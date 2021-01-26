@@ -1,0 +1,561 @@
+<!DOCTYPE HTML>
+<head>
+    <title>
+        Mych's Macro Magic
+    </title>
+    <script>
+        eventHandlers = {};
+
+        function on(eventName, eventHandler)
+        {
+            eventHandlers[eventName] = eventHandler;
+        }
+    </script>
+    <script src="MychsMacroMagic.js">
+    </script>
+    <script>
+        function escapeHTML(text)
+        {
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+    <style type="text/css">
+        body {
+            font-family: Consolas, monospace;
+            font-size: 9pt;
+        }
+
+        div.expression
+        {
+            padding: 0.5em 1em 0.5em 1em;
+            border: 1px solid silver;
+            margin-bottom: 1em;
+            white-space: pre-wrap;
+        }
+
+        span.success {
+            color: green;
+            font-weight: bold;
+        }
+
+        span.type {
+            color: gray;
+            font-family: Calibri, sans-serif;
+        }
+
+        div.script {
+            padding: 0.5em 1em 1em 1em;
+            border: 1px solid silver;
+            margin-bottom: 1em;
+            white-space: pre-wrap;
+        }
+
+        td {
+            vertical-align: top;
+            line-height: 10pt;
+        }
+
+        td.script-header {
+            font-family: Calibri, sans-serif;
+            font-weight: bold;
+            font-size: 10pt;
+            padding-bottom: 0.5em;
+        }
+
+        td.lineno {
+            width: 3em;
+            color: gray;
+            font-family: Calibri, sans-serif;
+            text-align: right;
+            padding-right: 1em;
+        }
+
+        span.original {
+            color: gray;
+            font-family: Calibri, sans-serif;
+            font-style: italic;
+        }
+
+        span.state {
+            color: gray;
+            font-family: Calibri, sans-serif;
+        }
+
+        span.error {
+            color: red;
+            font-family: Calibri, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        var testExpressions = false;
+        var testScripts = true;
+
+        if (testExpressions)
+        {
+            var variables =
+            {
+                foo: 123,
+                bar: 456,
+                
+                len: function(value)
+                {
+                    return MychExpression.coerceString(value).length;
+                },
+
+                count: function(values)
+                {
+                    return arguments.length;
+                },
+
+                list: function(values)
+                {
+                    var elements = [];
+                    for (var i = 0; i < arguments.length; ++i)
+                    {
+                        elements.push("<" + arguments[i] + ">");
+                    }
+                    return elements.join("|");
+                },
+
+                getattr: function(characterName, attributeName)
+                {
+                    return "15";
+                },
+
+                array1: [1, 2],
+                array2: [3, 4, 5],
+            };
+
+            var expressionSources =
+            [
+                "1+2*3",
+                "(1+2)*3",
+                "len('ookook')",
+                "(1==1)",
+                "(1==2)",
+                "(1==1) and (2!=3)",
+                "1+()",
+                "1*()",
+                "3*(()+2)",
+                "2**8",
+                "array1,array2",
+                "list()",
+                "list(())",
+                "list(1)",
+                "list(1,'two',3,'four')",
+                "list(array1, array2)",
+                "list((1,'two'),(3,'four'))",
+                "getattr('Char1', 'AP')",
+                "--+-+-+-len('ookook')",
+                "len(1+10+90)",
+                "6+++++7",
+                "6++-++7",
+                "(((1))",
+                "(((1)))",
+                "(((1))))",
+                "(3+(2+(1)*",
+                "(1+2*3+4**5)-foo/bar+(6+7,(8+9)*10-len('foo \\'bar\\' baz \\\\quux'))",
+                "(1+2*3+4**5)-foo!/bar(6+7,(8+9)*10)",
+                "(1+2*3+4**5)-foo/bar(6+7)",
+                ")+123",
+                "*456",
+            ];
+
+            for (expressionSource of expressionSources)
+            {
+                document.write("<div class='expression'>");
+                
+                try
+                {
+                    var expression = new MychExpression(expressionSource);
+
+                    var result = expression.evaluate(variables);
+                    var resultType = (result instanceof Object ? result.constructor.name : typeof(result));
+
+                    document.write(escapeHTML(expressionSource) + " = <span class='success'>" + escapeHTML(JSON.stringify(result)) + "</span> <span class='type'>[" + escapeHTML(resultType) + "]</span>");
+                }
+                catch (exception)
+                {
+                    console.log(exception);
+                    document.write(escapeHTML(expressionSource) + " = <span class='error'>" + escapeHTML(exception) + "</span>");
+                }
+
+                document.write("</div>");
+            }
+        }
+
+        if (testScripts)
+        {
+            var includedScriptSources = [];
+
+            var scriptSources =
+            [
+                [
+                    "set correct = 123 + 456",
+                ],
+                [
+                    "set missingExpression",
+                ],
+                [
+                    "set incorrectAssignmentOperator := 123 + 456",
+                ],
+                [
+                    "do chat('correct')"
+                ],
+                [
+                    "do chat 'unknown operator'!"
+                ],
+                [
+                    "do chat 'missing parentheses'"
+                ],
+                [
+                    "    unknown command",
+                ],
+                [
+                    "chat: Hello World! Meaning of life: ${6*7}, current AP: ${getattr('Dummy', 'AP')}",
+                ],
+                [
+                    "chat: this <${undefinedValue}> should be empty",
+                ],
+                [
+                    "chat: floor(.) = (-1.2) = ${floor(-1.2)}, (-1.5) = ${floor(-1.5)}, (-1.7) = ${floor(-1.7)}, (1.2) = ${floor(1.2)}, (1.5) = ${floor(1.5)}, (1.7) = ${floor(1.7)}",
+                    "chat: round(.) = (-1.2) = ${round(-1.2)}, (-1.5) = ${round(-1.5)}, (-1.7) = ${round(-1.7)}, (1.2) = ${round(1.2)}, (1.5) = ${round(1.5)}, (1.7) = ${round(1.7)}",
+                    "chat: ceil(.) = (-1.2) = ${ceil(-1.2)}, (-1.5) = ${ceil(-1.5)}, (-1.7) = ${ceil(-1.7)}, (1.2) = ${ceil(1.2)}, (1.5) = ${ceil(1.5)}, (1.7) = ${ceil(1.7)}",
+                    "chat: abs(.) = (-1.2) = ${abs(-1.2)}, (-1.5) = ${abs(-1.5)}, (-1.7) = ${abs(-1.7)}, (1.2) = ${abs(1.2)}, (1.5) = ${abs(1.5)}, (1.7) = ${abs(1.7)}",
+                ],
+                [
+                    "chat: min() = <${min()}>, min(+123, undef) = ${min(+123, undef)}, min(.) = ${min(5, undefined, 'moo', 999, 2, -3.14)}",
+                    "chat: max() = <${max()}>, min(-456, undef) = ${min(-456, undef)}, max(.) = ${max(5, undefined, 'moo', 999, 2, -3.14)}",
+                ],
+                [
+                    "chat: this is ${highlight('rather normal')}, ${highlight('rather good', 'good')}, ${highlight('rather bad', 'bad')}, or ${highlight('very important', 'important')} indeed",
+                    "chat: but hover ${highlight('this', 'normal', 'fancy tooltip')} for a tooltip",
+                ],
+                [
+                    "else",
+                ],
+                [
+                    "if true",
+                    "else",
+                    "else",
+                    "end if",
+                ],
+                [
+                    "if false",
+                    "else if broken syntax in expression",
+                    "end if",
+                ],
+                [
+                    "if true",
+                    "   chat: correct",
+                    "else if true",
+                    "   chat: broken",
+                    "else",
+                    "   chat: broken",
+                    "end if",
+                ],
+                [
+                    "if false",
+                    "   chat: broken",
+                    "else if true",
+                    "   chat: correct",
+                    "else",
+                    "   chat: broken",
+                    "end if",
+                ],
+                [
+                    "if false",
+                    "   chat: broken",
+                    "else if false",
+                    "   chat: broken",
+                    "else",
+                    "   chat: correct",
+                    "end if",
+                ],
+                [
+                    "if false",
+                    "   if true",
+                    "       chat: wrong",
+                    "   end if",
+                    "else",
+                    "   chat: correct",
+                    "end if",
+                ],
+                [
+                    "chat: foo",
+                    "chat: bar",
+                ],
+                [
+                    "set discardedVariable = 123 + 456",
+                    "chat: discardedVariable=${discardedVariable}",
+                ],
+                [
+                    "script",
+                    "    set retainedVariable = 123 + 456",
+                    "    chat: retainedVariable=${retainedVariable}",
+                    "end script",
+                ],
+                [
+                    "script",
+                    "    chat: wrong",
+                    "script",
+                    "    chat: correct",
+                    "end script",
+                ],
+                [
+                    "script",
+                    "   end script syntax error",
+                    "end script",
+                ],
+                [
+                    "script",
+                    "   chat: wrong",
+                    "   if true",
+                    "       syntax error",
+                    "   end if",
+                    "end script",
+                    "chat: correct",
+                ],
+                [
+                    "script",
+                    "   chat: wrong",
+                    "   if true",
+                    "end script",
+                    "chat: correct",
+                ],
+                [
+                    "script",
+                    "   chat: wrong",
+                    "   if true",
+                    "       end unknown",
+                    "   end if",
+                    "   chat: wrong",
+                    "end script",
+                    "chat: correct",
+                ],
+                [
+                    "combine chat",
+                    "    chat: Hello World!",
+                    "    chat: Meaning of life: ${6*7},",
+                    "    chat: current AP: ${getattr('Dummy', 'AP')}",
+                    "    do chat('and even from expressions')",
+                    "end combine",
+                ],
+                [
+                    "combine chat using '//'",
+                    "    chat: foo",
+                    "    chat: bar",
+                    "    chat: baz",
+                    "end combine",
+                ],
+                [
+                    "combine chat",
+                    "    chat: testing maths...",
+                    "    if 1 < 2",
+                    "       chat: maths still work",
+                    "    else",
+                    "       chat: maths broken, abandon universe at once",
+                    "    end if",
+                    "end combine",
+                ],
+                [
+                    "combine chat",
+                    "    chat: testing maths...",
+                    "    if 1 > 2",
+                    "       chat: maths broken, abandon universe at once",
+                    "    else",
+                    "       chat: maths still work",
+                    "    end if",
+                    "end combine",
+                ],
+                [
+                    "script",
+                    "    set roll = [[1d6]]",
+                    "    chat: rolled ${roll}",
+                    "end script",
+                ],
+                [
+                    "script",
+                    "    chat: attacking with [[1d20]]",
+                    "    set roll = $[[0]]",
+                    "    chat: rolled ${roll}, say again: ${$[[0]]}, that is to say: $[[0]]",
+                    "end script",
+                ],
+                [
+                    "script",
+                    "   chat: attacking with [[1d3]]",
+                    "   set roll = $[[0]]",
+                    "   chat: critical: ${iscritical(roll)}",
+                    "   chat: fumble: ${isfumble(roll)}",
+                    "end script",
+                ],
+                [
+                    "combine chat",
+                    "   set roll = [[1d3]]",
+                    "   if iscritical(roll)",
+                    "       chat: critical",
+                    "   else if isfumble(roll)",
+                    "       chat: fumbled",
+                    "   else",
+                    "       chat: unremarkable",
+                    "   end if",
+                    "   chat: attack with ${roll}",
+                    "end combine",
+                ],
+                [
+                    "chat: fumble: ${isfumble($[[0]])}, critical: ${iscritical($[[0]])}, roll: [[1d3]]",
+                ],
+            ];
+
+            var messages = [];
+
+            var attributes =
+            {
+                AP: { current: 20, max: 30 },
+            };
+
+            MychScriptContext.prototype.chat = function(message)
+            {
+                messages.push(message);
+            };
+
+            MychScriptContext.prototype.error = function(exception)
+            {
+                document.write("<br><span class='error'>" + escapeHTML(exception) + "</span>")
+            };
+
+            MychScriptContext.prototype.getattr = function(characterNameOrId, attributeName)
+            {
+                return attributes[attributeName].current;
+            }
+
+            MychScriptContext.prototype.getattrmax = function(characterNameOrId, attributeName)
+            {
+                return attributes[attributeName].max;
+            }
+
+            MychScriptContext.prototype.setattr = function(characterNameOrId, attributeName, attributeValue)
+            {
+                if (attributes[attributeName] == undefined)
+                {
+                    attributes[attributeName] = { current: undefined, max: undefined };
+                }
+
+                attributes[attributeName].current = attributeValue;
+            }
+
+            MychScriptContext.prototype.setattrmax = function(characterNameOrId, attributeName, attributeValue)
+            {
+                if (attributes[attributeName] == undefined)
+                {
+                    attributes[attributeName] = { current: undefined, max: undefined };
+                }
+
+                attributes[attributeName].max = attributeValue;
+            }
+
+            for (var scriptSourceIndex = 0; scriptSourceIndex < scriptSources.length; ++scriptSourceIndex)
+            {
+                if (includedScriptSources.length > 0 && !includedScriptSources.includes(scriptSourceIndex))
+                {
+                    continue;
+                }
+
+                var scriptSource = scriptSources[scriptSourceIndex];
+
+                document.write("<div class='script'>");
+                document.write("<table>");
+                document.write("<tr><td></td><td class='script-header'>test script " + scriptSourceIndex + "</td></tr>");
+
+                messages.length = 0;
+
+                MychScriptContext.players = {};
+
+                for (var scriptSourceLineIndex = 0; scriptSourceLineIndex < scriptSource.length; ++scriptSourceLineIndex)
+                {
+                    var scriptSourceLine = scriptSource[scriptSourceLineIndex];
+                    var scriptSourceRolls = [];
+
+                    var originalScriptSourceLine = scriptSourceLine;
+
+                    scriptSourceLine = scriptSourceLine.replace(/\[\[((\d+)d(\d+))\]\]/gi,
+                        function(match, expression, numDice, numSides)
+                        {
+                            numDice = parseInt(numDice);
+                            numSides = parseInt(numSides);
+
+                            var roll = 
+                            {
+                                expression: expression,
+                                results:
+                                {
+                                    rolls:
+                                    [
+                                        {
+                                            dice: numDice,
+                                            results: [],
+                                            sides: numSides,
+                                        },
+                                    ],
+                                    total: 0,
+                                },
+                            };
+
+                            for (; numDice > 0; --numDice)
+                            {
+                                var rollValue = Math.floor(Math.random() * numSides) + 1;
+                                
+                                roll.results.rolls[0].results.push({ v: rollValue });
+                                roll.results.total += rollValue;
+                            }
+
+                            scriptSourceRolls.push(roll);
+
+                            return "$[[" + (scriptSourceRolls.length - 1) + "]]";
+                        });
+
+                    document.write("<tr>");
+                    
+                    document.write("<td class='lineno'>");
+                    document.write(scriptSourceLineIndex + 1);
+                    document.write("</td>");
+
+                    document.write("<td>");
+                    document.write(escapeHTML(scriptSourceLine));
+
+                    var msg =
+                    {
+                        type: "api",
+                        playerid: "player1234",
+                        who: "Tester",
+                        content: "!mmm " + scriptSourceLine,
+                        inlinerolls: scriptSourceRolls,
+                    };
+
+                    eventHandlers["chat:message"](msg);
+
+                    if (scriptSourceLine != originalScriptSourceLine)
+                    {
+                        document.write(" <span class='original'>" + escapeHTML(originalScriptSourceLine.trim()) + "</span>")
+                    }
+
+                    document.write("</td>");
+                    document.write("</tr>");
+                }
+
+                for (var message of messages)
+                {
+                    document.write("<tr>");
+                    document.write("<td class='lineno'>output</td>");
+                    document.write("<td>" + message + "</td>");
+                    document.write("</tr>");
+                }
+
+                document.write("</table>");
+                document.write("</div>");
+            }
+        }
+    </script>
+</body>
