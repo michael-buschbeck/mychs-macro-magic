@@ -1,0 +1,145 @@
+<!DOCTYPE HTML>
+<head>
+    <title>
+        Expression Tests &ndash; Mych's Macro Magic
+    </title>
+    <script>
+        eventHandlers = {};
+
+        function on(eventName, eventHandler)
+        {
+            eventHandlers[eventName] = eventHandler;
+        }
+    </script>
+    <script src="../MychsMacroMagic.js">
+    </script>
+    <script>
+        function escapeHTML(text)
+        {
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+    <style type="text/css">
+        body {
+            font-family: Consolas, monospace;
+            font-size: 9pt;
+        }
+
+        div.expression
+        {
+            padding: 0.5em 1em 0.5em 1em;
+            border: 1px solid silver;
+            margin-bottom: 1em;
+            white-space: pre-wrap;
+        }
+
+        span.success {
+            color: green;
+            font-weight: bold;
+        }
+
+        span.type {
+            color: gray;
+            font-family: Calibri, sans-serif;
+        }
+
+        span.error {
+            color: red;
+            font-family: Calibri, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        var variables =
+        {
+            foo: 123,
+            bar: 456,
+            
+            len: function(value)
+            {
+                return MychExpression.coerceString(value).length;
+            },
+
+            count: function(values)
+            {
+                return arguments.length;
+            },
+
+            list: function(values)
+            {
+                var elements = [];
+                for (var i = 0; i < arguments.length; ++i)
+                {
+                    elements.push("<" + arguments[i] + ">");
+                }
+                return elements.join("|");
+            },
+
+            getattr: function(characterName, attributeName)
+            {
+                return "15";
+            },
+
+            array1: [1, 2],
+            array2: [3, 4, 5],
+        };
+
+        var expressionSources =
+        [
+            "1+2*3",
+            "(1+2)*3",
+            "len('ookook')",
+            "(1==1)",
+            "(1==2)",
+            "(1==1) and (2!=3)",
+            "1+()",
+            "1*()",
+            "3*(()+2)",
+            "2**8",
+            "array1,array2",
+            "list()",
+            "list(())",
+            "list(1)",
+            "list(1,'two',3,'four')",
+            "list(array1, array2)",
+            "list((1,'two'),(3,'four'))",
+            "getattr('Char1', 'AP')",
+            "--+-+-+-len('ookook')",
+            "len(1+10+90)",
+            "6+++++7",
+            "6++-++7",
+            "(((1))",
+            "(((1)))",
+            "(((1))))",
+            "(3+(2+(1)*",
+            "(1+2*3+4**5)-foo/bar+(6+7,(8+9)*10-len('foo \\'bar\\' baz \\\\quux'))",
+            "(1+2*3+4**5)-foo!/bar(6+7,(8+9)*10)",
+            "(1+2*3+4**5)-foo/bar(6+7)",
+            ")+123",
+            "*456",
+        ];
+
+        for (expressionSource of expressionSources)
+        {
+            document.write("<div class='expression'>");
+            
+            try
+            {
+                var expression = new MychExpression(expressionSource);
+
+                var result = expression.evaluate(variables);
+                var resultType = (result instanceof Object ? result.constructor.name : typeof(result));
+
+                document.write(escapeHTML(expressionSource) + " = <span class='success'>" + escapeHTML(JSON.stringify(result)) + "</span> <span class='type'>[" + escapeHTML(resultType) + "]</span>");
+            }
+            catch (exception)
+            {
+                console.log(exception);
+                document.write(escapeHTML(expressionSource) + " = <span class='error'>" + escapeHTML(exception) + "</span>");
+            }
+
+            document.write("</div>");
+        }
+    </script>
+</body>
