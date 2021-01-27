@@ -155,7 +155,7 @@ That said – anything that's evaluated by the Roll20 macro engine *before* the 
 | ---- | -------- | -------------
 | 1    | _!mmm_ **set** Health = @{Finn\|HP} | *(assign current HP to Health variable)*
 | 2    | _!mmm_ **if** Health >= 0.8 * @{Finn\|HP\|max} | *(check if 80% healthy or more)*
-| 3    | _!mmm_     **chat:** I feel sufficiently envigorated!
+| 3    | _!mmm_     **chat:** I feel sufficiently invigorated!
 | 4    | _!mmm_ **else if** ?{Heal if necessary?\|yes,true\|no,false} | *(less than 80% healthy – use result of roll query)*
 | 5    | _!mmm_     **chat:** /me gulps a healing potion for [[1d6]] health. | *(chat with inline roll result)*
 | 6    | _!mmm_     **set** Health = min(Health + $[[0]], @{Finn\|HP\|max}) | *(calculate new Health limited to max)*
