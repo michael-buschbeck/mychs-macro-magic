@@ -6,7 +6,7 @@ A simple, sane, and friendly little scripting language for your Roll20 macros.
 - Stockholm syndrome just not working for you to keep you enchanted with that soup of brackets, braces, and strings of seemingly random dice-roll suffixes you wrote yesterday?
 - Your [sense of pride and accomplishment](https://www.reddit.com/r/MuseumOfReddit/comments/8ish3t/the_time_that_ea_got_a_sense_of_pride_and/) just not kicking in anymore like it used to after spending hours figuring out how to bully the dice engine into comparing two numbers?
 
-And that distant, lingering, but unmistakable yearning, like an unscratchable itch at the back of your mind, calling softly at you as if from afar: "How easy would this be if I could just use a proper *conditional* here?", and: "How nice if I didn't have to put all this stuff into *one* line?", and: "If I could just use *one* tiny variable here, that would be so handy..."
+And that distant, lingering, but unmistakable yearning, like an unscratchable itch at the back of your mind, calling softly at you as if from afar: "How easy would this be if I could just use a proper *conditional* here?", and: "How nice if I didn't have to put all this stuff into *one* line?", and: "If I could just use *one tiny* variable here, that would be so handy..."
 
 If that sounds familiar, then **Mych's Macro Magic (MMM)** is here for you. Just install it as an API script and start writing macro scripts like a boring, *productive* programmer would.
 
@@ -66,7 +66,7 @@ Using a **script** block is optional, but if you do, it gives you the following 
 
 Inside a **script** block, you can use *variables*.
 
-*Variables* allow you to store roll results or other computed values so you can refer back to them any future point in the **script** block:
+*Variables* allow you to store roll results and other computed values so you can refer back to them any future point in the **script** block:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
@@ -79,7 +79,7 @@ Inside a **script** block, you can use *variables*.
 | 7    | _!mmm_     **end if**
 | 8    | _!mmm_ **end script**
 
-You can freely choose your variable names as long as they only contain letters (A-Z), digits (0-9), and underscores (_). Variable names cannot contain other punctuation or spaces. Upper- and lowercase spelling is significant (so attackRoll, AttackRoll, and attackroll are three different variables).
+You can freely choose your variable names as long as they only contain letters (A-Z, a-z), digits (0-9), and underscores (_). Variable names cannot contain other punctuation or spaces. Upper- and lowercase spelling is significant (so attackRoll, AttackRoll, and attackroll are three different variables).
 
 Once set, the lifetime of variables only extends to the next **end script** command. If you want to save state between different scripts or script runs, consider using character attributes.
 
@@ -132,9 +132,9 @@ By default, the parts of the message are separated with spaces when the **combin
 | ---- | -------- | -------------
 | 1    | _!mmm_ **combine chat using** "" | *(evaluate separator expression: empty string)*
 | 2    | _!mmm_     **chat:** Finn M | *(queue message part)*
-| 2    | _!mmm_     **chat:** acRath | *(queue message part)*
-| 2    | _!mmm_     **chat:** gar | *(queue message part)*
-| 8    | _!mmm_ **end combine** | ***Finn:*** Finn MacRathgar
+| 3    | _!mmm_     **chat:** acRath | *(queue message part)*
+| 4    | _!mmm_     **chat:** gar | *(queue message part)*
+| 5    | _!mmm_ **end combine** | ***Finn:*** Finn MacRathgar
 
 -----
 
@@ -142,7 +142,7 @@ By default, the parts of the message are separated with spaces when the **combin
 
 Executes other commands conditionally.
 
-The **if** and **else if** commands evaluate their expression (which will usually contains a comparison of some sort), and...
+The **if** and **else if** commands evaluate their expression (which will usually include a comparison of some sort), and...
 
 - If the result is true, execute the commands that follow until the next **else if**, **else**, or **end if** on the same level is reached, and then skip everything down to the **end if** command that completes the **if** block.
 - If the result is false, skip the commands that follow until the next **else if**, **else**, or **end if** on the same level is reached.
@@ -161,8 +161,8 @@ That said – anything that's evaluated by the Roll20 macro engine *before* the 
 | 6    | _!mmm_     **set** Health = min(Health + $[[0]], @{Finn\|HP\|max}) | *(calculate new Health limited to max)*
 | 7    | _!mmm_     **do** setattr("Finn", "HP", Health) | *(set HP to updated Health)*
 | 8    | _!mmm_ **else**
-| 3    | _!mmm_     **chat:** Feeling bad and no healing potion. Woe is me!
-| 8    | _!mmm_ **end if**
+| 9    | _!mmm_     **chat:** Feeling bad and no healing potion. Woe is me!
+| 10   | _!mmm_ **end if**
 
 In the example above, the "Heal if necessary?" question will pop up even before the entire script runs – actually, just when the **else if** line is received by the Roll20 chat engine and before it's sent to the MMM scripting engine. So this question will be asked even if Finn is sufficiently healthy to not even want healing. Unfortunately, the only way to make roll queries conditional is with conventional (and limited) Roll20 macro magic.
 
