@@ -87,6 +87,7 @@
 
         var expressionSources =
         [
+            "VERSION",
             "1+2*3",
             "(1+2)*3",
             "len('ookook')",
@@ -128,7 +129,7 @@
             {
                 var expression = new MychExpression(expressionSource);
 
-                var result = expression.evaluate(variables);
+                var result = expression.evaluate(variables, new MychScriptContext());
                 var resultType = (result instanceof Object ? result.constructor.name : typeof(result));
 
                 document.write(escapeHTML(expressionSource) + " = <span class='success'>" + escapeHTML(JSON.stringify(result)) + "</span> <span class='type'>[" + escapeHTML(resultType) + "]</span>");
