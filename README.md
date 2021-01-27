@@ -6,7 +6,7 @@ A simple, sane, and friendly little scripting language for your Roll20 macros.
 - Stockholm syndrome just not working for you to keep you enchanted with that soup of brackets, braces, and strings of seemingly random dice-roll suffixes you wrote yesterday?
 - Your [sense of pride and accomplishment](https://www.reddit.com/r/MuseumOfReddit/comments/8ish3t/the_time_that_ea_got_a_sense_of_pride_and/) just not kicking in anymore like it used to after spending hours figuring out how to bully the dice engine into comparing two numbers?
 
-And that distant, lingering, but unmistakable yearning, like an unscratchable itch at the back of your mind, calling softly at you as if from afar: "How easy would this be if I could just use a proper *conditional* here?", and: "How nice if I didn't have to put all this stuff into *one* line?"...
+And that distant, lingering, but unmistakable yearning, like an unscratchable itch at the back of your mind, calling softly at you as if from afar: "How easy would this be if I could just use a proper *conditional* here?", and: "How nice if I didn't have to put all this stuff into *one* line?", and: "If I could just use *one* tiny variable here, that would be so handy..."
 
 If that sounds familiar, then **Mych's Macro Magic (MMM)** is here for you. Just install it as an API script and start writing macro scripts like a boring, *productive* programmer would.
 
@@ -30,8 +30,8 @@ You can also put a whole sequence of commands together, one after another in sep
 | Line | Commands | What happens?
 | ---- | -------- | -------------
 | 1    | _!mmm_ **chat:** Oh dear, I'm pretty banged up. | ***Finn:*** Oh dear, I'm pretty banged up.
-| 2    | _!mmm_ **do** setattr(sender, "LP", getattrmax(sender, "LP")) | *(set LP attribute to its maximum)*
-| 3    | _!mmm_ **chat:** /me is back at ${getattr(sender, "LP")} points. | ***Finn is back at 25 points.***
+| 2    | _!mmm_ **do** setattr(sender, "HP", getattrmax(sender, "HP")) | *(set HP attribute to its maximum)*
+| 3    | _!mmm_ **chat:** /me is back at ${getattr(sender, "HP")} points. | ***Finn is back at 25 points.***
 
 Each of these commands would be executed as soon as the MMM scripting engine receives it. That's possible because each of the commands above is *self-contained:* It has everything it needs to execute in the same line.
 
@@ -39,7 +39,7 @@ However, some commands enclose a *block* of other commands – for example, if y
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **if** getattr(sender, "LP") < 5 | *(check LP attribute)*
+| 1    | _!mmm_ **if** getattr(sender, "HP") < 5 | *(check HP attribute)*
 | 2    | _!mmm_     **chat:** /me is nearly dead! | ***Finn is nearly dead!***
 | 3    | _!mmm_ **end if**
 
@@ -105,7 +105,7 @@ You can use /me, /whisper, and any other Roll20 chat directives in a **chat** co
 | ---- | -------- | -------------
 | 1    | _!mmm_ **chat:** /me is bored. | ***Finn is bored.***
 | 2    | _!mmm_ **chat:** Attacking with [[1d20+12]] | ***Finn:*** Attacking with `14`
-| 3    | _!mmm_ **chat:** My half-life is ${getattr(sender, "LP") / 2}. | ***Finn:*** My half-life is 11.5.
+| 3    | _!mmm_ **chat:** My half-life is ${getattr(sender, "HP") / 2}. | ***Finn:*** My half-life is 11.5.
 
 
 ### _!mmm_ **combine chat** [...] **end combine**
@@ -149,17 +149,17 @@ The **if** and **else if** commands evaluate their expression (which will usuall
 
 You can use any commands inside an **if** block included other, nested **if** blocks.
 
-That said – anything that's evaluated by the Roll20 macro engine *before* the command is sent to the MMM scripting engine will be always be executed unconditionally by Roll20 before MMM gets a shot at it. So while you absolutely *can* use inline rolls like `[[1d6]]`, roll queries like `?{Bonus|0}`, and attribute calls like `@{Finn|LP}` in your scripts, you *cannot* make them conditional by placing them inside an **if** block.
+That said – anything that's evaluated by the Roll20 macro engine *before* the command is sent to the MMM scripting engine will be always be executed unconditionally by Roll20 before MMM gets a shot at it. So while you absolutely *can* use inline rolls like `[[1d6]]`, roll queries like `?{Bonus|0}`, and attribute calls like `@{Finn|HP}` in your scripts, you *cannot* make them conditional by placing them inside an **if** block.
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **set** Health = @{Finn\|LP} | *(assign current LP to Health variable)*
-| 2    | _!mmm_ **if** Health >= 0.8 * @{Finn\|LP\|max} | *(check if 80% healthy or more)*
+| 1    | _!mmm_ **set** Health = @{Finn\|HP} | *(assign current HP to Health variable)*
+| 2    | _!mmm_ **if** Health >= 0.8 * @{Finn\|HP\|max} | *(check if 80% healthy or more)*
 | 3    | _!mmm_     **chat:** I feel sufficiently envigorated!
 | 4    | _!mmm_ **else if** ?{Heal if necessary?\|yes,true\|no,false} | *(less than 80% healthy – use result of roll query)*
 | 5    | _!mmm_     **chat:** /me gulps a healing potion for [[1d6]] health. | *(chat with inline roll result)*
-| 6    | _!mmm_     **set** Health = min(Health + $[[0]], @{Finn\|LP\|max}) | *(calculate new Health limited to max)*
-| 7    | _!mmm_     **do** setattr("Finn", "LP", Health) | *(set LP to updated Health)*
+| 6    | _!mmm_     **set** Health = min(Health + $[[0]], @{Finn\|HP\|max}) | *(calculate new Health limited to max)*
+| 7    | _!mmm_     **do** setattr("Finn", "HP", Health) | *(set HP to updated Health)*
 | 8    | _!mmm_ **else**
 | 3    | _!mmm_     **chat:** Feeling bad and no healing potion. Woe is me!
 | 8    | _!mmm_ **end if**
@@ -186,10 +186,111 @@ Evaluates an expression. This is useful if the expression has side effects, e.g.
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **do** setattr(sender, "LP", min(getattr(sender, "LP") + [[1d6]], getattrmax(sender, "LP")) | *(add 1d6 LP, up to max LP)*
+| 1    | _!mmm_ **do** setattr(sender, "HP", min(getattr(sender, "HP") + [[1d6]], getattrmax(sender, "HP")) | *(add 1d6 HP, up to max HP)*
 | 2    | _!mmm_ **do** setattr(sender, "AmmoCount", getattr(sender, "AmmoCount") - 1) | *(decrement AmmoCount attribute)*
 | 3    | _!mmm_ **do** chat("/me likes chatting the hard way") | ***Finn likes chatting the hard way***
 
+
+
+## Expressions
+
+Expressions are used everywhere: in **set** and **do** commands; as the condition in **if** and **else if** commands; for the separator in the **combine chat using** command; and even inside ${...} placeholders in the message text for the **chat** command.
+
+If a command contains an expression (or several, like in a **chat** command), the expression is evaluated when the command is *executed* using the most up-to-date variable values. This is unlike what happens with native Roll20 inline rolls, roll queries, or attribute calls, which are executed (and then substituted into the command) when the command is *sent* to the MMM scripting engine, before any part of the script executes.
+
+Expressions can contain...
+
+- Numbers like `42`, `3.14`, or `-1`
+- Text strings in double quotes like `"foo"` or single quotes like `'bar'` – the quotes are just there to demark the string, not part of it. If you want to include a literal double quote in a double-quoted string, or a literal single quote in a single-quoted one, you can prefix it with a backslash like so: `"Finn \"The Gorgeous\" MacRathgar"` – and same if you want to include a literal backslash in a string: `"lean\\left"`
+- Boolean logic values `true` and `false`
+- Mathematical operators like `+` `-` `*` `/` and many more – see list below
+- Boolean logic operators `and`, `or`, and `not`
+- Function calls like `floor(num)`, `getattr(char,attrname)`, and `max(a,b,c...)` – see list below
+
+Operators follow the usual precedence rules, so `1+2*3` means `1+(2*3)` – you can always use parentheses to override operator precedence, e.g. `(1+2)*3`.
+
+
+### Literals
+
+| Syntax      | Description
+| ----------- | -----------
+| `42`        | Integral number
+| `3.14`      | Fractional number
+| `-1.2`      | Negative (integral or fractional) number
+| `"foo"`     | Double-quoted string representing `foo` 
+| `'bar'`     | Single-quoted string representing `bar`
+| `"a\"b\\c"` | String representing `a"b\c` (double- or single-quoted)
+| `true`      | Boolean logic value representing true condition
+| `false`     | Boolean logic value representing false condition
+
+
+### Variables
+
+| Syntax      | Description
+| ----------- | -----------
+| `AmmoCount` | References the value of the variable named `AmmoCount`
+| `$[[0]]`    | References a recent roll or inline roll
+
+The MMM scripting engine keeps track of your recent rolls for you – explicit rolls and inline rolls, both within and outside of script commands – so you can reference them using the `$[[0]]` syntax in script expressions and templates. An explicit roll always sets `$[[0]]` whereas inline rolls set `$[[0]]`, `$[[1]]`, and so on – one for each pair of `[[ ]]` in the message that contained the rolls.
+
+You can use attribute calls like `@{Finn|HP}` as well, but keep in mind that they're substituted into the script command *before* the MMM scripting engine even sees it. That's unproblematic if the attribute is a plain number, but if it's a string, you must explicitly surround the attribute call with quotes:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **set** TargetName = "@{target\|name}" | *(set TargetName variable to name of selected target – use quotes)*
+| 2    | _!mmm_ **set** TargetHealth = @{target\|HP} | *(set TargetHealth variable to current health of selected target – numeric, no quotes required)*
+
+
+### Operators
+
+| Syntax         | Precedence  | Category | Description
+| -------------- | ----------- | -------- | -----------
+| *a* `**` *b*   | 1 (highest) | Math     | Calculate *a* to the power of *b*
+| `+`*a*         | 2           | Math     | Return *a* unchanged (even if *a* is not a number)
+| `-`*a*         | 2           | Math     | Negate *a*
+| *a* `*` *b*    | 3           | Math     | Multiply *a* with *b*
+| *a* `/` *b*    | 3           | Math     | Divide *a* by *b*
+| *a* `%` *b*    | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b*
+| *a* `+` *b*    | 4           | Math     | Add *a* and *b*
+| *a* `-` *b*    | 4           | Math     | Subtract *b* from *a*
+| *a* `<` *b*    | 5           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
+| *a* `<=` *b*   | 5           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
+| *a* `>` *b*    | 5           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
+| *a* `>=` *b*   | 5           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
+| *a* `==` *b*   | 6           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
+| *a* `!=` *b*   | 6           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
+| *a* `eq` *b*   | 6           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
+| *a* `ne` *b*   | 6           | Logic    | Return `true` if *a* is alphanumerically unequal to *b*, else `false`
+| *a* `and` *b*  | 7           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
+| *a* `or` *b*   | 8           | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
+| `not` *a*      | 9 (lowest)  | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
+
+If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
+
+
+### Functions
+
+| Syntax                              | Category  | Example | Description
+| ----------------------------------- | --------- | ------- | -----------
+| floor(*a*)                          | Math      | floor(1.7) = 1 | Return the greatest integer that's less than or equal to *a*
+| round(*a*)                          | Math      | round(1.5) = 2 | Round *a* to the nearest integer
+| ceil(*a*)                           | Math      | ceil(1.3) = 2  | Return the smallest integer that's greater than or equal to *a*
+| abs(*a*)                            | Math      | abs(-5) = 5    | Return the absolute value of *a*
+| min(...)                            | Math      | min(3,1,2) = 1 | Return the numerically smallest value – any number of arguments allowed
+| max(...)                            | Math      | max(3,1,2) = 3 | Return the numerically greatest value – any number of arguments allowed
+| len(*str*)                          | String    | len("foo") = 3 | Return the number of character in string *str*
+| literal(*str*)                      | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
+| highlight(*str*)                    | String    |  | When output to chat, highlight string *str* with a pretty box
+| highlight(*str*, *type*)            | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
+| highlight(*str*, *type*, *tooltip*) | String    |  | ...with a tooltip popping up on mouse hover
+| iscritical(*roll*)                  | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
+| isfumble(*roll*)                    | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
+| chat(*str*)                         | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
+| getcharid(*char*)                   | Character | getcharid("Finn") | Return the character ID for *char* – works with both character IDs and full character names
+| getattr(*char*, *attr*)             | Character | getattr("Finn", "HP") | Look up character attribute *attr* for *char*
+| getattrmax(*char*, *attr*)          | Character | getattrmax("Finn", "HP") | Look up maximum value of character attribute *attr* for *char*
+| setattr(*char*, *attr*, *val*)      | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set character attribute *attr* for *char* to *val*, then return *val* – create *attr* if necessary
+| setattrmax(*char*, *attr*, *val*)   | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of character attribute *attr* for *char* to *val* – create *attr* if necessary
 
 
 ## Copyright & License
