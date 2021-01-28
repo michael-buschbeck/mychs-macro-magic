@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.0.2";
+const MMM_VERSION = "1.1.0";
 
 on("chat:message", function(msg)
 {
@@ -94,6 +94,8 @@ class MychScriptContext
     static players = {};
 
     version = MMM_VERSION;
+    playerid = undefined;
+    sender = undefined;
 
     floor(value)
     {
@@ -312,11 +314,11 @@ class MychScriptContext
 
     chat(message)
     {
-        var characterId = this.getcharid(this.sender);
+        var character = this.$getcharobj(this.sender);
 
-        if (characterId)
+        if (character)
         {
-            sendChat("character|" + characterId, message);
+            sendChat("character|" + character.id, message);
             return;
         }
         
@@ -335,7 +337,7 @@ class MychScriptContext
         sendChat("Mych's Macro Magic", "/direct " + exception, null, { noarchive: true });
     }
 
-    getcharid(characterNameOrId)
+    $getcharobj(characterNameOrId)
     {
         if (/^-/.test(characterNameOrId))
         {
@@ -343,66 +345,57 @@ class MychScriptContext
 
             if (character)
             {
-                return characterNameOrId;
+                return character;
             }
         }
 
         var characters = findObjs({ _type: "character", name: characterNameOrId });
-
-        if (characters.length == 1)
-        {
-            return characters[0].id;
-        }
-
-        return undefined;
+        return characters[0];
     }
     
-    $getattrobj(characterNameOrId, attributeName)
+    $getattrobj(character, attributeName)
     {
-        var characterId = this.getcharid(characterNameOrId);
-
-        if (!characterId)
+        if (!character || character.get("_type") != "character")
         {
             return undefined;
         }
 
-        var attributes = findObjs({ _type: "attribute", _characterid: characterId, name: attributeName });
-
-        if (attributes.length == 1)
-        {
-            return attributes[0];
-        }
-
-        return undefined;
+        var attributes = findObjs({ _type: "attribute", _characterid: character.id, name: attributeName });
+        return attributes[0];
     }
 
-    $createattrobj(characterNameOrId, attributeName)
+    $createattrobj(character, attributeName)
     {
-        var characterId = this.getcharid(characterNameOrId);
-
-        if (!characterId)
+        if (!character || character.get("_type") != "character")
         {
             return undefined;
         }
 
-        return createObj("attribute", {_characterid: characterId, name: attributeName });
+        return createObj("attribute", { _characterid: character.id, name: attributeName });
     }
 
     getattr(characterNameOrId, attributeName)
     {
-        var attribute = this.$getattrobj(characterNameOrId, attributeName);
+        var character = this.$getcharobj(characterNameOrId);
 
-        if (!attribute)
+        if (attributeName == "character_id")
         {
-            return undefined;
+            return character.id;
         }
 
-        return attribute.get("current");
+        if (attributeName == "character_name")
+        {
+            return character.get("name");
+        }
+
+        var attribute = this.$getattrobj(character, attributeName);
+        return attribute ? attribute.get("current") : undefined;
     }
 
     getattrmax(characterNameOrId, attributeName)
     {
-        var attribute = this.$getattrobj(characterNameOrId, attributeName);
+        var character = this.$getcharobj(characterNameOrId0);
+        var attribute = this.$getattrobj(character, attributeName);
 
         if (!attribute)
         {
@@ -414,18 +407,12 @@ class MychScriptContext
 
     setattr(characterNameOrId, attributeName, attributeValue)
     {
-        var characterId = this.getcharid(characterNameOrId);
-
-        if (!characterId)
-        {
-            return undefined;
-        }
-
-        var attribute = this.$getattrobj(characterId, attributeName);
+        var character = this.$getcharobj(characterNameOrId);
+        var attribute = this.$getattrobj(character, attributeName);
 
         if (!attribute)
         {
-            attribute = this.$createattrobj(characterId, attributeName);
+            attribute = this.$createattrobj(character, attributeName);
         }
 
         attribute.set("current", MychExpression.coerceScalar(attributeValue));
@@ -435,18 +422,12 @@ class MychScriptContext
 
     setattrmax(characterNameOrId, attributeName, attributeValue)
     {
-        var characterId = this.getcharid(characterNameOrId);
-
-        if (!characterId)
-        {
-            return undefined;
-        }
-
-        var attribute = this.$getattrobj(characterId, attributeName);
+        var character = this.$getcharobj(characterNameOrId0);
+        var attribute = this.$getattrobj(character, attributeName);
 
         if (!attribute)
         {
-            attribute = this.$createattrobj(characterId, attributeName);
+            attribute = this.$createattrobj(character, attributeName);
         }
 
         attribute.set("max", MychExpression.coerceScalar(attributeValue));
