@@ -4,7 +4,7 @@ A simple, sane, and friendly little scripting language for your Roll20 macros.
 
 - Tired of writing macros that look like the cat had an uneasy dream (again!) on your keyboard?
 - Stockholm syndrome just not working for you to keep you enchanted with that soup of brackets, braces, and strings of seemingly random dice-roll suffixes you wrote yesterday?
-- Your [sense of pride and accomplishment](https://www.reddit.com/r/MuseumOfReddit/comments/8ish3t/the_time_that_ea_got_a_sense_of_pride_and/) just not kicking in anymore like it used to after spending hours figuring out how to bully the dice engine into comparing two numbers?
+- Your [sense of pride and accomplishment](https://www.reddit.com/r/MuseumOfReddit/comments/8ish3t/the_time_that_ea_got_a_sense_of_pride_and/) not kicking in anymore like it used to after spending hours of figuring out how to bully the dice engine into comparing two numbers?
 
 And that distant, lingering, but unmistakable yearning, like an unscratchable itch at the back of your mind, calling softly at you as if from afar: "How easy would this be if I could just use a proper *conditional* here?", and: "How nice if I didn't have to put all this stuff into *one* line?", and: "If I could just use *one tiny* variable here, that would be so handy..."
 
@@ -136,7 +136,6 @@ By default, the parts of the message are separated with spaces when the **combin
 | 4    | _!mmm_     **chat:** gar | *(queue message part)*
 | 5    | _!mmm_ **end combine** | ***Finn:*** Finn MacRathgar
 
------
 
 ### _!mmm_ **if** *expression* [...] **else if** *expression* [...] **else** [...] **end if**
 
@@ -153,16 +152,18 @@ That said – anything that's evaluated by the Roll20 macro engine *before* the 
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **set** Health = @{Finn\|HP} | *(assign current HP to Health variable)*
-| 2    | _!mmm_ **if** Health >= 0.8 * @{Finn\|HP\|max} | *(check if 80% healthy or more)*
-| 3    | _!mmm_     **chat:** I feel sufficiently invigorated!
-| 4    | _!mmm_ **else if** ?{Heal if necessary?\|yes,true\|no,false} | *(less than 80% healthy – use result of roll query)*
-| 5    | _!mmm_     **chat:** /me gulps a healing potion for [[1d6]] health. | *(chat with inline roll result)*
-| 6    | _!mmm_     **set** Health = min(Health + $[[0]], @{Finn\|HP\|max}) | *(calculate new Health limited to max)*
-| 7    | _!mmm_     **do** setattr("Finn", "HP", Health) | *(set HP to updated Health)*
-| 8    | _!mmm_ **else**
-| 9    | _!mmm_     **chat:** Feeling bad and no healing potion. Woe is me!
-| 10   | _!mmm_ **end if**
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set** Health = @{Finn\|HP} | *(assign current HP to Health variable)*
+| 3    | _!mmm_     **if** Health >= 0.8 * @{Finn\|HP\|max} | *(check if 80% healthy or more)*
+| 4    | _!mmm_         **chat:** I feel sufficiently invigorated!
+| 5    | _!mmm_     **else if** ?{Heal if necessary?\|yes,true\|no,false} | *(less than 80% healthy – use result of roll query)*
+| 6    | _!mmm_         **chat:** /me gulps a healing potion for [[1d6]] health. | *(chat with inline roll result)*
+| 7    | _!mmm_         **set** Health = min(Health + $[[0]], @{Finn\|HP\|max}) | *(calculate new Health limited to max)*
+| 8    | _!mmm_         **do** setattr("Finn", "HP", Health) | *(set HP to updated Health)*
+| 9    | _!mmm_     **else**
+| 10   | _!mmm_         **chat:** Feeling bad and no healing potion. Woe is me!
+| 11   | _!mmm_     **end if**
+| 12   | _!mmm_ **end script**
 
 In the example above, the "Heal if necessary?" question will pop up even before the entire script runs – actually, just when the **else if** line is received by the Roll20 chat engine and before it's sent to the MMM scripting engine. So this question will be asked even if Finn is sufficiently healthy to not even want healing. Unfortunately, the only way to make roll queries conditional is with conventional (and limited) Roll20 macro magic.
 
@@ -231,7 +232,7 @@ Operators follow the usual precedence rules, so `1+2*3` means `1+(2*3)` – you 
 | `AmmoCount` | References the value of the variable named `AmmoCount`
 | `$[[0]]`    | References a recent roll or inline roll
 
-The MMM scripting engine keeps track of your recent rolls for you – explicit rolls and inline rolls, both within and outside of script commands – so you can reference them using the `$[[0]]` syntax in script expressions and templates. An explicit roll always sets `$[[0]]` whereas inline rolls set `$[[0]]`, `$[[1]]`, and so on – one for each pair of `[[ ]]` in the message that contained the rolls.
+The MMM scripting engine keeps track of your recent rolls for you – explicit rolls and inline rolls, both within and outside of script commands – so you can reference them using the `$[[0]]` syntax in script expressions and templates. An explicit roll always sets `$[[0]]` whereas inline rolls set `$[[0]]`, `$[[1]]`, and so on – one for each pair of `[[ ]]` in the message that contained the rolls.
 
 You can use attribute calls like `@{Finn|HP}` as well, but keep in mind that they're substituted into the script command *before* the MMM scripting engine even sees it. That's unproblematic if the attribute is a plain number, but if it's a string, you must explicitly surround the attribute call with quotes:
 
@@ -291,6 +292,7 @@ If you want to calculate the square root of something, you can use the power-of 
 | getattrmax(*char*, *attr*)          | Character | getattrmax("Finn", "HP") | Look up maximum value of character attribute *attr* for *char*
 | setattr(*char*, *attr*, *val*)      | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set character attribute *attr* for *char* to *val*, then return *val* – create *attr* if necessary
 | setattrmax(*char*, *attr*, *val*)   | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of character attribute *attr* for *char* to *val* – create *attr* if necessary
+
 
 
 ## Copyright & License
