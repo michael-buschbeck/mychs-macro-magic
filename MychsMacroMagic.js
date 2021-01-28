@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.1.0";
+const MMM_VERSION = "1.2.0";
 
 on("chat:message", function(msg)
 {
@@ -337,6 +337,56 @@ class MychScriptContext
         sendChat("Mych's Macro Magic", "/direct " + exception, null, { noarchive: true });
     }
 
+    $permission(obj)
+    {
+        if (!this.playerid || !obj || typeof(obj.get) != "function")
+        {
+            return "none";
+        }
+
+        if (playerIsGM(this.playerid))
+        {
+            return "control";
+        }
+
+        if ((obj.get("_parentid") || "") == this.playerid)
+        {
+            return "control";
+        }
+
+        if ((obj.get("represents") || "") == this.playerid)
+        {
+            return "control";
+        }
+
+        if ((obj.get("controlledby") || "").split(",").some(id => id == "all" || id == this.playerid))
+        {
+            return "control";
+        }
+
+        if ((obj.get("inplayerjournals") || "").split(",").some(id => id == "all" || id == this.playerid))
+        {
+            return "view";
+        }
+
+        if ((obj.get("_pageid") || "") == Campaign().get("playerpageid") && ["objects", "maps"].includes(obj.get("layer")))
+        {
+            return "view";
+        }
+
+        return "none";
+    }
+
+    $cancontrol(obj)
+    {
+        return ["control"].includes(this.$permission(obj));
+    }
+
+    $canview(obj)
+    {
+        return ["control", "view"].includes(this.$permission(obj));
+    }
+
     $getcharobj(characterNameOrId)
     {
         if (/^-/.test(characterNameOrId))
@@ -355,7 +405,7 @@ class MychScriptContext
     
     $getattrobj(character, attributeName)
     {
-        if (!character || character.get("_type") != "character")
+        if (!character || character.get("_type") != "character" || !this.$cancontrol(character))
         {
             return undefined;
         }
@@ -366,7 +416,7 @@ class MychScriptContext
 
     $createattrobj(character, attributeName)
     {
-        if (!character || character.get("_type") != "character")
+        if (!character || character.get("_type") != "character" || !this.$cancontrol(character))
         {
             return undefined;
         }
@@ -378,12 +428,17 @@ class MychScriptContext
     {
         var character = this.$getcharobj(characterNameOrId);
 
-        if (attributeName == "character_id")
+        if (attributeName == "permission")
+        {
+            return this.$permission(character);
+        }
+
+        if (character && attributeName == "character_id")
         {
             return character.id;
         }
 
-        if (attributeName == "character_name")
+        if (character && attributeName == "character_name")
         {
             return character.get("name");
         }
@@ -394,26 +449,24 @@ class MychScriptContext
 
     getattrmax(characterNameOrId, attributeName)
     {
-        var character = this.$getcharobj(characterNameOrId0);
+        var character = this.$getcharobj(characterNameOrId);
         var attribute = this.$getattrobj(character, attributeName);
 
-        if (!attribute)
-        {
-            return undefined;
-        }
-
-        return attribute.get("max");
+        return attribute ? attribute.get("max") : undefined;
     }
 
     setattr(characterNameOrId, attributeName, attributeValue)
     {
         var character = this.$getcharobj(characterNameOrId);
-        var attribute = this.$getattrobj(character, attributeName);
 
-        if (!attribute)
+        if (!this.$cancontrol(character) || ["permission", "character_id", "character_name"].includes(attributeName))
         {
-            attribute = this.$createattrobj(character, attributeName);
+            return this.getattr(character, attributeName);
         }
+
+        var attribute =
+            this.$getattrobj(character, attributeName) ||
+            this.$createattrobj(character, attributeName);
 
         attribute.set("current", MychExpression.coerceScalar(attributeValue));
 
@@ -422,13 +475,16 @@ class MychScriptContext
 
     setattrmax(characterNameOrId, attributeName, attributeValue)
     {
-        var character = this.$getcharobj(characterNameOrId0);
-        var attribute = this.$getattrobj(character, attributeName);
+        var character = this.$getcharobj(characterNameOrId);
 
-        if (!attribute)
+        if (!this.$cancontrol(character) || ["permission", "character_id", "character_name"].includes(attributeName))
         {
-            attribute = this.$createattrobj(character, attributeName);
+            return this.getattrmax(character, attributeName);
         }
+
+        var attribute =
+            this.$getattrobj(character, attributeName) ||
+            this.$createattrobj(character, attributeName);
 
         attribute.set("max", MychExpression.coerceScalar(attributeValue));
 
