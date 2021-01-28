@@ -232,7 +232,7 @@ Operators follow the usual precedence rules, so `1+2*3` means `1+(2*3)` – you 
 | `AmmoCount` | References the value of the variable named `AmmoCount`
 | `$[[0]]`    | References a recent roll or inline roll
 
-The MMM scripting engine keeps track of your recent rolls for you – explicit rolls and inline rolls, both within and outside of script commands – so you can reference them using the `$[[0]]` syntax in script expressions and templates. An explicit roll always sets `$[[0]]` whereas inline rolls set `$[[0]]`, `$[[1]]`, and so on – one for each pair of `[[ ]]` in the message that contained the rolls.
+The MMM scripting engine keeps track of your recent rolls for you – explicit rolls and inline rolls, both within and outside of script commands – so you can reference them using the `$[[0]]` syntax in script expressions and templates. An explicit roll always sets `$[[0]]` whereas inline rolls set `$[[0]]` and `$[[1]]` and so on, one for each pair of `[[ ]]` in the message that contained the rolls. (The exact details of how they're numbered is subject to Roll20's dice engine, but the gist of it is: from most deeply nested to top-most, and on each nesting level from left to right.)
 
 You can use attribute calls like `@{Finn|HP}` as well, but keep in mind that they're substituted into the script command *before* the MMM scripting engine even sees it. That's unproblematic if the attribute is a plain number, but if it's a string, you must explicitly surround the attribute call with quotes:
 
@@ -240,6 +240,16 @@ You can use attribute calls like `@{Finn|HP}` as well, but keep in mind that the
 | ---- | -------- | -------------
 | 1    | _!mmm_ **set** TargetName = "@{target\|name}" | *(set TargetName variable to name of selected target – use quotes)*
 | 2    | _!mmm_ **set** TargetHealth = @{target\|HP} | *(set TargetHealth variable to current health of selected target – numeric, no quotes required)*
+
+There are also a few special *context variables* that are pre-set for you:
+
+| Variable   | Example  | Description
+| ---------- | -------- | -----------
+| `playerid` |          | Player ID (not character ID!) of the player who sent the command
+| `sender`   | "Finn"   | Player or character name who sent the command – subject to the chat "As" drop-down box
+| `version`  | "1.0.1"  | [Semantic version number](https://semver.org) of the MMM scripting engine
+
+You can *shadow* these special context variables by setting a custom variable with the same name (and your custom variable will then take precedence for the remainder of the script), but you can't truly change them.
 
 
 ### Operators
