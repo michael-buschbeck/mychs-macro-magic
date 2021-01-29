@@ -13,6 +13,14 @@ If that sounds familiar, then **Mych's Macro Magic (MMM)** is here for you. Just
 You're here to yell at dice, not at macros, after all – right?
 
 
+### Contents
+
+- [Scripts](#scripts) – [script commands](mmm-script--mmm-end-script)
+- [Expressions](#expressions) – [literals](#literals), [variables](#variables), [operators](#operators)
+- [What's new?](#versions)
+- [Copyright & License](#copyright--license)
+
+
 ## Scripts
 
 You can write MMM scripts wherever you can write macro code: in the *Macros* tab in the sidebar, in your character sheet's *Abilities* tab, or even directly in the chat box.
@@ -302,6 +310,18 @@ If you want to calculate the square root of something, you can use the power-of 
 | getattrmax(*char*, *attr*)          | Character | getattrmax("Finn", "HP") | Look up maximum value of character attribute *attr* for *char*
 | setattr(*char*, *attr*, *val*)      | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set character attribute *attr* for *char* to *val*, then return *val* – create *attr* if necessary
 | setattrmax(*char*, *attr*, *val*)   | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of character attribute *attr* for *char* to *val* – create *attr* if necessary
+
+
+
+## Versions
+
+| Version | Date       | What's new?
+| ------- | ---------- | -----------
+| 1.2.0   | 2021-01-28 | Perform permission checks on attribute queries
+| 1.1.0   | 2021-01-28 | Support `character_id` and `character_name` pseudo-attributes
+| 1.0.0   | 2021-01-26 | Initial release
+
+For details on patch releases and bugfixes, check the [commit history](https://github.com/michael-buschbeck/mychs-macro-magic/commits/main/MychsMacroMagic.js) on GitHub.
 
 
 
