@@ -318,6 +318,14 @@ If you want to calculate the square root of something, you can use the power-of 
 
 ## Versions
 
+You can check your installed version by running this command from the chat box:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.1.0
+
+If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
+
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
 | 1.2.0   | 2021-01-28 | Perform permission checks on attribute queries
