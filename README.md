@@ -321,7 +321,9 @@ If you want to calculate the square root of something, you can use the power-of 
 
 ### After installing MMM, will my old macros still work or do I have to rewrite everything?
 
-You don't have to rewrite anything – everything that used to work still works even with MMM installed. (I don't think I even *could* make it not-work even if I wanted to. Not that I do.) Installing MMM just opens up new possibilities for you. It doesn't remove any.
+You don't have to rewrite anything – everything that used to work still works even with MMM installed. (I don't think I even *could* make it not-work even if I wanted to. Not that I do.)
+
+Installing MMM just opens up new possibilities for you. It doesn't remove any.
 
 
 ### Do you do bugs? I think I found one.
@@ -350,12 +352,16 @@ They're free and [really easy to make](https://github.com/join?ref_cta=Sign+up&r
 
 ### I have an awesome idea for a new feature!
 
-Brilliant! I really appreciate (and enjoy) your enthusiasm, and I'm eager to hear your idea. Please [open a ticket on GitHub](https://github.com/michael-buschbeck/mychs-macro-magic/issues) (you can add the *Enhancement* label if you like) so we can discuss it and flesh it out.
+Brilliant! I really appreciate (and enjoy) your enthusiasm, and I'm eager to hear your idea.
+
+Please [open a ticket on GitHub](https://github.com/michael-buschbeck/mychs-macro-magic/issues) – you can add the `enhancement` label if you like – so we can discuss it and flesh it out.
 
 
 ### Okay, but I really need that feature. I'm willing to pay you.
 
-I appreciate your willingness to pay me, and I acknowledge what this implies about your request. But I'm already doing software dev as a full-time salaried job (which is fun too, if always driven by business impact and whatnot), so to pay me you'd have to compete with *them*, and that's gonna be expensive.
+I appreciate your willingness to pay me, and I acknowledge what that implies about your request.
+
+But I'm already doing software dev as a full-time salaried job (which is fun too, if always driven by business impact and whatnot), so to pay me you'd have to compete with *them*, and that's gonna be expensive.
 
 In my free time, I exclusively program for my own fun.
 
