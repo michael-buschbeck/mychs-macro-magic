@@ -28,7 +28,7 @@ You can write MMM scripts wherever you can write macro code: in the *Macros* tab
 
 Every MMM script command must start with _!mmm_ – that's how Roll20 knows to send what follows to the MMM scripting engine. The _!mmm_ prefix must be followed by an MMM command (described below).
 
-Scripts can be as short a single command:
+Scripts can be as short as a single command:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
@@ -52,7 +52,7 @@ However, some commands enclose a *block* of other commands – for example, if y
 | 2    | _!mmm_     **chat:** /me is nearly dead! | ***Finn is nearly dead!***
 | 3    | _!mmm_ **end if**
 
-In the previous example, **if** is a block command: Every commands that follow the **if** command down to the **end if** command is a *block* of commands that's only going to be executed if the **if** condition is true. In general, every block command ends with a corresponding **end *block*** command.
+In the previous example, **if** is a block command: All commands that follow the **if** command down to the **end if** command are a *block* of commands that's only going to be executed if the **if** condition is true. In general, every block command ends with a corresponding **end *block*** command.
 
 You may have noticed that the **chat:** command in the example above has been moved to the right (by inserting extra spaces) in relation to the **if** and **end if** commands. That's completely up to you! Extra spaces between the _!mmm_ prefix and the command (and, in general, anywhere else) are ignored. *Indenting* the commands in a block relative to their enclosing block command is a time-honored practice among programmers – it simply makes the script's structure easier to see.
 
