@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.2.0";
+const MMM_VERSION = "1.2.1";
 
 on("chat:message", function(msg)
 {
@@ -1131,7 +1131,7 @@ class MychTemplate
 
     evaluate(variables, context)
     {
-        var contextKeys = Object.keys(context);
+        var contextKeys = Object.keys(context).filter(key => !/^\w+$/.test(key));
         var contextKeysRegExp;
 
         if (contextKeys.length > 0)
