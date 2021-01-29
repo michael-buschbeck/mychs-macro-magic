@@ -17,6 +17,7 @@ You're here to yell at dice, not at macros, after all – right?
 
 - [Scripts](#scripts) – [script commands](#mmm-script--end-script)
 - [Expressions](#expressions) – [literals](#literals), [variables](#variables), [operators](#operators), [functions](#functions)
+- [Frequently Asked Questions](#frequently-asked-questions)
 - [What's new?](#versions)
 - [Copyright & License](#copyright--license)
 
@@ -313,6 +314,64 @@ If you want to calculate the square root of something, you can use the power-of 
 | getattrmax(*char*, *attr*)          | Character | getattrmax("Finn", "HP") | Look up maximum value of character attribute *attr* for *char*
 | setattr(*char*, *attr*, *val*)      | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set character attribute *attr* for *char* to *val*, then return *val* – create *attr* if necessary
 | setattrmax(*char*, *attr*, *val*)   | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of character attribute *attr* for *char* to *val* – create *attr* if necessary
+
+
+
+## Frequently Asked Questions
+
+### After installing MMM, will my old macros still work or do I have to rewrite everything?
+
+You don't have to rewrite anything – everything that used to work still works even with MMM installed. (I don't think I even *could* make it not-work even if I wanted to. Not that I do.)
+
+Installing MMM just opens up new possibilities for you. It doesn't remove any.
+
+
+### Do you do bugs? I think I found one.
+
+Never. But the cat might. I'll have to revoke his commit rights one of these days. (I don't have a cat.)
+
+
+### Okay, so, I think I found a bug *the cat made*. How do I report it?
+
+Please [open a ticket on GitHub](https://github.com/michael-buschbeck/mychs-macro-magic/issues). I'll see to it that it gets the cat's attention, stat.
+
+Maybe look around before you open a new issue – perhaps someone else has encountered the same bug, and perhaps there's already discussion and workarounds (or even a fix!) available.
+
+
+### But I already told you in chat/person/Discord!
+
+That's great! Love the human touch. Please [open a ticket on GitHub](https://github.com/michael-buschbeck/mychs-macro-magic/issues).
+
+
+### But I don't have a GitHub account!
+
+They're free and [really easy to make](https://github.com/join?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F%3Cuser-name%3E%2F%3Crepo-name%3E%2Fissues%2Findex&source=header-repo&source_repo=michael-buschbeck%2Fmychs-macro-magic)!
+
+(That's assuming you're not a robot. If you are, you might have a slight issue here. I can refer you to the cat for pointers, but note that he can be a bit of an ass sometimes.)
+
+
+### I have an awesome idea for a new feature!
+
+Brilliant! I really appreciate (and enjoy) your enthusiasm, and I'm eager to hear your idea.
+
+Please [open a ticket on GitHub](https://github.com/michael-buschbeck/mychs-macro-magic/issues) – you can add the `enhancement` label if you like – so we can discuss it and flesh it out.
+
+
+### Okay, but I really need that feature. I'm willing to pay you.
+
+I appreciate your willingness to pay me, and I acknowledge what that implies about your request.
+
+But I'm already doing software dev as a full-time salaried job (which is fun too, if always driven by business impact and whatnot), so to pay me you'd have to compete with *them*, and that's gonna be expensive.
+
+In my free time, I exclusively program for my own fun.
+
+Luckily for you, I'm completely tolerant of and open to *bribes*. Potentially effective bribes include:
+
+- Write something substantial and favorable about MMM in your blog and send me a link. I'm a sucker for positive attention.
+- Contribute to MMM in other, non-programming ways – e.g. by writing docs, translating docs, writing examples, or answering community questions.
+- Send me a diversely filled crate of *interesting* craft beer. If nothing else it'll put me into a mellow mood regarding your request.
+
+That's not an exhaustive list. I love to see how the software I write affects other humans positively, so... just be creative. I'm sure we can figure something out, subject to disposable free time on my part.
 
 
 
