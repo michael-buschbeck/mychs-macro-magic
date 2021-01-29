@@ -182,11 +182,14 @@ Evaluates an expression and assigns its results to a variable. If the variable d
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **set** CurCount = getattr(sender, "AmmoCount") | *(stores AmmoCount attribute value in CurCount variable)*
-| 2    | _!mmm_ **set** MaxCount = getattrmax(sender, "AmmoCount") | *(stores AmmoCount attribute max value in MaxCount variable)*
-| 3    | _!mmm_ **set** FindProb = ?{Probability?\|100} / 100 | *(calculates FindProb variable from roll query result)*
-| 4    | _!mmm_ **set** FindCount = (MaxCount - CurCount) * FindProb | *(calculates and assigns FindCount variable)*
-| 5    | _!mmm_ **set** CurCount = CurCount + FindCount | *(updates CurCount variable)*
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set** CurCount = getattr(sender, "AmmoCount") | *(stores AmmoCount attribute value in CurCount variable)*
+| 3    | _!mmm_     **set** MaxCount = getattrmax(sender, "AmmoCount") | *(stores AmmoCount attribute max value in MaxCount variable)*
+| 4    | _!mmm_     **set** FindProb = ?{Probability?\|100} / 100 | *(calculates FindProb variable from roll query result)*
+| 5    | _!mmm_     **set** FindCount = round(FindProb * (MaxCount - CurCount)) | *(calculates and assigns FindCount variable)*
+| 6    | _!mmm_     **set** CurCount = CurCount + FindCount | *(updates CurCount variable)*
+| 7    | _!mmm_     **chat:** Found ${FindCount} ammo, have ${CurCount} now | ***Finn:*** Found 7 ammo, have 18 now
+| 8    | _!mmm_ **end script**
 
 
 ### _!mmm_ **do** *expression*
@@ -246,8 +249,8 @@ You can use attribute calls like `@{Finn|HP}` as well, but keep in mind that the
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **set** TargetName = "@{target\|name}" | *(set TargetName variable to name of selected target – use quotes)*
-| 2    | _!mmm_ **set** TargetHealth = @{target\|HP} | *(set TargetHealth variable to current health of selected target – numeric, no quotes required)*
+| 1    | _!mmm_ **set** TargetName = "@{target\|x\|token_name}" | *(set TargetName variable to name of selected target – use quotes)*
+| 2    | _!mmm_ **set** TargetHealth = @{target\|x\|HP} | *(set TargetHealth variable to current health of selected target – numeric, no quotes required)*
 
 There are also a few special *context variables* that are pre-set for you:
 
