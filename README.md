@@ -15,7 +15,7 @@ You're here to yell at dice, not at macros, after all – right?
 
 ### Contents
 
-- [Scripts](#scripts) – [script commands](mmm-script--mmm-end-script)
+- [Scripts](#scripts) – [script commands](#mmm-script--mmm-end-script)
 - [Expressions](#expressions) – [literals](#literals), [variables](#variables), [operators](#operators), [functions](#functions)
 - [What's new?](#versions)
 - [Copyright & License](#copyright--license)
