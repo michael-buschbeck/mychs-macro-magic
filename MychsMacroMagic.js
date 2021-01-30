@@ -521,7 +521,8 @@ class MychScriptContext
 
             case "character":
             {
-                var tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: Campaign().get("playerpageid") });
+                var playerPageId = Campaign().get("playerpageid");
+                var tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: playerPageId });
                 return (tokens ? tokens[0] : undefined);
             }
         }
