@@ -373,8 +373,9 @@ class MychScriptContext
 
         if (objType == "attribute")
         {
-            var characterId = obj.get("characterid");
-            return this.$canControl(getObj("character", characterId));
+            var ownerCharacterId = obj.get("characterid");
+            var ownerCharacter = getObj("character", ownerCharacterId);
+            return this.$canControl(ownerCharacter);
         }
 
         if (objType == "hand" && obj.get("parentid") == this.playerid)
@@ -383,11 +384,12 @@ class MychScriptContext
         }
 
         // objType == "graphic"
-        var representsPlayerId = obj.get("represents");
+        var representsCharacterId = obj.get("represents");
 
-        if (representsPlayerId && representsPlayerId == this.playerid)
+        if (representsCharacterId)
         {
-            return true;
+            var representsCharacter = getObj("character", representsCharacterId);
+            return this.$canControl(representsCharacter);
         }
 
         // objType == "path", "text", "graphic", "character"
