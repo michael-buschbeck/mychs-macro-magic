@@ -601,8 +601,8 @@ class MychScriptContext
     {
         var denied =
         {
-            getScalar: () => undefined,
-            getMarkup: () => "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>",
+            toScalar: () => undefined,
+            toMarkup: () => "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>",
         };
 
         return denied;
