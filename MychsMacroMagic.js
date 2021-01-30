@@ -703,7 +703,7 @@ class MychScriptContext
             break;
         }
         
-        if (!lookupObj || !lookupKey)
+        if (!lookupObj)
         {
             return undefined;
         }
@@ -711,6 +711,11 @@ class MychScriptContext
         if (!this.$canViewAttribute(lookupObj, attributeName))
         {
             return this.$getDenied();
+        }
+
+        if (!lookupKey)
+        {
+            return undefined;
         }
 
         return lookupObj.get(lookupKey);
