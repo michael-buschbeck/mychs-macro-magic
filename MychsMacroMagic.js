@@ -314,7 +314,7 @@ class MychScriptContext
 
     chat(message)
     {
-        var character = this.$getcharobj(this.sender);
+        var [character, token] = this.$getCharacterAndTokenObjs(this.sender);
 
         if (character)
         {
