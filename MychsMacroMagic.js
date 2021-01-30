@@ -627,6 +627,7 @@ class MychScriptContext
 
         var lookupObj = undefined;
         var lookupKey = undefined;
+        var lookupMod = val => val;
 
         switch (attributeName)
         {
@@ -686,6 +687,7 @@ class MychScriptContext
                 {
                     lookupObj = getObj("page", Campaign().get("playerpageid"));
                     lookupKey = (attributeName == "left" ? "width" : "height");
+                    lookupMod = val => 70 * val;
                 }
                 else
                 {
@@ -721,7 +723,7 @@ class MychScriptContext
             return undefined;
         }
 
-        return lookupObj.get(lookupKey);
+        return lookupMod(lookupObj.get(lookupKey));
     }
 
     $setAttribute(nameOrId, attributeName, attributeValue, max = false)
@@ -789,9 +791,7 @@ class MychScriptContext
             {
                 if (max)
                 {
-                    updateObj = getObj("page", Campaign().get("playerpageid"));
-                    updateKey = (attributeName == "left" ? "width" : "height");
-                    updateVal = MychExpression.coerceNumber(attributeValue);
+                    // changing page dimensions through token intentionally unsupported
                 }
                 else
                 {
@@ -829,7 +829,7 @@ class MychScriptContext
 
         updateObj.set(updateKey, updateVal);
 
-        return updateObj.get(updateKey);
+        return this.$getAttribute(nameOrId, attributeName, max);
     }
 }
 
