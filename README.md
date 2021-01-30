@@ -387,6 +387,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.3.0   | 2021-01-30 | Unify character and token attribute access
 | 1.2.0   | 2021-01-28 | Perform permission checks on attribute queries
 | 1.1.0   | 2021-01-28 | Support `character_id` and `character_name` pseudo-attributes
 | 1.0.0   | 2021-01-26 | Initial release
