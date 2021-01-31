@@ -279,12 +279,12 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 
 | Attribute         | Example              | Value? | Max?  | Description
 | ----------------- | -------------------- | ------ | ----- | -----------
-| `permission`      | `"control"`          | read   | —     | `"none"`, `"view"`, or `"control"` – see below
-| `name`            | `"Finn"`             | read   | —     | Character or token name
-| `token_id`        |                      | read   | —     | Token ID
-| `token_name`      | `"Finn's Spiderbro"` | read   | —     | Token name – provided for Roll20 parity
-| `character_id`    |                      | read   | —     | Character ID
-| `character_name`  | `"Finn"`             | read   | —     | Character name – provided for Roll20 parity
+| `permission`      | `"control"`          | read   |       | `"none"`, `"view"`, or `"control"` – see below
+| `name`            | `"Finn"`             | read   |       | Character or token name
+| `token_id`        |                      | read   |       | Token ID
+| `token_name`      | `"Finn's Spiderbro"` | read   |       | Token name – provided for Roll20 parity
+| `character_id`    |                      | read   |       | Character ID
+| `character_name`  | `"Finn"`             | read   |       | Character name – provided for Roll20 parity
 | `bar1`            | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
 | `bar2`            | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
 | `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
