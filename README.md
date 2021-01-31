@@ -332,27 +332,47 @@ If you want to calculate the square root of something, you can use the power-of 
 
 ### Functions
 
-| Syntax                                | Category  | Example | Description
-| ------------------------------------- | --------- | ------- | -----------
-| floor(*a*)                            | Math      | floor(1.7) = 1 | Return the greatest integer that's less than or equal to *a*
-| round(*a*)                            | Math      | round(1.5) = 2 | Round *a* to the nearest integer
-| ceil(*a*)                             | Math      | ceil(1.3) = 2  | Return the smallest integer that's greater than or equal to *a*
-| abs(*a*)                              | Math      | abs(-5) = 5    | Return the absolute value of *a*
-| min(...)                              | Math      | min(3,1,2) = 1 | Return the numerically smallest value – any number of arguments allowed
-| max(...)                              | Math      | max(3,1,2) = 3 | Return the numerically greatest value – any number of arguments allowed
-| len(*str*)                            | String    | len("foo") = 3 | Return the number of character in string *str*
-| literal(*str*)                        | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
-| highlight(*str*)                      | String    |  | When output to chat, highlight string *str* with a pretty box
-| highlight(*str*, *type*)              | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
-| highlight(*str*, *type*, *tooltip*)   | String    |  | ...with a tooltip popping up on mouse hover
-| iscritical(*roll*)                    | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
-| isfumble(*roll*)                      | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
-| chat(*str*)                           | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
-| getcharid(*name\|id*)                 | Character | getcharid("Finn") | Return the character ID for *name\|id*
-| getattr(*name\|id*, *attr*)           | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
-| getattrmax(*name\|id*, *attr*)        | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
-| setattr(*name\|id*, *attr*, *val*)    | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
-| setattrmax(*name\|id*, *attr*, *val*) | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+| Syntax                                             | Category  | Example | Description
+| -------------------------------------------------- | --------- | ------- | -----------
+| floor(*a*)                                         | Math      | floor(1.7) = 1 | Return the greatest integer that's less than or equal to *a*
+| round(*a*)                                         | Math      | round(1.5) = 2 | Round *a* to the nearest integer
+| ceil(*a*)                                          | Math      | ceil(1.3) = 2  | Return the smallest integer that's greater than or equal to *a*
+| abs(*a*)                                           | Math      | abs(-5) = 5    | Return the absolute value of *a*
+| min(...)                                           | Math      | min(3,1,2) = 1 | Return the numerically smallest value – any number of arguments allowed
+| max(...)                                           | Math      | max(3,1,2) = 3 | Return the numerically greatest value – any number of arguments allowed
+| len(*str*)                                         | String    | len("foo") = 3 | Return the number of character in string *str*
+| literal(*str*)                                     | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
+| highlight(*str*)                                   | String    |  | When output to chat, highlight string *str* with a pretty box
+| highlight(*str*, *type*)                           | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
+| highlight(*str*, *type*, *tooltip*)                | String    |  | ...with a tooltip popping up on mouse hover
+| iscritical(*roll*)                                 | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
+| isfumble(*roll*)                                   | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
+| chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
+| findattr(*name\|id*)                               | Character | findattr("Finn") | List available character sheet table names – see below
+| findattr(*name\|id*, *table*)                      | Character | findattr("Finn", "attack") | List available columns in a character sheet table – see below
+| findattr(*name\|id*, *table*, *col*, *val*, *col*) | Character | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | Find attribute name in a character sheet table – see below
+| getcharid(*name\|id*)                              | Character | getcharid("Finn") | Return the character ID for *name\|id*
+| getattr(*name\|id*, *attr*)                        | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
+| getattrmax(*name\|id*, *attr*)                     | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
+| setattr(*name\|id*, *attr*, *val*)                 | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
+| setattrmax(*name\|id*, *attr*, *val*)              | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+
+The `findattr()` function helps you determine the attribute name to query (or update) anything that's in an extensible table in a character sheet.
+
+These attribute names always start with `repeating_`... followed by a table name (e.g. `attack`), followed by a soup of random characters (the row ID), and finally the name of column you're interested in (e.g. `damage`). Official [Roll20 guidance](https://help.roll20.net/hc/en-us/articles/360037256794-Macros#Macros-ReferencingRepeatingAttributes) says to break out your HTML debugger and dive into the character sheet's HTML source to figure out these IDs – but that's a hair-on-fire–tier harebrained way to have to go about this.
+
+With `findattr()` you can do all this without leaving the safe comfort of your chat box:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **chat:** Tables: ${findattr(sender)} | ***Finn:*** Tables: attack, defense, armor
+| 2    | _!mmm_ **chat:** Columns: ${findattr(sender, "attack")} | ***Finn:*** Columns: weapon, skill, damage
+| 3    | _!mmm_ **chat:** Attribute: ${findattr(sender, "attack", "weapon", "Slingshot", "damage")} | ***Finn:*** Attribute: repeating_attack_-MSxAHDgxtzAHdDAIopE_damage
+| 4    | _!mmm_ **chat:** Value: ${getattr(sender, findattr(sender, "attack", "weapon", "Slingshot", "damage"))} | ***Finn:*** Value: 1d6
+
+What's happening in the last two lines above is that you're *selecting* one of the rows based on a condition: in this case, you want to get to the `damage` attribute of the `attack` table row that has the value `Slingshot` in its `weapon` column – so, the damage dealt by your slingshot. You can include several pairs of *column*, *value* to narrow down your selection if necessary.
+
+Unlike most other things in MMM, table names, column names, and column values are case-insensitive in the `findattr()` function.
 
 
 

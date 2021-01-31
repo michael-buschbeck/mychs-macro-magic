@@ -343,6 +343,129 @@ class MychScriptContext
         return (character ? character.id : undefined);
     }
 
+    findattr(nameOrId, table, selection)
+    {
+        const firstSelectionArgIndex = 2;
+
+        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+
+        if (!character || !this.$canControl(character))
+        {
+            return this.$getDenied();
+        }
+
+        if (arguments.length == 1)
+        {
+            var tableNames = {};
+
+            var attributeNameRegExp = /^repeating_(?<tableName>[^_]+)_/;
+            var attributes = findObjs({ type: "attribute", characterid: character.id });
+
+            for (var attribute of attributes)
+            {
+                var attributeName = attribute.get("name");
+                var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+    
+                if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
+                {
+                    continue;
+                }
+
+                var tableName = attributeNameMatch.groups.tableName;
+
+                tableNames[tableName.toLowerCase()] = tableName;
+            }
+
+            return Object.values(tableNames).join(", ");
+        }
+
+        var tableRegExpSource = MychExpression.coerceString(table).replace(/(\W)/g, "\\$1");
+
+        var attributeNameRegExpSource = /^repeating_/.source + tableRegExpSource + /_(?<rowId>[-A-Za-z0-9]+)_(?<colName>\S+)$/.source;
+        var attributeNameRegExp = new RegExp(attributeNameRegExpSource, "i");
+
+        if (arguments.length == 2)
+        {
+            var colNames = {};
+
+            var attributes = findObjs({ type: "attribute", characterid: character.id });
+
+            for (var attribute of attributes)
+            {
+                var attributeName = attribute.get("name");
+                var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+    
+                if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
+                {
+                    continue;
+                }
+                
+                var colName = attributeNameMatch.groups.colName;
+
+                colNames[colName.toLowerCase()] = colName;
+            }
+
+            return Object.values(colNames).join(", ");
+        }
+
+        var conditions = {};
+        var conditionCount = 0;
+
+        for (var argIndex = firstSelectionArgIndex; argIndex < arguments.length - 1; argIndex += 2)
+        {
+            var colName = MychExpression.coerceString(arguments[argIndex]);
+            var colValue = MychExpression.coerceString(arguments[argIndex + 1]);
+
+            conditions[colName.toLowerCase()] = colValue.toLowerCase();
+            conditionCount += 1;
+        }
+
+        var rowInfos = {}
+
+        var lookupColName = ((arguments.length - firstSelectionArgIndex) % 2 == 0
+            ? arguments[arguments.length - 2]
+            : arguments[arguments.length - 1]); 
+
+        var attributes = findObjs({ type: "attribute", characterid: character.id });
+
+        for (var attribute of attributes)
+        {
+            var attributeName = attribute.get("name");
+            var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+
+            if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
+            {
+                continue;
+            }
+
+            var rowId = attributeNameMatch.groups.rowId;
+            var colName = attributeNameMatch.groups.colName;
+            var colValue = MychExpression.coerceString(attribute.get("current"));
+
+            rowInfos[rowId] = rowInfos[rowId] || { conditionCount: 0, lookupAttributeName: undefined };
+
+            if (conditions[colName.toLowerCase()] == colValue.toLowerCase())
+            {
+                rowInfos[rowId].conditionCount += 1;
+            }
+
+            if (colName.toLowerCase() == lookupColName.toLowerCase())
+            {
+                rowInfos[rowId].lookupAttributeName = attributeName;
+            }
+        }
+
+        for (var [rowId, rowInfo] of Object.entries(rowInfos))
+        {
+            if (rowInfo.lookupAttributeName && rowInfo.conditionCount == conditionCount)
+            {
+                return rowInfo.lookupAttributeName;
+            }
+        }
+
+        return undefined;
+    }
+
     getattr(nameOrId, attributeName)
     {
         return this.$getAttribute(nameOrId, attributeName, false);
