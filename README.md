@@ -348,7 +348,7 @@ If you want to calculate the square root of something, you can use the power-of 
 | iscritical(*roll*)                  | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
 | isfumble(*roll*)                    | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
 | chat(*str*)                         | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
-| getcharid(*char*)                   | Character | getcharid("Finn") | Return the character ID for *char* – works with both character IDs and full character names
+| getcharid(*name\|id*)                   | Character | getcharid("Finn") | Return the character ID for *name\|id*
 | getattr(*name\|id*, *attr*)             | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
 | getattrmax(*name\|id*, *attr*)          | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
 | setattr(*name\|id*, *attr*, *val*)      | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary

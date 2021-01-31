@@ -337,6 +337,12 @@ class MychScriptContext
         sendChat("Mych's Macro Magic", "/direct " + exception, null, { noarchive: true });
     }
 
+    getcharid(nameOrId)
+    {
+        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+        return (character ? character.id : undefined);
+    }
+
     getattr(nameOrId, attributeName)
     {
         return this.$getAttribute(nameOrId, attributeName, false);
