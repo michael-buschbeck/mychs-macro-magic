@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.2.1";
+const MMM_VERSION = "1.3.0";
 
 on("chat:message", function(msg)
 {
@@ -314,7 +314,7 @@ class MychScriptContext
 
     chat(message)
     {
-        var character = this.$getcharobj(this.sender);
+        var [character, token] = this.$getCharacterAndTokenObjs(this.sender);
 
         if (character)
         {
@@ -337,158 +337,628 @@ class MychScriptContext
         sendChat("Mych's Macro Magic", "/direct " + exception, null, { noarchive: true });
     }
 
-    $permission(obj)
+    getcharid(nameOrId)
     {
-        if (!this.playerid || !obj || typeof(obj.get) != "function")
+        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+        return (character ? character.id : undefined);
+    }
+
+    findattr(nameOrId, table, selection)
+    {
+        const firstSelectionArgIndex = 2;
+
+        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+
+        if (!character || !this.$canControl(character))
         {
-            return "none";
+            return this.$getDenied();
+        }
+
+        if (arguments.length == 1)
+        {
+            var tableNames = {};
+
+            var attributeNameRegExp = /^repeating_(?<tableName>[^_]+)_/;
+            var attributes = findObjs({ type: "attribute", characterid: character.id });
+
+            for (var attribute of attributes)
+            {
+                var attributeName = attribute.get("name");
+                var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+    
+                if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
+                {
+                    continue;
+                }
+
+                var tableName = attributeNameMatch.groups.tableName;
+
+                tableNames[tableName.toLowerCase()] = tableName;
+            }
+
+            return Object.values(tableNames).join(", ");
+        }
+
+        var tableRegExpSource = MychExpression.coerceString(table).replace(/(\W)/g, "\\$1");
+
+        var attributeNameRegExpSource = /^repeating_/.source + tableRegExpSource + /_(?<rowId>[-A-Za-z0-9]+)_(?<colName>\S+)$/.source;
+        var attributeNameRegExp = new RegExp(attributeNameRegExpSource, "i");
+
+        if (arguments.length == 2)
+        {
+            var colNames = {};
+
+            var attributes = findObjs({ type: "attribute", characterid: character.id });
+
+            for (var attribute of attributes)
+            {
+                var attributeName = attribute.get("name");
+                var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+    
+                if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
+                {
+                    continue;
+                }
+                
+                var colName = attributeNameMatch.groups.colName;
+
+                colNames[colName.toLowerCase()] = colName;
+            }
+
+            return Object.values(colNames).join(", ");
+        }
+
+        var conditions = {};
+        var conditionCount = 0;
+
+        for (var argIndex = firstSelectionArgIndex; argIndex < arguments.length - 1; argIndex += 2)
+        {
+            var colName = MychExpression.coerceString(arguments[argIndex]);
+            var colValue = MychExpression.coerceString(arguments[argIndex + 1]);
+
+            conditions[colName.toLowerCase()] = colValue.toLowerCase();
+            conditionCount += 1;
+        }
+
+        var rowInfos = {}
+
+        var lookupColName = ((arguments.length - firstSelectionArgIndex) % 2 == 0
+            ? arguments[arguments.length - 2]
+            : arguments[arguments.length - 1]); 
+
+        var attributes = findObjs({ type: "attribute", characterid: character.id });
+
+        for (var attribute of attributes)
+        {
+            var attributeName = attribute.get("name");
+            var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+
+            if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
+            {
+                continue;
+            }
+
+            var rowId = attributeNameMatch.groups.rowId;
+            var colName = attributeNameMatch.groups.colName;
+            var colValue = MychExpression.coerceString(attribute.get("current"));
+
+            rowInfos[rowId] = rowInfos[rowId] || { conditionCount: 0, lookupAttributeName: undefined };
+
+            if (conditions[colName.toLowerCase()] == colValue.toLowerCase())
+            {
+                rowInfos[rowId].conditionCount += 1;
+            }
+
+            if (colName.toLowerCase() == lookupColName.toLowerCase())
+            {
+                rowInfos[rowId].lookupAttributeName = attributeName;
+            }
+        }
+
+        for (var [rowId, rowInfo] of Object.entries(rowInfos))
+        {
+            if (rowInfo.lookupAttributeName && rowInfo.conditionCount == conditionCount)
+            {
+                return rowInfo.lookupAttributeName;
+            }
+        }
+
+        return undefined;
+    }
+
+    getattr(nameOrId, attributeName)
+    {
+        return this.$getAttribute(nameOrId, attributeName, false);
+    }
+
+    getattrmax(nameOrId, attributeName)
+    {
+        return this.$getAttribute(nameOrId, attributeName, true);
+    }
+
+    setattr(nameOrId, attributeName, attributeValue)
+    {
+        return this.$setAttribute(nameOrId, attributeName, attributeValue, false);
+    }
+
+    setattrmax(nameOrId, attributeName, attributeValue)
+    {
+        return this.$setAttribute(nameOrId, attributeName, attributeValue, true);
+    }
+
+    $canControl(obj)
+    {
+        if (!this.playerid || !obj || !obj.get)
+        {
+            return undefined;
         }
 
         if (playerIsGM(this.playerid))
         {
-            return "control";
+            return true;
         }
 
-        if ((obj.get("_parentid") || "") == this.playerid)
+        var objType = obj.get("type");
+
+        if (objType == "attribute")
         {
-            return "control";
+            var ownerCharacterId = obj.get("characterid");
+            var ownerCharacter = getObj("character", ownerCharacterId);
+            return this.$canControl(ownerCharacter);
         }
 
-        if ((obj.get("represents") || "") == this.playerid)
+        if (objType == "hand" && obj.get("parentid") == this.playerid)
         {
-            return "control";
+            return true;
         }
 
-        if ((obj.get("controlledby") || "").split(",").some(id => id == "all" || id == this.playerid))
+        // objType == "graphic"
+        var representsCharacterId = obj.get("represents");
+
+        if (representsCharacterId)
         {
-            return "control";
+            var representsCharacter = getObj("character", representsCharacterId);
+            return this.$canControl(representsCharacter);
         }
 
-        if ((obj.get("inplayerjournals") || "").split(",").some(id => id == "all" || id == this.playerid))
+        // objType == "path", "text", "graphic", "character"
+        var controllerPlayerIds = obj.get("controlledby");
+
+        if (controllerPlayerIds && controllerPlayerIds.split(",").some(id => id == "all" || id == this.playerid))
         {
-            return "view";
+            return true;
         }
 
-        if ((obj.get("_pageid") || "") == Campaign().get("playerpageid") && ["objects", "maps"].includes(obj.get("layer")))
-        {
-            return "view";
-        }
-
-        return "none";
+        return false;
     }
 
-    $cancontrol(obj)
+    $canControlAttribute(obj, attributeName)
     {
-        return ["control"].includes(this.$permission(obj));
+        return this.$canControl(obj);
     }
 
-    $canview(obj)
+    $canView(obj)
     {
-        return ["control", "view"].includes(this.$permission(obj));
-    }
-
-    $getcharobj(characterNameOrId)
-    {
-        if (/^-/.test(characterNameOrId))
+        if (!this.playerid || !obj || !obj.get)
         {
-            var character = getObj("character", characterNameOrId);
+            return false;
+        }
 
-            if (character)
+        if (this.$canControl(obj))
+        {
+            return true;
+        }
+
+        var objType = obj.get("type");
+
+        if (objType == "attribute")
+        {
+            var characterId = obj.get("characterid");
+            return this.$canView(getObj("character", characterId));
+        }
+
+        var playerPageId = Campaign().get("playerpageid");
+
+        if (objType == "page" && obj.id == playerPageId)
+        {
+            return true;
+        }
+
+        // objType == "character", "handout"
+        var journalPlayerIds = obj.get("inplayerjournals");
+
+        if (journalPlayerIds && journalPlayerIds.split(",").some(id => id == "all" || id == this.playerid))
+        {
+            return true;
+        }
+
+        // objType == "text", "path", "graphic"
+        var drawingPageId = obj.get("pageid");
+
+        if (drawingPageId && drawingPageId == playerPageId)
+        {
+            var drawingLayer = obj.get("layer");
+            return (drawingLayer == "objects" || drawingLayer == "maps");
+        }
+
+        return false;
+    }
+
+    $canViewAttribute(obj, attributeName)
+    {
+        if (attributeName == "permission")
+        {
+            return true;
+        }
+
+        if (this.$canControlAttribute(obj, attributeName))
+        {
+            return true;
+        }
+
+        if (this.$canView(obj))
+        {
+            switch (attributeName)
             {
+                case "id":
+                case "character_id":
+                case "token_id":
+                {
+                    return true;
+                }
+
+                case "name":
+                case "character_name":
+                case "token_name":
+                {
+                    var token = this.$getCorrespondingTokenObj(obj);
+                    return (token && token.get("showplayers_name"));
+                }
+
+                case "bar1":
+                case "bar2":
+                case "bar3":
+                {
+                    var token = this.$getCorrespondingTokenObj(obj);
+                    return (token && token.get("showplayers_" + attributeName));
+                }
+
+                case "left":
+                case "top":
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    $getCorrespondingTokenObj(characterOrToken)
+    {
+        if (!characterOrToken || !characterOrToken.get)
+        {
+            return undefined;
+        }
+
+        switch (characterOrToken.get("type"))
+        {
+            case "graphic":
+            {
+                return characterOrToken;
+            }
+
+            case "character":
+            {
+                var playerPageId = Campaign().get("playerpageid");
+                var tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: playerPageId });
+                return (tokens ? tokens[0] : undefined);
+            }
+        }
+
+        return undefined;
+    }    
+
+    $getCorrespondingCharacterObj(characterOrToken)
+    {
+        if (!characterOrToken || !characterOrToken.get)
+        {
+            return undefined;
+        }
+
+        switch (characterOrToken.get("type"))
+        {
+            case "character":
+            {
+                return characterOrToken;
+            }
+
+            case "graphic":
+            {
+                var character = getObj("character", characterOrToken.get("represents"));
                 return character;
             }
         }
 
-        var characters = findObjs({ _type: "character", name: characterNameOrId });
-        return characters[0];
-    }
-    
-    $getattrobj(character, attributeName)
+        return undefined;
+    }    
+
+    $getCharacterAndTokenObjs(nameOrId)
     {
-        if (!character || character.get("_type") != "character" || !this.$cancontrol(character))
+        var characterOrToken =
+            getObj("character", nameOrId) ||
+            getObj("graphic", nameOrId);
+
+        if (!this.$canView(characterOrToken))
+        {
+            characterOrToken = undefined;
+        }
+
+        if (!characterOrToken)
+        {
+            characterOrToken =
+                findObjs({ type: "character", name: nameOrId }).filter(obj => this.$canViewAttribute(obj, "name"))[0] ||
+                findObjs({ type: "graphic", name: nameOrId }).filter(obj => this.$canViewAttribute(obj, "name"))[0];
+        }
+
+        if (!characterOrToken)
+        {
+            return [undefined, undefined];
+        }
+
+        var character = undefined;
+        var token = undefined;
+
+        switch (characterOrToken.get("type"))
+        {
+            case "character":
+            {
+                character = characterOrToken;
+                token = this.$getCorrespondingTokenObj(characterOrToken);
+            }
+            break;
+
+            case "graphic":
+            {
+                character = this.$getCorrespondingCharacterObj(characterOrToken);
+                token = characterOrToken;
+            }
+            break;
+        }
+
+        return [character, token];
+    }
+
+    $getDenied()
+    {
+        var denied =
+        {
+            toScalar: () => undefined,
+            toMarkup: () => "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>",
+        };
+
+        return denied;
+    }
+
+    $getAttribute(nameOrId, attributeName, max = false)
+    {
+        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+
+        if (!character && !token)
+        {
+            if (attributeName == "permission")
+            {
+                return "none";
+            }
+
+            return this.$getDenied();
+        }
+
+        var lookupObj = undefined;
+        var lookupKey = undefined;
+        var lookupMod = val => val;
+
+        switch (attributeName)
+        {
+            case "permission":
+            {
+                return (this.$canControl(character || token) ? "control" : "view");
+            }
+
+            case "name":
+            {
+                lookupObj = character || token;
+                lookupKey = (max ? undefined : "name");
+            }
+            break;
+                
+            case "character_name":
+            {
+                lookupObj = character;
+                lookupKey = (max ? undefined : "name");
+            }
+            break;
+            
+            case "token_name":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "name");
+            }
+            break;
+
+            case "character_id":
+            {
+                lookupObj = character;
+                lookupKey = (max ? undefined : "id");
+            }
+            break;
+
+            case "token_id":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "id");
+            }
+            break;
+        
+            case "bar1":
+            case "bar2":
+            case "bar3":
+            {
+                lookupObj = token;
+                lookupKey = attributeName + (max ? "_max" : "_value");
+            }
+            break;
+
+            case "left":
+            case "top":
+            {
+                if (max)
+                {
+                    lookupObj = getObj("page", Campaign().get("playerpageid"));
+                    lookupKey = (attributeName == "left" ? "width" : "height");
+                    lookupMod = val => 70 * val;
+                }
+                else
+                {
+                    lookupObj = token;
+                    lookupKey = attributeName;
+                }
+            }
+            break;
+
+            default:
+            {
+                if (character)
+                {
+                    lookupObj = findObjs({ type: "attribute", characterid: character.id, name: attributeName })[0];
+                    lookupKey = (max ? "max" : "current");
+                }
+            }
+            break;
+        }
+        
+        if (!lookupObj)
         {
             return undefined;
         }
 
-        var attributes = findObjs({ _type: "attribute", _characterid: character.id, name: attributeName });
-        return attributes[0];
-    }
+        if (!this.$canViewAttribute(lookupObj, attributeName))
+        {
+            return this.$getDenied();
+        }
 
-    $createattrobj(character, attributeName)
-    {
-        if (!character || character.get("_type") != "character" || !this.$cancontrol(character))
+        if (!lookupKey)
         {
             return undefined;
         }
 
-        return createObj("attribute", { _characterid: character.id, name: attributeName });
+        return lookupMod(lookupObj.get(lookupKey));
     }
 
-    getattr(characterNameOrId, attributeName)
+    $setAttribute(nameOrId, attributeName, attributeValue, max = false)
     {
-        var character = this.$getcharobj(characterNameOrId);
+        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
-        if (attributeName == "permission")
+        if (!character && !token)
         {
-            return this.$permission(character);
+            return this.$getDenied();
         }
 
-        if (character && attributeName == "character_id")
+        var updateObj = undefined;
+        var updateKey = undefined;
+        var updateVal = undefined;
+
+        switch (attributeName)
         {
-            return character.id;
+            case "permission":
+            {
+                return this.$getDenied();
+            }
+
+            case "name":
+            {
+                updateObj = character || token;
+            }
+            break;
+                
+            case "character_name":
+            {
+                updateObj = character;
+            }
+            break;
+            
+            case "token_name":
+            {
+                updateObj = token;
+            }
+            break;
+
+            case "character_id":
+            {
+                updateObj = character;
+            }
+            break;
+
+            case "token_id":
+            {
+                updateObj = token;
+            }
+            break;
+        
+            case "bar1":
+            case "bar2":
+            case "bar3":
+            {
+                updateObj = token;
+                updateKey = attributeName + (max ? "_max" : "_value");
+                updateVal = MychExpression.coerceNumber(attributeValue);
+            }
+            break;
+
+            case "left":
+            case "top":
+            {
+                if (max)
+                {
+                    // changing page dimensions through token intentionally unsupported
+                }
+                else
+                {
+                    updateObj = token;
+                    updateKey = attributeName;
+                    updateVal = MychExpression.coerceNumber(attributeValue);
+                }
+            }
+            break;
+
+            default:
+            {
+                if (character && this.$canControlAttribute(character, attributeName))
+                {
+                    updateObj =
+                        findObjs({ type: "attribute", characterid: character.id, name: attributeName })[0] ||
+                        createObj("attribute", { characterid: character.id, name: attributeName });
+
+                    updateKey = (max ? "max" : "current");
+                    updateVal = MychExpression.coerceScalar(attributeValue);
+                }
+            }
+            break;
+        }
+        
+        if (!updateObj)
+        {
+            return undefined;
         }
 
-        if (character && attributeName == "character_name")
+        if (!updateKey || !this.$canControlAttribute(updateObj, attributeName))
         {
-            return character.get("name");
+            return this.$getDenied();
         }
 
-        var attribute = this.$getattrobj(character, attributeName);
-        return attribute ? attribute.get("current") : undefined;
-    }
+        updateObj.set(updateKey, updateVal);
 
-    getattrmax(characterNameOrId, attributeName)
-    {
-        var character = this.$getcharobj(characterNameOrId);
-        var attribute = this.$getattrobj(character, attributeName);
-
-        return attribute ? attribute.get("max") : undefined;
-    }
-
-    setattr(characterNameOrId, attributeName, attributeValue)
-    {
-        var character = this.$getcharobj(characterNameOrId);
-
-        if (!this.$cancontrol(character) || ["permission", "character_id", "character_name"].includes(attributeName))
-        {
-            return this.getattr(character, attributeName);
-        }
-
-        var attribute =
-            this.$getattrobj(character, attributeName) ||
-            this.$createattrobj(character, attributeName);
-
-        attribute.set("current", MychExpression.coerceScalar(attributeValue));
-
-        return attribute.get("current");
-    }
-
-    setattrmax(characterNameOrId, attributeName, attributeValue)
-    {
-        var character = this.$getcharobj(characterNameOrId);
-
-        if (!this.$cancontrol(character) || ["permission", "character_id", "character_name"].includes(attributeName))
-        {
-            return this.getattrmax(character, attributeName);
-        }
-
-        var attribute =
-            this.$getattrobj(character, attributeName) ||
-            this.$createattrobj(character, attributeName);
-
-        attribute.set("max", MychExpression.coerceScalar(attributeValue));
-
-        return attribute.get("max");
+        return this.$getAttribute(nameOrId, attributeName, max);
     }
 }
 

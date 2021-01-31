@@ -16,7 +16,7 @@ You're here to yell at dice, not at macros, after all – right?
 ### Contents
 
 - [Scripts](#scripts) – [script commands](#mmm-script--end-script)
-- [Expressions](#expressions) – [literals](#literals), [variables](#variables), [operators](#operators), [functions](#functions)
+- [Expressions](#expressions) – [literals](#literals), [variables](#variables), [attributes](#attributes), [operators](#operators), [functions](#functions)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [What's new?](#versions)
 - [Copyright & License](#copyright--license)
@@ -264,6 +264,45 @@ There are also a few special *context variables* that are pre-set for you:
 You can *shadow* these special context variables by setting a custom variable with the same name (and your custom variable will then take precedence for the remainder of the script), but you can't truly change them.
 
 
+### Attributes
+
+Like in macros, you can query *attributes* in MMM expressions – and even create and update them if you like:
+
+- Use the `getattr()` and `getattrmax()` functions to query attribute values and max values.
+- Use the `setattr()` and `setattrmax()` functions to update (or, if necessary, create) attributes and max values.
+
+All of these functions take a *name|id* value as their first argument. You can pass a character ID, token ID, character name, or token name. (If you're passing a name and there's ambiguity, MMM always chooses characters over tokens, and if multiple characters should the same name, it'll choose one at random. IDs are always unambiguous.)
+
+If a token represents a specific character (e.g. your character token on the board), it doesn't matter whether you address the token or the character – you'll get access to all attributes of both through either.
+
+MMM has a more general notion of what attributes are than Roll20 itself and adds a few of its own:
+
+| Attribute         | Example              | Value? | Max?  | Description
+| ----------------- | -------------------- | ------ | ----- | -----------
+| `permission`      | `"control"`          | read   |       | `"none"`, `"view"`, or `"control"` – see below
+| `name`            | `"Finn"`             | read   |       | Character or token name
+| `token_id`        |                      | read   |       | Token ID
+| `token_name`      | `"Finn's Spiderbro"` | read   |       | Token name – provided for Roll20 parity
+| `character_id`    |                      | read   |       | Character ID
+| `character_name`  | `"Finn"`             | read   |       | Character name – provided for Roll20 parity
+| `bar1`            | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
+| `bar2`            | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
+| `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
+| `left`            | `350` / `1750`       | write  | read  | Token's X coordinate on the table       
+| `top`             | `350` / `1750`       | write  | read  | Token's Y coordinate on the table       
+| *(anything else)* |                      | write  | write | Character attribute – e.g. `HP` or any custom attribute
+
+But keep in mind that just because an attribute *can be accessed* per this table, that doesn't mean *you* can access it.
+
+You can't access anything through MMM you couldn't access manually in the game. For example, you can only read the `left` attribute of a token you can see on the table, or the `HP` attribute of a character you control yourself.
+
+The one exception of this rule is the special `permission` attribute: That one's always there for you to read, even on tokens and characters you're not allowed to access at all or that don't even exist, in which case it'll be `"none"`. Otherwise it can be either `"view"` (you can see aspects of it but not change) or `"control"` (it's yours and you can do anything with it).
+
+Individual attributes may have further restrictions – for example, even if you can see an NPC token, you might not be able to read its `name` unless the GM has made it visible.
+
+If you try to read or write an attribute you don't have permission to, you'll get a special null value back that resolves to zero in numeric context, an empty string in string contaxt, `false` in boolean logic context, and that'll render as the word `denied` on a pretty red background when sent to chat.
+
+
 ### Operators
 
 | Syntax         | Precedence  | Category | Description
@@ -293,27 +332,47 @@ If you want to calculate the square root of something, you can use the power-of 
 
 ### Functions
 
-| Syntax                              | Category  | Example | Description
-| ----------------------------------- | --------- | ------- | -----------
-| floor(*a*)                          | Math      | floor(1.7) = 1 | Return the greatest integer that's less than or equal to *a*
-| round(*a*)                          | Math      | round(1.5) = 2 | Round *a* to the nearest integer
-| ceil(*a*)                           | Math      | ceil(1.3) = 2  | Return the smallest integer that's greater than or equal to *a*
-| abs(*a*)                            | Math      | abs(-5) = 5    | Return the absolute value of *a*
-| min(...)                            | Math      | min(3,1,2) = 1 | Return the numerically smallest value – any number of arguments allowed
-| max(...)                            | Math      | max(3,1,2) = 3 | Return the numerically greatest value – any number of arguments allowed
-| len(*str*)                          | String    | len("foo") = 3 | Return the number of character in string *str*
-| literal(*str*)                      | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
-| highlight(*str*)                    | String    |  | When output to chat, highlight string *str* with a pretty box
-| highlight(*str*, *type*)            | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
-| highlight(*str*, *type*, *tooltip*) | String    |  | ...with a tooltip popping up on mouse hover
-| iscritical(*roll*)                  | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
-| isfumble(*roll*)                    | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
-| chat(*str*)                         | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
-| getcharid(*char*)                   | Character | getcharid("Finn") | Return the character ID for *char* – works with both character IDs and full character names
-| getattr(*char*, *attr*)             | Character | getattr("Finn", "HP") | Look up character attribute *attr* for *char*
-| getattrmax(*char*, *attr*)          | Character | getattrmax("Finn", "HP") | Look up maximum value of character attribute *attr* for *char*
-| setattr(*char*, *attr*, *val*)      | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set character attribute *attr* for *char* to *val*, then return *val* – create *attr* if necessary
-| setattrmax(*char*, *attr*, *val*)   | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of character attribute *attr* for *char* to *val* – create *attr* if necessary
+| Syntax                                             | Category  | Example | Description
+| -------------------------------------------------- | --------- | ------- | -----------
+| floor(*a*)                                         | Math      | floor(1.7) = 1 | Return the greatest integer that's less than or equal to *a*
+| round(*a*)                                         | Math      | round(1.5) = 2 | Round *a* to the nearest integer
+| ceil(*a*)                                          | Math      | ceil(1.3) = 2  | Return the smallest integer that's greater than or equal to *a*
+| abs(*a*)                                           | Math      | abs(-5) = 5    | Return the absolute value of *a*
+| min(...)                                           | Math      | min(3,1,2) = 1 | Return the numerically smallest value – any number of arguments allowed
+| max(...)                                           | Math      | max(3,1,2) = 3 | Return the numerically greatest value – any number of arguments allowed
+| len(*str*)                                         | String    | len("foo") = 3 | Return the number of character in string *str*
+| literal(*str*)                                     | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
+| highlight(*str*)                                   | String    |  | When output to chat, highlight string *str* with a pretty box
+| highlight(*str*, *type*)                           | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
+| highlight(*str*, *type*, *tooltip*)                | String    |  | ...with a tooltip popping up on mouse hover
+| iscritical(*roll*)                                 | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
+| isfumble(*roll*)                                   | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
+| chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
+| findattr(*name\|id*)                               | Character | findattr("Finn") | List available character sheet table names – see below
+| findattr(*name\|id*, *table*)                      | Character | findattr("Finn", "attack") | List available columns in a character sheet table – see below
+| findattr(*name\|id*, *table*, *col*, *val*, *col*) | Character | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | Find attribute name in a character sheet table – see below
+| getcharid(*name\|id*)                              | Character | getcharid("Finn") | Return the character ID for *name\|id*
+| getattr(*name\|id*, *attr*)                        | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
+| getattrmax(*name\|id*, *attr*)                     | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
+| setattr(*name\|id*, *attr*, *val*)                 | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
+| setattrmax(*name\|id*, *attr*, *val*)              | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+
+The `findattr()` function helps you determine the attribute name to query (or update) anything that's in an extensible table in a character sheet.
+
+These attribute names always start with `repeating_`... followed by a table name (e.g. `attack`), followed by a soup of random characters (the row ID), and finally the name of column you're interested in (e.g. `damage`). Official [Roll20 guidance](https://help.roll20.net/hc/en-us/articles/360037256794-Macros#Macros-ReferencingRepeatingAttributes) says to break out your HTML debugger and dive into the character sheet's HTML source to figure out these IDs – but that's a hair-on-fire–tier harebrained way to have to go about this.
+
+With `findattr()` you can do all this without leaving the safe comfort of your chat box:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **chat:** Tables: ${findattr(sender)} | ***Finn:*** Tables: attack, defense, armor
+| 2    | _!mmm_ **chat:** Columns: ${findattr(sender, "attack")} | ***Finn:*** Columns: weapon, skill, damage
+| 3    | _!mmm_ **chat:** Attribute: ${findattr(sender, "attack", "weapon", "Slingshot", "damage")} | ***Finn:*** Attribute: repeating_attack_-MSxAHDgxtzAHdDAIopE_damage
+| 4    | _!mmm_ **chat:** Value: ${getattr(sender, findattr(sender, "attack", "weapon", "Slingshot", "damage"))} | ***Finn:*** Value: 1d6
+
+What's happening in the last two lines above is that you're *selecting* one of the rows based on a condition: in this case, you want to get to the `damage` attribute of the `attack` table row that has the value `Slingshot` in its `weapon` column – so, the damage dealt by your slingshot. You can include several pairs of *column*, *value* to narrow down your selection if necessary.
+
+Unlike most other things in MMM, table names, column names, and column values are case-insensitive in the `findattr()` function.
 
 
 
@@ -387,6 +446,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.3.0   | 2021-01-30 | Unify character and token attribute access
 | 1.2.0   | 2021-01-28 | Perform permission checks on attribute queries
 | 1.1.0   | 2021-01-28 | Support `character_id` and `character_name` pseudo-attributes
 | 1.0.0   | 2021-01-26 | Initial release
