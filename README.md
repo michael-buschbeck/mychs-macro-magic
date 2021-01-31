@@ -332,27 +332,27 @@ If you want to calculate the square root of something, you can use the power-of 
 
 ### Functions
 
-| Syntax                              | Category  | Example | Description
-| ----------------------------------- | --------- | ------- | -----------
-| floor(*a*)                          | Math      | floor(1.7) = 1 | Return the greatest integer that's less than or equal to *a*
-| round(*a*)                          | Math      | round(1.5) = 2 | Round *a* to the nearest integer
-| ceil(*a*)                           | Math      | ceil(1.3) = 2  | Return the smallest integer that's greater than or equal to *a*
-| abs(*a*)                            | Math      | abs(-5) = 5    | Return the absolute value of *a*
-| min(...)                            | Math      | min(3,1,2) = 1 | Return the numerically smallest value – any number of arguments allowed
-| max(...)                            | Math      | max(3,1,2) = 3 | Return the numerically greatest value – any number of arguments allowed
-| len(*str*)                          | String    | len("foo") = 3 | Return the number of character in string *str*
-| literal(*str*)                      | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
-| highlight(*str*)                    | String    |  | When output to chat, highlight string *str* with a pretty box
-| highlight(*str*, *type*)            | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
-| highlight(*str*, *type*, *tooltip*) | String    |  | ...with a tooltip popping up on mouse hover
-| iscritical(*roll*)                  | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
-| isfumble(*roll*)                    | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
-| chat(*str*)                         | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
-| getcharid(*name\|id*)                   | Character | getcharid("Finn") | Return the character ID for *name\|id*
-| getattr(*name\|id*, *attr*)             | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
-| getattrmax(*name\|id*, *attr*)          | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
-| setattr(*name\|id*, *attr*, *val*)      | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
-| setattrmax(*name\|id*, *attr*, *val*)   | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+| Syntax                                | Category  | Example | Description
+| ------------------------------------- | --------- | ------- | -----------
+| floor(*a*)                            | Math      | floor(1.7) = 1 | Return the greatest integer that's less than or equal to *a*
+| round(*a*)                            | Math      | round(1.5) = 2 | Round *a* to the nearest integer
+| ceil(*a*)                             | Math      | ceil(1.3) = 2  | Return the smallest integer that's greater than or equal to *a*
+| abs(*a*)                              | Math      | abs(-5) = 5    | Return the absolute value of *a*
+| min(...)                              | Math      | min(3,1,2) = 1 | Return the numerically smallest value – any number of arguments allowed
+| max(...)                              | Math      | max(3,1,2) = 3 | Return the numerically greatest value – any number of arguments allowed
+| len(*str*)                            | String    | len("foo") = 3 | Return the number of character in string *str*
+| literal(*str*)                        | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
+| highlight(*str*)                      | String    |  | When output to chat, highlight string *str* with a pretty box
+| highlight(*str*, *type*)              | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
+| highlight(*str*, *type*, *tooltip*)   | String    |  | ...with a tooltip popping up on mouse hover
+| iscritical(*roll*)                    | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
+| isfumble(*roll*)                      | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
+| chat(*str*)                           | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
+| getcharid(*name\|id*)                 | Character | getcharid("Finn") | Return the character ID for *name\|id*
+| getattr(*name\|id*, *attr*)           | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
+| getattrmax(*name\|id*, *attr*)        | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
+| setattr(*name\|id*, *attr*, *val*)    | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
+| setattrmax(*name\|id*, *attr*, *val*) | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
 
 
 
