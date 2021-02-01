@@ -347,6 +347,9 @@ If you want to calculate the square root of something, you can use the power-of 
 | highlight(*str*, *type*, *tooltip*)                | String    |  | ...with a tooltip popping up on mouse hover
 | iscritical(*roll*)                                 | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
 | isfumble(*roll*)                                   | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
+| distunits()                                        | Board     | distunits() = "m"    | Return name of distance units used on the current game board
+| distscale()                                        | Board     | distscale() = 0.0714 | Return number of game board distance units per pixel
+| distsnap()                                         | Board     | distsnap() = 70      | Return number of pixels between grid lines – if grid lines disabled, zero
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | findattr(*name\|id*)                               | Character | findattr("Finn") | List available character sheet table names – see below
 | findattr(*name\|id*, *table*)                      | Character | findattr("Finn", "attack") | List available columns in a character sheet table – see below
@@ -446,6 +449,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.4.0   | 2021-02-01 | Provide access to game board distance metrics
 | 1.3.0   | 2021-01-30 | Unify character and token attribute access
 | 1.2.0   | 2021-01-28 | Perform permission checks on attribute queries
 | 1.1.0   | 2021-01-28 | Support `character_id` and `character_name` pseudo-attributes
