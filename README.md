@@ -347,9 +347,9 @@ If you want to calculate the square root of something, you can use the power-of 
 | highlight(*str*, *type*, *tooltip*)                | String    |  | ...with a tooltip popping up on mouse hover
 | iscritical(*roll*)                                 | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
 | isfumble(*roll*)                                   | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
-| distunits()                                        | Board     | distunits() = "m"    | Distance units used on the current game board
-| distscale()                                        | Board     | distscale() = 0.0714 | Number of game board distance units per pixel
-| distsnap()                                         | Board     | distsnap() = 70      | Number of pixels between grid lines – if grid lines disabled, zero
+| distunits()                                        | Board     | distunits() = "m"    | Return name of distance units used on the current game board
+| distscale()                                        | Board     | distscale() = 0.0714 | Return number of game board distance units per pixel
+| distsnap()                                         | Board     | distsnap() = 70      | Return number of pixels between grid lines – if grid lines disabled, zero
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | findattr(*name\|id*)                               | Character | findattr("Finn") | List available character sheet table names – see below
 | findattr(*name\|id*, *table*)                      | Character | findattr("Finn", "attack") | List available columns in a character sheet table – see below
