@@ -359,7 +359,7 @@ If you want to calculate the square root of something, you can use the power-of 
 
 The `findattr()` function helps you determine the attribute name to query (or update) anything that's in an extensible table in a character sheet.
 
-These attribute names always start with `repeating_`... followed by a table name (e.g. `attack`), followed by a soup of random characters (the row ID), and finally the name of column you're interested in (e.g. `damage`). Official [Roll20 guidance](https://help.roll20.net/hc/en-us/articles/360037256794-Macros#Macros-ReferencingRepeatingAttributes) says to break out your HTML debugger and dive into the character sheet's HTML source to figure out these IDs – but that's a hair-on-fire–tier harebrained way to have to go about this.
+These attribute names always start with `repeating_`... followed by a table name (e.g. `attack`), followed by a soup of random characters (the row ID), and finally the name of column you're interested in (e.g. `damage`). Official [Roll20 guidance](https://help.roll20.net/hc/en-us/articles/360037256794-Macros#Macros-ReferencingRepeatingAttributes) says to break out your HTML debugger and dive into the character sheet's HTML source to figure out these IDs – but that's a pants-on-fire–grade way to have to go about this.
 
 With `findattr()` you can do all this without leaving the safe comfort of your chat box:
 
@@ -370,7 +370,7 @@ With `findattr()` you can do all this without leaving the safe comfort of your c
 | 3    | _!mmm_ **chat:** Attribute: ${findattr(sender, "attack", "weapon", "Slingshot", "damage")} | ***Finn:*** Attribute: repeating_attack_-MSxAHDgxtzAHdDAIopE_damage
 | 4    | _!mmm_ **chat:** Value: ${getattr(sender, findattr(sender, "attack", "weapon", "Slingshot", "damage"))} | ***Finn:*** Value: 1d6
 
-What's happening in the last two lines above is that you're *selecting* one of the rows based on a condition: in this case, you want to get to the `damage` attribute of the `attack` table row that has the value `Slingshot` in its `weapon` column – so, the damage dealt by your slingshot. You can include several pairs of *column*, *value* to narrow down your selection if necessary.
+What's happening in the last two lines above is that you're *selecting* one of the rows based on a condition: In this case, you want to get to the `damage` attribute of the `attack` table row that has the value `Slingshot` in its `weapon` column – so, the damage dealt by your slingshot. You can include several pairs of *column*, *value* to narrow down your selection if necessary.
 
 Unlike most other things in MMM, table names, column names, and column values are case-insensitive in the `findattr()` function.
 
