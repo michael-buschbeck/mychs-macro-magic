@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.4.0";
+const MMM_VERSION = "1.4.1";
 
 on("chat:message", function(msg)
 {
@@ -42,7 +42,7 @@ on("chat:message", function(msg)
 
     var scriptMatch = /^!mmm\b(\s*|\s(?<command>.+))$/.exec(msg.content);
 
-    if (!scriptMatch || !scriptMatch.groups.command)
+    if (msg.type != "api" || !scriptMatch || !scriptMatch.groups.command)
     {
         return;
     }
