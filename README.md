@@ -315,6 +315,7 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | *a* `%` *b*    | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b*
 | *a* `+` *b*    | 4           | Math     | Add *a* and *b*
 | *a* `-` *b*    | 4           | Math     | Subtract *b* from *a*
+| *a* `&` *b*    | 4           | String   | Concatenate *a* and *b*
 | *a* `<` *b*    | 5           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
 | *a* `<=` *b*   | 5           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
 | *a* `>` *b*    | 5           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
@@ -449,6 +450,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.5.0   | 2021-02-01 | Add string concatenation operator
 | 1.4.0   | 2021-02-01 | Provide access to game board distance metrics
 | 1.3.0   | 2021-01-30 | Unify character and token attribute access
 | 1.2.0   | 2021-01-28 | Perform permission checks on attribute queries
