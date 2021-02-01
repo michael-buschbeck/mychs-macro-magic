@@ -356,7 +356,18 @@ class MychScriptContext
         var playerPageId = Campaign().get("playerpageid");
         var playerPage = getObj("page", playerPageId)
 
-        return (playerPage ? (playerPage.get("scale_number") / (70 * (playerPage.get("snapping_increment") || 1))) : undefined);
+        if (!playerPage)
+        {
+            return undefined;
+        }
+
+        var gridUnitsPerGridCell = playerPage.get("snapping_increment");
+        var pixelsPerGridUnit = 70;
+        var pixelsPerGridCell = pixelsPerGridUnit * (gridUnitsPerGridCell || 1);
+        var measurementUnitsPerGridCell = playerPage.get("scale_number");
+        var measurementUnitsPerPixel = measurementUnitsPerGridCell / pixelsPerGridCell;
+
+        return measurementUnitsPerPixel;
     }
 
     distsnap()
@@ -364,7 +375,16 @@ class MychScriptContext
         var playerPageId = Campaign().get("playerpageid");
         var playerPage = getObj("page", playerPageId)
 
-        return (playerPage ? (70 * (playerPage.get("snapping_increment")) || 1) : undefined);
+        if (!playerPage)
+        {
+            return undefined;
+        }
+
+        var gridUnitsPerGridCell = playerPage.get("snapping_increment");
+        var pixelsPerGridUnit = 70;
+        var pixelsPerGridCell = pixelsPerGridUnit * gridUnitsPerGridCell;
+
+        return pixelsPerGridCell;
     }
 
     getcharid(nameOrId)
