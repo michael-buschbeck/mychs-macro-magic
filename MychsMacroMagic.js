@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.3.1";
+const MMM_VERSION = "1.3.2";
 
 on("chat:message", function(msg)
 {
@@ -40,9 +40,9 @@ on("chat:message", function(msg)
     player.context.sender = msg.who;
     player.context.playerid = msg.playerid;
 
-    var scriptMatch = /^!mmm\s(.+)/.exec(msg.content);
+    var scriptMatch = /^!mmm\b(\s*|\s(?<command>.+))$/.exec(msg.content);
 
-    if (!scriptMatch)
+    if (!scriptMatch || !scriptMatch.groups.command)
     {
         return;
     }
@@ -54,7 +54,7 @@ on("chat:message", function(msg)
 
     try
     {
-        var scriptCommand = scriptMatch[1];
+        var scriptCommand = scriptMatch.groups.command;
         var scriptAdded = player.script.addCommand(scriptCommand, player.context);
 
         if (scriptAdded.type == "script")
