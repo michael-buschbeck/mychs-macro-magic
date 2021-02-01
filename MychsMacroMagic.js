@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.3.0";
+const MMM_VERSION = "1.3.1";
 
 on("chat:message", function(msg)
 {
@@ -596,38 +596,36 @@ class MychScriptContext
             return true;
         }
 
-        if (this.$canView(obj))
+        switch (attributeName)
         {
-            switch (attributeName)
+            case "id":
+            case "character_id":
+            case "token_id":
             {
-                case "id":
-                case "character_id":
-                case "token_id":
-                {
-                    return true;
-                }
+                return this.$canView(obj);
+            }
 
-                case "name":
-                case "character_name":
-                case "token_name":
-                {
-                    var token = this.$getCorrespondingTokenObj(obj);
-                    return (token && token.get("showplayers_name"));
-                }
+            case "name":
+            case "character_name":
+            case "token_name":
+            {
+                var character = this.$getCorrespondingCharacterObj(obj);
+                var token = this.$getCorrespondingTokenObj(obj);
+                return (this.$canView(character) || (this.$canView(token) && token.get("showplayers_name")));
+            }
 
-                case "bar1":
-                case "bar2":
-                case "bar3":
-                {
-                    var token = this.$getCorrespondingTokenObj(obj);
-                    return (token && token.get("showplayers_" + attributeName));
-                }
+            case "bar1":
+            case "bar2":
+            case "bar3":
+            {
+                var token = this.$getCorrespondingTokenObj(obj);
+                return (this.$canView(token) && token.get("showplayers_" + attributeName));
+            }
 
-                case "left":
-                case "top":
-                {
-                    return true;
-                }
+            case "left":
+            case "top":
+            {
+                return this.$canView(obj);
             }
         }
 
@@ -762,19 +760,19 @@ class MychScriptContext
         {
             case "permission":
             {
-                return (this.$canControl(character || token) ? "control" : "view");
+                return (this.$canControl(token || character) ? "control" : "view");
             }
 
             case "name":
             {
-                lookupObj = character || token;
+                lookupObj = token || character;
                 lookupKey = (max ? undefined : "name");
             }
             break;
                 
             case "character_name":
             {
-                lookupObj = character;
+                lookupObj = character ? (token || character) : undefined;
                 lookupKey = (max ? undefined : "name");
             }
             break;
