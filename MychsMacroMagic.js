@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.3.3";
+const MMM_VERSION = "1.4.0";
 
 on("chat:message", function(msg)
 {
@@ -341,6 +341,30 @@ class MychScriptContext
     {
         log(exception.stack);
         sendChat("Mych's Macro Magic", "/direct " + exception, null, { noarchive: true });
+    }
+
+    distunits()
+    {
+        var playerPageId = Campaign().get("playerpageid");
+        var playerPage = getObj("page", playerPageId)
+
+        return (playerPage ? playerPage.get("scale_units") : undefined);
+    }
+
+    distscale()
+    {
+        var playerPageId = Campaign().get("playerpageid");
+        var playerPage = getObj("page", playerPageId)
+
+        return (playerPage ? (playerPage.get("scale_number") / (70 * (playerPage.get("snapping_increment") || 1))) : undefined);
+    }
+
+    distsnap()
+    {
+        var playerPageId = Campaign().get("playerpageid");
+        var playerPage = getObj("page", playerPageId)
+
+        return (playerPage ? (70 * (playerPage.get("snapping_increment")) || 1) : undefined);
     }
 
     getcharid(nameOrId)
