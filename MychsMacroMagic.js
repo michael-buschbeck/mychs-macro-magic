@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.5.0";
+const MMM_VERSION = "1.5.1";
 
 on("chat:message", function(msg)
 {
@@ -1155,7 +1155,7 @@ class MychScript
 
                 if (!parentScript || parentScript.type != "if")
                 {
-                    throw new MychScriptError("parse", "unexpected outside \"if\" block", this.source, 0);
+                    throw new MychScriptError("parse", "unexpected \"else\" outside of \"if\" block", this.source, 0);
                 }
 
                 if (args.expression)
@@ -1178,7 +1178,7 @@ class MychScript
                 {
                     if (parentScript.definition.elseBranch)
                     {
-                        throw new MychScriptError("parse", "unexpected after previous \"else\"", this.source, 0);
+                        throw new MychScriptError("parse", "unexpected \"else\" after previous \"else\" in same \"if\" block", this.source, 0);
                     }
 
                     parentScript.definition.elseBranch = { nestedScriptOffset: parentScript.nestedScripts.length };
