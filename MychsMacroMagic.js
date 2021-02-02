@@ -1037,6 +1037,7 @@ class MychScript
     {
         this.type = undefined;
         this.source = undefined;
+        this.context = undefined;
         this.definition = {};
         this.variables = variables || {};
         this.nestedScripts = [];
