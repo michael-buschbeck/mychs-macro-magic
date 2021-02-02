@@ -271,7 +271,7 @@ Like in macros, you can query *attributes* in MMM expressions – and even creat
 - Use the `getattr()` and `getattrmax()` functions to query attribute values and max values.
 - Use the `setattr()` and `setattrmax()` functions to update (or, if necessary, create) attributes and max values.
 
-All of these functions take a *name|id* value as their first argument. You can pass a character ID, token ID, character name, or token name. (If you're passing a name and there's ambiguity, MMM always chooses characters over tokens, and if multiple characters should the same name, it'll choose one at random. IDs are always unambiguous.)
+All of these functions take a *name|id* value as their first argument. You can pass a character ID, token ID, character name, or token name. (If you're passing a name and there's ambiguity, MMM always chooses characters over tokens, and if multiple characters should have the same name, it'll choose one at random. IDs are always unambiguous.)
 
 If a token represents a specific character (e.g. your character token on the board), it doesn't matter whether you address the token or the character – you'll get access to all attributes of both through either.
 
