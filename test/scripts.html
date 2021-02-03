@@ -314,7 +314,7 @@
 
         MychScriptContext.prototype.chat = function(message)
         {
-            messages.push(message);
+            messages.push({ type: "chat", content: message });
         };
 
         MychScriptContext.prototype.error = function(exception)
@@ -350,6 +350,37 @@
             }
 
             attributes[attributeName].max = attributeValue;
+        }
+
+        MychScriptContext.prototype.$rollWithCallback = function(rollExpression, rollResultsCallback)
+        {
+            var sendChatCallback = function(msgs)
+            {
+                var rollResultsMsg = msgs.filter(msg => msg.type == "rollresult")[0];
+                
+                if (!rollResultsMsg)
+                {
+                    console.log("No roll result found in sendChat() results:", msgs);
+                    return;
+                }
+
+                var rollResults = JSON.parse(rollResultsMsg.content);
+                rollResultsCallback(rollResults);
+            };
+
+            sendChatRollWithCallback(rollExpression, sendChatCallback);
+        }
+
+        function sendChatRollWithCallback(rollExpression, callback)
+        {
+            var sendChatProcess = function()
+            {
+                var rollResults = executeRoll(rollExpression);
+                messages.push({ type: "roll", content: rollExpression + " \u2192 " + rollResults.total });
+                callback([{ type: "rollresult", content: JSON.stringify(rollResults) }]);
+            }
+
+            setTimeout(sendChatProcess, 10);
         }
 
         function executeRoll(rollExpression)
@@ -457,8 +488,8 @@
             for (var message of messages)
             {
                 document.write("<tr>");
-                document.write("<td class='lineno'>output</td>");
-                document.write("<td>" + message + "</td>");
+                document.write("<td class='lineno'>" + message.type + "</td>");
+                document.write("<td>" + message.content + "</td>");
                 document.write("</tr>");
             }
 
