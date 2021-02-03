@@ -306,6 +306,7 @@
         ];
 
         var messages = [];
+        var processes = [];
 
         var attributes =
         {
@@ -382,7 +383,7 @@
                 callback([{ type: "rollresult", content: JSON.stringify(rollResults), origRoll: rollExpression }]);
             };
 
-            setTimeout(sendChatProcess, 10);
+            processes.push({ label: "/roll " + rollExpression, execute: sendChatProcess });
         }
 
         function executeRoll(rollExpression)
@@ -475,6 +476,11 @@
                 document.write("<td>");
                 document.write(escapeHTML(scriptSourceLine));
 
+                if (scriptSourceLine != originalScriptSourceLine)
+                {
+                    document.write(" <span class='original'>" + escapeHTML(originalScriptSourceLine.trim()) + "</span>")
+                }
+
                 var msg =
                 {
                     type: "api",
@@ -486,13 +492,15 @@
 
                 eventHandlers["chat:message"](msg);
 
-                if (scriptSourceLine != originalScriptSourceLine)
-                {
-                    document.write(" <span class='original'>" + escapeHTML(originalScriptSourceLine.trim()) + "</span>")
-                }
-
                 document.write("</td>");
                 document.write("</tr>");
+            }
+
+            while (processes.length > 0)
+            {
+                var process = processes.shift();
+                messages.push({ type: "process", content: escapeHTML(process.label) });
+                process.execute();
             }
 
             for (var message of messages)
