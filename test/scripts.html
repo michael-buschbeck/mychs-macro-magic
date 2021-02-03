@@ -305,7 +305,6 @@
             ],
         ];
 
-        var messages = [];
         var processes = [];
 
         var attributes =
@@ -315,12 +314,18 @@
 
         MychScriptContext.prototype.chat = function(message)
         {
-            messages.push({ type: "chat", content: message });
+            document.write("<tr>");
+            document.write("<td class='lineno'>chat</td>");
+            document.write("<td>" + message + "</td>");
+            document.write("</tr>");
         };
 
         MychScriptContext.prototype.error = function(exception)
         {
-            document.write("<br><span class='error'>" + escapeHTML(exception) + "</span>")
+            document.write("<tr>");
+            document.write("<td class='lineno'>error</td>");
+            document.write("<td><span class='error'>" + escapeHTML(exception) + "</span></td>")
+            document.write("</tr>")
         };
 
         MychScriptContext.prototype.getattr = function(characterNameOrId, attributeName)
@@ -379,7 +384,12 @@
             var sendChatProcess = function()
             {
                 var rollResults = executeRoll(rollExpression);
-                messages.push({ type: "roll", content: rollExpression + " \u2192 " + rollResults.total });
+
+                document.write("<tr>");
+                document.write("<td class='lineno'>roll</td>");
+                document.write("<td>" + rollExpression + " \u2192 " + rollResults.total + "</td>");
+                document.write("</tr>");
+
                 callback([{ type: "rollresult", content: JSON.stringify(rollResults), origRoll: rollExpression }]);
             };
 
@@ -444,8 +454,6 @@
             document.write("<table>");
             document.write("<tr><td></td><td class='script-header'>test script " + scriptSourceIndex + "</td></tr>");
 
-            messages.length = 0;
-
             MychScriptContext.players = {};
 
             for (var scriptSourceLineIndex = 0; scriptSourceLineIndex < scriptSource.length; ++scriptSourceLineIndex)
@@ -481,6 +489,9 @@
                     document.write(" <span class='original'>" + escapeHTML(originalScriptSourceLine.trim()) + "</span>")
                 }
 
+                document.write("</td>");
+                document.write("</tr>");
+
                 var msg =
                 {
                     type: "api",
@@ -491,24 +502,18 @@
                 };
 
                 eventHandlers["chat:message"](msg);
-
-                document.write("</td>");
-                document.write("</tr>");
             }
 
             while (processes.length > 0)
             {
                 var process = processes.shift();
-                messages.push({ type: "process", content: escapeHTML(process.label) });
-                process.execute();
-            }
 
-            for (var message of messages)
-            {
                 document.write("<tr>");
-                document.write("<td class='lineno'>" + message.type + "</td>");
-                document.write("<td>" + message.content + "</td>");
+                document.write("<td class='lineno'>process</td>");
+                document.write("<td>" + escapeHTML(process.label) + "</td>");
                 document.write("</tr>");
+
+                process.execute();
             }
 
             document.write("</table>");
