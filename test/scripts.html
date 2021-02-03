@@ -387,7 +387,7 @@
 
         function executeRoll(rollExpression)
         {
-            var rollExpressionRegExp = /^(?<numDice>\d+)?d(?<numSides>\d+)$/i;
+            var rollExpressionRegExp = /^(?<numDice>\d+)?d(?<numSides>\d+)(?<modifier>[-+]\d+)?$/i;
             var rollExpressionMatch = rollExpressionRegExp.exec(rollExpression);
 
             if (!rollExpressionMatch)
@@ -397,15 +397,17 @@
 
             var numDice = parseInt(rollExpressionMatch.groups.numDice || 1);
             var numSides = parseInt(rollExpressionMatch.groups.numSides);
+            var modifier = parseInt(rollExpressionMatch.groups.modifier || 0)
 
             var rollResults = 
             {
                 rolls:
                 [
                     {
+                        type: "R",
                         dice: numDice,
-                        results: [],
                         sides: numSides,
+                        results: [],
                     },
                 ],
                 total: 0,
@@ -417,6 +419,12 @@
                 
                 rollResults.rolls[0].results.push({ v: rollValue });
                 rollResults.total += rollValue;
+            }
+
+            if (modifier)
+            {
+                rollResults.rolls.push({ type: "M", expr: rollExpressionMatch.groups.modifier });
+                rollResults.total += modifier;
             }
 
             return rollResults;
