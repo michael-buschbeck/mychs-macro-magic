@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.5.1";
+const MMM_VERSION = "1.5.2";
 
 on("chat:message", function(msg)
 {
@@ -10,8 +10,8 @@ on("chat:message", function(msg)
     
     if (msg.type == "rollresult")
     {
-        var msgRoll = JSON.parse(msg.content);
-        msgContextUpdated = (msgContext.$consumeRolls([{ results: msgRoll }]) > 0);
+        var msgRollResults = JSON.parse(msg.content);
+        msgContextUpdated = (msgContext.$consumeRolls([{ results: msgRollResults, expression: msg.origRoll }]) > 0);
     }
     else
     {
