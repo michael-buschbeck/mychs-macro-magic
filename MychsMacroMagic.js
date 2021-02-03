@@ -176,6 +176,30 @@ class MychScriptContext
         return maxValue;
     }
 
+    $decorateRoll(roll)
+    {
+        var context = this;
+
+        var decoratedRoll = Object.create(roll);
+            
+        decoratedRoll.toScalar = function()
+        {
+            return this.results.total;
+        };
+
+        decoratedRoll.toMarkup = function()
+        {
+            var isRollCritical = context.iscritical(this);
+            var isRollFumbled = context.isfumble(this);
+
+            var highlightType = (isRollCritical && isRollFumbled) ? "important" : isRollCritical ? "good" : isRollFumbled ? "bad" : "normal";
+
+            return context.highlight(this, highlightType, this.expression ? ("Rolling " + this.expression) : undefined).toMarkup();
+        };
+
+        return decoratedRoll;
+    }
+
     $consumeRolls(rolls)
     {
         if (!rolls || rolls.length == 0)
@@ -183,29 +207,10 @@ class MychScriptContext
             return 0;
         }
 
-        var context = this;
-
         for (var rollIndex = 0; rollIndex < rolls.length; ++rollIndex)
         {
-            var roll = Object.create(rolls[rollIndex]);
-            
-            roll.toScalar = function()
-            {
-                return this.results.total;
-            };
-
-            roll.toMarkup = function()
-            {
-                var criticalRoll = context.iscritical(this);
-                var fumbledRoll = context.isfumble(this);
-
-                var highlightType = (criticalRoll && fumbledRoll) ? "important" : criticalRoll ? "good" : fumbledRoll ? "bad" : "normal";
-
-                return context.highlight(this, highlightType, this.expression ? ("Rolling " + this.expression) : undefined).toMarkup();
-            };
-
             var rollReference = "$[[" + rollIndex + "]]";
-            this[rollReference] = roll;
+            this[rollReference] = this.$decorateRoll(rolls[rollIndex]);
         }
 
         return rolls.length;

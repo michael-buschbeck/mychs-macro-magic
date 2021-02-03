@@ -352,8 +352,10 @@
             attributes[attributeName].max = attributeValue;
         }
 
-        MychScriptContext.prototype.$rollWithCallback = function(rollExpression, rollResultsCallback)
+        MychScriptContext.prototype.$rollWithCallback = function(rollExpression, rollCallback)
         {
+            var context = this;
+
             var sendChatCallback = function(msgs)
             {
                 var rollResultsMsg = msgs.filter(msg => msg.type == "rollresult")[0];
@@ -365,7 +367,7 @@
                 }
 
                 var rollResults = JSON.parse(rollResultsMsg.content);
-                rollResultsCallback(rollResults);
+                rollCallback(context.$decorateRoll({ results: rollResults, expression: rollResultsMsg.origRoll }));
             };
 
             sendChatRollWithCallback(rollExpression, sendChatCallback);
@@ -377,8 +379,8 @@
             {
                 var rollResults = executeRoll(rollExpression);
                 messages.push({ type: "roll", content: rollExpression + " \u2192 " + rollResults.total });
-                callback([{ type: "rollresult", content: JSON.stringify(rollResults) }]);
-            }
+                callback([{ type: "rollresult", content: JSON.stringify(rollResults), origRoll: rollExpression }]);
+            };
 
             setTimeout(sendChatProcess, 10);
         }
