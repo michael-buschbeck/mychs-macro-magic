@@ -322,6 +322,8 @@
 
         MychScriptContext.prototype.error = function(exception)
         {
+            console.log(exception);
+
             document.write("<tr>");
             document.write("<td class='lineno'>error</td>");
             document.write("<td><span class='error'>" + escapeHTML(exception) + "</span></td>")
