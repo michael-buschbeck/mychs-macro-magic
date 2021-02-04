@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.5.2";
+const MMM_VERSION = "1.5.3";
 
 on("chat:message", function(msg)
 {
@@ -61,37 +61,22 @@ on("chat:message", function(msg)
         {
             player.script = scriptAdded;
         }
-
-        if (player.script.complete)
-        {
-            if (!player.exception)
-            {
-                player.script.execute();
-            }
-
-            player.script = undefined;
-            player.exception = undefined;
-        }
     }
     catch (exception)
     {
-        if (exception instanceof MychScriptError)
-        {
-            exception.source = "!mmm " + exception.source;
-            exception.offset += "!mmm ".length;
-        }
-
         player.context.error(exception);
+        player.exception = exception;
+    }
 
-        if (player.script && player.script.complete)
+    if (player.script.complete)
+    {
+        if (!player.exception)
         {
-            player.script = undefined;
-            player.exception = undefined;
+            player.script.startExecute();
         }
-        else
-        {
-            player.exception = exception;
-        }
+
+        player.script = undefined;
+        player.exception = undefined;
     }
 });
 
@@ -1073,11 +1058,11 @@ class MychScript
     {
         script:
         {
-            execute: function()
+            execute: function*()
             {
                 for (var nestedScript of this.nestedScripts)
                 {
-                    nestedScript.execute();
+                    yield* nestedScript.execute();
                 }
             }
         },
@@ -1104,7 +1089,7 @@ class MychScript
                 }
             },
 
-            execute: function()
+            execute: function*()
             {
                 var elseBranch = this.definition.elseBranch;
 
@@ -1117,7 +1102,7 @@ class MychScript
 
                     try
                     {
-                        branchCondition = branchScript.definition.expression.evaluate(this.variables, this.context);
+                        branchCondition = yield* branchScript.definition.expression.evaluate(this.variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1130,7 +1115,7 @@ class MychScript
 
                         for (var nestedScript of this.nestedScripts.slice(branch.nestedScriptOffset, nextBranch.nestedScriptOffset))
                         {
-                            nestedScript.execute();
+                            yield* nestedScript.execute();
                         }
 
                         return;
@@ -1141,7 +1126,7 @@ class MychScript
                 {
                     for (var nestedScript of this.nestedScripts.slice(elseBranch.nestedScriptOffset))
                     {
-                        nestedScript.execute();
+                        yield* nestedScript.execute();
                     }
                 }
             },
@@ -1215,11 +1200,11 @@ class MychScript
                 this.complete = true;
             },
             
-            execute: function()
+            execute: function*()
             {
                 try
                 {
-                    this.variables[this.definition.variable] = this.definition.expression.evaluate(this.variables, this.context);
+                    this.variables[this.definition.variable] = yield* this.definition.expression.evaluate(this.variables, this.context);
                 }
                 catch (exception)
                 {
@@ -1247,11 +1232,11 @@ class MychScript
                 this.complete = true;
             },
 
-            execute: function()
+            execute: function*()
             {
                 try
                 {
-                    this.definition.expression.evaluate(this.variables, this.context);
+                    yield* this.definition.expression.evaluate(this.variables, this.context);
                 }
                 catch (exception)
                 {
@@ -1279,13 +1264,13 @@ class MychScript
                 this.complete = true;
             },
 
-            execute: function()
+            execute: function*()
             {
                 var message;
 
                 try
                 {
-                    message = this.definition.template.evaluate(this.variables, this.context);
+                    message = yield* this.definition.template.evaluate(this.variables, this.context);
                 }
                 catch (exception)
                 {
@@ -1327,7 +1312,7 @@ class MychScript
                 }
             },
 
-            execute: function()
+            execute: function*()
             {
                 var separator = " ";
 
@@ -1335,7 +1320,7 @@ class MychScript
                 {
                     try
                     {
-                        separator = this.definition.expression.evaluate(this.variables, this.context);
+                        separator = yield* this.definition.expression.evaluate(this.variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1355,7 +1340,7 @@ class MychScript
 
                     for (var nestedScript of this.nestedScripts)
                     {
-                        nestedScript.execute();
+                        yield* nestedScript.execute();
                     }
                 }
                 finally
@@ -1516,7 +1501,7 @@ class MychScript
                 command.parse.call(this, commandArgs, parentScripts || []);
             }
 
-            this.execute = (command.execute || function() {});
+            this.execute = (command.execute || function*() {});
         
             return this;
         }
@@ -1565,6 +1550,51 @@ class MychScript
 
             return nestedScript;
         }
+    }
+
+    startExecute()
+    {
+        var scriptExecuteGenerator = this.execute();
+        this.continueExecute(scriptExecuteGenerator, undefined);
+    }
+
+    continueExecute(scriptExecuteGenerator, result)
+    {
+        try
+        {
+            var scriptExecuteResult = scriptExecuteGenerator.next(result);
+
+            if (scriptExecuteResult.value)
+            {
+                var nextScriptExecuteContinuation = scriptExecuteResult.value;
+                nextScriptExecuteContinuation(this, scriptExecuteGenerator);
+            }
+        }
+        catch (exception)
+        {
+            if (exception instanceof MychScriptError)
+            {
+                exception.source = "!mmm " + exception.source;
+                exception.offset += "!mmm ".length;
+            }
+
+            this.context.error(exception);
+        }
+    }
+
+    static continueExecuteOnCallback(callbackSetup = function(resultCallback) {})
+    {
+        var scriptExecuteContinuation = function(script, scriptExecuteGenerator)
+        {
+            var resultCallback = function(result)
+            {
+                script.continueExecute(scriptExecuteGenerator, result);
+            };
+
+            callbackSetup(resultCallback);
+        };
+
+        return scriptExecuteContinuation;
     }
 }
 
@@ -1653,7 +1683,7 @@ class MychTemplate
         this.segments = segments;
     }
 
-    evaluate(variables, context)
+    *evaluate(variables, context)
     {
         var contextKeys = Object.keys(context).filter(key => !/^\w+$/.test(key));
         var contextKeysRegExp;
@@ -1687,7 +1717,7 @@ class MychTemplate
                 {
                     try
                     {
-                        var expressionValue = segment.expression.evaluate(variables, context);
+                        var expressionValue = yield* segment.expression.evaluate(variables, context);
                         evaluatedSegments.push(MychExpression.coerceMarkup(expressionValue));
                     }
                     catch (exception)
@@ -2001,12 +2031,12 @@ class MychExpression
         this.tokens = tokens;
     }
 
-    evaluate(variables, context)
+    *evaluate(variables, context)
     {
         var valueStack = [];
         var operationStack = [];
 
-        var reduce = function(precedence)
+        var reduce = function*(precedence)
         {
             while (operationStack.length > 0)
             {
@@ -2031,6 +2061,11 @@ class MychExpression
                 {
                     executionArguments = executionArguments.flat(1);
                     executionResult = operation.execute.apply(operation.context, executionArguments);
+
+                    if (executionResult && executionResult.next)
+                    {
+                        executionResult = yield* executionResult;
+                    }
                 }
                 else
                 {
@@ -2091,7 +2126,7 @@ class MychExpression
                     }
                     else
                     {
-                        reduce(operator.associativity == "right" ? operator.precedence - 1 : operator.precedence);
+                        yield* reduce(operator.associativity == "right" ? operator.precedence - 1 : operator.precedence);
 
                         operationStack.push({ type: "operator", name: token.value, operands: 2, precedence: operator.precedence, execute: operator.execute });
                         expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
@@ -2140,7 +2175,7 @@ class MychExpression
                     }
                     else
                     {
-                        reduce();
+                        yield* reduce();
 
                         var openingParenthesisOperation = operationStack.pop();
                         if (valueStack.length == openingParenthesisOperation.valueStackOffset)
@@ -2162,7 +2197,7 @@ class MychExpression
             throw new MychExpressionError("evaluate", "expected " + expectDescription, this.source, this.source.length);
         }
 
-        reduce();
+        yield* reduce();
 
         if (operationStack.length != 0)
         {
