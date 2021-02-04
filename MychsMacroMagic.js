@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.5.3";
+const MMM_VERSION = "1.6.0";
 
 on("chat:message", function(msg)
 {
@@ -199,6 +199,32 @@ class MychScriptContext
         }
 
         return rolls.length;
+    }
+
+    *roll(rollExpression)
+    {
+        var context = this;
+
+        var rollResult = yield MychScript.continueExecuteOnCallback(function(rollResultCallback)
+        {
+            var sendChatCallback = function(msgs)
+            {
+                var rollResultsMsg = msgs.filter(msg => msg.type == "rollresult")[0];
+                
+                if (!rollResultsMsg)
+                {
+                    console.log("No roll result found in sendChat() results:", msgs);
+                    return;
+                }
+
+                var rollResults = JSON.parse(rollResultsMsg.content);
+                rollResultCallback(context.$decorateRoll({ results: rollResults, expression: rollResultsMsg.origRoll }));
+            };
+
+            sendChat(context.sender || "Mych's Macro Magic", "/roll " + MychExpression.coerceString(rollExpression), sendChatCallback, {use3d: true});
+        });
+
+        return rollResult;
     }
 
     iscritical(roll)

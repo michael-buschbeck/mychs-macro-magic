@@ -303,6 +303,24 @@
             [
                 "!mmm chat: fumble: ${isfumble($[[0]])}, critical: ${iscritical($[[0]])}, roll: [[1d3]]",
             ],
+            [
+                "!mmm script",
+                "!mmm     chat: Going to attack...",
+                "!mmm     set attackRoll = roll('1d20+12')",
+                "!mmm     chat: Rolled attack ${attackRoll}",
+                "!mmm     if attackRoll >= 20",
+                "!mmm         chat: Success! Rolling damage...",
+                "!mmm         set damageRoll = roll('1d6')",
+                "!mmm         chat: Dealt ${damageRoll} points of damage",
+                "!mmm     end if",
+                "!mmm end script",
+            ],
+            [
+                "!mmm script",
+                "!mmm     do roll('1d20')",
+                "!mmm     do syntax error",
+                "!mmm end script",
+            ],
         ];
 
         var processes = [];
