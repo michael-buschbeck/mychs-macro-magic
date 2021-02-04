@@ -303,9 +303,27 @@
             [
                 "!mmm chat: fumble: ${isfumble($[[0]])}, critical: ${iscritical($[[0]])}, roll: [[1d3]]",
             ],
+            [
+                "!mmm script",
+                "!mmm     chat: Going to attack...",
+                "!mmm     set attackRoll = roll('1d20+12')",
+                "!mmm     chat: Rolled attack ${attackRoll}",
+                "!mmm     if attackRoll >= 20",
+                "!mmm         chat: Success! Rolling damage...",
+                "!mmm         set damageRoll = roll('1d6')",
+                "!mmm         chat: Dealt ${damageRoll} points of damage",
+                "!mmm     end if",
+                "!mmm end script",
+            ],
+            [
+                "!mmm script",
+                "!mmm     do roll('1d20')",
+                "!mmm     do syntax error",
+                "!mmm end script",
+            ],
         ];
 
-        var messages = [];
+        var processes = [];
 
         var attributes =
         {
@@ -314,12 +332,17 @@
 
         MychScriptContext.prototype.chat = function(message)
         {
-            messages.push(message);
+            sendChat(this.sender || "Mych's Macro Magic", message);
         };
 
         MychScriptContext.prototype.error = function(exception)
         {
-            document.write("<br><span class='error'>" + escapeHTML(exception) + "</span>")
+            console.log(exception);
+
+            document.write("<tr>");
+            document.write("<td class='lineno'>error</td>");
+            document.write("<td><span class='error'>" + escapeHTML(exception) + "</span></td>")
+            document.write("</tr>")
         };
 
         MychScriptContext.prototype.getattr = function(characterNameOrId, attributeName)
@@ -352,6 +375,94 @@
             attributes[attributeName].max = attributeValue;
         }
 
+        function sendChat(sender, message, callback, options)
+        {
+            var results = [];
+
+            var rollRegExp = /^\/roll\s+(?<expression>.+)/i;
+            var rollMatch = rollRegExp.exec(message);
+
+            if (rollMatch)
+            {
+                var rollExpression = rollMatch.groups.expression;
+                var rollResults = executeRoll(rollExpression);
+
+                results.push({ who: sender, type: "rollresult", content: JSON.stringify(rollResults), origRoll: rollExpression });
+            }
+            else
+            {
+                results.push({ who: sender, type: "general", content: message });
+            }
+
+            if (callback)
+            {
+                var sendChatProcess = function()
+                {
+                    callback(results);
+                }
+
+                processes.push(
+                {
+                    type: "process",
+                    message: message,
+                    execute: sendChatProcess,
+                });
+            }
+            else
+            {
+                processes.push(
+                {
+                    type: "chat",
+                    message: message,
+                });
+            }
+        }
+
+        function executeRoll(rollExpression)
+        {
+            var rollExpressionRegExp = /^(?<numDice>\d+)?d(?<numSides>\d+)(?<modifier>[-+]\d+)?$/i;
+            var rollExpressionMatch = rollExpressionRegExp.exec(rollExpression);
+
+            if (!rollExpressionMatch)
+            {
+                return undefined;
+            }
+
+            var numDice = parseInt(rollExpressionMatch.groups.numDice || 1);
+            var numSides = parseInt(rollExpressionMatch.groups.numSides);
+            var modifier = parseInt(rollExpressionMatch.groups.modifier || 0)
+
+            var rollResults = 
+            {
+                rolls:
+                [
+                    {
+                        type: "R",
+                        dice: numDice,
+                        sides: numSides,
+                        results: [],
+                    },
+                ],
+                total: 0,
+            };
+
+            for (; numDice > 0; --numDice)
+            {
+                var rollValue = Math.floor(Math.random() * numSides) + 1;
+                
+                rollResults.rolls[0].results.push({ v: rollValue });
+                rollResults.total += rollValue;
+            }
+
+            if (modifier)
+            {
+                rollResults.rolls.push({ type: "M", expr: rollExpressionMatch.groups.modifier });
+                rollResults.total += modifier;
+            }
+
+            return rollResults;
+        }
+
         for (var scriptSourceIndex = 0; scriptSourceIndex < scriptSources.length; ++scriptSourceIndex)
         {
             if (includedScriptSources.length > 0 && !includedScriptSources.includes(scriptSourceIndex))
@@ -365,8 +476,6 @@
             document.write("<table>");
             document.write("<tr><td></td><td class='script-header'>test script " + scriptSourceIndex + "</td></tr>");
 
-            messages.length = 0;
-
             MychScriptContext.players = {};
 
             for (var scriptSourceLineIndex = 0; scriptSourceLineIndex < scriptSource.length; ++scriptSourceLineIndex)
@@ -376,38 +485,14 @@
 
                 var originalScriptSourceLine = scriptSourceLine;
 
-                scriptSourceLine = scriptSourceLine.replace(/\[\[((\d+)d(\d+))\]\]/gi,
-                    function(match, expression, numDice, numSides)
+                scriptSourceLine = scriptSourceLine.replace(/\[\[([^\]]*[^\d\]][^\]]*)\]\]/gi,
+                    function(substring, rollExpression)
                     {
-                        numDice = parseInt(numDice);
-                        numSides = parseInt(numSides);
-
-                        var roll = 
+                        scriptSourceRolls.push(
                         {
-                            expression: expression,
-                            results:
-                            {
-                                rolls:
-                                [
-                                    {
-                                        dice: numDice,
-                                        results: [],
-                                        sides: numSides,
-                                    },
-                                ],
-                                total: 0,
-                            },
-                        };
-
-                        for (; numDice > 0; --numDice)
-                        {
-                            var rollValue = Math.floor(Math.random() * numSides) + 1;
-                            
-                            roll.results.rolls[0].results.push({ v: rollValue });
-                            roll.results.total += rollValue;
-                        }
-
-                        scriptSourceRolls.push(roll);
+                            expression: rollExpression,
+                            results: executeRoll(rollExpression),
+                        });
 
                         return "$[[" + (scriptSourceRolls.length - 1) + "]]";
                     });
@@ -421,6 +506,14 @@
                 document.write("<td>");
                 document.write(escapeHTML(scriptSourceLine));
 
+                if (scriptSourceLine != originalScriptSourceLine)
+                {
+                    document.write(" <span class='original'>" + escapeHTML(originalScriptSourceLine.trim()) + "</span>")
+                }
+
+                document.write("</td>");
+                document.write("</tr>");
+
                 var msg =
                 {
                     type: "api",
@@ -431,22 +524,21 @@
                 };
 
                 eventHandlers["chat:message"](msg);
-
-                if (scriptSourceLine != originalScriptSourceLine)
-                {
-                    document.write(" <span class='original'>" + escapeHTML(originalScriptSourceLine.trim()) + "</span>")
-                }
-
-                document.write("</td>");
-                document.write("</tr>");
             }
 
-            for (var message of messages)
+            while (processes.length > 0)
             {
+                var process = processes.shift();
+
                 document.write("<tr>");
-                document.write("<td class='lineno'>output</td>");
-                document.write("<td>" + message + "</td>");
+                document.write("<td class='lineno'>" + process.type + "</td>");
+                document.write("<td>" + process.message + "</td>");
                 document.write("</tr>");
+
+                if (process.execute)
+                {
+                    process.execute();
+                }
             }
 
             document.write("</table>");
