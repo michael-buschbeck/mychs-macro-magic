@@ -314,10 +314,7 @@
 
         MychScriptContext.prototype.chat = function(message)
         {
-            document.write("<tr>");
-            document.write("<td class='lineno'>chat</td>");
-            document.write("<td>" + message + "</td>");
-            document.write("</tr>");
+            sendChat(this.sender || "Mych's Macro Magic", message);
         };
 
         MychScriptContext.prototype.error = function(exception)
@@ -360,42 +357,47 @@
             attributes[attributeName].max = attributeValue;
         }
 
-        MychScriptContext.prototype.$rollWithCallback = function(rollExpression, rollCallback)
+        function sendChat(sender, message, callback, options)
         {
-            var context = this;
+            var results = [];
 
-            var sendChatCallback = function(msgs)
+            var rollRegExp = /^\/roll\s+(?<expression>.+)/i;
+            var rollMatch = rollRegExp.exec(message);
+
+            if (rollMatch)
             {
-                var rollResultsMsg = msgs.filter(msg => msg.type == "rollresult")[0];
-                
-                if (!rollResultsMsg)
-                {
-                    console.log("No roll result found in sendChat() results:", msgs);
-                    return;
-                }
-
-                var rollResults = JSON.parse(rollResultsMsg.content);
-                rollCallback(context.$decorateRoll({ results: rollResults, expression: rollResultsMsg.origRoll }));
-            };
-
-            sendChatRollWithCallback(rollExpression, sendChatCallback);
-        }
-
-        function sendChatRollWithCallback(rollExpression, callback)
-        {
-            var sendChatProcess = function()
-            {
+                var rollExpression = rollMatch.groups.expression;
                 var rollResults = executeRoll(rollExpression);
 
-                document.write("<tr>");
-                document.write("<td class='lineno'>roll</td>");
-                document.write("<td>" + rollExpression + " \u2192 " + rollResults.total + "</td>");
-                document.write("</tr>");
+                results.push({ who: sender, type: "rollresult", content: JSON.stringify(rollResults), origRoll: rollExpression });
+            }
+            else
+            {
+                results.push({ who: sender, type: "general", content: message });
+            }
 
-                callback([{ type: "rollresult", content: JSON.stringify(rollResults), origRoll: rollExpression }]);
-            };
+            if (callback)
+            {
+                var sendChatProcess = function()
+                {
+                    callback(results);
+                }
 
-            processes.push({ label: "/roll " + rollExpression, execute: sendChatProcess });
+                processes.push(
+                {
+                    type: "process",
+                    message: message,
+                    execute: sendChatProcess,
+                });
+            }
+            else
+            {
+                processes.push(
+                {
+                    type: "chat",
+                    message: message,
+                });
+            }
         }
 
         function executeRoll(rollExpression)
@@ -511,11 +513,14 @@
                 var process = processes.shift();
 
                 document.write("<tr>");
-                document.write("<td class='lineno'>process</td>");
-                document.write("<td>" + escapeHTML(process.label) + "</td>");
+                document.write("<td class='lineno'>" + process.type + "</td>");
+                document.write("<td>" + process.message + "</td>");
                 document.write("</tr>");
 
-                process.execute();
+                if (process.execute)
+                {
+                    process.execute();
+                }
             }
 
             document.write("</table>");
