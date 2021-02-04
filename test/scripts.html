@@ -321,6 +321,33 @@
                 "!mmm     do syntax error",
                 "!mmm end script",
             ],
+            [
+                "!mmm script",
+                "!mmm     combine chat",
+                "!mmm         chat: correct",
+                "!mmm         exit script",
+                "!mmm         chat: broken",
+                "!mmm     end combine",
+                "!mmm end script",
+            ],
+            [
+                "!mmm script",
+                "!mmm     combine chat",
+                "!mmm         chat: correct",
+                "!mmm         exit script if 1 == 2",
+                "!mmm         chat: correct",
+                "!mmm     end combine",
+                "!mmm end script",
+            ],
+            [
+                "!mmm script",
+                "!mmm     combine chat",
+                "!mmm         chat: correct",
+                "!mmm         exit script if 1 != 2",
+                "!mmm         chat: broken",
+                "!mmm     end combine",
+                "!mmm end script",
+            ],
         ];
 
         var processes = [];

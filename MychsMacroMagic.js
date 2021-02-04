@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.6.0";
+const MMM_VERSION = "1.7.0";
 
 on("chat:message", function(msg)
 {
@@ -1091,6 +1091,57 @@ class MychScript
                     yield* nestedScript.execute();
                 }
             }
+        },
+
+        exit:
+        {
+            tokens:
+            {
+                exitscript:   [ "script" ],
+                exitscriptif: [ "script", "if",  /(?<expression>.+)/ ],
+            },
+
+            parse: function(args)
+            {
+                if (args.expression)
+                {
+                    try
+                    {
+                        this.definition.expressionOffset = args.expression.offset;
+                        this.definition.expression = new MychExpression(args.expression.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    }
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*()
+            {
+                if (this.definition.expression)
+                {
+                    var exitCondition;
+
+                    try
+                    {
+                        exitCondition = yield* this.definition.expression.evaluate(this.variables, this.context);
+                    }
+                    catch (exception)
+                    {
+                        branchScript.rethrowExpressionError("execute", exception, branchScript.definition.expressionOffset);
+                    }
+
+                    if (!MychExpression.coerceBoolean(exitCondition))
+                    {
+                        return;
+                    }
+                }
+
+                yield undefined;
+            },
         },
 
         if:
