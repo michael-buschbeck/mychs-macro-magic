@@ -116,6 +116,18 @@ You can use /me, /whisper, and any other Roll20 chat directives in a **chat** co
 | 2    | _!mmm_ **chat:** Attacking with [[1d20+12]] | ***Finn:*** Attacking with `14`
 | 3    | _!mmm_ **chat:** My half-life is ${getattr(sender, "HP") / 2}. | ***Finn:*** My half-life is 11.5.
 
+If the template is completely absent, the **chat** command sends a line break instead of just nothing. Together with **combine chat** (described below) you can use this to add some visual structure to your chat messages without going to the extreme of just sending several separate messages (oh my!):
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **combine chat**
+| 2    | _!mmm_     **chat:** Attack with [[1d20+12]] | *(queue message part)*
+| 3    | _!mmm_     **chat:** | *(queue line break)*
+| 4    | _!mmm_     **chat:** Here's [[1d6]] damage for you just in case | *(queue message part)*
+| 5    | _!mmm_     **chat:** | *(queue line break)*
+| 6    | _!mmm_     **chat:** Sorry for the trouble! | *(queue message part)*
+| 7    | _!mmm_ **end combine** | ***Finn:*** Attack with `23`<br>Here's `2` damage for you just in case<br>Sorry for the trouble!
+
 
 ### _!mmm_ **combine chat** [...] **end combine**
 
@@ -504,12 +516,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.7.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.8.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.8.0   | 2021-02-05 | Support line breaks in chat messages
 | 1.7.0   | 2021-02-05 | Add `exit` command to exit a block or the entire script
 | 1.6.0   | 2021-02-04 | Add `roll(expr)` to run a roll through Roll20's dice engine
 | 1.5.0   | 2021-02-01 | Add string concatenation operator
