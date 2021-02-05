@@ -222,7 +222,7 @@ The most common use of this would be to exit an entire script early to avoid hav
 | 8    | _!mmm_     **chat:** Take these [[1d6+1]] points of damage, despicable wretch! | *(not executed)*
 | 9    | _!mmm_ **end script**
 
-But you can actually exit *any* block, not just **script** blocks:
+But you can actually exit any block, not just **script** blocks:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
@@ -241,7 +241,7 @@ But you can actually exit *any* block, not just **script** blocks:
 | 13   | _!mmm_     **end if**
 | 14   | _!mmm_ **end script**
 
-This applies to *any* kind of block, even **if** blocks, though it might be considered bad taste (or at least extremely unorthodox) to exit **if** blocks. (But if it works, it works, right?)
+This really applies to any kind of block, even **if** blocks, though it might be considered bad taste – or at least extremely unorthodox and frowned-upon by traditional programmers – to exit **if** blocks. Plus, it might look like you're stuttering if you're using the **exit *block* if** variant described below. But if it works, it works... right?
 
 
 ### _!mmm_ **exit *block*** **if** *expression*
