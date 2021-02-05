@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.7.1";
+const MMM_VERSION = "1.8.0";
 
 on("chat:message", function(msg)
 {
@@ -1341,18 +1341,25 @@ class MychScript
 
         chat:
         {
-            tokens: [ ":", /(?<template>.+)/ ],
+            tokens:
+            {
+                newline:  [ ":" ],
+                template: [ ":", /(?<template>.+)/ ],
+            },
 
             parse: function(args)
             {
-                try
+                if (args.template)
                 {
-                    this.definition.templateOffset = args.template.offset;
-                    this.definition.template = new MychTemplate(args.template.value);
-                }
-                catch (exception)
-                {
-                    this.rethrowTemplateError("parse", exception, this.definition.templateOffset);
+                    try
+                    {
+                        this.definition.templateOffset = args.template.offset;
+                        this.definition.template = new MychTemplate(args.template.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowTemplateError("parse", exception, this.definition.templateOffset);
+                    }
                 }
 
                 this.complete = true;
@@ -1362,13 +1369,20 @@ class MychScript
             {
                 var message;
 
-                try
+                if (this.definition.template)
                 {
-                    message = yield* this.definition.template.evaluate(this.variables, this.context);
+                    try
+                    {
+                        message = yield* this.definition.template.evaluate(this.variables, this.context);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowTemplateError("execute", exception, this.definition.templateOffset);
+                    }
                 }
-                catch (exception)
+                else
                 {
-                    this.rethrowTemplateError("execute", exception, this.definition.templateOffset);
+                    message = "<br/>";
                 }
 
                 if (this.variables.chat)
