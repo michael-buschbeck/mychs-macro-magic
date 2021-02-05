@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.6.0";
+const MMM_VERSION = "1.7.0";
 
 on("chat:message", function(msg)
 {
@@ -1047,6 +1047,14 @@ class MychScriptError
     }
 }
 
+class MychScriptExit
+{
+    constructor(type)
+    {
+        this.type = type;
+    }
+}
+
 class MychScript
 {
     constructor(variables)
@@ -1086,11 +1094,67 @@ class MychScript
         {
             execute: function*()
             {
-                for (var nestedScript of this.nestedScripts)
-                {
-                    yield* nestedScript.execute();
-                }
+                var nestedScriptExit = yield* this.executeNestedScripts();
+                return this.propagateExitOnReturn(nestedScriptExit);
             }
+        },
+
+        exit:
+        {
+            tokens:
+            {
+                exit:   [ /(?<type>\w+)/ ],
+                exitif: [ /(?<type>\w+)/, "if", /(?<expression>.+)/ ],
+            },
+
+            parse: function(args, parentScripts)
+            {
+                this.definition.type = args.type.value;
+
+                if (!parentScripts.some(script => script.type == this.definition.type))
+                {
+                    throw new MychScriptError("parse", "unexpected block exit", this.source, args.type.offset);
+                }
+
+                if (args.expression)
+                {
+                    try
+                    {
+                        this.definition.expressionOffset = args.expression.offset;
+                        this.definition.expression = new MychExpression(args.expression.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    }
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*()
+            {
+                if (this.definition.expression)
+                {
+                    var exitCondition;
+
+                    try
+                    {
+                        exitCondition = yield* this.definition.expression.evaluate(this.variables, this.context);
+                    }
+                    catch (exception)
+                    {
+                        branchScript.rethrowExpressionError("execute", exception, branchScript.definition.expressionOffset);
+                    }
+
+                    if (!MychExpression.coerceBoolean(exitCondition))
+                    {
+                        return;
+                    }
+                }
+
+                return new MychScriptExit(this.definition.type);
+            },
         },
 
         if:
@@ -1139,21 +1203,15 @@ class MychScript
                     {
                         var nextBranch = this.definition.branches[branchIndex + 1] || elseBranch || { nestedScriptOffset: this.nestedScripts.length };
 
-                        for (var nestedScript of this.nestedScripts.slice(branch.nestedScriptOffset, nextBranch.nestedScriptOffset))
-                        {
-                            yield* nestedScript.execute();
-                        }
-
-                        return;
+                        var branchNestedScriptExit = yield* this.executeNestedScripts(branch.nestedScriptOffset, nextBranch.nestedScriptOffset);
+                        return this.propagateExitOnReturn(branchNestedScriptExit);
                     }
                 }
 
                 if (elseBranch)
                 {
-                    for (var nestedScript of this.nestedScripts.slice(elseBranch.nestedScriptOffset))
-                    {
-                        yield* nestedScript.execute();
-                    }
+                    var elseNestedScriptExit = yield* this.executeNestedScripts(elseBranch.nestedScriptOffset);
+                    return this.propagateExitOnReturn(elseNestedScriptExit);
                 }
             },
         },
@@ -1354,6 +1412,8 @@ class MychScript
                     }
                 }
 
+                var combineNestedScriptExit;
+
                 var messages = [];
                 var prevChat = this.variables.chat;
 
@@ -1364,10 +1424,7 @@ class MychScript
                         messages.push(message);
                     };
 
-                    for (var nestedScript of this.nestedScripts)
-                    {
-                        yield* nestedScript.execute();
-                    }
+                    combineNestedScriptExit = yield* this.executeNestedScripts();
                 }
                 finally
                 {
@@ -1382,6 +1439,8 @@ class MychScript
                 {
                     this.context.chat(messages.join(separator));
                 }
+
+                return this.propagateExitOnReturn(combineNestedScriptExit);
             },
         },
     };
@@ -1576,6 +1635,31 @@ class MychScript
 
             return nestedScript;
         }
+    }
+
+    *executeNestedScripts(startIndex = undefined, endIndex = undefined)
+    {
+        for (var nestedScript of this.nestedScripts.slice(startIndex, endIndex))
+        {
+            var nestedScriptExit = yield* nestedScript.execute();
+
+            if (nestedScriptExit)
+            {
+                return nestedScriptExit;
+            }
+        }
+
+        return undefined;
+    }
+
+    propagateExitOnReturn(nestedScriptExit)
+    {
+        if (nestedScriptExit && nestedScriptExit.type == this.type)
+        {
+            return undefined;
+        }
+
+        return nestedScriptExit;
     }
 
     startExecute()

@@ -204,6 +204,65 @@ Evaluates an expression. This is useful if the expression has side effects, e.g.
 | 3    | _!mmm_ **do** chat("/me likes chatting the hard way") | ***Finn likes chatting the hard way***
 
 
+### _!mmm_ **exit *block***
+
+Stops executing commands in this block and instead returns control to the command following the next **end *block*** – or no further command at all in case of **exit script**.
+
+The most common use of this would be to exit an entire script early to avoid having to wrap most of it in (yet another) **if** block:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **chat:** Attacking with [[1d20+12]] | ***Finn:*** Attacking with `17`
+| 3    | _!mmm_     **if** $[[0]] < 20 | *(check attack success)*
+| 4    | _!mmm_         **exit script** | *(no success – stop script)*
+| 5    | _!mmm_     **end if**
+| 6    | _!mmm_     **chat:** And it's a hit! | *(not executed)*
+| 7    | _!mmm_     **chat:** /me swings his longsword aptly and with elegance. | *(not executed)*
+| 8    | _!mmm_     **chat:** Take these [[1d6+1]] points of damage, despicable wretch! | *(not executed)*
+| 9    | _!mmm_ **end script**
+
+But you can actually exit any block, not just **script** blocks:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **combine chat**
+| 3    | _!mmm_         **chat:** Attacking with [[1d20+12]] | *(queue message part with roll)*
+| 4    | _!mmm_         **if** not iscritical($[[0]]) | *(check critical attack success)*
+| 5    | _!mmm_             **exit combine** | *(no critical success – stop bragging)*
+| 6    | _!mmm_         **end if**
+| 7    | _!mmm_         **chat:** in a fashion not yet seen by the world! | *(not executed)*
+| 8    | _!mmm_         **chat:** Volumes will be written about this! | *(not executed)*
+| 9    | _!mmm_         **chat:** Entire generations will model themselves after Finn! | *(not executed)*
+| 10   | _!mmm_     **end combine** | ***Finn:*** Attacking with `23`
+| 11   | _!mmm_     **if** $[[0]] >= 20 | *(check attack success)*
+| 12   | _!mmm_         **chat:** Anyway, here's [[1d6+1]] points of damage. | ***Finn:*** Anyway, here's `3` points of damage.
+| 13   | _!mmm_     **end if**
+| 14   | _!mmm_ **end script**
+
+This really applies to any kind of block, even **if** blocks, though it might be considered bad taste – or at least extremely unorthodox and frowned-upon by traditional programmers – to exit **if** blocks. Plus, it might look like you're stuttering if you're using the **exit *block* if** variant described below. But if it works, it works... right?
+
+
+### _!mmm_ **exit *block*** **if** *expression*
+
+Shorthand for doing **exit *block*** inside an **if** block because that's a pretty common thing to do. This:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **exit script if** attackRoll < 20 | *(exit script if attack failed)*
+
+...works exactly like this:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **if** attackRoll < 20 | *(check if attack failed)*
+| 2    | _!mmm_     **exit script** | *(if so, exit script)*
+| 3    | _!mmm_ **end if**
+
+Just use whichever you prefer.
+
+
 
 ## Expressions
 
@@ -445,12 +504,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.6.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.7.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.7.0   | 2021-02-05 | Add `exit` command to exit a block or the entire script
 | 1.6.0   | 2021-02-04 | Add `roll(expr)` to run a roll through Roll20's dice engine
 | 1.5.0   | 2021-02-01 | Add string concatenation operator
 | 1.4.0   | 2021-02-01 | Provide access to game board distance metrics
