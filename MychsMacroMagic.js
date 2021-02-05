@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.7.0";
+const MMM_VERSION = "1.7.1";
 
 on("chat:message", function(msg)
 {
@@ -40,43 +40,53 @@ on("chat:message", function(msg)
     player.context.sender = msg.who;
     player.context.playerid = msg.playerid;
 
-    var scriptMatch = /^!mmm\b(\s*|\s(?<command>.+))$/.exec(msg.content);
-
-    if (msg.type != "api" || !scriptMatch || !scriptMatch.groups.command)
+    if (msg.type != "api")
     {
         return;
     }
 
-    if (!player.script)
-    {
-        player.script = new MychScript(new MychScriptVariables());
-    }
+    var msgContentLines = msg.content.split(/<br\/>\s+/);
 
-    try
+    for (var msgContentLine of msgContentLines)
     {
-        var scriptCommand = scriptMatch.groups.command;
-        var scriptAdded = player.script.addCommand(scriptCommand, player.context);
+        var scriptMatch = /^!mmm\b(\s*|\s(?<command>.+))$/.exec(msgContentLine);
 
-        if (scriptAdded.type == "script")
+        if (!scriptMatch || !scriptMatch.groups.command)
         {
-            player.script = scriptAdded;
-        }
-    }
-    catch (exception)
-    {
-        player.context.error(exception);
-        player.exception = exception;
-    }
-
-    if (player.script.complete)
-    {
-        if (!player.exception)
-        {
-            player.script.startExecute();
+            continue;
         }
 
-        player.script = undefined;
-        player.exception = undefined;
+        if (!player.script)
+        {
+            player.script = new MychScript(new MychScriptVariables());
+        }
+
+        try
+        {
+            var scriptCommand = scriptMatch.groups.command;
+            var scriptAdded = player.script.addCommand(scriptCommand, player.context);
+
+            if (scriptAdded.type == "script")
+            {
+                player.script = scriptAdded;
+            }
+        }
+        catch (exception)
+        {
+            player.context.error(exception);
+            player.exception = exception;
+        }
+
+        if (player.script.complete)
+        {
+            if (!player.exception)
+            {
+                player.script.startExecute();
+            }
+
+            player.script = undefined;
+            player.exception = undefined;
+        }
     }
 });
 

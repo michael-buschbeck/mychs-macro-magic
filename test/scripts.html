@@ -381,6 +381,15 @@
                 "!mmm     do syntax error",
                 "!mmm end script",
             ],
+            [
+                "!mmm script",
+                "!mmm     combine chat",
+                "!mmm         chat: {{foo=" + "<br/>\n" +
+                "!mmm         chat: bar" + "<br/>\n" +
+                "!mmm         chat: baz}} quux",
+                "!mmm     end combine",
+                "!mmm end script",
+            ],
         ];
 
         var processes = [];
