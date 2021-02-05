@@ -1047,6 +1047,14 @@ class MychScriptError
     }
 }
 
+class MychScriptExit
+{
+    constructor(type)
+    {
+        this.type = type;
+    }
+}
+
 class MychScript
 {
     constructor(variables)
@@ -1086,10 +1094,8 @@ class MychScript
         {
             execute: function*()
             {
-                for (var nestedScript of this.nestedScripts)
-                {
-                    yield* nestedScript.execute();
-                }
+                var nestedScriptExit = yield* this.executeNestedScripts();
+                return this.propagateExitOnReturn(nestedScriptExit);
             }
         },
 
@@ -1097,12 +1103,19 @@ class MychScript
         {
             tokens:
             {
-                exitscript:   [ "script" ],
-                exitscriptif: [ "script", "if",  /(?<expression>.+)/ ],
+                exit:   [ /(?<type>\w+)/ ],
+                exitif: [ /(?<type>\w+)/, "if", /(?<expression>.+)/ ],
             },
 
-            parse: function(args)
+            parse: function(args, parentScripts)
             {
+                this.definition.type = args.type.value;
+
+                if (!parentScripts.some(script => script.type == this.definition.type))
+                {
+                    throw new MychScriptError("parse", "unexpected block exit", this.source, args.type.offset);
+                }
+
                 if (args.expression)
                 {
                     try
@@ -1140,7 +1153,7 @@ class MychScript
                     }
                 }
 
-                yield undefined;
+                return new MychScriptExit(this.definition.type);
             },
         },
 
@@ -1190,21 +1203,15 @@ class MychScript
                     {
                         var nextBranch = this.definition.branches[branchIndex + 1] || elseBranch || { nestedScriptOffset: this.nestedScripts.length };
 
-                        for (var nestedScript of this.nestedScripts.slice(branch.nestedScriptOffset, nextBranch.nestedScriptOffset))
-                        {
-                            yield* nestedScript.execute();
-                        }
-
-                        return;
+                        var branchNestedScriptExit = yield* this.executeNestedScripts(branch.nestedScriptOffset, nextBranch.nestedScriptOffset);
+                        return this.propagateExitOnReturn(branchNestedScriptExit);
                     }
                 }
 
                 if (elseBranch)
                 {
-                    for (var nestedScript of this.nestedScripts.slice(elseBranch.nestedScriptOffset))
-                    {
-                        yield* nestedScript.execute();
-                    }
+                    var elseNestedScriptExit = yield* this.executeNestedScripts(elseBranch.nestedScriptOffset);
+                    return this.propagateExitOnReturn(elseNestedScriptExit);
                 }
             },
         },
@@ -1405,6 +1412,8 @@ class MychScript
                     }
                 }
 
+                var combineNestedScriptExit;
+
                 var messages = [];
                 var prevChat = this.variables.chat;
 
@@ -1415,10 +1424,7 @@ class MychScript
                         messages.push(message);
                     };
 
-                    for (var nestedScript of this.nestedScripts)
-                    {
-                        yield* nestedScript.execute();
-                    }
+                    combineNestedScriptExit = yield* this.executeNestedScripts();
                 }
                 finally
                 {
@@ -1433,6 +1439,8 @@ class MychScript
                 {
                     this.context.chat(messages.join(separator));
                 }
+
+                return this.propagateExitOnReturn(combineNestedScriptExit);
             },
         },
     };
@@ -1627,6 +1635,31 @@ class MychScript
 
             return nestedScript;
         }
+    }
+
+    *executeNestedScripts(startIndex = undefined, endIndex = undefined)
+    {
+        for (var nestedScript of this.nestedScripts.slice(startIndex, endIndex))
+        {
+            var nestedScriptExit = yield* nestedScript.execute();
+
+            if (nestedScriptExit)
+            {
+                return nestedScriptExit;
+            }
+        }
+
+        return undefined;
+    }
+
+    propagateExitOnReturn(nestedScriptExit)
+    {
+        if (nestedScriptExit && nestedScriptExit.type == this.type)
+        {
+            return undefined;
+        }
+
+        return nestedScriptExit;
     }
 
     startExecute()
