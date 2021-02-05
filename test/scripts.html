@@ -52,6 +52,10 @@
             padding-right: 1em;
         }
 
+        td.output {
+            white-space: normal;
+        }
+
         span.original {
             color: gray;
             font-family: Calibri, sans-serif;
@@ -390,6 +394,15 @@
                 "!mmm     end combine",
                 "!mmm end script",
             ],
+            [
+                "!mmm script",
+                "!mmm     combine chat",
+                "!mmm         chat: first paragraph",
+                "!mmm         chat:",
+                "!mmm         chat: second paragraph",
+                "!mmm     end combine",
+                "!mmm end script",
+            ],
         ];
 
         var processes = [];
@@ -410,7 +423,7 @@
 
             document.write("<tr>");
             document.write("<td class='lineno'>error</td>");
-            document.write("<td><span class='error'>" + escapeHTML(exception) + "</span></td>")
+            document.write("<td class='output'><span class='error'>" + escapeHTML(exception) + "</span></td>")
             document.write("</tr>")
         };
 
@@ -601,7 +614,7 @@
 
                 document.write("<tr>");
                 document.write("<td class='lineno'>" + process.type + "</td>");
-                document.write("<td>" + process.message + "</td>");
+                document.write("<td class='output'>" + process.message + "</td>");
                 document.write("</tr>");
 
                 if (process.execute)
