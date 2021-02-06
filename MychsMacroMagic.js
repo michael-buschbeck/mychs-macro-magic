@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.8.0";
+const MMM_VERSION = "1.9.0";
 
 on("chat:message", function(msg)
 {
@@ -98,6 +98,8 @@ class MychScriptContext
     playerid = undefined;
     sender = undefined;
 
+    pi = Math.PI;
+
     floor(value)
     {
         return Math.floor(MychExpression.coerceNumber(value));
@@ -169,6 +171,38 @@ class MychScriptContext
         }
 
         return maxValue;
+    }
+
+    sin(degrees)
+    {
+        return Math.sin((Math.PI / 180) * MychExpression.coerceNumber(degrees));
+    }
+
+    cos(degrees)
+    {
+        return Math.cos((Math.PI / 180) * MychExpression.coerceNumber(degrees));
+    }
+
+    tan(degrees)
+    {
+        return Math.tan((Math.PI / 180) * MychExpression.coerceNumber(degrees));
+    }
+
+    asin(x)
+    {
+        return (180 / Math.PI) * Math.asin(MychExpression.coerceNumber(x));
+    }
+
+    acos(x)
+    {
+        return (180 / Math.PI) * Math.acos(MychExpression.coerceNumber(x));
+    }
+
+    atan(y, x = undefined)
+    {
+        return (180 / Math.PI) * (x == undefined
+            ? Math.atan(MychExpression.coerceNumber(x))
+            : Math.atan2(MychExpression.coerceNumber(y), MychExpression.coerceNumber(x)));
     }
 
     $decorateRoll(roll)
@@ -700,6 +734,7 @@ class MychScriptContext
 
             case "left":
             case "top":
+            case "rotation":
             {
                 return this.$canView(obj);
             }
@@ -900,6 +935,16 @@ class MychScriptContext
             }
             break;
 
+            case "rotation":
+            {
+                if (!max)
+                {
+                    lookupObj = token;
+                    lookupKey = "rotation";
+                }
+            }
+            break;
+
             default:
             {
                 if (character)
@@ -1000,6 +1045,17 @@ class MychScriptContext
                 {
                     updateObj = token;
                     updateKey = attributeName;
+                    updateVal = MychExpression.coerceNumber(attributeValue);
+                }
+            }
+            break;
+
+            case "rotation":
+            {
+                if (!max)
+                {
+                    updateObj = token;
+                    updateKey = "rotation";
                     updateVal = MychExpression.coerceNumber(attributeValue);
                 }
             }
