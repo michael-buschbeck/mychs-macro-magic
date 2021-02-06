@@ -17,6 +17,7 @@ You're here to yell at dice, not at macros, after all – right?
 
 - [Scripts](#scripts) – [script commands](#mmm-script--end-script)
 - [Expressions](#expressions) – [literals](#literals), [variables](#variables), [attributes](#attributes), [operators](#operators), [functions](#functions)
+- [Recipes](#recipes)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [What's new?](#versions)
 - [Copyright & License](#copyright--license)
@@ -441,6 +442,11 @@ If you want to calculate the square root of something, you can use the power-of 
 | setattr(*name\|id*, *attr*, *val*)                 | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
 | setattrmax(*name\|id*, *attr*, *val*)              | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
 
+
+## Recipes
+
+### Using findattr() to determine character sheet attribute names
+
 The `findattr()` function helps you determine the attribute name to query (or update) anything that's in an extensible table in a character sheet.
 
 These attribute names always start with `repeating_`... followed by a table name (e.g. `attack`), followed by a soup of random characters (the row ID), and finally the name of column you're interested in (e.g. `damage`). Official [Roll20 guidance](https://help.roll20.net/hc/en-us/articles/360037256794-Macros#Macros-ReferencingRepeatingAttributes) says to break out your HTML debugger and dive into the character sheet's HTML source to figure out these IDs – but that's a pants-on-fire–grade way to have to go about this.
@@ -457,6 +463,28 @@ With `findattr()` you can do all this without leaving the safe comfort of your c
 What's happening in the last two lines above is that you're *selecting* one of the rows based on a condition: In this case, you want to get to the `damage` attribute of the `attack` table row that has the value `Slingshot` in its `weapon` column – so, the damage dealt by your slingshot. You can include several pairs of *column*, *value* to narrow down your selection if necessary.
 
 Unlike most other things in MMM, table names, column names, and column values are case-insensitive in the `findattr()` function.
+
+
+### Using atan() to find out how to orient a token towards another token
+
+The `atan()` function is particularly useful when you want to figure out how one token is *oriented* towards another.
+
+Here is a script that will rotate the *selected* token so that it visually faces a *target* token (which you'll be prompted to click when the script runs):
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set** selectedToken = "@{selected\|token_id}" | *(get selected token – will be rotated)*
+| 3    | _!mmm_     **set** targetToken = "@{target\|Target\|token_id}" | *(get target token – selected token will be oriented facing it)*
+| 4    | _!mmm_     **set** targetOffsetRight = getattr(targetToken, "left") - getattr(selectedToken, "left") | *(calculate horizontal offset of target from selected)*
+| 5    | _!mmm_     **set** targetOffsetDown = getattr(targetToken, "top") - getattr(selectedToken, "top") | *(calculate vertical offset of target from selected)*
+| 6    | _!mmm_     **set** rotation = atan(targetOffsetDown, targetOffsetRight) | *(calculate rotation from selected towards target)*
+| 7    | _!mmm_     **do** setattr(selectedToken, "rotation", rotation - 90) | *(apply rotation to selected – assume token visually faces down, not right)*
+| 8    | _!mmm_ **end script**
+
+The mysterious `90` in the `setattr()` line compensates for how the token *looks* like it's facing when it's oriented at a `rotation` of zero degrees. If the token were visually facing exactly to the right, there wouldn't be a need for that. However, since many tokens are designed to face *downwards* rather than to the right, you'd first have to rotate it counterclockwise by 90 degrees (there!) to make the token face to the right as a starting point for rotating it towards the target.
+
+If you're mathematically inclined, it may seem odd to you that `rotation` and `atan()` are measuring an angle in *clockwise* degrees. (The common maths convention is to go counterclockwise.) The reason is that the game board's vertical axis goes *down* rather than *up* like a proper mathematical Y axis would, but the horizontal axis still goes *right* exactly like an X axis should – that makes the whole board appear mirrored from a maths point of view.
 
 
 
