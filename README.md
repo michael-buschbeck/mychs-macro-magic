@@ -361,8 +361,9 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `bar1`            | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
 | `bar2`            | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
 | `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
-| `left`            | `350` / `1750`       | write  | read  | Token's X coordinate on the table       
-| `top`             | `350` / `1750`       | write  | read  | Token's Y coordinate on the table       
+| `left`            | `350` / `1750`       | write  | read  | Token's X coordinate on the table
+| `top`             | `350` / `1750`       | write  | read  | Token's Y coordinate on the table
+| `rotation`        | `45`                 | write  |       | Token's clockwise rotation in degrees
 | *(anything else)* |                      | write  | write | Character attribute – e.g. `HP` or any custom attribute
 
 But keep in mind that just because an attribute *can be accessed* per this table, that doesn't mean *you* can access it.
