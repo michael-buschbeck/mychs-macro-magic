@@ -331,6 +331,7 @@ There are also a few special *context variables* that are pre-set for you:
 | `playerid` |          | Player ID (not character ID!) of the player who sent the command
 | `sender`   | "Finn"   | Player or character name who sent the command – subject to the chat "As" drop-down box
 | `version`  | "1.0.1"  | [Semantic version number](https://semver.org) of the MMM scripting engine
+| `pi`       | 3.141... | [Ratio of a circle's circumference to its diameter](https://en.wikipedia.org/wiki/Pi) – useful for geometric calculations
 
 You can *shadow* these special context variables by setting a custom variable with the same name (and your custom variable will then take precedence for the remainder of the script), but you can't truly change them.
 
@@ -406,13 +407,20 @@ If you want to calculate the square root of something, you can use the power-of 
 
 | Syntax                                             | Category  | Example | Description
 | -------------------------------------------------- | --------- | ------- | -----------
-| floor(*a*)                                         | Math      | floor(1.7) = 1 | Return the greatest integer that's less than or equal to *a*
-| round(*a*)                                         | Math      | round(1.5) = 2 | Round *a* to the nearest integer
-| ceil(*a*)                                          | Math      | ceil(1.3) = 2  | Return the smallest integer that's greater than or equal to *a*
-| abs(*a*)                                           | Math      | abs(-5) = 5    | Return the absolute value of *a*
-| min(...)                                           | Math      | min(3,1,2) = 1 | Return the numerically smallest value – any number of arguments allowed
-| max(...)                                           | Math      | max(3,1,2) = 3 | Return the numerically greatest value – any number of arguments allowed
-| len(*str*)                                         | String    | len("foo") = 3 | Return the number of character in string *str*
+| floor(*a*)                                         | Math      | floor(1.7) = 1   | Return the greatest integer that's less than or equal to *a*
+| round(*a*)                                         | Math      | round(1.5) = 2   | Round *a* to the nearest integer
+| ceil(*a*)                                          | Math      | ceil(1.3) = 2    | Return the smallest integer that's greater than or equal to *a*
+| abs(*a*)                                           | Math      | abs(-5) = 5      | Return the absolute value of *a*
+| min(...)                                           | Math      | min(3,1,2) = 1   | Return the numerically smallest value – any number of arguments allowed
+| max(...)                                           | Math      | max(3,1,2) = 3   | Return the numerically greatest value – any number of arguments allowed
+| sin(*degrees*)                                     | Math      | sin(90) = 1      | Return the sine of *degrees*
+| cos(*degrees*)                                     | Math      | cos(90) = 0      | Return the cosine of *degrees*
+| tan(*degrees*)                                     | Math      | tan(45) = 1      | Return the tangent of *degrees*
+| asin(*x*)                                          | Math      | asin(1) = 90     | Return the angle (-90...+90 degrees) whose sine is *x*
+| acos(*x*)                                          | Math      | acos(0) = 90     | Return the angle (-90...+90 degrees) whose cosine is *x*
+| atan(*x*)                                          | Math      | atan(1) = 45     | Return the angle (-90...+90 degrees) whose tangent is *x*
+| atan(*down*, *right*)                              | Math      | atan(3,1) = 71.6 | Return the angle (-180...+180 degrees) required to rotate a rightward-facing object such that it will point toward something offset by *right* and *down* on the game board
+| len(*str*)                                         | String    | len("foo") = 3   | Return the number of character in string *str*
 | literal(*str*)                                     | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
 | highlight(*str*)                                   | String    |  | When output to chat, highlight string *str* with a pretty box
 | highlight(*str*, *type*)                           | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
@@ -516,12 +524,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.8.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.9.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.9.0   | 2021-02-06 | Support `rotation` token attribute and trigonometric functions
 | 1.8.0   | 2021-02-05 | Support line breaks in chat messages
 | 1.7.0   | 2021-02-05 | Add `exit` command to exit a block or the entire script
 | 1.6.0   | 2021-02-04 | Add `roll(expr)` to run a roll through Roll20's dice engine
