@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.9.0";
+const MMM_VERSION = "1.9.1";
 
 on("chat:message", function(msg)
 {
@@ -806,8 +806,8 @@ class MychScriptContext
         if (!characterOrToken)
         {
             characterOrToken =
-                findObjs({ type: "character", name: nameOrId }).filter(obj => this.$canViewAttribute(obj, "name"))[0] ||
-                findObjs({ type: "graphic", name: nameOrId }).filter(obj => this.$canViewAttribute(obj, "name"))[0];
+                findObjs({ type: "character", name: nameOrId }, { caseInsensitive: true }).filter(obj => this.$canViewAttribute(obj, "name"))[0] ||
+                findObjs({ type: "graphic", name: nameOrId }, { caseInsensitive: true }).filter(obj => this.$canViewAttribute(obj, "name"))[0];
         }
 
         if (!characterOrToken)
@@ -949,7 +949,7 @@ class MychScriptContext
             {
                 if (character)
                 {
-                    lookupObj = findObjs({ type: "attribute", characterid: character.id, name: attributeName })[0];
+                    lookupObj = findObjs({ type: "attribute", characterid: character.id, name: attributeName }, { caseInsensitive: true })[0];
                     lookupKey = (max ? "max" : "current");
                 }
             }
@@ -1066,7 +1066,7 @@ class MychScriptContext
                 if (character && this.$canControlAttribute(character, attributeName))
                 {
                     updateObj =
-                        findObjs({ type: "attribute", characterid: character.id, name: attributeName })[0] ||
+                        findObjs({ type: "attribute", characterid: character.id, name: attributeName }, { caseInsensitive: true })[0] ||
                         createObj("attribute", { characterid: character.id, name: attributeName });
 
                     updateKey = (max ? "max" : "current");
