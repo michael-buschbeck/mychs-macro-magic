@@ -465,9 +465,9 @@ What's happening in the last two lines above is that you're *selecting* one of t
 Unlike most other things in MMM, table names, column names, and column values are case-insensitive in the `findattr()` function.
 
 
-### Using atan() to find out how to orient a token towards another token
+### Using atan() to rotate a token to face another token
 
-The `atan()` function is particularly useful when you want to figure out how one token is *oriented* towards another.
+The `atan()` function is useful when you want to figure out how one token is *oriented* towards another.
 
 Here is a script that will rotate the *selected* token so that it visually faces a *target* token (which you'll be prompted to click when the script runs):
 
@@ -479,12 +479,12 @@ Here is a script that will rotate the *selected* token so that it visually faces
 | 4    | _!mmm_     **set** targetOffsetRight = getattr(targetToken, "left") - getattr(selectedToken, "left") | *(calculate horizontal offset of target from selected)*
 | 5    | _!mmm_     **set** targetOffsetDown = getattr(targetToken, "top") - getattr(selectedToken, "top") | *(calculate vertical offset of target from selected)*
 | 6    | _!mmm_     **set** rotation = atan(targetOffsetDown, targetOffsetRight) | *(calculate rotation from selected towards target)*
-| 7    | _!mmm_     **do** setattr(selectedToken, "rotation", rotation - 90) | *(apply rotation to selected – assume token visually faces down, not right)*
+| 7    | _!mmm_     **do** setattr(selectedToken, "rotation", -90 + rotation) | *(apply rotation to selected – assume token visually faces down, not right)*
 | 8    | _!mmm_ **end script**
 
-The mysterious `90` in the `setattr()` line compensates for how the token *looks* like it's facing when it's oriented at a `rotation` of zero degrees. If the token were visually facing exactly to the right, there wouldn't be a need for that. However, since many tokens are designed to face *downwards* rather than to the right, you'd first have to rotate it counterclockwise by 90 degrees (there!) to make the token face to the right as a starting point for rotating it towards the target.
+Most character (and monster) tokens in the Roll20 marketplace are made to look like the character (or monster) is facing downwards on the screen. But the `atan()` function would return "zero degrees of rotation" if the target was exactly *to the right* of the selected token on the screen. So the `-90` in the `setattr()` call (in line 7) compensates for that – it means "you'd have to rotate the token 90 degrees counterclockwise to make it face the right side of the screen", and then the actual rotation towards the target is added.
 
-If you're mathematically inclined, it may seem odd to you that `rotation` and `atan()` are measuring an angle in *clockwise* degrees. (The common maths convention is to go counterclockwise.) The reason is that the game board's vertical axis goes *down* rather than *up* like a proper mathematical Y axis would, but the horizontal axis still goes *right* exactly like an X axis should – that makes the whole board appear mirrored from a maths point of view.
+If you're mathematically inclined, it may seem odd to you that `rotation` and `atan()` are working with angles in *clockwise* degrees. That's because the Roll20 board has its vertical coordinate axis pointing downwards rather than upwards – common on computers, not so much in maths.
 
 
 
