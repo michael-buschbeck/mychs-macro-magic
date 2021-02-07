@@ -361,12 +361,17 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `bar1`            | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
 | `bar2`            | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
 | `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
+| `status_`...      | `true`               | write  |       | Token's status markers – `false` to hide, `true` to show, or any single digit to show with an overlay – see below
 | `left`            | `350` / `1750`       | write  | read  | Token's X coordinate on the table
 | `top`             | `350` / `1750`       | write  | read  | Token's Y coordinate on the table
 | `rotation`        | `45`                 | write  |       | Token's clockwise rotation in degrees
 | *(anything else)* |                      | write  | write | Character attribute – e.g. `HP` or any custom attribute
 
-But keep in mind that just because an attribute *can be accessed* per this table, that doesn't mean *you* can access it.
+**Status markers:** The `status_`... attributes show or hide token status markers. Most markers – with the notable exception of the "dead" marker, that big red cross covering the entire token – support displaying a single digit as an overlay.
+
+You can find a full list of available token status marker names in the [official API docs](https://help.roll20.net/hc/en-us/articles/360037772793-API-Objects#API:Objects-ImportantNotesAboutStatusMarkers) (search for "full list of status markers"). Here in MMM, the corresponding attribute names use underscores (_) in place of all dashes (-), so you'd use the `status_all_for_one` attribute to get the "all-for-one" marker.
+
+**Permissions:** Keep in mind that just because an attribute *can be accessed* per this table, that doesn't mean *you* can access it.
 
 You can't access anything through MMM you couldn't access manually in the game. For example, you can only read the `left` attribute of a token you can see on the table, or the `HP` attribute of a character you control yourself.
 
@@ -554,12 +559,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.10.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.11.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.11.0  | 2021-02-07 | Support `status_`... attribute access to token status markers
 | 1.10.0  | 2021-02-07 | Support optional *name\|id* parameter in `roll()` function
 | 1.9.0   | 2021-02-06 | Support `rotation` token attribute and trigonometric functions
 | 1.8.0   | 2021-02-05 | Support line breaks in chat messages
