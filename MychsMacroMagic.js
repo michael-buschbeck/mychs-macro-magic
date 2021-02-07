@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.9.1";
+const MMM_VERSION = "1.10.0";
 
 on("chat:message", function(msg)
 {
@@ -245,8 +245,33 @@ class MychScriptContext
         return rolls.length;
     }
 
-    *roll(rollExpression)
+    *roll(nameOrIdOrRollExpression, rollExpressionIfNameOrId = undefined)
     {
+        var nameOrId;
+        var rollExpression;
+        
+        if (rollExpressionIfNameOrId == undefined)
+        {
+            nameOrId = this.sender;
+            rollExpression = nameOrIdOrRollExpression;
+        }
+        else
+        {
+            nameOrId = nameOrIdOrRollExpression;
+            rollExpression = rollExpressionIfNameOrId;
+        }
+
+        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+
+        var characterContext = (character ? character.get("name") : this.sender);
+
+        rollExpression = rollExpression.replace(/@\{([^}]+)\}/g, function(attributeCall, attributeExpression)
+        {
+            var attrExpressionParts = attributeExpression.split("|");
+            var hasCharacterContext = (attrExpressionParts.length >= 3 || (attrExpressionParts.length == 2 && attrExpressionParts[1] == "max"));
+            return hasCharacterContext ? attributeCall : "@{" + characterContext + "|" + attributeExpression + "}";
+        });
+
         var context = this;
 
         var rollResult = yield MychScript.continueExecuteOnCallback(function(rollResultCallback)
@@ -265,7 +290,7 @@ class MychScriptContext
                 rollResultCallback(context.$decorateRoll({ results: rollResults, expression: rollResultsMsg.origRoll }));
             };
 
-            sendChat(context.sender || "Mych's Macro Magic", "/roll " + MychExpression.coerceString(rollExpression), sendChatCallback, {use3d: true});
+            sendChat(context.sender || "Mych's Macro Magic (background roll)", "/roll " + MychExpression.coerceString(rollExpression), sendChatCallback, {use3d: true});
         });
 
         return rollResult;

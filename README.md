@@ -427,7 +427,8 @@ If you want to calculate the square root of something, you can use the power-of 
 | highlight(*str*)                                   | String    |  | When output to chat, highlight string *str* with a pretty box
 | highlight(*str*, *type*)                           | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
 | highlight(*str*, *type*, *tooltip*)                | String    |  | ...with a tooltip popping up on mouse hover
-| roll(*expr*)                                       | Roll      | roll("1d20+12") = 23 | Run a roll through Roll20's dice engine and return its result
+| roll(*expr*)                                       | Roll      | roll("1d20+12") = 23 | Run a roll expression through Roll20's dice engine and return its result
+| roll(*name\|id*, *expr*)                           | Roll      | roll("Finn", "@{HP}") = 15 | ...evaluated in context of character *name\|id* (instead of `sender`)
 | iscritical(*roll*)                                 | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
 | isfumble(*roll*)                                   | Roll      |  | Return `true` if any die in the roll had its smallest value (e.g. 1 on 1d20), else `false`
 | distunits()                                        | Board     | distunits() = "m"    | Return name of distance units used on the current game board
@@ -553,12 +554,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.9.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.10.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.10.0  | 2021-02-07 | Support optional *name\|id* parameter in `roll()` function
 | 1.9.0   | 2021-02-06 | Support `rotation` token attribute and trigonometric functions
 | 1.8.0   | 2021-02-05 | Support line breaks in chat messages
 | 1.7.0   | 2021-02-05 | Add `exit` command to exit a block or the entire script
