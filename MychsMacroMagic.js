@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.10.1";
+const MMM_VERSION = "1.11.0";
 
 on("chat:message", function(msg)
 {
@@ -765,6 +765,14 @@ class MychScriptContext
             }
         }
 
+        var statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+        var statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
+
+        if (statusAttributeNameMatch)
+        {
+            return this.$canView(obj);
+        }
+
         return false;
     }
 
@@ -972,6 +980,27 @@ class MychScriptContext
 
             default:
             {
+                var statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+                var statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
+        
+                if (statusAttributeNameMatch)
+                {
+                    if (!max)
+                    {
+                        var statusIdentifier = statusAttributeNameMatch.groups.identifier;
+
+                        lookupObj = token;
+                        lookupKey = "status_" + statusIdentifier.replace(/_/g, "-");
+                        
+                        // modify value to make both boolean and numeric interpretation simple:
+                        // - false (hidden): false (as number: 0)
+                        // - digit (shown with digit): string digit (as bool: true, number: digit)
+                        // - other (shown undecorated): string "shown" (as bool: true, number: 0)
+                        lookupMod = val => (val === false ? false : (str => str.match(/^[0-9]$/) ? str : "shown")(MychExpression.coerceString(val)));
+                    }
+                    break;
+                }
+
                 if (character)
                 {
                     lookupObj = findObjs({ type: "attribute", characterid: character.id, name: attributeName }, { caseInsensitive: true })[0];
@@ -1088,6 +1117,34 @@ class MychScriptContext
 
             default:
             {
+                var statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+                var statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
+        
+                if (statusAttributeNameMatch)
+                {
+                    if (!max)
+                    {
+                        var statusIdentifier = statusAttributeNameMatch.groups.identifier;
+                        
+                        updateObj = token;
+                        updateKey = "status_" + statusIdentifier.replace(/_/g, "-");
+
+                        if (statusIdentifier == "dead")
+                        {
+                            // dead marker (big red cross) crashes client when given an overlay
+                            updateVal = MychExpression.coerceString(attributeValue);
+                            updateVal = (updateVal == "false" || updateVal == "" ? false : true);
+                        }
+                        else
+                        {
+                            // revert conversion done when reading status marker state
+                            updateVal = MychExpression.coerceString(attributeValue);
+                            updateVal = (updateVal == "false" || updateVal == "" ? false : updateVal.match(/^[0-9]$/) ? updateVal : true);
+                        }
+                    }
+                    break;
+                }
+
                 if (character && this.$canControlAttribute(character, attributeName))
                 {
                     updateObj =
