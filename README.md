@@ -367,9 +367,9 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `rotation`        | `45`                 | write  |       | Token's clockwise rotation in degrees
 | *(anything else)* |                      | write  | write | Character attribute – e.g. `HP` or any custom attribute
 
-**Status markers:** The `status_`... attributes show or hide token status markers. Most markers – with the notable exception of the "dead" marker, that big red cross covering the entire token – support displaying a single digit as an overlay.
+**Status markers:** The `status_`... attributes show or hide token status markers. Most markers – with the notable exception of the "dead" marker, that big red cross covering the entire token – also support displaying a single digit as an overlay, which can be useful for counters and the like.
 
-You can find a full list of available token status marker names in the [official API docs](https://help.roll20.net/hc/en-us/articles/360037772793-API-Objects#API:Objects-ImportantNotesAboutStatusMarkers) (search for "full list of status markers"). Here in MMM, the corresponding attribute names use underscores (_) in place of all dashes (-), so you'd use the `status_all_for_one` attribute to get the "all-for-one" marker.
+You can find a full list of available token status marker names in the [official API docs](https://help.roll20.net/hc/en-us/articles/360037772793-API-Objects#API:Objects-ImportantNotesAboutStatusMarkers) (search for "full list of status markers"). Here in MMM, the corresponding attribute names use underscores (_) in place of any dashes (-), so you'd use the `status_all_for_one` attribute to get to the "all-for-one" marker, for example.
 
 **Permissions:** Keep in mind that just because an attribute *can be accessed* per this table, that doesn't mean *you* can access it.
 
