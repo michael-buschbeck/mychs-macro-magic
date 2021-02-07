@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.10.0";
+const MMM_VERSION = "1.10.1";
 
 on("chat:message", function(msg)
 {
@@ -2063,7 +2063,7 @@ class MychExpression
 
             case "string": 
             {
-                return (string.length > 0);
+                return (value.length > 0);
             }
         }
 
