@@ -379,7 +379,7 @@ The one exception of this rule is the special `permission` attribute: That one's
 
 Individual attributes may have further restrictions – for example, even if you can see an NPC token, you might not be able to read its `name` unless the GM has made it visible.
 
-If you try to read or write an attribute you don't have permission to, you'll get a special null value back that resolves to zero in numeric context, an empty string in string contaxt, `false` in boolean logic context, and that'll render as the word `denied` on a pretty red background when sent to chat.
+If you try to read or write an attribute you don't have permission to, you'll get a special null value back that resolves to zero in numeric context, an empty string in string context, `false` in boolean logic context, and that'll render as the word `denied` on a pretty red background when sent to chat.
 
 
 ### Operators
@@ -447,7 +447,7 @@ If you want to calculate the square root of something, you can use the power-of 
 | getattr(*name\|id*, *attr*)                        | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
 | getattrmax(*name\|id*, *attr*)                     | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
 | setattr(*name\|id*, *attr*, *val*)                 | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
-| setattrmax(*name\|id*, *attr*, *val*)              | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+| setattrmax(*name\|id*, *attr*, *val*)              | Character | setattrmax("Finn", "HP", 25) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
 
 
 ## Recipes
@@ -506,10 +506,10 @@ Installing MMM just opens up new possibilities for you. It doesn't remove any.
 
 ### Do you do bugs? I think I found one.
 
-Never. But the cat might. I'll have to revoke his commit rights one of these days. (I don't have a cat.)
+Never. But the cat might. I'll have to revoke his commit permission one of these days. (I don't have a cat.)
 
 
-### Okay, so, I think I found a bug *the cat made*. How do I report it?
+### Okay, so, I think I found a bug *the cat* made. How do I report it?
 
 Please [open a ticket on GitHub](https://github.com/michael-buschbeck/mychs-macro-magic/issues). I'll see to it that it gets the cat's attention, stat.
 
