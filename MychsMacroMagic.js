@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.11.2";
+const MMM_VERSION = "1.12.0";
 
 on("chat:message", function(msg)
 {
@@ -491,6 +491,24 @@ class MychScriptContext
         return (character ? character.id : undefined);
     }
 
+    static Denied = class
+    {
+        toScalar()
+        {
+            return undefined;
+        }
+
+        toMarkup()
+        {
+            return "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>";
+        }
+    }
+
+    isdenied(value)
+    {
+        return (value instanceof MychScriptContext.Denied);
+    }
+
     findattr(nameOrId, table, selection)
     {
         const firstSelectionArgIndex = 2;
@@ -499,7 +517,7 @@ class MychScriptContext
 
         if (!character || !this.$canControl(character))
         {
-            return this.$getDenied();
+            return new MychScriptContext.Denied();
         }
 
         if (arguments.length == 1)
@@ -884,17 +902,6 @@ class MychScriptContext
         return [character, token];
     }
 
-    $getDenied()
-    {
-        var denied =
-        {
-            toScalar: () => undefined,
-            toMarkup: () => "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>",
-        };
-
-        return denied;
-    }
-
     $getAttribute(nameOrId, attributeName, max = false)
     {
         var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
@@ -906,7 +913,7 @@ class MychScriptContext
                 return "none";
             }
 
-            return this.$getDenied();
+            return new MychScriptContext.Denied();
         }
 
         var lookupObj = undefined;
@@ -1030,7 +1037,7 @@ class MychScriptContext
 
         if (!this.$canViewAttribute(lookupObj, attributeName))
         {
-            return this.$getDenied();
+            return new MychScriptContext.Denied();
         }
 
         if (!lookupKey)
@@ -1047,7 +1054,7 @@ class MychScriptContext
 
         if (!character && !token)
         {
-            return this.$getDenied();
+            return new MychScriptContext.Denied();
         }
 
         var updateObj = undefined;
@@ -1058,7 +1065,7 @@ class MychScriptContext
         {
             case "permission":
             {
-                return this.$getDenied();
+                return new MychScriptContext.Denied();
             }
 
             case "name":
@@ -1178,7 +1185,7 @@ class MychScriptContext
 
         if (!updateKey || !this.$canControlAttribute(updateObj, attributeName))
         {
-            return this.$getDenied();
+            return new MychScriptContext.Denied();
         }
 
         updateObj.set(updateKey, updateVal);
