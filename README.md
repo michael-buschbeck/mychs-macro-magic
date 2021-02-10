@@ -379,7 +379,7 @@ The one exception of this rule is the special `permission` attribute: That one's
 
 Individual attributes may have further restrictions – for example, even if you can see an NPC token, you might not be able to read its `name` unless the GM has made it visible.
 
-If you try to read or write an attribute you don't have permission to, you'll get a special null value back that resolves to zero in numeric context, an empty string in string context, `false` in boolean logic context, and that'll render as the word `denied` on a pretty red background when sent to chat. You can use the `isdenied()` function to distinguish between a regular undefined value and this special access-denied–indicator value.
+If you try to read or write an attribute you don't have permission to, you'll get a special null value back that resolves to zero in numeric context, an empty string in string context, `false` in boolean logic context, and that'll render as the word `denied` on a pretty red background when sent to chat. You can use the `isdenied()` function to distinguish between a regular attribute value that doesn't exist and this special indicator value.
 
 
 ### Operators
