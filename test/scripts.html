@@ -417,6 +417,15 @@
             sendChat(this.sender || "Mych's Macro Magic", message);
         };
 
+        MychScriptContext.prototype.whisperback = function(message)
+        {
+            processes.push(
+            {
+                type: "whisper",
+                message: "(From Mych's Macro Magic:) " + message,
+            });
+        };
+
         MychScriptContext.prototype.error = function(exception)
         {
             console.log(exception);
