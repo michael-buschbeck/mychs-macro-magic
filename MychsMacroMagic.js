@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.2";
+const MMM_VERSION = "1.12.3";
 
 on("chat:message", function(msg)
 {
@@ -43,6 +43,99 @@ on("chat:message", function(msg)
     if (msg.type != "api")
     {
         return;
+    }
+
+    let statusSource = msg.content;
+
+    let statusRegExp = /^(?<command>!mmm\s+status\s*)(?<arguments>.+)?$/;
+    let statusMatch = statusRegExp.exec(statusSource);
+
+    if (statusMatch)
+    {
+        let statusSourceOffset = statusMatch.groups.command.length;
+
+        try
+        {
+            let [statusResetSourceOffset, statusResetArgs] = MychScript.parseTokens([ "reset" ], statusSource, statusSourceOffset);
+
+            if (statusResetArgs)
+            {
+                if (statusResetSourceOffset < statusSource.length)
+                {
+                    throw new MychScriptError("parse", "syntax error", statusSource, statusResetSourceOffset);
+                }
+
+                MychScriptContext.players = {};
+
+                player.context.whisperback("All state reset.")
+                return;
+            }
+
+            if (statusSourceOffset < statusSource.length)
+            {
+                throw new MychScriptError("parse", "syntax error", statusSource, statusSourceOffset);
+            }
+
+            var statusTableRows = [];
+
+            for (let [playerId, player] of Object.entries(MychScriptContext.players))
+            {
+                let playerObj = getObj("player", playerId);
+                let playerDescription;
+
+                if (playerObj)
+                {
+                    let playerName = playerObj.get("displayname");
+                    let playerOnline = playerObj.get("online");
+                    
+                    playerDescription = playerName + " (" + (playerOnline ? "online" : "offline") + ")";
+                }
+
+                statusTableRows.push([ (playerDescription || playerId) ]);
+
+                let scriptDescription;
+
+                if (player.script)
+                {
+                    scriptDescription = player.script.type || "undefined";
+                    scriptDescription += " [";
+
+                    let nestedScriptDescriptions = [];
+
+                    for (let nestedScript of player.script.nestedScripts)
+                    {
+                        let nestedScriptDescription = (nestedScript.type || "undefined") + (nestedScript.complete ? "" : "...");
+                        nestedScriptDescriptions.push(nestedScriptDescription);
+                    }
+
+                    scriptDescription += nestedScriptDescriptions.join(", ");
+                    scriptDescription += "]";
+                    scriptDescription += (player.script.complete ? "" : "...");
+                }
+
+                statusTableRows.push([ "Script", (scriptDescription || "no script") ]);
+                statusTableRows.push([ "Error", (player.exception || "no exception") ]);
+            }
+
+            let renderTableBodyRow = function(row)
+            {
+                let tableColumnStart = (row.length == 1 ? "<td colspan='2' style='text-align: center'>" : "<td>");
+                return "<tr>" + row.map(content => tableColumnStart + player.context.literal(content) + "</td>").join("") + "</tr>";
+            };
+
+            let statusTableCaption = "<caption>Mych's Macro Magic " + MMM_VERSION + "</caption>";
+            let statusTableBody = "<tbody>" + statusTableRows.map(renderTableBodyRow).join("") + "</tbody>";
+
+            let statusOutput = "<div class='sheet-rolltemplate-default'><table>" + statusTableCaption + statusTableBody + "</table></div>";
+            
+            player.context.whisperback(statusOutput);
+            return;
+        }
+        catch (exception)
+        {
+            player.context.error(exception);
+            return;
+        }
     }
 
     let msgContentLines = msg.content.split(/<br\/>\s+/);
