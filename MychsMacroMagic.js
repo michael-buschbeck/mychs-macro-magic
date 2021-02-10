@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.11.1";
+const MMM_VERSION = "1.11.2";
 
 on("chat:message", function(msg)
 {
@@ -81,6 +81,12 @@ on("chat:message", function(msg)
         {
             if (!player.exception)
             {
+                if (player.script.type == "set")
+                {
+                    var variableName = player.script.definition.variable;
+                    player.context.whisperback("<br/>\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
+                }
+
                 player.script.startExecute();
             }
 
