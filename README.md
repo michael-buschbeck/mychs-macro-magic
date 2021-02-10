@@ -379,7 +379,7 @@ The one exception of this rule is the special `permission` attribute: That one's
 
 Individual attributes may have further restrictions – for example, even if you can see an NPC token, you might not be able to read its `name` unless the GM has made it visible.
 
-If you try to read or write an attribute you don't have permission to, you'll get a special null value back that resolves to zero in numeric context, an empty string in string context, `false` in boolean logic context, and that'll render as the word `denied` on a pretty red background when sent to chat.
+If you try to read or write an attribute you don't have permission to, you'll get a special null value back that resolves to zero in numeric context, an empty string in string context, `false` in boolean logic context, and that'll render as the word `denied` on a pretty red background when sent to chat. You can use the `isdenied()` function to distinguish between a regular attribute value that doesn't exist and this special indicator value.
 
 
 ### Operators
@@ -441,14 +441,15 @@ If you want to calculate the square root of something, you can use the power-of 
 | distsnap()                                         | Board     | distsnap() = 70      | Return number of pixels between grid lines – if grid lines disabled, zero
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
-| findattr(*name\|id*)                               | Character | findattr("Finn") | List available character sheet table names – see below
-| findattr(*name\|id*, *table*)                      | Character | findattr("Finn", "attack") | List available columns in a character sheet table – see below
-| findattr(*name\|id*, *table*, *col*, *val*, *col*) | Character | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | Find attribute name in a character sheet table – see below
-| getcharid(*name\|id*)                              | Character | getcharid("Finn") | Return the character ID for *name\|id*
-| getattr(*name\|id*, *attr*)                        | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
-| getattrmax(*name\|id*, *attr*)                     | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
-| setattr(*name\|id*, *attr*, *val*)                 | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
-| setattrmax(*name\|id*, *attr*, *val*)              | Character | setattrmax("Finn", "HP", 25) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+| findattr(*name\|id*)                               | Attribute | findattr("Finn") | List available character sheet table names – see below
+| findattr(*name\|id*, *table*)                      | Attribute | findattr("Finn", "attack") | List available columns in a character sheet table – see below
+| findattr(*name\|id*, *table*, *col*, *val*, *col*) | Attribute | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | Find attribute name in a character sheet table – see below
+| getcharid(*name\|id*)                              | Attribute | getcharid("Finn") | Return the character ID for *name\|id*
+| getattr(*name\|id*, *attr*)                        | Attribute | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
+| getattrmax(*name\|id*, *attr*)                     | Attribute | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
+| setattr(*name\|id*, *attr*, *val*)                 | Attribute | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
+| setattrmax(*name\|id*, *attr*, *val*)              | Attribute | setattrmax("Finn", "HP", 25) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+| isdenied(*expr*)                                   | Attribute | isdenied(getattr("Finn", "HP")) | Return `true` if access to *expr* was denied, else `false`
 
 
 ## Recipes
@@ -560,12 +561,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.11.1
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.12.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.12.0  | 2021-02-10 | Add `isdenied(expr)` to check if `getattr()` access was denied
 | 1.11.0  | 2021-02-07 | Support `status_`... attribute access to token status markers
 | 1.10.0  | 2021-02-07 | Support optional *name\|id* parameter in `roll()` function
 | 1.9.0   | 2021-02-06 | Support `rotation` token attribute and trigonometric functions
