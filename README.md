@@ -441,15 +441,15 @@ If you want to calculate the square root of something, you can use the power-of 
 | distsnap()                                         | Board     | distsnap() = 70      | Return number of pixels between grid lines – if grid lines disabled, zero
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
-| findattr(*name\|id*)                               | Character | findattr("Finn") | List available character sheet table names – see below
-| findattr(*name\|id*, *table*)                      | Character | findattr("Finn", "attack") | List available columns in a character sheet table – see below
-| findattr(*name\|id*, *table*, *col*, *val*, *col*) | Character | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | Find attribute name in a character sheet table – see below
-| getcharid(*name\|id*)                              | Character | getcharid("Finn") | Return the character ID for *name\|id*
-| getattr(*name\|id*, *attr*)                        | Character | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
-| getattrmax(*name\|id*, *attr*)                     | Character | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
-| setattr(*name\|id*, *attr*, *val*)                 | Character | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
-| setattrmax(*name\|id*, *attr*, *val*)              | Character | setattrmax("Finn", "HP", 25) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
-| isdenied(*expr*)                                   | Character | isdenied(getattr("Finn", "HP")) | Return `true` if access to *expr* was denied, else `false`
+| findattr(*name\|id*)                               | Attribute | findattr("Finn") | List available character sheet table names – see below
+| findattr(*name\|id*, *table*)                      | Attribute | findattr("Finn", "attack") | List available columns in a character sheet table – see below
+| findattr(*name\|id*, *table*, *col*, *val*, *col*) | Attribute | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | Find attribute name in a character sheet table – see below
+| getcharid(*name\|id*)                              | Attribute | getcharid("Finn") | Return the character ID for *name\|id*
+| getattr(*name\|id*, *attr*)                        | Attribute | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
+| getattrmax(*name\|id*, *attr*)                     | Attribute | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
+| setattr(*name\|id*, *attr*, *val*)                 | Attribute | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
+| setattrmax(*name\|id*, *attr*, *val*)              | Attribute | setattrmax("Finn", "HP", 25) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+| isdenied(*expr*)                                   | Attribute | isdenied(getattr("Finn", "HP")) | Return `true` if access to *expr* was denied, else `false`
 
 
 ## Recipes
