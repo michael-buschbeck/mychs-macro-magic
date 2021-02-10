@@ -440,6 +440,7 @@ If you want to calculate the square root of something, you can use the power-of 
 | distscale()                                        | Board     | distscale() = 0.0714 | Return number of game board distance units per pixel
 | distsnap()                                         | Board     | distsnap() = 70      | Return number of pixels between grid lines – if grid lines disabled, zero
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
+| whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
 | findattr(*name\|id*)                               | Character | findattr("Finn") | List available character sheet table names – see below
 | findattr(*name\|id*, *table*)                      | Character | findattr("Finn", "attack") | List available columns in a character sheet table – see below
 | findattr(*name\|id*, *table*, *col*, *val*, *col*) | Character | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | Find attribute name in a character sheet table – see below
@@ -559,7 +560,7 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.11.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.11.1
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 

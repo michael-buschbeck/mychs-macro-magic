@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.11.0";
+const MMM_VERSION = "1.11.1";
 
 on("chat:message", function(msg)
 {
@@ -322,16 +322,7 @@ class MychScriptContext
 
     literal(value)
     {
-        var replacements =
-        {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&apos;",
-        };
-
-        return MychExpression.coerceString(value).replace(/[&<>"']/g, char => replacements[char]);
+        return MychExpression.coerceString(value).replace(/[^\w\s]/g, char => "&#" + char.codePointAt(0) + ";")
     }
 
     highlight(value, type = "normal", tooltip = undefined)
@@ -422,10 +413,26 @@ class MychScriptContext
         sendChat(this.sender || "Mych's Macro Magic", message);
     }
 
+    whisperback(message)
+    {
+        var recipient = getObj("player", this.playerid).get("displayname");
+
+        // remove all tokens from first double-quote on (since we can't escape double-quotes)
+        recipient = recipient.replace(/\s*".*/, "");
+
+        // enclose in double quotes, but only if there are actually spaces
+        if (recipient.match(/\s/))
+        {
+            recipient = "\"" + recipient + "\"";
+        }
+
+        sendChat("Mych's Macro Magic", "/w " + recipient + " " + message, null, { noarchive: true });
+    }
+
     error(exception)
     {
         log(exception.stack);
-        sendChat("Mych's Macro Magic", "/direct " + exception, null, { noarchive: true });
+        this.whisperback("<br/>" + this.literal(exception));
     }
 
     distunits()
