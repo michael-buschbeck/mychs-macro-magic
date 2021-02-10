@@ -1,16 +1,16 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.1";
+const MMM_VERSION = "1.12.2";
 
 on("chat:message", function(msg)
 {
-    var msgContext = new MychScriptContext();
-    var msgContextUpdated = false;
+    let msgContext = new MychScriptContext();
+    let msgContextUpdated = false;
     
     if (msg.type == "rollresult")
     {
-        var msgRollResults = JSON.parse(msg.content);
+        let msgRollResults = JSON.parse(msg.content);
         msgContextUpdated = (msgContext.$consumeRolls([{ results: msgRollResults, expression: msg.origRoll }]) > 0);
     }
     else
@@ -18,7 +18,7 @@ on("chat:message", function(msg)
         msgContextUpdated = (msgContext.$consumeRolls(msg.inlinerolls) > 0);
     }
 
-    var player = MychScriptContext.players[msg.playerid];
+    let player = MychScriptContext.players[msg.playerid];
 
     if (!player)
     {
@@ -45,11 +45,11 @@ on("chat:message", function(msg)
         return;
     }
 
-    var msgContentLines = msg.content.split(/<br\/>\s+/);
+    let msgContentLines = msg.content.split(/<br\/>\s+/);
 
-    for (var msgContentLine of msgContentLines)
+    for (let msgContentLine of msgContentLines)
     {
-        var scriptMatch = /^!mmm\b(\s*|\s(?<command>.+))$/.exec(msgContentLine);
+        let scriptMatch = /^!mmm\b(\s*|\s(?<command>.+))$/.exec(msgContentLine);
 
         if (!scriptMatch || !scriptMatch.groups.command)
         {
@@ -63,8 +63,8 @@ on("chat:message", function(msg)
 
         try
         {
-            var scriptCommand = scriptMatch.groups.command;
-            var scriptAdded = player.script.addCommand(scriptCommand, player.context);
+            let scriptCommand = scriptMatch.groups.command;
+            let scriptAdded = player.script.addCommand(scriptCommand, player.context);
 
             if (scriptAdded.type == "script")
             {
@@ -83,7 +83,7 @@ on("chat:message", function(msg)
             {
                 if (player.script.type == "set")
                 {
-                    var variableName = player.script.definition.variable;
+                    let variableName = player.script.definition.variable;
                     player.context.whisperback("<br/>\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
                 }
 
@@ -133,11 +133,11 @@ class MychScriptContext
 
     min(varargs)
     {
-        var minValue = undefined;
+        let minValue = undefined;
 
-        for (var argIndex = 0; argIndex < arguments.length; ++argIndex)
+        for (let argIndex = 0; argIndex < arguments.length; ++argIndex)
         {
-            var argValue = arguments[argIndex];
+            let argValue = arguments[argIndex];
             
             if (argValue == undefined)
             {
@@ -157,11 +157,11 @@ class MychScriptContext
 
     max(varargs)
     {
-        var maxValue = undefined;
+        let maxValue = undefined;
 
-        for (var argIndex = 0; argIndex < arguments.length; ++argIndex)
+        for (let argIndex = 0; argIndex < arguments.length; ++argIndex)
         {
-            var argValue = arguments[argIndex];
+            let argValue = arguments[argIndex];
             
             if (argValue == undefined)
             {
@@ -213,9 +213,9 @@ class MychScriptContext
 
     $decorateRoll(roll)
     {
-        var context = this;
+        let context = this;
 
-        var decoratedRoll = Object.create(roll);
+        let decoratedRoll = Object.create(roll);
             
         decoratedRoll.toScalar = function()
         {
@@ -224,10 +224,10 @@ class MychScriptContext
 
         decoratedRoll.toMarkup = function()
         {
-            var isRollCritical = context.iscritical(this);
-            var isRollFumbled = context.isfumble(this);
+            let isRollCritical = context.iscritical(this);
+            let isRollFumbled = context.isfumble(this);
 
-            var highlightType = (isRollCritical && isRollFumbled) ? "important" : isRollCritical ? "good" : isRollFumbled ? "bad" : "normal";
+            let highlightType = (isRollCritical && isRollFumbled) ? "important" : isRollCritical ? "good" : isRollFumbled ? "bad" : "normal";
 
             return context.highlight(this, highlightType, this.expression ? ("Rolling " + this.expression) : undefined).toMarkup();
         };
@@ -242,9 +242,9 @@ class MychScriptContext
             return 0;
         }
 
-        for (var rollIndex = 0; rollIndex < rolls.length; ++rollIndex)
+        for (let rollIndex = 0; rollIndex < rolls.length; ++rollIndex)
         {
-            var rollReference = "$[[" + rollIndex + "]]";
+            let rollReference = "$[[" + rollIndex + "]]";
             this[rollReference] = this.$decorateRoll(rolls[rollIndex]);
         }
 
@@ -253,8 +253,8 @@ class MychScriptContext
 
     *roll(nameOrIdOrRollExpression, rollExpressionIfNameOrId = undefined)
     {
-        var nameOrId;
-        var rollExpression;
+        let nameOrId;
+        let rollExpression;
         
         if (rollExpressionIfNameOrId == undefined)
         {
@@ -267,24 +267,24 @@ class MychScriptContext
             rollExpression = rollExpressionIfNameOrId;
         }
 
-        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
-        var characterContext = (character ? character.get("name") : this.sender);
+        let characterContext = (character ? character.get("name") : this.sender);
 
         rollExpression = rollExpression.replace(/@\{([^}]+)\}/g, function(attributeCall, attributeExpression)
         {
-            var attrExpressionParts = attributeExpression.split("|");
-            var hasCharacterContext = (attrExpressionParts.length >= 3 || (attrExpressionParts.length == 2 && attrExpressionParts[1] == "max"));
+            let attrExpressionParts = attributeExpression.split("|");
+            let hasCharacterContext = (attrExpressionParts.length >= 3 || (attrExpressionParts.length == 2 && attrExpressionParts[1] == "max"));
             return hasCharacterContext ? attributeCall : "@{" + characterContext + "|" + attributeExpression + "}";
         });
 
-        var context = this;
+        let context = this;
 
-        var rollResult = yield MychScript.continueExecuteOnCallback(function(rollResultCallback)
+        let rollResult = yield MychScript.continueExecuteOnCallback(function(rollResultCallback)
         {
-            var sendChatCallback = function(msgs)
+            let sendChatCallback = function(msgs)
             {
-                var rollResultsMsg = msgs.filter(msg => msg.type == "rollresult")[0];
+                let rollResultsMsg = msgs.filter(msg => msg.type == "rollresult")[0];
                 
                 if (!rollResultsMsg)
                 {
@@ -292,7 +292,7 @@ class MychScriptContext
                     return;
                 }
 
-                var rollResults = JSON.parse(rollResultsMsg.content);
+                let rollResults = JSON.parse(rollResultsMsg.content);
                 rollResultCallback(context.$decorateRoll({ results: rollResults, expression: rollResultsMsg.origRoll }));
             };
 
@@ -333,7 +333,7 @@ class MychScriptContext
 
     highlight(value, type = "normal", tooltip = undefined)
     {
-        var result;
+        let result;
         
         if (value instanceof Object)
         {
@@ -350,7 +350,7 @@ class MychScriptContext
             };
         }
 
-        var styles =
+        let styles =
         {
             "padding": "0 3px 0 3px",
             "color": "black",
@@ -360,7 +360,7 @@ class MychScriptContext
             "font-size": "1.1em",
         };
 
-        var borderStyleOverrides =
+        let borderStyleOverrides =
         {
             "good":      "2px solid #3FB315",
             "bad":       "2px solid #B31515",
@@ -374,12 +374,12 @@ class MychScriptContext
             styles["cursor"] =  "help";
         }
 
-        var valueLiteral = this.literal(value);
-        var styleLiteral = this.literal(Object.entries(styles).map(styleEntry => styleEntry.join(":")).join(";"));
+        let valueLiteral = this.literal(value);
+        let styleLiteral = this.literal(Object.entries(styles).map(styleEntry => styleEntry.join(":")).join(";"));
 
         if (!tooltip)
         {
-            var classLiteral = this.literal("mmm-highlight mmm-highlight-" + type);
+            let classLiteral = this.literal("mmm-highlight mmm-highlight-" + type);
 
             result.toMarkup = function()
             {
@@ -388,8 +388,8 @@ class MychScriptContext
         }
         else
         {
-            var titleLiteral = this.literal(tooltip);
-            var classLiteral = this.literal("mmm-highlight mmm-highlight-" + type + " showtip tipsy-n-right");
+            let titleLiteral = this.literal(tooltip);
+            let classLiteral = this.literal("mmm-highlight mmm-highlight-" + type + " showtip tipsy-n-right");
 
             result.toMarkup = function()
             {
@@ -402,7 +402,7 @@ class MychScriptContext
 
     chat(message)
     {
-        var [character, token] = this.$getCharacterAndTokenObjs(this.sender);
+        let [character, token] = this.$getCharacterAndTokenObjs(this.sender);
 
         if (character)
         {
@@ -421,7 +421,7 @@ class MychScriptContext
 
     whisperback(message)
     {
-        var recipient = getObj("player", this.playerid).get("displayname");
+        let recipient = getObj("player", this.playerid).get("displayname");
 
         // remove all tokens from first double-quote on (since we can't escape double-quotes)
         recipient = recipient.replace(/\s*".*/, "");
@@ -443,51 +443,51 @@ class MychScriptContext
 
     distunits()
     {
-        var playerPageId = Campaign().get("playerpageid");
-        var playerPage = getObj("page", playerPageId)
+        let playerPageId = Campaign().get("playerpageid");
+        let playerPage = getObj("page", playerPageId)
 
         return (playerPage ? playerPage.get("scale_units") : undefined);
     }
 
     distscale()
     {
-        var playerPageId = Campaign().get("playerpageid");
-        var playerPage = getObj("page", playerPageId)
+        let playerPageId = Campaign().get("playerpageid");
+        let playerPage = getObj("page", playerPageId)
 
         if (!playerPage)
         {
             return undefined;
         }
 
-        var gridUnitsPerGridCell = playerPage.get("snapping_increment");
-        var pixelsPerGridUnit = 70;
-        var pixelsPerGridCell = pixelsPerGridUnit * (gridUnitsPerGridCell || 1);
-        var measurementUnitsPerGridCell = playerPage.get("scale_number");
-        var measurementUnitsPerPixel = measurementUnitsPerGridCell / pixelsPerGridCell;
+        let gridUnitsPerGridCell = playerPage.get("snapping_increment");
+        let pixelsPerGridUnit = 70;
+        let pixelsPerGridCell = pixelsPerGridUnit * (gridUnitsPerGridCell || 1);
+        let measurementUnitsPerGridCell = playerPage.get("scale_number");
+        let measurementUnitsPerPixel = measurementUnitsPerGridCell / pixelsPerGridCell;
 
         return measurementUnitsPerPixel;
     }
 
     distsnap()
     {
-        var playerPageId = Campaign().get("playerpageid");
-        var playerPage = getObj("page", playerPageId)
+        let playerPageId = Campaign().get("playerpageid");
+        let playerPage = getObj("page", playerPageId)
 
         if (!playerPage)
         {
             return undefined;
         }
 
-        var gridUnitsPerGridCell = playerPage.get("snapping_increment");
-        var pixelsPerGridUnit = 70;
-        var pixelsPerGridCell = pixelsPerGridUnit * gridUnitsPerGridCell;
+        let gridUnitsPerGridCell = playerPage.get("snapping_increment");
+        let pixelsPerGridUnit = 70;
+        let pixelsPerGridCell = pixelsPerGridUnit * gridUnitsPerGridCell;
 
         return pixelsPerGridCell;
     }
 
     getcharid(nameOrId)
     {
-        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
         return (character ? character.id : undefined);
     }
 
@@ -513,7 +513,7 @@ class MychScriptContext
     {
         const firstSelectionArgIndex = 2;
 
-        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character || !this.$canControl(character))
         {
@@ -522,22 +522,22 @@ class MychScriptContext
 
         if (arguments.length == 1)
         {
-            var tableNames = {};
+            let tableNames = {};
 
-            var attributeNameRegExp = /^repeating_(?<tableName>[^_]+)_/;
-            var attributes = findObjs({ type: "attribute", characterid: character.id });
+            let attributeNameRegExp = /^repeating_(?<tableName>[^_]+)_/;
+            let attributes = findObjs({ type: "attribute", characterid: character.id });
 
-            for (var attribute of attributes)
+            for (let attribute of attributes)
             {
-                var attributeName = attribute.get("name");
-                var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+                let attributeName = attribute.get("name");
+                let attributeNameMatch = attributeNameRegExp.exec(attributeName);
     
                 if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
                 {
                     continue;
                 }
 
-                var tableName = attributeNameMatch.groups.tableName;
+                let tableName = attributeNameMatch.groups.tableName;
 
                 tableNames[tableName.toLowerCase()] = tableName;
             }
@@ -545,28 +545,28 @@ class MychScriptContext
             return Object.values(tableNames).join(", ");
         }
 
-        var tableRegExpSource = MychExpression.coerceString(table).replace(/(\W)/g, "\\$1");
+        let tableRegExpSource = MychExpression.coerceString(table).replace(/(\W)/g, "\\$1");
 
-        var attributeNameRegExpSource = /^repeating_/.source + tableRegExpSource + /_(?<rowId>[-A-Za-z0-9]+)_(?<colName>\S+)$/.source;
-        var attributeNameRegExp = new RegExp(attributeNameRegExpSource, "i");
+        let attributeNameRegExpSource = /^repeating_/.source + tableRegExpSource + /_(?<rowId>[-A-Za-z0-9]+)_(?<colName>\S+)$/.source;
+        let attributeNameRegExp = new RegExp(attributeNameRegExpSource, "i");
 
         if (arguments.length == 2)
         {
-            var colNames = {};
+            let colNames = {};
 
-            var attributes = findObjs({ type: "attribute", characterid: character.id });
+            let attributes = findObjs({ type: "attribute", characterid: character.id });
 
-            for (var attribute of attributes)
+            for (let attribute of attributes)
             {
-                var attributeName = attribute.get("name");
-                var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+                let attributeName = attribute.get("name");
+                let attributeNameMatch = attributeNameRegExp.exec(attributeName);
     
                 if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
                 {
                     continue;
                 }
                 
-                var colName = attributeNameMatch.groups.colName;
+                let colName = attributeNameMatch.groups.colName;
 
                 colNames[colName.toLowerCase()] = colName;
             }
@@ -574,39 +574,39 @@ class MychScriptContext
             return Object.values(colNames).join(", ");
         }
 
-        var conditions = {};
-        var conditionCount = 0;
+        let conditions = {};
+        let conditionCount = 0;
 
-        for (var argIndex = firstSelectionArgIndex; argIndex < arguments.length - 1; argIndex += 2)
+        for (let argIndex = firstSelectionArgIndex; argIndex < arguments.length - 1; argIndex += 2)
         {
-            var colName = MychExpression.coerceString(arguments[argIndex]);
-            var colValue = MychExpression.coerceString(arguments[argIndex + 1]);
+            let colName = MychExpression.coerceString(arguments[argIndex]);
+            let colValue = MychExpression.coerceString(arguments[argIndex + 1]);
 
             conditions[colName.toLowerCase()] = colValue.toLowerCase();
             conditionCount += 1;
         }
 
-        var rowInfos = {}
+        let rowInfos = {}
 
-        var lookupColName = ((arguments.length - firstSelectionArgIndex) % 2 == 0
+        let lookupColName = ((arguments.length - firstSelectionArgIndex) % 2 == 0
             ? arguments[arguments.length - 2]
             : arguments[arguments.length - 1]); 
 
-        var attributes = findObjs({ type: "attribute", characterid: character.id });
+        let attributes = findObjs({ type: "attribute", characterid: character.id });
 
-        for (var attribute of attributes)
+        for (let attribute of attributes)
         {
-            var attributeName = attribute.get("name");
-            var attributeNameMatch = attributeNameRegExp.exec(attributeName);
+            let attributeName = attribute.get("name");
+            let attributeNameMatch = attributeNameRegExp.exec(attributeName);
 
             if (!attributeNameMatch || !this.$canViewAttribute(character, attributeName))
             {
                 continue;
             }
 
-            var rowId = attributeNameMatch.groups.rowId;
-            var colName = attributeNameMatch.groups.colName;
-            var colValue = MychExpression.coerceString(attribute.get("current"));
+            let rowId = attributeNameMatch.groups.rowId;
+            let colName = attributeNameMatch.groups.colName;
+            let colValue = MychExpression.coerceString(attribute.get("current"));
 
             rowInfos[rowId] = rowInfos[rowId] || { conditionCount: 0, lookupAttributeName: undefined };
 
@@ -621,7 +621,7 @@ class MychScriptContext
             }
         }
 
-        for (var [rowId, rowInfo] of Object.entries(rowInfos))
+        for (let [rowId, rowInfo] of Object.entries(rowInfos))
         {
             if (rowInfo.lookupAttributeName && rowInfo.conditionCount == conditionCount)
             {
@@ -664,12 +664,12 @@ class MychScriptContext
             return true;
         }
 
-        var objType = obj.get("type");
+        let objType = obj.get("type");
 
         if (objType == "attribute")
         {
-            var ownerCharacterId = obj.get("characterid");
-            var ownerCharacter = getObj("character", ownerCharacterId);
+            let ownerCharacterId = obj.get("characterid");
+            let ownerCharacter = getObj("character", ownerCharacterId);
             return this.$canControl(ownerCharacter);
         }
 
@@ -679,16 +679,16 @@ class MychScriptContext
         }
 
         // objType == "graphic"
-        var representsCharacterId = obj.get("represents");
+        let representsCharacterId = obj.get("represents");
 
         if (representsCharacterId)
         {
-            var representsCharacter = getObj("character", representsCharacterId);
+            let representsCharacter = getObj("character", representsCharacterId);
             return this.$canControl(representsCharacter);
         }
 
         // objType == "path", "text", "graphic", "character"
-        var controllerPlayerIds = obj.get("controlledby");
+        let controllerPlayerIds = obj.get("controlledby");
 
         if (controllerPlayerIds && controllerPlayerIds.split(",").some(id => id == "all" || id == this.playerid))
         {
@@ -715,15 +715,15 @@ class MychScriptContext
             return true;
         }
 
-        var objType = obj.get("type");
+        let objType = obj.get("type");
 
         if (objType == "attribute")
         {
-            var characterId = obj.get("characterid");
+            let characterId = obj.get("characterid");
             return this.$canView(getObj("character", characterId));
         }
 
-        var playerPageId = Campaign().get("playerpageid");
+        let playerPageId = Campaign().get("playerpageid");
 
         if (objType == "page" && obj.id == playerPageId)
         {
@@ -731,7 +731,7 @@ class MychScriptContext
         }
 
         // objType == "character", "handout"
-        var journalPlayerIds = obj.get("inplayerjournals");
+        let journalPlayerIds = obj.get("inplayerjournals");
 
         if (journalPlayerIds && journalPlayerIds.split(",").some(id => id == "all" || id == this.playerid))
         {
@@ -739,11 +739,11 @@ class MychScriptContext
         }
 
         // objType == "text", "path", "graphic"
-        var drawingPageId = obj.get("pageid");
+        let drawingPageId = obj.get("pageid");
 
         if (drawingPageId && drawingPageId == playerPageId)
         {
-            var drawingLayer = obj.get("layer");
+            let drawingLayer = obj.get("layer");
             return (drawingLayer == "objects" || drawingLayer == "maps");
         }
 
@@ -775,8 +775,8 @@ class MychScriptContext
             case "character_name":
             case "token_name":
             {
-                var character = this.$getCorrespondingCharacterObj(obj);
-                var token = this.$getCorrespondingTokenObj(obj);
+                let character = this.$getCorrespondingCharacterObj(obj);
+                let token = this.$getCorrespondingTokenObj(obj);
                 return (this.$canView(character) || (this.$canView(token) && token.get("showplayers_name")));
             }
 
@@ -784,7 +784,7 @@ class MychScriptContext
             case "bar2":
             case "bar3":
             {
-                var token = this.$getCorrespondingTokenObj(obj);
+                let token = this.$getCorrespondingTokenObj(obj);
                 return (this.$canView(token) && token.get("showplayers_" + attributeName));
             }
 
@@ -796,8 +796,8 @@ class MychScriptContext
             }
         }
 
-        var statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
-        var statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
+        let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+        let statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
 
         if (statusAttributeNameMatch)
         {
@@ -823,8 +823,8 @@ class MychScriptContext
 
             case "character":
             {
-                var playerPageId = Campaign().get("playerpageid");
-                var tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: playerPageId });
+                let playerPageId = Campaign().get("playerpageid");
+                let tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: playerPageId });
                 return (tokens ? tokens[0] : undefined);
             }
         }
@@ -848,7 +848,7 @@ class MychScriptContext
 
             case "graphic":
             {
-                var character = getObj("character", characterOrToken.get("represents"));
+                let character = getObj("character", characterOrToken.get("represents"));
                 return character;
             }
         }
@@ -858,7 +858,7 @@ class MychScriptContext
 
     $getCharacterAndTokenObjs(nameOrId)
     {
-        var characterOrToken =
+        let characterOrToken =
             getObj("character", nameOrId) ||
             getObj("graphic", nameOrId);
 
@@ -879,8 +879,8 @@ class MychScriptContext
             return [undefined, undefined];
         }
 
-        var character = undefined;
-        var token = undefined;
+        let character = undefined;
+        let token = undefined;
 
         switch (characterOrToken.get("type"))
         {
@@ -904,7 +904,7 @@ class MychScriptContext
 
     $getAttribute(nameOrId, attributeName, max = false)
     {
-        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character && !token)
         {
@@ -916,9 +916,9 @@ class MychScriptContext
             return new MychScriptContext.Denied();
         }
 
-        var lookupObj = undefined;
-        var lookupKey = undefined;
-        var lookupMod = val => val;
+        let lookupObj = undefined;
+        let lookupKey = undefined;
+        let lookupMod = val => val;
 
         switch (attributeName)
         {
@@ -1000,14 +1000,14 @@ class MychScriptContext
 
             default:
             {
-                var statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
-                var statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
+                let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+                let statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
         
                 if (statusAttributeNameMatch)
                 {
                     if (!max)
                     {
-                        var statusIdentifier = statusAttributeNameMatch.groups.identifier;
+                        let statusIdentifier = statusAttributeNameMatch.groups.identifier;
 
                         lookupObj = token;
                         lookupKey = "status_" + statusIdentifier.replace(/_/g, "-");
@@ -1050,16 +1050,16 @@ class MychScriptContext
 
     $setAttribute(nameOrId, attributeName, attributeValue, max = false)
     {
-        var [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character && !token)
         {
             return new MychScriptContext.Denied();
         }
 
-        var updateObj = undefined;
-        var updateKey = undefined;
-        var updateVal = undefined;
+        let updateObj = undefined;
+        let updateKey = undefined;
+        let updateVal = undefined;
 
         switch (attributeName)
         {
@@ -1137,14 +1137,14 @@ class MychScriptContext
 
             default:
             {
-                var statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
-                var statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
+                let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+                let statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
         
                 if (statusAttributeNameMatch)
                 {
                     if (!max)
                     {
-                        var statusIdentifier = statusAttributeNameMatch.groups.identifier;
+                        let statusIdentifier = statusAttributeNameMatch.groups.identifier;
                         
                         updateObj = token;
                         updateKey = "status_" + statusIdentifier.replace(/_/g, "-");
@@ -1263,7 +1263,7 @@ class MychScript
         {
             execute: function*()
             {
-                var nestedScriptExit = yield* this.executeNestedScripts();
+                let nestedScriptExit = yield* this.executeNestedScripts();
                 return this.propagateExitOnReturn(nestedScriptExit);
             }
         },
@@ -1305,7 +1305,7 @@ class MychScript
             {
                 if (this.definition.expression)
                 {
-                    var exitCondition;
+                    let exitCondition;
 
                     try
                     {
@@ -1332,7 +1332,7 @@ class MychScript
 
             parse: function(args)
             {
-                var branch = { nestedScriptOffset: 0 };
+                let branch = { nestedScriptOffset: 0 };
 
                 this.definition.branches = [branch];
                 this.definition.branchElse = undefined;
@@ -1350,14 +1350,14 @@ class MychScript
 
             execute: function*()
             {
-                var elseBranch = this.definition.elseBranch;
+                let elseBranch = this.definition.elseBranch;
 
-                for (var branchIndex = 0; branchIndex < this.definition.branches.length; ++branchIndex)
+                for (let branchIndex = 0; branchIndex < this.definition.branches.length; ++branchIndex)
                 {
-                    var branch = this.definition.branches[branchIndex];
-                    var branchScript = (branchIndex == 0 ? this : this.nestedScripts[branch.nestedScriptOffset]);
+                    let branch = this.definition.branches[branchIndex];
+                    let branchScript = (branchIndex == 0 ? this : this.nestedScripts[branch.nestedScriptOffset]);
 
-                    var branchCondition;
+                    let branchCondition;
 
                     try
                     {
@@ -1370,16 +1370,16 @@ class MychScript
     
                     if (MychExpression.coerceBoolean(branchCondition))
                     {
-                        var nextBranch = this.definition.branches[branchIndex + 1] || elseBranch || { nestedScriptOffset: this.nestedScripts.length };
+                        let nextBranch = this.definition.branches[branchIndex + 1] || elseBranch || { nestedScriptOffset: this.nestedScripts.length };
 
-                        var branchNestedScriptExit = yield* this.executeNestedScripts(branch.nestedScriptOffset, nextBranch.nestedScriptOffset);
+                        let branchNestedScriptExit = yield* this.executeNestedScripts(branch.nestedScriptOffset, nextBranch.nestedScriptOffset);
                         return this.propagateExitOnReturn(branchNestedScriptExit);
                     }
                 }
 
                 if (elseBranch)
                 {
-                    var elseNestedScriptExit = yield* this.executeNestedScripts(elseBranch.nestedScriptOffset);
+                    let elseNestedScriptExit = yield* this.executeNestedScripts(elseBranch.nestedScriptOffset);
                     return this.propagateExitOnReturn(elseNestedScriptExit);
                 }
             },
@@ -1395,7 +1395,7 @@ class MychScript
 
             parse: function(args, parentScripts)
             {
-                var parentScript = parentScripts[parentScripts.length - 1];
+                let parentScript = parentScripts[parentScripts.length - 1];
 
                 if (!parentScript || parentScript.type != "if")
                 {
@@ -1404,7 +1404,7 @@ class MychScript
 
                 if (args.expression)
                 {
-                    var branch = { nestedScriptOffset: parentScript.nestedScripts.length };
+                    let branch = { nestedScriptOffset: parentScript.nestedScripts.length };
 
                     try
                     {
@@ -1526,7 +1526,7 @@ class MychScript
 
             execute: function*()
             {
-                var message;
+                let message;
 
                 if (this.definition.template)
                 {
@@ -1581,7 +1581,7 @@ class MychScript
 
             execute: function*()
             {
-                var separator = " ";
+                let separator = " ";
 
                 if (this.definition.expression)
                 {
@@ -1595,10 +1595,10 @@ class MychScript
                     }
                 }
 
-                var combineNestedScriptExit;
+                let combineNestedScriptExit;
 
-                var messages = [];
-                var prevChat = this.variables.chat;
+                let messages = [];
+                let prevChat = this.variables.chat;
 
                 try
                 {
@@ -1630,14 +1630,14 @@ class MychScript
 
     static parseTokens(tokenPatterns, source, sourceOffset)
     {
-        var args = {};
+        let args = {};
 
-        var whitespaceRegExp = /\s*/g;
+        let whitespaceRegExp = /\s*/g;
 
-        for (var tokenPattern of tokenPatterns)
+        for (let tokenPattern of tokenPatterns)
         {
             whitespaceRegExp.lastIndex = sourceOffset;
-            var whitespaceMatch = whitespaceRegExp.exec(source);
+            let whitespaceMatch = whitespaceRegExp.exec(source);
 
             if (!whitespaceMatch || whitespaceMatch.index != sourceOffset)
             {
@@ -1646,7 +1646,7 @@ class MychScript
 
             sourceOffset = whitespaceMatch.index + whitespaceMatch[0].length;
 
-            var tokenRegExpSource;
+            let tokenRegExpSource;
 
             if (tokenPattern instanceof RegExp)
             {
@@ -1659,10 +1659,10 @@ class MychScript
                 tokenRegExpSource = tokenRegExpSource.replace(/^\b|\b$/g, "\\b");
             }
             
-            var tokenRegExp = new RegExp(tokenRegExpSource, "ig");
+            let tokenRegExp = new RegExp(tokenRegExpSource, "ig");
 
             tokenRegExp.lastIndex = sourceOffset;
-            var tokenMatch = tokenRegExp.exec(source);
+            let tokenMatch = tokenRegExp.exec(source);
 
             if (!tokenMatch || tokenMatch.index != sourceOffset)
             {
@@ -1671,7 +1671,7 @@ class MychScript
 
             if (tokenMatch.groups)
             {
-                for (var [argName, argValue] of Object.entries(tokenMatch.groups))
+                for (let [argName, argValue] of Object.entries(tokenMatch.groups))
                 {
                     if (argValue != undefined)
                     {
@@ -1684,7 +1684,7 @@ class MychScript
         }
 
         whitespaceRegExp.lastIndex = sourceOffset;
-        var whitespaceMatch = whitespaceRegExp.exec(source);
+        let whitespaceMatch = whitespaceRegExp.exec(source);
 
         if (!whitespaceMatch || whitespaceMatch.index != sourceOffset)
         {
@@ -1698,25 +1698,25 @@ class MychScript
 
     static parseCommand(source)
     {
-        for (var commandType in MychScript.commands)
+        for (let commandType in MychScript.commands)
         {
-            var [sourceOffset, commandTypeArgs] = MychScript.parseTokens([commandType], source, 0);
+            let [sourceOffset, commandTypeArgs] = MychScript.parseTokens([commandType], source, 0);
 
             if (!commandTypeArgs)
             {
                 continue;
             }
 
-            var command = MychScript.commands[commandType];
+            let command = MychScript.commands[commandType];
 
             if (command.tokens)
             {
-                var commandTokensAlternatives = (command.tokens instanceof Array ? [command.tokens] : Object.values(command.tokens));
-                var maxSourceOffsetAlternative = sourceOffset;
+                let commandTokensAlternatives = (command.tokens instanceof Array ? [command.tokens] : Object.values(command.tokens));
+                let maxSourceOffsetAlternative = sourceOffset;
 
-                for (var commandTokens of commandTokensAlternatives)
+                for (let commandTokens of commandTokensAlternatives)
                 {
-                    var [sourceOffsetAlternative, commandArgs] = MychScript.parseTokens(commandTokens, source, sourceOffset);
+                    let [sourceOffsetAlternative, commandArgs] = MychScript.parseTokens(commandTokens, source, sourceOffset);
 
                     if (sourceOffsetAlternative == source.length && commandArgs)
                     {
@@ -1742,7 +1742,7 @@ class MychScript
             }
         }
 
-        var [sourceOffset] = MychScript.parseTokens([], source, 0);
+        let [sourceOffset] = MychScript.parseTokens([], source, 0);
 
         throw new MychScriptError("parse", "unknown command", source, sourceOffset);
     }
@@ -1756,9 +1756,9 @@ class MychScript
 
         if (!this.type)
         {
-            var [commandType, commandArgs] = MychScript.parseCommand(source);
+            let [commandType, commandArgs] = MychScript.parseCommand(source);
 
-            var command = MychScript.commands[commandType];
+            let command = MychScript.commands[commandType];
 
             this.type = commandType;
             this.source = source;
@@ -1775,14 +1775,14 @@ class MychScript
         }
         else
         {
-            var nestedScript = this.nestedScripts[this.nestedScripts.length - 1];
+            let nestedScript = this.nestedScripts[this.nestedScripts.length - 1];
 
             if (nestedScript && !nestedScript.complete)
             {
                 return nestedScript.addCommand(source, context, parentScripts.concat(this));
             }
 
-            var [endSourceOffset, endCommandArgs] = MychScript.parseTokens([ "end", /(?<type>\w+)/ ], source, 0);
+            let [endSourceOffset, endCommandArgs] = MychScript.parseTokens([ "end", /(?<type>\w+)/ ], source, 0);
 
             if (endCommandArgs)
             {
@@ -1793,11 +1793,11 @@ class MychScript
 
                 if (endCommandArgs.type.value != this.type)
                 {
-                    var endParentScriptIndex = parentScripts.map(script => script.type).lastIndexOf(endCommandArgs.type.value);
+                    let endParentScriptIndex = parentScripts.map(script => script.type).lastIndexOf(endCommandArgs.type.value);
 
                     if (endParentScriptIndex >= 0)
                     {
-                        for (var parentScript of parentScripts.slice(endParentScriptIndex))
+                        for (let parentScript of parentScripts.slice(endParentScriptIndex))
                         {
                             parentScript.complete = true;
                         }
@@ -1822,9 +1822,9 @@ class MychScript
 
     *executeNestedScripts(startIndex = undefined, endIndex = undefined)
     {
-        for (var nestedScript of this.nestedScripts.slice(startIndex, endIndex))
+        for (let nestedScript of this.nestedScripts.slice(startIndex, endIndex))
         {
-            var nestedScriptExit = yield* nestedScript.execute();
+            let nestedScriptExit = yield* nestedScript.execute();
 
             if (nestedScriptExit)
             {
@@ -1847,7 +1847,7 @@ class MychScript
 
     startExecute()
     {
-        var scriptExecuteGenerator = this.execute();
+        let scriptExecuteGenerator = this.execute();
         this.continueExecute(scriptExecuteGenerator, undefined);
     }
 
@@ -1855,11 +1855,11 @@ class MychScript
     {
         try
         {
-            var scriptExecuteResult = scriptExecuteGenerator.next(result);
+            let scriptExecuteResult = scriptExecuteGenerator.next(result);
 
             if (scriptExecuteResult.value)
             {
-                var nextScriptExecuteContinuation = scriptExecuteResult.value;
+                let nextScriptExecuteContinuation = scriptExecuteResult.value;
                 nextScriptExecuteContinuation(this, scriptExecuteGenerator);
             }
         }
@@ -1877,9 +1877,9 @@ class MychScript
 
     static continueExecuteOnCallback(callbackSetup = function(resultCallback) {})
     {
-        var scriptExecuteContinuation = function(script, scriptExecuteGenerator)
+        let scriptExecuteContinuation = function(script, scriptExecuteGenerator)
         {
-            var resultCallback = function(result)
+            let resultCallback = function(result)
             {
                 script.continueExecute(scriptExecuteGenerator, result);
             };
@@ -1933,11 +1933,11 @@ class MychTemplate
 
     parse(source)
     {
-        var segments = [];
-        var segmentRegExp = /(?<string>([^\\$]|\\.|\$(?!\{))+)|\$\{(?<expression>([^}"']|"([^\\"]|\\.)*"|'([^\\']|\\.)*')*)\}/g;
-        var segmentMatch;
+        let segments = [];
+        let segmentRegExp = /(?<string>([^\\$]|\\.|\$(?!\{))+)|\$\{(?<expression>([^}"']|"([^\\"]|\\.)*"|'([^\\']|\\.)*')*)\}/g;
+        let segmentMatch;
 
-        var segmentOffset = 0;
+        let segmentOffset = 0;
 
         while (segmentMatch = segmentRegExp.exec(source))
         {
@@ -1948,16 +1948,16 @@ class MychTemplate
 
             if (segmentMatch.groups.string)
             {
-                var unescapedString = segmentMatch.groups.string.replace(/\\(.)/g, "$1");
+                let unescapedString = segmentMatch.groups.string.replace(/\\(.)/g, "$1");
                 segments.push({ type: "string", offset: segmentOffset, value: unescapedString });
             }
 
             if (segmentMatch.groups.expression)
             {
-                var expressionOffset = segmentOffset + "${".length;
+                let expressionOffset = segmentOffset + "${".length;
                 try
                 {
-                    var expression = new MychExpression(segmentMatch.groups.expression);
+                    let expression = new MychExpression(segmentMatch.groups.expression);
                     segments.push({ type: "expression", offset: expressionOffset, expression: expression });
                 }
                 catch (exception)
@@ -1979,23 +1979,23 @@ class MychTemplate
 
     *evaluate(variables, context)
     {
-        var contextKeys = Object.keys(context).filter(key => !/^\w+$/.test(key));
-        var contextKeysRegExp;
+        let contextKeys = Object.keys(context).filter(key => !/^\w+$/.test(key));
+        let contextKeysRegExp;
 
         if (contextKeys.length > 0)
         {
             contextKeysRegExp = new RegExp(contextKeys.map(key => key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/, "\\b")).join("|"), "g");
         }
 
-        var evaluatedSegments = [];
+        let evaluatedSegments = [];
 
-        for (var segment of this.segments)
+        for (let segment of this.segments)
         {
             switch (segment.type)
             {
                 case "string":
                 {
-                    var evaluatedString = segment.value;
+                    let evaluatedString = segment.value;
 
                     if (contextKeysRegExp)
                     {
@@ -2011,7 +2011,7 @@ class MychTemplate
                 {
                     try
                     {
-                        var expressionValue = yield* segment.expression.evaluate(variables, context);
+                        let expressionValue = yield* segment.expression.evaluate(variables, context);
                         evaluatedSegments.push(MychExpression.coerceMarkup(expressionValue));
                     }
                     catch (exception)
@@ -2225,21 +2225,21 @@ class MychExpression
 
     static createTokenRegExp()
     {
-        var compareLengthDecreasing = function(string1, string2)
+        let compareLengthDecreasing = function(string1, string2)
         {
             // Sort in decreasing order of string length.
             return (string2.length - string1.length);
         };
 
-        var createOperatorRegExpSource = function(operator)
+        let createOperatorRegExpSource = function(operator)
         {
             // Escape all characters that might have special meaning and add boundary assertions.
             return operator.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/g, "\\b");
         };
 
-        var operatorRegExpSource = Object.keys(MychExpression.operators).sort(compareLengthDecreasing).map(createOperatorRegExpSource).join("|");
+        let operatorRegExpSource = Object.keys(MychExpression.operators).sort(compareLengthDecreasing).map(createOperatorRegExpSource).join("|");
 
-        var tokenPatterns =
+        let tokenPatterns =
         {
             operator:             operatorRegExpSource,
             literalNumber:        /(\.\d+|\d+(\.\d*)?)([eE][-+]?\d+)?/,
@@ -2252,7 +2252,7 @@ class MychExpression
             unsupported:          /.+/,
         }
 
-        var createTokenRegExpSource = function([type, pattern])
+        let createTokenRegExpSource = function([type, pattern])
         {
             if (pattern instanceof RegExp)
             {
@@ -2269,8 +2269,8 @@ class MychExpression
 
     parse(source)
     {
-        var tokens = [];
-        var tokenMatch;
+        let tokens = [];
+        let tokenMatch;
 
         MychExpression.tokenRegExp.lastIndex = 0;
 
@@ -2286,7 +2286,7 @@ class MychExpression
                 throw new MychExpressionError("parse", "syntax error", source, tokenMatch.index);
             }
 
-            var [tokenType, tokenValue] = Object.entries(tokenMatch.groups).find(([type, value]) => value);
+            let [tokenType, tokenValue] = Object.entries(tokenMatch.groups).find(([type, value]) => value);
 
             switch (tokenType)
             {
@@ -2328,14 +2328,14 @@ class MychExpression
 
     *evaluate(variables, context)
     {
-        var valueStack = [];
-        var operationStack = [];
+        let valueStack = [];
+        let operationStack = [];
 
-        var reduce = function*(precedence)
+        let reduce = function*(precedence)
         {
             while (operationStack.length > 0)
             {
-                var operation = operationStack[operationStack.length - 1];
+                let operation = operationStack[operationStack.length - 1];
 
                 if (operation.type == "parenthesis")
                 {
@@ -2349,8 +2349,8 @@ class MychExpression
 
                 operationStack.pop();
 
-                var executionArguments = valueStack.splice(-operation.operands);
-                var executionResult;
+                let executionArguments = valueStack.splice(-operation.operands);
+                let executionResult;
 
                 if (operation.type == "function")
                 {
@@ -2371,27 +2371,27 @@ class MychExpression
             }
         };
 
-        var expectClosing = [{}];
-        var expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+        let expectClosing = [{}];
+        let expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
 
-        var getExpectDescription = function()
+        let getExpectDescription = function()
         {
             return Object.entries(expectTokens).filter(([type, qualifier]) => qualifier).map(([type, qualifier]) => qualifier + " " + type).join(", ");
         };
 
-        for (var token of this.tokens)
+        for (let token of this.tokens)
         {
-            var tokenQualifier = "any";
-            var expectTokenQualifiers = [expectTokens[token.type]].flat();
+            let tokenQualifier = "any";
+            let expectTokenQualifiers = [expectTokens[token.type]].flat();
 
-            var operator = undefined;
+            let operator = undefined;
 
             switch (token.type)
             {
                 case "operator":
                 {
-                    var operatorVariants = MychExpression.operators[token.value];
-                    var operatorType = expectTokenQualifiers.find(qualifier => operatorVariants[qualifier]);
+                    let operatorVariants = MychExpression.operators[token.value];
+                    let operatorType = expectTokenQualifiers.find(qualifier => operatorVariants[qualifier]);
                     operator = operatorVariants[operatorType];
                     tokenQualifier = operatorType || Object.keys(operatorVariants).join("/");
                 }
@@ -2406,7 +2406,7 @@ class MychExpression
 
             if (!expectTokenQualifiers.includes(tokenQualifier))
             {
-                var expectDescription = getExpectDescription();
+                let expectDescription = getExpectDescription();
                 throw new MychExpressionError("evaluate", tokenQualifier + " " + token.type + " not expected here (expected " + expectDescription + ")", this.source, token.offset);
             }
 
@@ -2438,8 +2438,8 @@ class MychExpression
 
                 case "identifier":
                 {
-                    var identifierContext = variables;
-                    var identifierValue = variables[token.value];
+                    let identifierContext = variables;
+                    let identifierValue = variables[token.value];
 
                     if (identifierValue == undefined)
                     {
@@ -2472,7 +2472,7 @@ class MychExpression
                     {
                         yield* reduce();
 
-                        var openingParenthesisOperation = operationStack.pop();
+                        let openingParenthesisOperation = operationStack.pop();
                         if (valueStack.length == openingParenthesisOperation.valueStackOffset)
                         {
                             valueStack.push([]);
@@ -2488,7 +2488,7 @@ class MychExpression
 
         if (expectTokens.operator != "binary")
         {
-            var expectDescription = getExpectDescription();
+            let expectDescription = getExpectDescription();
             throw new MychExpressionError("evaluate", "expected " + expectDescription, this.source, this.source.length);
         }
 
@@ -2496,11 +2496,11 @@ class MychExpression
 
         if (operationStack.length != 0)
         {
-            var expectDescription = getExpectDescription();
+            let expectDescription = getExpectDescription();
             throw new MychExpressionError("evaluate", "expected " + expectDescription, this.source, this.source.length);
         }
 
-        var result = MychExpression.coerceScalar(valueStack);
+        let result = MychExpression.coerceScalar(valueStack);
 
         if (result instanceof MychExpressionArgs)
         {
