@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.0";
+const MMM_VERSION = "1.12.1";
 
 on("chat:message", function(msg)
 {
@@ -1201,12 +1201,13 @@ class MychScriptVariables
 
 class MychScriptError
 {
-    constructor(stage, message, source, offset)
+    constructor(stage, message, source, offset, cause = undefined)
     {
         this.stage = stage;
         this.message = message;
         this.source = source;
         this.offset = offset;
+        this.cause = cause;
     }
 
     toString()
@@ -1240,20 +1241,20 @@ class MychScript
     {
         if (exception instanceof MychExpressionError)
         {
-            throw new MychScriptError(stage, exception.message + " in expression", (source || this.source), expressionOffset + exception.offset);
+            throw new MychScriptError(stage, exception.message + " in expression", (source || this.source), expressionOffset + exception.offset, exception);
         }
 
-        throw new MychScriptError(stage, exception + " in expression", this.source, expressionOffset);
+        throw new MychScriptError(stage, exception + " in expression", this.source, expressionOffset, exception);
     }
 
     rethrowTemplateError(stage, exception, templateOffset)
     {
         if (exception instanceof MychTemplateError)
         {
-            throw new MychScriptError(stage, exception.message + " in template", this.source, templateOffset + exception.offset);
+            throw new MychScriptError(stage, exception.message + " in template", this.source, templateOffset + exception.offset, exception);
         }
 
-        throw new MychScriptError(stage, exception + " in template", this.source, templateOffset);
+        throw new MychScriptError(stage, exception + " in template", this.source, templateOffset, exception);
     }
 
     static commands =
@@ -1892,12 +1893,13 @@ class MychScript
 
 class MychTemplateError
 {
-    constructor(stage, message, source, offset)
+    constructor(stage, message, source, offset, cause = undefined)
     {
         this.stage = stage;
         this.message = message;
         this.source = source;
         this.offset = offset;
+        this.cause = cause;
     }
 
     toString()
@@ -1923,10 +1925,10 @@ class MychTemplate
     {
         if (exception instanceof MychExpressionError)
         {
-            throw new MychTemplateError(stage, exception.message + " in expression", this.source, expressionOffset + exception.offset);
+            throw new MychTemplateError(stage, exception.message + " in expression", this.source, expressionOffset + exception.offset, exception);
         }
 
-        throw new MychTemplateError(stage, exception + " in expression", this.source, expressionOffset);
+        throw new MychTemplateError(stage, exception + " in expression", this.source, expressionOffset, exception);
     }
 
     parse(source)
@@ -2027,12 +2029,13 @@ class MychTemplate
 
 class MychExpressionError
 {
-    constructor(stage, message, source, offset)
+    constructor(stage, message, source, offset, cause = undefined)
     {
         this.stage = stage;
         this.message = message;
         this.source = source;
         this.offset = offset;
+        this.cause = cause;
     }
 
     toString()
