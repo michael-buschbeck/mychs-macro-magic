@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.4";
+const MMM_VERSION = "1.12.5";
 
 on("chat:message", function(msg)
 {
@@ -98,17 +98,14 @@ on("chat:message", function(msg)
             continue;
         }
 
-        if (!player.script)
-        {
-            player.script = new MychScript(new MychScriptVariables());
-        }
-
         try
         {
-            let scriptCommand = scriptMatch.groups.command;
-            let scriptAdded = player.script.addCommand(scriptCommand, player.context);
+            let scriptCommandTokens = scriptMatch.groups.command;
 
-            if (scriptAdded.type == "script" && !scriptAdded.complete)
+            let scriptTop = (player.script || new MychScript(new MychScriptVariables()));
+            let scriptAdded = scriptTop.addCommand(scriptCommandTokens, player.context);
+
+            if (!player.script || (scriptAdded.type == "script" && !scriptAdded.complete))
             {
                 player.script = scriptAdded;
                 player.exception = undefined;
@@ -120,7 +117,7 @@ on("chat:message", function(msg)
             player.exception = exception;
         }
 
-        if (player.script.complete)
+        if (player.script && player.script.complete)
         {
             if (!player.exception)
             {
