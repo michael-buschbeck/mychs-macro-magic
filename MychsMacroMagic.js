@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.2";
+const MMM_VERSION = "1.12.3";
 
 on("chat:message", function(msg)
 {
@@ -24,6 +24,7 @@ on("chat:message", function(msg)
     {
         player =
         {
+            lastseen: undefined,
             context: new MychScriptContext(),
             script: undefined,
             exception: undefined,
@@ -31,6 +32,8 @@ on("chat:message", function(msg)
 
         MychScriptContext.players[msg.playerid] = player;
     }
+
+    player.lastseen = new Date();
 
     if (msgContextUpdated)
     {
@@ -43,6 +46,45 @@ on("chat:message", function(msg)
     if (msg.type != "api")
     {
         return;
+    }
+
+    let statusSource = msg.content;
+
+    let statusRegExp = /^(?<command>!mmm\s+status\s*)(?<arguments>.+)?$/;
+    let statusMatch = statusRegExp.exec(statusSource);
+
+    if (statusMatch)
+    {
+        let statusSourceOffset = statusMatch.groups.command.length;
+
+        try
+        {
+            let [statusResetSourceOffset, statusResetArgs] = MychScript.parseTokens([ "reset" ], statusSource, statusSourceOffset);
+
+            if (statusResetArgs)
+            {
+                if (statusResetSourceOffset < statusSource.length)
+                {
+                    throw new MychScriptError("parse", "syntax error", statusSource, statusResetSourceOffset);
+                }
+
+                player.context.$statusReset();
+                return;
+            }
+
+            if (statusSourceOffset < statusSource.length)
+            {
+                throw new MychScriptError("parse", "syntax error", statusSource, statusSourceOffset);
+            }
+
+            player.context.$statusDump();
+            return;
+        }
+        catch (exception)
+        {
+            player.context.error(exception);
+            return;
+        }
     }
 
     let msgContentLines = msg.content.split(/<br\/>\s+/);
@@ -84,7 +126,7 @@ on("chat:message", function(msg)
                 if (player.script.type == "set")
                 {
                     let variableName = player.script.definition.variable;
-                    player.context.whisperback("<br/>\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
+                    player.context.whisperback("\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
                 }
 
                 player.script.startExecute();
@@ -432,13 +474,13 @@ class MychScriptContext
             recipient = "\"" + recipient + "\"";
         }
 
-        sendChat("Mych's Macro Magic", "/w " + recipient + " " + message, null, { noarchive: true });
+        sendChat("Mych's Macro Magic", "/w " + recipient + " <br/>" + message, null, { noarchive: true });
     }
 
     error(exception)
     {
         log(exception.stack);
-        this.whisperback("<br/>" + this.literal(exception));
+        this.whisperback(this.literal(exception));
     }
 
     distunits()
@@ -1191,6 +1233,80 @@ class MychScriptContext
         updateObj.set(updateKey, updateVal);
 
         return this.$getAttribute(nameOrId, attributeName, max);
+    }
+
+    $statusReset()
+    {
+        MychScriptContext.players = {};
+        this.whisperback("All state reset.")
+    }
+
+    $statusDump()
+    {
+        let statusTableRows = [];
+
+        for (let [playerId, player] of Object.entries(MychScriptContext.players))
+        {
+            let playerObj = getObj("player", playerId);
+            let playerDescription;
+
+            if (playerObj)
+            {
+                let playerName = playerObj.get("displayname");
+                let playerOnline = playerObj.get("online");
+                
+                playerDescription = playerName + " (" + (playerOnline ? "online" : "offline") + ")";
+            }
+
+            statusTableRows.push([ this.literal(playerDescription || playerId) ]);
+            statusTableRows.push([ "Seen", player.lastseen.toISOString().replace(/T/, " ").replace(/Z$/, " UTC") ]);
+
+            let contextDescription = "";
+
+            for (let [contextVariableName, contextVariableValue] of Object.entries(player.context))
+            {
+                let contextVariableMarkup = (contextVariableValue && contextVariableValue.toMarkup ? contextVariableValue.toMarkup() : this.literal(JSON.stringify(contextVariableValue)));
+                contextDescription += "**" + this.literal(contextVariableName) + "** = " + contextVariableMarkup + "<br/>";
+            }
+
+            statusTableRows.push([ "Context", (contextDescription || "empty" )]);
+
+            let scriptDescription;
+
+            if (player.script)
+            {
+                scriptDescription = player.script.type || "undefined";
+                scriptDescription += " [";
+
+                let nestedScriptDescriptions = [];
+
+                for (let nestedScript of player.script.nestedScripts)
+                {
+                    let nestedScriptDescription = (nestedScript.type || "undefined") + (nestedScript.complete ? "" : "...");
+                    nestedScriptDescriptions.push(nestedScriptDescription);
+                }
+
+                scriptDescription += nestedScriptDescriptions.join(", ");
+                scriptDescription += "]";
+                scriptDescription += (player.script.complete ? "" : "...");
+            }
+
+            statusTableRows.push([ "Script", this.literal(scriptDescription || "no script") ]);
+            statusTableRows.push([ "Error", this.literal(player.exception || "no exception") ]);
+        }
+
+        let renderTableBodyRow = function(row)
+        {
+            let tableColumnStart = (row.length == 1 ? "<td colspan='2' style='text-align: center'>" : "<td>");
+            return "<tr>" + row.map(content => tableColumnStart + content + "</td>").join("") + "</tr>";
+        };
+
+        let statusTableCaption = "<caption>Mych's Macro Magic " + MMM_VERSION + "</caption>";
+        let statusTableBody = "<tbody>" + statusTableRows.map(renderTableBodyRow).join("") + "</tbody>";
+
+        let statusOutput = "<div class='sheet-rolltemplate-default'><table>" + statusTableCaption + statusTableBody + "</table></div>";
+        
+        this.whisperback(statusOutput);
     }
 }
 
