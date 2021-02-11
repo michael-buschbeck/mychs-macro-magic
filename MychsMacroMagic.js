@@ -24,6 +24,7 @@ on("chat:message", function(msg)
     {
         player =
         {
+            lastseen: undefined,
             context: new MychScriptContext(),
             script: undefined,
             exception: undefined,
@@ -31,6 +32,8 @@ on("chat:message", function(msg)
 
         MychScriptContext.players[msg.playerid] = player;
     }
+
+    player.lastseen = new Date();
 
     if (msgContextUpdated)
     {
@@ -92,6 +95,7 @@ on("chat:message", function(msg)
                 }
 
                 statusTableRows.push([ player.context.literal(playerDescription || playerId) ]);
+                statusTableRows.push([ "Seen", player.lastseen.toISOString().replace(/T/, " ").replace(/Z$/, " UTC") ]);
 
                 let contextDescription = "";
 
