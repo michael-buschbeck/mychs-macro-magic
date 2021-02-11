@@ -126,7 +126,7 @@ on("chat:message", function(msg)
                 if (player.script.type == "set")
                 {
                     let variableName = player.script.definition.variable;
-                    player.context.whisperback("<br/>\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
+                    player.context.whisperback("\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
                 }
 
                 player.script.startExecute();
@@ -474,13 +474,13 @@ class MychScriptContext
             recipient = "\"" + recipient + "\"";
         }
 
-        sendChat("Mych's Macro Magic", "/w " + recipient + " " + message, null, { noarchive: true });
+        sendChat("Mych's Macro Magic", "/w " + recipient + " <br/>" + message, null, { noarchive: true });
     }
 
     error(exception)
     {
         log(exception.stack);
-        this.whisperback("<br/>" + this.literal(exception));
+        this.whisperback(this.literal(exception));
     }
 
     distunits()
