@@ -91,7 +91,17 @@ on("chat:message", function(msg)
                     playerDescription = playerName + " (" + (playerOnline ? "online" : "offline") + ")";
                 }
 
-                statusTableRows.push([ (playerDescription || playerId) ]);
+                statusTableRows.push([ player.context.literal(playerDescription || playerId) ]);
+
+                let contextDescription = "";
+
+                for (let [contextVariableName, contextVariableValue] of Object.entries(player.context))
+                {
+                    let contextVariableMarkup = (contextVariableValue && contextVariableValue.toMarkup ? contextVariableValue.toMarkup() : player.context.literal(JSON.stringify(contextVariableValue)));
+                    contextDescription += "**" + player.context.literal(contextVariableName) + "** = " + contextVariableMarkup + "<br/>";
+                }
+
+                statusTableRows.push([ "Context", (contextDescription || "empty" )]);
 
                 let scriptDescription;
 
@@ -113,14 +123,14 @@ on("chat:message", function(msg)
                     scriptDescription += (player.script.complete ? "" : "...");
                 }
 
-                statusTableRows.push([ "Script", (scriptDescription || "no script") ]);
-                statusTableRows.push([ "Error", (player.exception || "no exception") ]);
+                statusTableRows.push([ "Script", player.context.literal(scriptDescription || "no script") ]);
+                statusTableRows.push([ "Error", player.context.literal(player.exception || "no exception") ]);
             }
 
             let renderTableBodyRow = function(row)
             {
                 let tableColumnStart = (row.length == 1 ? "<td colspan='2' style='text-align: center'>" : "<td>");
-                return "<tr>" + row.map(content => tableColumnStart + player.context.literal(content) + "</td>").join("") + "</tr>";
+                return "<tr>" + row.map(content => tableColumnStart + content + "</td>").join("") + "</tr>";
             };
 
             let statusTableCaption = "<caption>Mych's Macro Magic " + MMM_VERSION + "</caption>";
