@@ -68,9 +68,7 @@ on("chat:message", function(msg)
                     throw new MychScriptError("parse", "syntax error", statusSource, statusResetSourceOffset);
                 }
 
-                MychScriptContext.players = {};
-
-                player.context.whisperback("All state reset.")
+                player.context.$statusReset();
                 return;
             }
 
@@ -79,70 +77,7 @@ on("chat:message", function(msg)
                 throw new MychScriptError("parse", "syntax error", statusSource, statusSourceOffset);
             }
 
-            var statusTableRows = [];
-
-            for (let [playerId, player] of Object.entries(MychScriptContext.players))
-            {
-                let playerObj = getObj("player", playerId);
-                let playerDescription;
-
-                if (playerObj)
-                {
-                    let playerName = playerObj.get("displayname");
-                    let playerOnline = playerObj.get("online");
-                    
-                    playerDescription = playerName + " (" + (playerOnline ? "online" : "offline") + ")";
-                }
-
-                statusTableRows.push([ player.context.literal(playerDescription || playerId) ]);
-                statusTableRows.push([ "Seen", player.lastseen.toISOString().replace(/T/, " ").replace(/Z$/, " UTC") ]);
-
-                let contextDescription = "";
-
-                for (let [contextVariableName, contextVariableValue] of Object.entries(player.context))
-                {
-                    let contextVariableMarkup = (contextVariableValue && contextVariableValue.toMarkup ? contextVariableValue.toMarkup() : player.context.literal(JSON.stringify(contextVariableValue)));
-                    contextDescription += "**" + player.context.literal(contextVariableName) + "** = " + contextVariableMarkup + "<br/>";
-                }
-
-                statusTableRows.push([ "Context", (contextDescription || "empty" )]);
-
-                let scriptDescription;
-
-                if (player.script)
-                {
-                    scriptDescription = player.script.type || "undefined";
-                    scriptDescription += " [";
-
-                    let nestedScriptDescriptions = [];
-
-                    for (let nestedScript of player.script.nestedScripts)
-                    {
-                        let nestedScriptDescription = (nestedScript.type || "undefined") + (nestedScript.complete ? "" : "...");
-                        nestedScriptDescriptions.push(nestedScriptDescription);
-                    }
-
-                    scriptDescription += nestedScriptDescriptions.join(", ");
-                    scriptDescription += "]";
-                    scriptDescription += (player.script.complete ? "" : "...");
-                }
-
-                statusTableRows.push([ "Script", player.context.literal(scriptDescription || "no script") ]);
-                statusTableRows.push([ "Error", player.context.literal(player.exception || "no exception") ]);
-            }
-
-            let renderTableBodyRow = function(row)
-            {
-                let tableColumnStart = (row.length == 1 ? "<td colspan='2' style='text-align: center'>" : "<td>");
-                return "<tr>" + row.map(content => tableColumnStart + content + "</td>").join("") + "</tr>";
-            };
-
-            let statusTableCaption = "<caption>Mych's Macro Magic " + MMM_VERSION + "</caption>";
-            let statusTableBody = "<tbody>" + statusTableRows.map(renderTableBodyRow).join("") + "</tbody>";
-
-            let statusOutput = "<div class='sheet-rolltemplate-default'><table>" + statusTableCaption + statusTableBody + "</table></div>";
-            
-            player.context.whisperback(statusOutput);
+            player.context.$statusDump();
             return;
         }
         catch (exception)
@@ -1298,6 +1233,80 @@ class MychScriptContext
         updateObj.set(updateKey, updateVal);
 
         return this.$getAttribute(nameOrId, attributeName, max);
+    }
+
+    $statusReset()
+    {
+        MychScriptContext.players = {};
+        this.whisperback("All state reset.")
+    }
+
+    $statusDump()
+    {
+        let statusTableRows = [];
+
+        for (let [playerId, player] of Object.entries(MychScriptContext.players))
+        {
+            let playerObj = getObj("player", playerId);
+            let playerDescription;
+
+            if (playerObj)
+            {
+                let playerName = playerObj.get("displayname");
+                let playerOnline = playerObj.get("online");
+                
+                playerDescription = playerName + " (" + (playerOnline ? "online" : "offline") + ")";
+            }
+
+            statusTableRows.push([ this.literal(playerDescription || playerId) ]);
+            statusTableRows.push([ "Seen", player.lastseen.toISOString().replace(/T/, " ").replace(/Z$/, " UTC") ]);
+
+            let contextDescription = "";
+
+            for (let [contextVariableName, contextVariableValue] of Object.entries(player.context))
+            {
+                let contextVariableMarkup = (contextVariableValue && contextVariableValue.toMarkup ? contextVariableValue.toMarkup() : this.literal(JSON.stringify(contextVariableValue)));
+                contextDescription += "**" + this.literal(contextVariableName) + "** = " + contextVariableMarkup + "<br/>";
+            }
+
+            statusTableRows.push([ "Context", (contextDescription || "empty" )]);
+
+            let scriptDescription;
+
+            if (player.script)
+            {
+                scriptDescription = player.script.type || "undefined";
+                scriptDescription += " [";
+
+                let nestedScriptDescriptions = [];
+
+                for (let nestedScript of player.script.nestedScripts)
+                {
+                    let nestedScriptDescription = (nestedScript.type || "undefined") + (nestedScript.complete ? "" : "...");
+                    nestedScriptDescriptions.push(nestedScriptDescription);
+                }
+
+                scriptDescription += nestedScriptDescriptions.join(", ");
+                scriptDescription += "]";
+                scriptDescription += (player.script.complete ? "" : "...");
+            }
+
+            statusTableRows.push([ "Script", this.literal(scriptDescription || "no script") ]);
+            statusTableRows.push([ "Error", this.literal(player.exception || "no exception") ]);
+        }
+
+        let renderTableBodyRow = function(row)
+        {
+            let tableColumnStart = (row.length == 1 ? "<td colspan='2' style='text-align: center'>" : "<td>");
+            return "<tr>" + row.map(content => tableColumnStart + content + "</td>").join("") + "</tr>";
+        };
+
+        let statusTableCaption = "<caption>Mych's Macro Magic " + MMM_VERSION + "</caption>";
+        let statusTableBody = "<tbody>" + statusTableRows.map(renderTableBodyRow).join("") + "</tbody>";
+
+        let statusOutput = "<div class='sheet-rolltemplate-default'><table>" + statusTableCaption + statusTableBody + "</table></div>";
+        
+        this.whisperback(statusOutput);
     }
 }
 
