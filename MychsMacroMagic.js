@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.3";
+const MMM_VERSION = "1.12.4";
 
 on("chat:message", function(msg)
 {
@@ -108,9 +108,10 @@ on("chat:message", function(msg)
             let scriptCommand = scriptMatch.groups.command;
             let scriptAdded = player.script.addCommand(scriptCommand, player.context);
 
-            if (scriptAdded.type == "script")
+            if (scriptAdded.type == "script" && !scriptAdded.complete)
             {
                 player.script = scriptAdded;
+                player.exception = undefined;
             }
         }
         catch (exception)
