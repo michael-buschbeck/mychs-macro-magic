@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.8";
+const MMM_VERSION = "1.12.9";
 
 on("chat:message", function(msg)
 {
@@ -1274,20 +1274,18 @@ class MychScriptContext
 
             if (player.script)
             {
-                scriptDescription = player.script.type || "undefined";
-                scriptDescription += " [";
-
-                let nestedScriptDescriptions = [];
-
-                for (let nestedScript of player.script.nestedScripts)
+                let generateScriptSummary = function(script)
                 {
-                    let nestedScriptDescription = (nestedScript.type || "undefined") + (nestedScript.complete ? "" : "...");
-                    nestedScriptDescriptions.push(nestedScriptDescription);
-                }
-
-                scriptDescription += nestedScriptDescriptions.join(", ");
-                scriptDescription += "]";
-                scriptDescription += (player.script.complete ? "" : "...");
+                    if (script.complete)
+                    {
+                        return script.type || "uninitialized";
+                    }
+    
+                    let nestedScriptSummaries = script.nestedScripts.map(nestedScript => generateScriptSummary(nestedScript));
+                    return script.type + " [" + nestedScriptSummaries.join(", ") + "...]";
+                };
+    
+                scriptDescription = generateScriptSummary(player.script);
             }
 
             statusTableRows.push([ "Script", this.literal(scriptDescription || "no script") ]);
