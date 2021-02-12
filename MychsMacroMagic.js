@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.6";
+const MMM_VERSION = "1.12.7";
 
 on("chat:message", function(msg)
 {
@@ -1659,14 +1659,8 @@ class MychScript
                     message = "<br/>";
                 }
 
-                if (this.variables.chat)
-                {
-                    this.variables.chat(message);
-                }
-                else
-                {
-                    this.context.chat(message);
-                }
+                let chatContext = (this.variables.chat ? this.variables : this.context);
+                chatContext.chat(message);
             },
         },
 
@@ -1729,14 +1723,8 @@ class MychScript
                     this.variables.chat = prevChat;
                 }
 
-                if (this.variables.chat)
-                {
-                    this.variables.chat(messages.join(separator));
-                }
-                else
-                {
-                    this.context.chat(messages.join(separator));
-                }
+                let chatContext = (this.variables.chat ? this.variables : this.context);
+                chatContext.chat(messages.join(separator));
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
             },
