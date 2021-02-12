@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.5";
+const MMM_VERSION = "1.12.6";
 
 on("chat:message", function(msg)
 {
@@ -10,12 +10,13 @@ on("chat:message", function(msg)
     
     if (msg.type == "rollresult")
     {
-        let msgRollResults = JSON.parse(msg.content);
-        msgContextUpdated = (msgContext.$consumeRolls([{ results: msgRollResults, expression: msg.origRoll }]) > 0);
+        msgContext.$consumeRolls([{ results: JSON.parse(msg.content), expression: msg.origRoll }]);
+        msgContextUpdated = true;
     }
-    else
+    else if (msg.inlinerolls && msg.inlinerolls.length > 0)
     {
-        msgContextUpdated = (msgContext.$consumeRolls(msg.inlinerolls) > 0);
+        msgContext.$consumeRolls(msg.inlinerolls);
+        msgContextUpdated = true;
     }
 
     let player = MychScriptContext.players[msg.playerid];
