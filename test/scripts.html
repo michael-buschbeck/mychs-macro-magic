@@ -58,6 +58,40 @@
             white-space: normal;
         }
 
+        div.sheet-rolltemplate-default table {
+            border: 1px solid;
+            color: black;
+            border-color: rgba(112, 32, 130,1);
+            font-size: 1em;
+            font-family: "Helvetica Neue", Helvetica, sans-serif;
+        }
+
+        div.sheet-rolltemplate-default caption {
+            background-color: rgba(112, 32, 130,1);
+            color: #ffffff;
+            padding: 2px;
+            border-bottom: 1px solid black;
+            line-height: 1.6em;
+            font-size: 1.2em;
+        }
+
+        div.sheet-rolltemplate-default td {
+            padding: 5px;
+        }
+
+        div.sheet-rolltemplate-default td:nth-child(1)
+        {
+            font-weight: bold;
+        }
+
+        div.sheet-rolltemplate-default tr:nth-child(odd) {
+            background-color: rgba(217, 217, 214,1);
+        }
+
+        div.sheet-rolltemplate-default tr:nth-child(even) {
+            background-color: rgba(233, 233, 233,1);
+        }
+
         span.original {
             color: gray;
             font-family: Calibri, sans-serif;
@@ -240,6 +274,18 @@
                 "!mmm    chat: correct[1/2]",
                 "!mmm end combine",
                 "!mmm chat: correct[2/2]",
+            ],
+            [
+                "!mmm script",
+                "!mmm     set foo = 1",
+                "!mmm     if true",
+                "!mmm         chat: True dat!",
+                "!mmm     else",
+                "!mmm         combine chat",
+                "!mmm             if false",
+                "!mmm                 chat: The cake is a lie",
+                "!mmm                 chat: The coffee also",
+                "!mmm status",
             ],
             [
                 "!mmm script",
