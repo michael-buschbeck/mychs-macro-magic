@@ -276,6 +276,14 @@
                 "!mmm chat: correct[2/2]",
             ],
             [
+                "!mmm status",
+            ],
+            [
+                "!mmm combine chat",
+                "!mmm     chat: broken",
+                "!mmm status",
+            ],
+            [
                 "!mmm script",
                 "!mmm     set foo = 1",
                 "!mmm     if true",
@@ -286,6 +294,12 @@
                 "!mmm                 chat: The cake is a lie",
                 "!mmm                 chat: The coffee also",
                 "!mmm status",
+            ],
+            [
+                "!mmm combine chat",
+                "!mmm     chat: broken",
+                "!mmm status reset",
+                "!mmm chat: correct[1/1]"
             ],
             [
                 "!mmm script",
