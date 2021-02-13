@@ -391,7 +391,7 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | `-`*a*         | 2           | Math     | Negate *a*
 | *a* `*` *b*    | 3           | Math     | Multiply *a* with *b*
 | *a* `/` *b*    | 3           | Math     | Divide *a* by *b*
-| *a* `%` *b*    | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b*
+| *a* `%` *b*    | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b* – result always has the sign of *b*
 | *a* `+` *b*    | 4           | Math     | Add *a* and *b*
 | *a* `-` *b*    | 4           | Math     | Subtract *b* from *a*
 | *a* `&` *b*    | 4           | String   | Concatenate *a* and *b*
@@ -561,7 +561,7 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.12.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.12.10
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 

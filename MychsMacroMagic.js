@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.9";
+const MMM_VERSION = "1.12.10";
 
 on("chat:message", function(msg)
 {
@@ -2273,7 +2273,7 @@ class MychExpression
             binary: { precedence: 3, execute: (a,b) => MychExpression.coerceNumber(a) / MychExpression.coerceNumber(b) }
         },
         "%": {
-            binary: { precedence: 3, execute: (a,b) => MychExpression.coerceNumber(a) % MychExpression.coerceNumber(b) }
+            binary: { precedence: 3, execute: (a,b) => ((an,bn) => ((an % bn) + bn) % bn)(MychExpression.coerceNumber(a), MychExpression.coerceNumber(b)) }
         },
         "+": {
             unary:  { precedence: 2, execute: (a) => a },
