@@ -156,6 +156,12 @@
                 "!mmm chat: this <${undefinedValue}> should be empty",
             ],
             [
+                "!mmm chat:  11 %  8 = ${ 11 %  8} (3 expected)",
+                "!mmm chat: -11 %  8 = ${-11 %  8} (5 expected)",
+                "!mmm chat:  11 % -8 = ${ 11 % -8} (-5 expected)",
+                "!mmm chat: -11 % -8 = ${-11 % -8} (-3 expected)",
+            ],
+            [
                 "!mmm chat: floor(.) = (-1.2) = ${floor(-1.2)}, (-1.5) = ${floor(-1.5)}, (-1.7) = ${floor(-1.7)}, (1.2) = ${floor(1.2)}, (1.5) = ${floor(1.5)}, (1.7) = ${floor(1.7)}",
                 "!mmm chat: round(.) = (-1.2) = ${round(-1.2)}, (-1.5) = ${round(-1.5)}, (-1.7) = ${round(-1.7)}, (1.2) = ${round(1.2)}, (1.5) = ${round(1.5)}, (1.7) = ${round(1.7)}",
                 "!mmm chat: ceil(.) = (-1.2) = ${ceil(-1.2)}, (-1.5) = ${ceil(-1.5)}, (-1.7) = ${ceil(-1.7)}, (1.2) = ${ceil(1.2)}, (1.5) = ${ceil(1.5)}, (1.7) = ${ceil(1.7)}",
