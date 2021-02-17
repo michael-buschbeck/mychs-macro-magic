@@ -1334,7 +1334,15 @@ class MychScriptContext
 
             statusTableRows.push([ "Context", (contextDescription || "empty" )]);
 
-            let scriptDescription;
+            let scriptDescriptions = [];
+
+            if (player.customizations)
+            {
+                for (let customizeScript of player.customizations.nestedScripts)
+                {
+                    scriptDescriptions.push(customizeScript.type || "uninitialized");
+                }
+            }
 
             if (player.script)
             {
@@ -1345,14 +1353,14 @@ class MychScriptContext
                         return script.type || "uninitialized";
                     }
     
-                    let nestedScriptSummaries = script.nestedScripts.map(nestedScript => generateScriptSummary(nestedScript));
-                    return script.type + " [" + nestedScriptSummaries.join(", ") + "...]";
+                    let nestedScriptSummaries = script.nestedScripts.map(nestedScript => generateScriptSummary(nestedScript)).concat("...");
+                    return script.type + " [" + nestedScriptSummaries.join(", ") + "]";
                 }
     
-                scriptDescription = generateScriptSummary(player.script);
+                scriptDescriptions.push(generateScriptSummary(player.script));
             }
 
-            statusTableRows.push([ "Script", this.literal(scriptDescription || "no script") ]);
+            statusTableRows.push([ "Script", this.literal(scriptDescriptions.join(", ") || "no script") ]);
             statusTableRows.push([ "Error", this.literal(player.exception || "no exception") ]);
         }
 
