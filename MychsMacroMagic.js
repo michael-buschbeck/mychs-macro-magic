@@ -451,7 +451,7 @@ class MychScriptContext
 
     literal(value)
     {
-        return MychExpression.coerceString(value).replace(/[^\w\s]/g, char => "&#" + char.codePointAt(0) + ";")
+        return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";")
     }
 
     highlight(value, type = "normal", tooltip = undefined)
@@ -1377,6 +1377,12 @@ class MychScriptContext
         
         this.whisperback(statusOutput);
     }
+
+    $exportScript(destination, source)
+    {
+        let prefixedSource = source.split("\n").filter(line => !line.match(/^\s*$/)).map(line => "!mmm " + line).join("\n");
+        this.whisperback("<span style='white-space: pre-wrap'>" + this.literal(prefixedSource).replace(/\n/g, "<br/>") + "</span>");
+    }
 }
 
 class MychScriptVariables
@@ -1695,6 +1701,43 @@ class MychScript
                     this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
                 }
             },
+
+            getCustomization: function(variables)
+            {
+                if (!this.definition.customizable)
+                {
+                    return undefined;
+                }
+
+                let customizationKey = "set." + this.definition.variable;
+                let customizationCommand = "set " + this.definition.variable;
+
+                if (variables.$customizations.hasOwnProperty(this.definition.variable))
+                {
+                    let customization = variables.$customizations[this.definition.variable];
+                    customizationCommand += " = " + (customization instanceof MychScriptContext.Default ? "default" : MychExpression.literal(customization));
+                }
+                else if (this.definition.expression)
+                {
+                    if (this.definition.expression.tokens.length == 1 && this.definition.expression.tokens[0].type == "literal")
+                    {
+                        let onlyExpressionToken = this.definition.expression.tokens[0];
+                        customizationCommand += " = " + MychExpression.literal(onlyExpressionToken.value);
+                    }
+                    else
+                    {
+                        // no customization: evaluate default at script runtime
+                        customizationCommand += " = default";
+                    }
+                }
+                else
+                {
+                    // no customization and no default: show thinking face emoji
+                    customizationCommand += " = \u{1F914}";
+                }
+
+                return [customizationKey, customizationCommand];
+            },
         },
 
         do:
@@ -1787,6 +1830,22 @@ class MychScript
                 let chatContext = (variables.chat ? variables : this.context);
                 chatContext.chat(message);
             },
+
+            getCustomization: function(variables)
+            {
+                if (!this.definition.label)
+                {
+                    return undefined;
+                }
+
+                let translationTemplate = variables.$customizations.$translations && variables.$customizations.$translations[this.definition.label];
+                let customizationTemplate = (translationTemplate ? this.definition.template.createTranslated(translationTemplate) : this.definition.template);
+
+                let customizationKey = "chat." + this.definition.label;
+                let customizationCommand = "translate [" + this.definition.label + "]: " + customizationTemplate.getSourceWithReferences();
+
+                return [customizationKey, customizationCommand];
+            },
         },
 
         combine:
@@ -1859,9 +1918,16 @@ class MychScript
         {
             execute: function*(variables)
             {
-                for (let nestedScriptIndex = 0; nestedScriptIndex < this.nestedScripts.length; ++nestedScriptIndex)
+                let nestedScriptIndex;
+
+                for (nestedScriptIndex = 0; nestedScriptIndex < this.nestedScripts.length; ++nestedScriptIndex)
                 {
                     let nestedScript = this.nestedScripts[nestedScriptIndex];
+
+                    if (variables.$customizations.$export && nestedScript.type != "customize")
+                    {
+                        break;
+                    }
 
                     try
                     {
@@ -1887,20 +1953,81 @@ class MychScript
                     }
                 }
 
+                if (!variables.$customizations.$export)
+                {
+                    return undefined;
+                }
+                
+                function* gatherCustomizations(script)
+                {
+                    for (let nestedScript of script.nestedScripts)
+                    {
+                        if (nestedScript.getCustomization)
+                        {
+                            yield nestedScript.getCustomization(variables);
+                        }
+
+                        yield* gatherCustomizations(nestedScript);
+                    }
+                }
+
+                let customizationCommands = {};
+
+                for (let exportedNestedScript of this.nestedScripts.slice(nestedScriptIndex))
+                {
+                    for (let [customizationKey, customizationCommand] of gatherCustomizations(exportedNestedScript))
+                    {
+                        customizationCommands[customizationKey] ||= customizationCommand;
+                    }
+                }
+
+                let customizationBlock = [];
+
+                customizationBlock.push("customize");
+                customizationBlock.push(...Object.values(customizationCommands).map(command => "   " + command));
+                customizationBlock.push("end customize");
+
+                let customizationBlockSource = customizationBlock.map(line => line + "\n").join("");
+                this.context.$exportScript(variables.$customizations.$export.destination, customizationBlockSource);
+
                 return undefined;
             },
         },
 
         customize:
         {
+            tokens:
+            {
+                block:  [],
+                export: [ "export", "to", /(?<destination>\w+)/ ],
+            },
+
+            parse: function(args)
+            {
+                if (args.destination)
+                {
+                    this.definition.export = true;
+                    this.definition.exportDestination = args.destination.value;
+
+                    this.complete = true;
+                }
+            },
+
             execute: function*(variables)
             {
-                let nestedVariables = Object.create(variables);
-                let nestedScriptExit = yield* this.executeNestedScripts(nestedVariables);
+                if (this.definition.export)
+                {
+                    variables.$customizations.$export = { destination: this.definition.exportDestination };
+                }
+                else
+                {
+                    let nestedVariables = Object.create(variables);
+                    let nestedScriptExit = yield* this.executeNestedScripts(nestedVariables);
 
-                variables.integrateCustomizations(nestedVariables);
+                    variables.integrateCustomizations(nestedVariables);
 
-                return this.propagateExitOnReturn(nestedScriptExit);
+                    return this.propagateExitOnReturn(nestedScriptExit);
+                }
             },
         },
 
@@ -2086,6 +2213,7 @@ class MychScript
             }
 
             this.execute = (command.execute || function*() {});
+            this.getCustomization = command.getCustomization;
         
             return this;
         }
@@ -2311,6 +2439,26 @@ class MychTemplate
         }
 
         this.segments = segments;
+    }
+
+    getSourceWithReferences()
+    {
+        function reconstructSegment(segment)
+        {
+            if (segment.type == "string")
+            {
+                return segment.value.replace(/(\$[\{\[]|\\)/, "\\\\$1");
+            }
+
+            if (segment.type == "expression" && segment.label)
+            {
+                return "$[" + segment.label + "]";
+            }
+
+            return "...";
+        }
+
+        return this.segments.map(reconstructSegment).join("");
     }
 
     static createContextKeysRegExp(context)
@@ -2570,6 +2718,20 @@ class MychExpression
         }
 
         return MychExpressionArgs.of(value);
+    }
+
+    static literal(value)
+    {
+        switch (typeof(value))
+        {
+            case "string":
+            {
+                let stringLiteral = "\"" + value.replace(/(["\\])/g, "\\$1") + "\"";
+                return stringLiteral;
+            }
+        }
+
+        return String(value);
     }
 
     static operators =

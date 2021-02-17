@@ -706,6 +706,21 @@
                 "!mmm end script",
             ],
             [
+                "!mmm customize export to ExportedCustomizations",
+                "!mmm customize",
+                "!mmm     set customizedSetting = 'correct \"customized\" setting'",
+                "!mmm     translate [translatedChat]: correct translated chat message with $[placeholder]",
+                "!mmm end customize",
+                "!mmm script",
+                "!mmm     set customizable customizedSetting = 'broken'",
+                "!mmm     set customizable settingWithoutDefault",
+                "!mmm     set customizable settingWithSimpleDefault = 'correct \"default\" setting'",
+                "!mmm     set customizable settingWithExpressionDefault = 'correct ' & '\"default\"' & ' setting'",
+                "!mmm     chat [translatedChat]: broken translated chat with $[correct_placeholder]{'labeled expression'}",
+                "!mmm     chat [defaultChat]: correct default chat with $[correct_placeholder]{'broken labeled expression'} and ${'broken expression without label'} and $[broken_misplaced_label]",
+                "!mmm     chat [defaultChat]: broken redundant default chat with $[broken_placeholder]{'broken labeled expression'} and ${'broken expression without label'} and $[broken_misplaced_label]",
+                "!mmm end script",
+            ],
         ];
 
         var processes = [];
