@@ -103,8 +103,8 @@ on("chat:message", function(msg)
         {
             let scriptCommandTokens = scriptMatch.groups.command;
 
-            let scriptTop = (player.script || new MychScript(new MychScriptVariables()));
-            let scriptAdded = scriptTop.addCommand(scriptCommandTokens, player.context);
+            let scriptMain = (player.script || new MychScript());
+            let scriptAdded = scriptMain.addCommand(scriptCommandTokens, player.context);
 
             if (!player.script || (scriptAdded.type == "script" && !scriptAdded.complete))
             {
@@ -122,13 +122,15 @@ on("chat:message", function(msg)
         {
             if (!player.exception)
             {
+                let scriptVariables = new MychScriptVariables();
+
                 if (player.script.type == "set")
                 {
                     let variableName = player.script.definition.variable;
                     player.context.whisperback("\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
                 }
 
-                player.script.startExecute();
+                player.script.startExecute(scriptVariables);
             }
 
             player.script = undefined;
@@ -1339,13 +1341,12 @@ class MychScriptExit
 
 class MychScript
 {
-    constructor(variables)
+    constructor()
     {
         this.type = undefined;
         this.source = undefined;
         this.context = undefined;
         this.definition = {};
-        this.variables = variables || {};
         this.nestedScripts = [];
         this.complete = false;
     }
@@ -1374,9 +1375,9 @@ class MychScript
     {
         script:
         {
-            execute: function*()
+            execute: function*(variables)
             {
-                let nestedScriptExit = yield* this.executeNestedScripts();
+                let nestedScriptExit = yield* this.executeNestedScripts(variables);
                 return this.propagateExitOnReturn(nestedScriptExit);
             }
         },
@@ -1414,7 +1415,7 @@ class MychScript
                 this.complete = true;
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 if (this.definition.expression)
                 {
@@ -1422,7 +1423,7 @@ class MychScript
 
                     try
                     {
-                        exitCondition = yield* this.definition.expression.evaluate(this.variables, this.context);
+                        exitCondition = yield* this.definition.expression.evaluate(variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1461,7 +1462,7 @@ class MychScript
                 }
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 let elseBranch = this.definition.elseBranch;
 
@@ -1474,7 +1475,7 @@ class MychScript
 
                     try
                     {
-                        branchCondition = yield* branchScript.definition.expression.evaluate(this.variables, this.context);
+                        branchCondition = yield* branchScript.definition.expression.evaluate(variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1485,14 +1486,14 @@ class MychScript
                     {
                         let nextBranch = this.definition.branches[branchIndex + 1] || elseBranch || { nestedScriptOffset: this.nestedScripts.length };
 
-                        let branchNestedScriptExit = yield* this.executeNestedScripts(branch.nestedScriptOffset, nextBranch.nestedScriptOffset);
+                        let branchNestedScriptExit = yield* this.executeNestedScripts(variables, branch.nestedScriptOffset, nextBranch.nestedScriptOffset);
                         return this.propagateExitOnReturn(branchNestedScriptExit);
                     }
                 }
 
                 if (elseBranch)
                 {
-                    let elseNestedScriptExit = yield* this.executeNestedScripts(elseBranch.nestedScriptOffset);
+                    let elseNestedScriptExit = yield* this.executeNestedScripts(variables, elseBranch.nestedScriptOffset);
                     return this.propagateExitOnReturn(elseNestedScriptExit);
                 }
             },
@@ -1566,11 +1567,11 @@ class MychScript
                 this.complete = true;
             },
             
-            execute: function*()
+            execute: function*(variables)
             {
                 try
                 {
-                    this.variables[this.definition.variable] = yield* this.definition.expression.evaluate(this.variables, this.context);
+                    variables[this.definition.variable] = yield* this.definition.expression.evaluate(variables, this.context);
                 }
                 catch (exception)
                 {
@@ -1598,11 +1599,11 @@ class MychScript
                 this.complete = true;
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 try
                 {
-                    yield* this.definition.expression.evaluate(this.variables, this.context);
+                    yield* this.definition.expression.evaluate(variables, this.context);
                 }
                 catch (exception)
                 {
@@ -1637,7 +1638,7 @@ class MychScript
                 this.complete = true;
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 let message;
 
@@ -1645,7 +1646,7 @@ class MychScript
                 {
                     try
                     {
-                        message = yield* this.definition.template.evaluate(this.variables, this.context);
+                        message = yield* evaluateTemplate.evaluate(variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1657,7 +1658,7 @@ class MychScript
                     message = "<br/>";
                 }
 
-                let chatContext = (this.variables.chat ? this.variables : this.context);
+                let chatContext = (variables.chat ? variables : this.context);
                 chatContext.chat(message);
             },
         },
@@ -1686,7 +1687,7 @@ class MychScript
                 }
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 let separator = " ";
 
@@ -1694,7 +1695,7 @@ class MychScript
                 {
                     try
                     {
-                        separator = yield* this.definition.expression.evaluate(this.variables, this.context);
+                        separator = yield* this.definition.expression.evaluate(variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1705,23 +1706,23 @@ class MychScript
                 let combineNestedScriptExit;
 
                 let messages = [];
-                let prevChat = this.variables.chat;
+                let prevChat = variables.chat;
 
                 try
                 {
-                    this.variables.chat = function(message)
+                    variables.chat = function(message)
                     {
                         messages.push(message);
                     };
 
-                    combineNestedScriptExit = yield* this.executeNestedScripts();
+                    combineNestedScriptExit = yield* this.executeNestedScripts(variables);
                 }
                 finally
                 {
-                    this.variables.chat = prevChat;
+                    variables.chat = prevChat;
                 }
 
-                let chatContext = (this.variables.chat ? this.variables : this.context);
+                let chatContext = (variables.chat ? variables : this.context);
                 chatContext.chat(messages.join(separator));
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
@@ -1912,7 +1913,7 @@ class MychScript
                 return this;
             }
 
-            nestedScript = new MychScript(this.variables);
+            nestedScript = new MychScript();
             nestedScript.addCommand(source, context, parentScripts.concat(this));
         
             this.nestedScripts.push(nestedScript);
@@ -1921,11 +1922,11 @@ class MychScript
         }
     }
 
-    *executeNestedScripts(startIndex = undefined, endIndex = undefined)
+    *executeNestedScripts(variables, startIndex = undefined, endIndex = undefined)
     {
         for (let nestedScript of this.nestedScripts.slice(startIndex, endIndex))
         {
-            let nestedScriptExit = yield* nestedScript.execute();
+            let nestedScriptExit = yield* nestedScript.execute(variables);
 
             if (nestedScriptExit)
             {
@@ -1946,9 +1947,9 @@ class MychScript
         return nestedScriptExit;
     }
 
-    startExecute()
+    startExecute(variables)
     {
-        let scriptExecuteGenerator = this.execute();
+        let scriptExecuteGenerator = this.execute(variables);
         this.continueExecute(scriptExecuteGenerator, undefined);
     }
 
