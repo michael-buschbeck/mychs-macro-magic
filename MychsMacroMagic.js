@@ -2016,6 +2016,7 @@ class MychTemplate
     {
         this.source = undefined;
         this.segments = [];
+        this.expressionSegments = {};
 
         if (source != undefined)
         {
@@ -2036,7 +2037,7 @@ class MychTemplate
     parse(source)
     {
         let segments = [];
-        let segmentRegExp = /(?<string>([^\\$]|\\.|\$(?!\{))+)|\$\{(?<expression>([^}"']|"([^\\"]|\\.)*"|'([^\\']|\\.)*')*)\}/g;
+        let segmentRegExp = /(?<string>([^\\$]|\\.|\$(?!\{|\[\w))+)|\$(\[(?<exlabel>\w+)\])?\{(?<expression>([^}"']|"([^\\"]|\\.)*"|'([^\\']|\\.)*')*)\}|\$\[(?<reflabel>\w+)\]/g;
         let segmentMatch;
 
         let segmentOffset = 0;
@@ -2056,16 +2057,33 @@ class MychTemplate
 
             if (segmentMatch.groups.expression)
             {
-                let expressionOffset = segmentOffset + "${".length;
+                let expressionLabel = segmentMatch.groups.exlabel;
+                let expressionOffset = segmentOffset + "${".length + (expressionLabel ? ("[]".length + expressionLabel.length) : 0);
+
                 try
                 {
                     let expression = new MychExpression(segmentMatch.groups.expression);
-                    segments.push({ type: "expression", offset: expressionOffset, expression: expression });
+                    let expressionSegment = { type: "expression", offset: expressionOffset, expression: expression, label: expressionLabel };
+
+                    if (expressionLabel)
+                    {
+                        this.expressionSegments[expressionLabel] = expressionSegment;
+                    }
+
+                    segments.push(expressionSegment);
                 }
                 catch (exception)
                 {
                     this.rethrowExpressionError("parse", exception, expressionOffset);
                 }
+            }
+            
+            if (segmentMatch.groups.reflabel)
+            {
+                let referenceLabel = segmentMatch.groups.reflabel;
+                let referenceSegment = { type: "reference", label: referenceLabel };
+                
+                segments.push(referenceSegment);
             }
 
             segmentOffset = segmentMatch.index + segmentMatch[0].length;
@@ -2120,6 +2138,13 @@ class MychTemplate
                     {
                         this.rethrowExpressionError("evaluate", exception, segment.offset);
                     }
+                }
+                break;
+
+                case "reference":
+                {
+                    let evaluatedReference = "$[" + segment.label + "]";
+                    evaluatedStrings.push(evaluatedReference);
                 }
                 break;
             }
