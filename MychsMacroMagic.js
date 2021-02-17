@@ -323,7 +323,7 @@ class MychScriptContext
 
         let rollResult = yield MychScript.continueExecuteOnCallback(function(rollResultCallback)
         {
-            let sendChatCallback = function(msgs)
+            function sendChatCallback(msgs)
             {
                 let rollResultsMsg = msgs.filter(msg => msg.type == "rollresult")[0];
                 
@@ -335,7 +335,7 @@ class MychScriptContext
 
                 let rollResults = JSON.parse(rollResultsMsg.content);
                 rollResultCallback(context.$decorateRoll({ results: rollResults, expression: rollResultsMsg.origRoll }));
-            };
+            }
 
             sendChat(context.sender || "Mych's Macro Magic (background roll)", "/roll " + MychExpression.coerceString(rollExpression), sendChatCallback, {use3d: true});
         });
@@ -1274,7 +1274,7 @@ class MychScriptContext
 
             if (player.script)
             {
-                let generateScriptSummary = function(script)
+                function generateScriptSummary(script)
                 {
                     if (script.complete)
                     {
@@ -1283,7 +1283,7 @@ class MychScriptContext
     
                     let nestedScriptSummaries = script.nestedScripts.map(nestedScript => generateScriptSummary(nestedScript));
                     return script.type + " [" + nestedScriptSummaries.join(", ") + "...]";
-                };
+                }
     
                 scriptDescription = generateScriptSummary(player.script);
             }
@@ -1292,11 +1292,11 @@ class MychScriptContext
             statusTableRows.push([ "Error", this.literal(player.exception || "no exception") ]);
         }
 
-        let renderTableBodyRow = function(row)
+        function renderTableBodyRow(row)
         {
             let tableColumnStart = (row.length == 1 ? "<td colspan='2' style='text-align: center'>" : "<td>");
             return "<tr>" + row.map(content => tableColumnStart + content + "</td>").join("") + "</tr>";
-        };
+        }
 
         let statusTableCaption = "<caption>Mych's Macro Magic " + MMM_VERSION + "</caption>";
         let statusTableBody = "<tbody>" + statusTableRows.map(renderTableBodyRow).join("") + "</tbody>";
@@ -1978,15 +1978,15 @@ class MychScript
 
     static continueExecuteOnCallback(callbackSetup = function(resultCallback) {})
     {
-        let scriptExecuteContinuation = function(script, scriptExecuteGenerator)
+        function scriptExecuteContinuation(script, scriptExecuteGenerator)
         {
-            let resultCallback = function(result)
+            function resultCallback(result)
             {
                 script.continueExecute(scriptExecuteGenerator, result);
-            };
+            }
 
             callbackSetup(resultCallback);
-        };
+        }
 
         return scriptExecuteContinuation;
     }
@@ -2326,17 +2326,17 @@ class MychExpression
 
     static createTokenRegExp()
     {
-        let compareLengthDecreasing = function(string1, string2)
+        function compareLengthDecreasing(string1, string2)
         {
             // Sort in decreasing order of string length.
             return (string2.length - string1.length);
-        };
+        }
 
-        let createOperatorRegExpSource = function(operator)
+        function createOperatorRegExpSource(operator)
         {
             // Escape all characters that might have special meaning and add boundary assertions.
             return operator.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/g, "\\b");
-        };
+        }
 
         let operatorRegExpSource = Object.keys(MychExpression.operators).sort(compareLengthDecreasing).map(createOperatorRegExpSource).join("|");
 
@@ -2353,7 +2353,7 @@ class MychExpression
             unsupported:          /.+/,
         }
 
-        let createTokenRegExpSource = function([type, pattern])
+        function createTokenRegExpSource([type, pattern])
         {
             if (pattern instanceof RegExp)
             {
@@ -2361,7 +2361,7 @@ class MychExpression
             }
 
             return "(?<" + type + ">" + pattern + ")";
-        };
+        }
 
         return new RegExp(Object.entries(tokenPatterns).map(createTokenRegExpSource).join("|"), "g");
     }
@@ -2432,7 +2432,7 @@ class MychExpression
         let valueStack = [];
         let operationStack = [];
 
-        let reduce = function*(precedence)
+        function* reduce(precedence)
         {
             while (operationStack.length > 0)
             {
@@ -2470,15 +2470,15 @@ class MychExpression
 
                 valueStack.push(executionResult);
             }
-        };
+        }
 
         let expectClosing = [{}];
         let expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
 
-        let getExpectDescription = function()
+        function getExpectDescription()
         {
             return Object.entries(expectTokens).filter(([type, qualifier]) => qualifier).map(([type, qualifier]) => qualifier + " " + type).join(", ");
-        };
+        }
 
         for (let token of this.tokens)
         {
