@@ -2051,8 +2051,10 @@ class MychTemplate
 
             if (segmentMatch.groups.string)
             {
-                let unescapedString = segmentMatch.groups.string.replace(/\\(.)/g, "$1");
-                segments.push({ type: "string", offset: segmentOffset, value: unescapedString });
+                let string = segmentMatch.groups.string.replace(/\\(.)/g, "$1");
+                let stringSegment = { type: "string", value: string };
+
+                segments.push(stringSegment);
             }
 
             if (segmentMatch.groups.expression)
@@ -2097,17 +2099,33 @@ class MychTemplate
         this.segments = segments;
     }
 
-    *evaluate(variables, context)
+    static createContextKeysRegExp(context)
     {
         let contextKeys = Object.keys(context).filter(key => /^(\W|\W.*\W)$/.test(key));
-        let contextKeysRegExp;
 
-        if (contextKeys.length > 0)
+        if (contextKeys.length == 0)
         {
-            contextKeysRegExp = new RegExp(contextKeys.map(key => key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/, "\\b")).join("|"), "g");
+            return undefined;
         }
 
-        let evaluatedSegments = [];
+        return new RegExp(contextKeys.map(key => key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/, "\\b")).join("|"), "g");
+    }
+
+    static replaceContextKeys(string, contextKeysRegExp, context)
+    {
+        if (!contextKeysRegExp)
+        {
+            return string;
+        }
+
+        return string.replace(contextKeysRegExp, key => MychExpression.coerceMarkup(context[key]));
+    }
+
+    *evaluate(variables, context)
+    {
+        let evaluatedStrings = [];
+
+        let contextKeysRegExp = MychTemplate.createContextKeysRegExp(context);
 
         for (let segment of this.segments)
         {
@@ -2115,15 +2133,8 @@ class MychTemplate
             {
                 case "string":
                 {
-                    let evaluatedString = segment.value;
-
-                    if (contextKeysRegExp)
-                    {
-                        evaluatedString = evaluatedString.replace(contextKeysRegExp,
-                            function(key) { return MychExpression.coerceMarkup(context[key]) });
-                    }
-
-                    evaluatedSegments.push(evaluatedString);
+                    let evaluatedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context);
+                    evaluatedStrings.push(evaluatedString);
                 }
                 break;
 
@@ -2131,8 +2142,8 @@ class MychTemplate
                 {
                     try
                     {
-                        let expressionValue = yield* segment.expression.evaluate(variables, context);
-                        evaluatedSegments.push(MychExpression.coerceMarkup(expressionValue));
+                        let evaluatedExpressionResult = yield* segment.expression.evaluate(variables, context);
+                        evaluatedStrings.push(MychExpression.coerceMarkup(evaluatedExpressionResult));
                     }
                     catch (exception)
                     {
@@ -2150,7 +2161,67 @@ class MychTemplate
             }
         }
     
-        return evaluatedSegments.join("");
+        return evaluatedStrings.join("");
+    }
+
+    createTranslated(translationTemplate)
+    {
+        let translatedTemplate = new MychTemplate();
+
+        translatedTemplate.source = this.source;
+        translatedTemplate.expressionSegments = this.expressionSegments;
+        translatedTemplate.segments = translationTemplate.segments.map(segment => (segment.type == "reference" ? this.expressionSegments[segment.label] : undefined) || segment);
+
+        return translatedTemplate;
+    }
+
+    *createMaterialized(variables, context)
+    {
+        let materializedTemplate = new MychTemplate();
+
+        materializedTemplate.source = this.source;
+        materializedTemplate.expressionSegments = {};
+
+        let contextKeysRegExp = MychTemplate.createContextKeysRegExp(context);
+
+        for (let segment of this.segments)
+        {
+            switch (segment.type)
+            {
+                case "string":
+                {
+                    let materializedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context);
+                    let materializedStringSegment = { type: "string", value: materializedString };
+
+                    materializedTemplate.segments.push(materializedStringSegment);
+                }
+                break;
+
+                case "expression":
+                {
+                    try
+                    {
+                        let materializedExpressionResult = yield* segment.expression.evaluate(variables, context);
+                        let materializedExpressionSegment = { type: "string", value: MychExpression.coerceMarkup(materializedExpressionResult) };
+
+                        materializedTemplate.segments.push(materializedExpressionSegment);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("materialize", exception, segment.offset);
+                    }
+                }
+                break;
+
+                case "reference":
+                {
+                    materializedTemplate.segments.push(segment);
+                }
+                break;
+            }
+        }
+
+        return materializedTemplate;
     }
 }
 
