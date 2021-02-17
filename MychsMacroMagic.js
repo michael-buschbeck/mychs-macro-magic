@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.10";
+const MMM_VERSION = "1.13.0";
 
 on("chat:message", function(msg)
 {
@@ -28,6 +28,7 @@ on("chat:message", function(msg)
             lastseen: undefined,
             context: new MychScriptContext(),
             script: undefined,
+            customizations: undefined,
             exception: undefined,
         };
 
@@ -99,16 +100,28 @@ on("chat:message", function(msg)
             continue;
         }
 
+        let scriptCommandTokens = scriptMatch.groups.command;
+
         try
         {
-            let scriptCommandTokens = scriptMatch.groups.command;
-
             let scriptMain = (player.script || new MychScript());
             let scriptAdded = scriptMain.addCommand(scriptCommandTokens, player.context);
 
-            if (!player.script || (scriptAdded.type == "script" && !scriptAdded.complete))
+            if (!player.script)
             {
                 player.script = scriptAdded;
+                player.exception = undefined;
+            }
+            else if (scriptAdded.type == "script" && !scriptAdded.complete)
+            {
+                player.script = scriptAdded;
+                player.customizations = undefined;
+                player.exception = undefined;
+            }
+            else if (scriptAdded.type == "customize" && !scriptAdded.complete)
+            {
+                player.script = scriptAdded;
+                player.customizations = undefined;
                 player.exception = undefined;
             }
         }
@@ -116,25 +129,53 @@ on("chat:message", function(msg)
         {
             player.context.error(exception);
             player.exception = exception;
+
+            if (!player.script)
+            {
+                // top-level script that failed to parse consumes customization stack
+                player.customizations = undefined;
+            }
         }
 
         if (player.script && player.script.complete)
         {
-            if (!player.exception)
-            {
-                let scriptVariables = new MychScriptVariables();
-
-                if (player.script.type == "set")
-                {
-                    let variableName = player.script.definition.variable;
-                    player.context.whisperback("\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
-                }
-
-                player.script.startExecute(scriptVariables);
-            }
+            let [script, scriptException] = [player.script, player.exception];
 
             player.script = undefined;
             player.exception = undefined;
+
+            if (scriptException)
+            {
+                continue;
+            }
+
+            if (script.type == "customize")
+            {
+                player.customizations ||= new MychScript().addCommand("$customizations", player.context);
+                player.customizations.nestedScripts.push(script);
+            }
+            else
+            {
+                let scriptCustomizations = player.customizations;
+
+                player.customizations = undefined;
+
+                if (scriptCustomizations)
+                {
+                    scriptCustomizations.nestedScripts.push(script);
+                    script = scriptCustomizations;
+                }
+
+                let scriptVariables = new MychScriptVariables();
+
+                if (script.type == "set")
+                {
+                    let variableName = script.definition.variable;
+                    player.context.whisperback("\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
+                }
+
+                script.startExecute(scriptVariables);
+            }
         }
     }
 });
@@ -148,6 +189,45 @@ class MychScriptContext
     sender = undefined;
 
     pi = Math.PI;
+
+    default = new MychScriptContext.Default();
+    denied = new MychScriptContext.Denied();
+
+    static Default = class
+    {
+        toScalar()
+        {
+            return undefined;
+        }
+
+        toMarkup()
+        {
+            return "<span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>";
+        }
+    }
+
+    static Denied = class
+    {
+        toScalar()
+        {
+            return undefined;
+        }
+
+        toMarkup()
+        {
+            return "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>";
+        }
+    }
+
+    isdefault(value)
+    {
+        return (value instanceof MychScriptContext.Default);
+    }
+
+    isdenied(value)
+    {
+        return (value instanceof MychScriptContext.Denied);
+    }
 
     floor(value)
     {
@@ -532,24 +612,6 @@ class MychScriptContext
     {
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
         return (character ? character.id : undefined);
-    }
-
-    static Denied = class
-    {
-        toScalar()
-        {
-            return undefined;
-        }
-
-        toMarkup()
-        {
-            return "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>";
-        }
-    }
-
-    isdenied(value)
-    {
-        return (value instanceof MychScriptContext.Denied);
     }
 
     findattr(nameOrId, table, selection)
@@ -1311,7 +1373,26 @@ class MychScriptContext
 
 class MychScriptVariables
 {
-    // generic container
+    constructor()
+    {
+        this.$customizations = {};
+    }
+
+    integrateCustomizations(customizations)
+    {
+        for (let [key, value] of Object.entries(customizations))
+        {
+            if (key.match(/^\w+$/) || !(value instanceof Object))
+            {
+                this.$customizations[key] = value;
+            }
+            else
+            {
+                this.$customizations[key] ||= {};
+                Object.assign(this.$customizations[key], value);
+            }
+        }
+    }
 }
 
 class MychScriptError
@@ -1548,20 +1629,29 @@ class MychScript
 
         set:
         {
-            tokens: [ /(?<variable>\w+)/, "=", /(?<expression>.+)/ ],
+            tokens:
+            {
+                assign:         [ /(?<variable>\w+)/, "=", /(?<expression>.+)/ ],
+                customrequired: [ "customizable", /(?<customizable>)(?<variable>\w+)/ ],
+                customdefault:  [ "customizable", /(?<customizable>)(?<variable>\w+)/, "=", /(?<expression>.+)/ ],
+            },
             
             parse: function(args)
             {
                 this.definition.variable = args.variable.value;
+                this.definition.customizable = args.customizable != undefined;
 
-                try
+                if (args.expression)
                 {
-                    this.definition.expressionOffset = args.expression.offset;
-                    this.definition.expression = new MychExpression(args.expression.value);
-                }
-                catch (exception)
-                {
-                    this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    try
+                    {
+                        this.definition.expressionOffset = args.expression.offset;
+                        this.definition.expression = new MychExpression(args.expression.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    }
                 }
 
                 this.complete = true;
@@ -1569,6 +1659,25 @@ class MychScript
             
             execute: function*(variables)
             {
+                if (this.definition.customizable)
+                {
+                    if (variables.$customizations.hasOwnProperty(this.definition.variable))
+                    {
+                        let customization = variables.$customizations[this.definition.variable];
+
+                        if (!(customization instanceof MychScriptContext.Default))
+                        {
+                            variables[this.definition.variable] = customization;
+                            return;
+                        }
+                    }
+
+                    if (!this.definition.expression)
+                    {
+                        throw new MychScriptError("execute", "require customization or default", this.source, this.source.length);
+                    }
+                }
+
                 try
                 {
                     variables[this.definition.variable] = yield* this.definition.expression.evaluate(variables, this.context);
@@ -1618,6 +1727,7 @@ class MychScript
             {
                 newline:  [ ":" ],
                 template: [ ":", /(?<template>.+)/ ],
+                custom:   [ "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/ ]
             },
 
             parse: function(args)
@@ -1633,6 +1743,11 @@ class MychScript
                     {
                         this.rethrowTemplateError("parse", exception, this.definition.templateOffset);
                     }
+
+                    if (args.label)
+                    {
+                        this.definition.label = args.label.value;
+                    }
                 }
 
                 this.complete = true;
@@ -1644,6 +1759,9 @@ class MychScript
 
                 if (this.definition.template)
                 {
+                    let translationTemplate = variables.$customizations.$translations && variables.$customizations.$translations[this.definition.label];
+                    let evaluateTemplate = (translationTemplate ? this.definition.template.createTranslated(translationTemplate) : this.definition.template);
+
                     try
                     {
                         message = yield* evaluateTemplate.evaluate(variables, this.context);
@@ -1727,6 +1845,94 @@ class MychScript
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
             },
+        },
+
+        $customizations:
+        {
+            execute: function*(variables)
+            {
+                for (let nestedScriptIndex = 0; nestedScriptIndex < this.nestedScripts.length; ++nestedScriptIndex)
+                {
+                    let nestedScript = this.nestedScripts[nestedScriptIndex];
+
+                    try
+                    {
+                        let nestedScriptExit = yield* this.executeNestedScripts(variables, nestedScriptIndex, nestedScriptIndex + 1);
+
+                        if (nestedScriptExit)
+                        {
+                            // redundant as there is no valid command to exit $customizations block
+                            return this.propagateExitOnReturn(nestedScriptExit);
+                        }
+                    }
+                    catch (exception)
+                    {
+                        if (nestedScript.type != "customize")
+                        {
+                            throw exception;
+                        }
+
+                        exception.stage = "customize";
+                        this.context.whisperback(exception);
+    
+                        continue;
+                    }
+                }
+
+                return undefined;
+            },
+        },
+
+        customize:
+        {
+            execute: function*(variables)
+            {
+                let nestedVariables = Object.create(variables);
+                let nestedScriptExit = yield* this.executeNestedScripts(nestedVariables);
+
+                variables.integrateCustomizations(nestedVariables);
+
+                return this.propagateExitOnReturn(nestedScriptExit);
+            },
+        },
+
+        translate:
+        {
+            tokens: [ "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/ ],
+
+            parse: function(args)
+            {
+                this.definition.label = args.label.value;
+
+                try
+                {
+                    this.definition.templateOffset = args.template.offset;
+                    this.definition.template = new MychTemplate(args.template.value);
+                }
+                catch (exception)
+                {
+                    this.rethrowTemplateError("parse", exception, this.definition.templateOffset);
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*(variables)
+            {
+                let translation;
+
+                try
+                {
+                    translation = yield* this.definition.template.createMaterialized(variables, this.context);
+                }
+                catch (exception)
+                {
+                    this.rethrowTemplateError("execute", exception, this.definition.templateOffset);
+                }
+                
+                variables.$translations ||= {};
+                variables.$translations[this.definition.label] = translation;
+            }
         },
     };
 
