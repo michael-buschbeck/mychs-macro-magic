@@ -107,7 +107,7 @@ See above (and below) for examples.
 
 Sends text to the chat impersonating the player or character who sent the script.
 
-The template is simple text that can contain ${expression} placeholders. When the **chat** command is executed, all ${expression} placeholders are evaluated and substituted into the template text.
+The template is simple text that can contain `${expression}` placeholders. When the **chat** command is executed, all ${expression} placeholders are evaluated and substituted into the template text.
 
 You can use /me, /whisper, and any other Roll20 chat directives in a **chat** command. 
 
@@ -128,6 +128,26 @@ If the template is completely absent, the **chat** command sends a line break in
 | 5    | _!mmm_     **chat:** | *(queue line break)*
 | 6    | _!mmm_     **chat:** Sorry for the trouble! | *(queue message part)*
 | 7    | _!mmm_ **end combine** | ***Finn:*** Attack with `23`<br>Here's `2` damage for you just in case<br>Sorry for the trouble!
+
+
+### _!mmm_ **chat [**_label_**]:** *template*
+
+Like **chat** but allows the template to be customized (or translated) with a **translate** command with matching **\[**_label_**\]** in a **customize** block preceding this script.
+
+If there are any `${expression}` placeholders in the template, you should add a label to them like so: `$[foo]{expression}` – the player can reference this expression by saying `$[foo]` in their corresponding **translate** command. (Unlabeled expression placeholders will still work but **translate** won't be able to include them in the translated message.)
+
+See the [**customize** block](#mmm-customize) for examples and an extended description.
+
+
+### _!mmm_ **translate [**_label_**]:** *template*
+
+Use in a **customize** block preceding a **script** to provide a customization (or translation) of a **chat** message.
+
+The **\[**_label_**\]** following the **translate** keyword (enclosed in actual brackets!) lets players specify which **chat** message they want to customize: the one with the same **\[**_label_**\]** following the **chat** keyword. If there is no such **chat** command in the script, nothing happens.
+
+The translated template can reference any labeled expression placeholders with a `$[foo]` placeholder. This placeholder will be replaced with the evaluated result of the corresponding `$[foo]{expression}` from the original, untranslated **chat** message template when the **chat** command is executed. If there is no corresponding labeled expression in the original **chat** template, the `$[foo]` placeholder is included in the translated message as-is to indicate that there's something amiss with this expression reference.
+
+See the [**customize** block](#mmm-customize) for examples and an extended description.
 
 
 ### _!mmm_ **combine chat** [...] **end combine**
@@ -206,6 +226,24 @@ Evaluates an expression and assigns its results to a variable. If the variable d
 | 8    | _!mmm_ **end script**
 
 
+### _!mmm_ **set customizable** *variable*
+
+Declares a variable that *must* be **set** in a **customize** block preceding this script.
+
+If there is no **customize** block preceding this script, or if this variable isn't **set** in it, the script stops with an error message saying that this variable must be customized. Use the variant below if you want to specify a default expression that's evaluated in that case.
+
+See the [**customize** block](#mmm-customize) for examples and an extended description.
+
+
+### _!mmm_ **set customizable** *variable* = *expression*
+
+Declares a variable that *can* (but doesn't have to) be **set** in a **customize** block preceding this script. If it isn't, the expression is evaluated and assigned to the variable as its default value.
+
+Use the variant above (without default expression) that forces users to provide a customization for this variable.
+
+See the [**customize** block](#mmm-customize) for examples and an extended description.
+
+
 ### _!mmm_ **do** *expression*
 
 Evaluates an expression. This is useful if the expression has side effects, e.g. changes a character attribute. (If the expression returns a result, the result is discarded.)
@@ -275,6 +313,74 @@ Shorthand for doing **exit *block*** inside an **if** block because that's a pre
 
 Just use whichever you prefer.
 
+
+### _!mmm_ **customize** [...] **end customize**
+
+A special block that can be placed in front of a **script** block to customize it. In a **customize** block, you can use **set** and **translate** commands to customize the script that follows.
+
+Consider this script:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set customizable** AmmoName = "ammo" | *(assign "ammo" to AmmoName)*
+| 3    | _!mmm_     **set** StartAmmoCount = getattr(sender, AmmoName) | *(get current ammo count from attribute "ammo")*
+| 4    | _!mmm_     **if** StartAmmoCount == 0 | *(check if there's still ammo left)*
+| 5    | _!mmm_         **chat** **[**<span>OutOfAmmo</span>**]:** Out of ammo | ***Finn:*** Out of ammo
+| 6    | _!mmm_     **else**
+| 7    | _!mmm_         **set** EndAmmoCount = setattr(sender, AmmoName, StartAmmoCount - 1) | *(decrement attribute "ammo" and assign to EndAmmoCount)*
+| 8    | _!mmm_         **chat** **[**<span>UsedAmmo</span>**]:** Used one, have $[NumAmmo]{EndAmmoCount} ${ammoName} left | ***Finn:*** Used one, have 13 ammo left
+| 9    | _!mmm_     **end if**
+| 10   | _!mmm_ **end script**
+
+That script doesn't have a lot of flavor in its messages, but it was made to be *customizable:*
+
+- It uses **set customizable** (instead of just **set**) for the `AmmoName` assignment so that this variable can be customized from the outside.
+- Every **chat** command has a **[**_label_**]** so that the chat message can be translated from the outside.
+
+To customize this script, the player has to put a **customize** block just before the script:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **customize**
+| 2    | _!mmm_     **set** AmmoName = "arrows" | *(customize AmmoName to be "arrows" instead of "ammo")*
+| 3    | _!mmm_     **translate** **[**<span>OutOfAmmo</span>**]:** My quiver is empty! | *(customize chat message)*
+| 4    | _!mmm_     **translate** **[**<span>UsedAmmo</span>**]:** Shot an arrow, just $[NumAmmo] left now. | *(customize chat message and include remaining arrows)*
+| 5    | _!mmm_ **end customize**
+| 6    | _!mmm_ **script**
+| 7    | _!mmm_     **set customizable** AmmoName = "ammo" | *(assign "arrows" to AmmoName – ignore "ammo")*
+| 8    | _!mmm_     **set** StartAmmoCount = getattr(sender, AmmoName) | *(get current ammo count from attribute "arrows")*
+| 9    | _!mmm_     **if** StartAmmoCount == 0 | *(check if there are still arrows left)*
+| 10   | _!mmm_         **chat** **[**<span>OutOfAmmo</span>**]:** Out of ammo | ***Finn:*** My quiver is empty!
+| 11   | _!mmm_     **else**
+| 12   | _!mmm_         **set** EndAmmoCount = setattr(sender, AmmoName, StartAmmoCount - 1) | *(decrement attribute "arrows" and assign to EndAmmoCount)*
+| 13   | _!mmm_         **chat** **[**<span>UsedAmmo</span>**]:** Used one, have $[NumAmmo]{EndAmmoCount} ${ammoName} left | ***Finn:*** Shot an arrow, just 13 left now.
+| 14   | _!mmm_     **end if**
+| 15   | _!mmm_ **end script**
+
+This only works if the **customize** block immediately precedes the **script** block to be customized. You can have multiple **customize** blocks stacked in front of a **script** block – customizations will complement one another; if the same variable or chat message is customized more than once, the last customization takes precedence.
+
+Using **customize** is especially handy if the script source code isn't even under the player's own control: The GM can provide a (vetted and validated) version of a script to all players as a shared Roll20 macro – and each player can put their own **customize** block in front of the script's macro call to adjust the script to their character, inventory, and taste for flavor in chat messages.
+
+So if the entire **script** [...] **end script** block in the example above was made available by the GM as a Roll20 macro named `UseAmmoScript`, Finn could create their own customized macro for shooting arrows (with style!) simply like this:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **customize**
+| 2    | _!mmm_     **set** AmmoName = "arrows" | *(customize AmmoName to be "arrows" instead of "ammo")*
+| 3    | _!mmm_     **translate** **[**<span>OutOfAmmo</span>**]:** My quiver is empty! | *(customize chat message)*
+| 4    | _!mmm_     **translate** **[**<span>UsedAmmo</span>**]:** Shot an arrow, just $[NumAmmo] left now. | *(customize chat message and include remaining arrows)*
+| 5    | _!mmm_ **end customize**
+| 6    | #UseAmmoScript | *(call shared Roll20 macro containing the customizable script)*
+
+
+### _!mmm_ **customize export to** *destination*
+
+When placed before a **script**, exports a template of all customizable variables and chat messages to the player's chat. (The destination is currently ignored.)
+
+If there already are any **customize** blocks in front of the script, their customizations are included in the exported template. Otherwise, the template contains the default values of variables and the chat messages the script would use without customization.
+
+Note that this is a single-line command, not a block.
 
 
 ## Expressions
