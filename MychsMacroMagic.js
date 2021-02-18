@@ -1381,7 +1381,7 @@ class MychScriptContext
     $exportScript(destination, source)
     {
         let prefixedSource = source.split("\n").filter(line => !line.match(/^\s*$/)).map(line => "!mmm " + line).join("\n");
-        this.whisperback("<span style='white-space: pre-wrap'>" + this.literal(prefixedSource).replace(/\n/g, "<br/>") + "</span>");
+        this.whisperback("<span style='white-space: pre'>" + this.literal(prefixedSource).replace(/\n/g, "<br/>") + "</span>");
     }
 }
 
