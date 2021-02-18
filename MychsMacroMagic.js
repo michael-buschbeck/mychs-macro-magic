@@ -151,7 +151,7 @@ on("chat:message", function(msg)
 
             if (script.type == "customize")
             {
-                player.customizations ||= new MychScript().addCommand("$customizations", player.context);
+                player.customizations || (player.customizations = new MychScript().addCommand("$customizations", player.context));
                 player.customizations.nestedScripts.push(script);
             }
             else
@@ -1402,7 +1402,7 @@ class MychScriptVariables
             }
             else
             {
-                this.$customizations[key] ||= {};
+                this.$customizations[key] || (this.$customizations[key] = {});
                 Object.assign(this.$customizations[key], value);
             }
         }
@@ -1977,7 +1977,7 @@ class MychScript
                 {
                     for (let [customizationKey, customizationCommand] of gatherCustomizations(exportedNestedScript))
                     {
-                        customizationCommands[customizationKey] ||= customizationCommand;
+                        customizationCommands[customizationKey] || (customizationCommands[customizationKey] = customizationCommand);
                     }
                 }
 
@@ -2065,7 +2065,7 @@ class MychScript
                     this.rethrowTemplateError("execute", exception, this.definition.templateOffset);
                 }
                 
-                variables.$translations ||= {};
+                variables.$translations || (variables.$translations = {});
                 variables.$translations[this.definition.label] = translation;
             }
         },
