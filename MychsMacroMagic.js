@@ -1378,10 +1378,72 @@ class MychScriptContext
         this.whisperback(statusOutput);
     }
 
-    $exportScript(destination, source)
+    $exportScript(destination, source, backup = true)
     {
-        let prefixedSource = source.split("\n").filter(line => !line.match(/^\s*$/)).map(line => "!mmm " + line).join("\n");
-        this.whisperback("<span style='white-space: pre'>" + this.literal(prefixedSource).replace(/\n/g, "<br/>") + "</span>");
+        let sourceLines = source.split("\n").filter(line => !line.match(/^\s*$/)).map(line => "!mmm " + line);
+        
+        this.whisperback("<span style='white-space: pre'>" + sourceLines.map(line => this.literal(line)).join("<br/>") + "</span>");
+
+        if (destination == "chat")
+        {
+            return;
+        }
+
+        let messageLines = [];
+
+        let destinationMacro = findObjs({ type: "macro", playerid: this.playerid, name: destination }, { caseInsensitive: true })[0];
+        
+        if (destinationMacro)
+        {
+            let destinationMacroSource = destinationMacro.get("action");
+            let destinationMacroSourceLines = destinationMacroSource.split("\n").filter(line => !line.match(/^\s*$/));
+    
+            let destinationMacroSourcePrefixLines = [];
+            let destinationMacroSourceSuffixLines = [];
+            let destinationMacroSourceLinesAreScript = destinationMacroSourceLines.map(line => !!line.match(/^!mmm\b/));
+            let destinationMacroSourceFirstScriptLineIndex = destinationMacroSourceLinesAreScript.indexOf(true);
+
+            if (destinationMacroSourceFirstScriptLineIndex < 0)
+            {
+                destinationMacroSourcePrefixLines = destinationMacroSourceLines;
+            }
+            else
+            {
+                destinationMacroSourcePrefixLines = destinationMacroSourceLines.slice(0, destinationMacroSourceFirstScriptLineIndex);
+                destinationMacroSourceSuffixLines = destinationMacroSourceLines.slice(destinationMacroSourceLinesAreScript.lastIndexOf(true) + 1);
+            }
+
+            if (backup)
+            {
+                let existingMacroNames = findObjs({ type: "macro", playerid: this.playerid }).map(macro => macro.get("name"));
+
+                let backupMacroSuffixRegExpSource = /^/.source + destination.replace(/(\W)/g, "\\$1") + /_backup_(?<suffix>\d+)$/.source;
+                let backupMacroSuffixRegExp = new RegExp(backupMacroSuffixRegExpSource, "i");
+                
+                let existingBackupMacroMaxSuffix = Math.max(0, ...existingMacroNames.map(name => backupMacroSuffixRegExp.exec(name)).filter(match => match).map(match => parseInt(match.groups.suffix)));
+
+                let backupMacroSuffix = existingBackupMacroMaxSuffix + 1;
+                let backupMacroName = destinationMacro.get("name") + "_backup_" + backupMacroSuffix;
+
+                createObj("macro", { playerid: this.playerid, name: backupMacroName, action: destinationMacroSource });
+
+                messageLines.push("Previous version saved as **..._backup_" + this.literal(backupMacroSuffix) + "**");
+            }
+
+            destinationMacroSource = [...destinationMacroSourcePrefixLines, ...sourceLines, ...destinationMacroSourceSuffixLines].join("\n");
+            destinationMacro.set({ action: destinationMacroSource });
+
+            messageLines.unshift("Updated macro **" + this.literal(destinationMacro.get("name")) + "**");
+        }
+        else
+        {
+            let destinationMacroSource = sourceLines.join("\n");
+            destinationMacro = createObj("macro", { playerid: this.playerid, name: destination, action: destinationMacroSource });
+
+            messageLines.push("Created macro **" + this.literal(destinationMacro.get("name")) + "**");
+        }
+
+        this.whisperback(messageLines.join("<br/>"));
     }
 }
 
@@ -1988,7 +2050,7 @@ class MychScript
                 customizationBlock.push("end customize");
 
                 let customizationBlockSource = customizationBlock.map(line => line + "\n").join("");
-                this.context.$exportScript(variables.$customizations.$export.destination, customizationBlockSource);
+                this.context.$exportScript(variables.$customizations.$export.destination, customizationBlockSource, variables.$customizations.$export.backup);
 
                 return undefined;
             },
@@ -1998,8 +2060,9 @@ class MychScript
         {
             tokens:
             {
-                block:  [],
-                export: [ "export", "to", /(?<destination>\w+)/ ],
+                block:         [],
+                exportbackup:  [ "export", "to", /(?<destination>\w+)(?<backup>)/ ],
+                exportreplace: [ "export", "to", /(?<destination>\w+)/, "without", "backup" ],
             },
 
             parse: function(args)
@@ -2008,6 +2071,7 @@ class MychScript
                 {
                     this.definition.export = true;
                     this.definition.exportDestination = args.destination.value;
+                    this.definition.exportBackup = !!args.backup;
 
                     this.complete = true;
                 }
@@ -2017,7 +2081,7 @@ class MychScript
             {
                 if (this.definition.export)
                 {
-                    variables.$customizations.$export = { destination: this.definition.exportDestination };
+                    variables.$customizations.$export = { destination: this.definition.exportDestination, backup: this.definition.exportBackup };
                 }
                 else
                 {
