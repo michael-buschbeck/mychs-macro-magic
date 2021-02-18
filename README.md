@@ -380,11 +380,22 @@ So with the entire **script** [...] **end script** block above moved to a Roll20
 
 ### _!mmm_ **customize export to** *destination*
 
-When placed before a **script**, exports a template of all customizable variables and chat messages to the player's chat. (The destination is currently ignored.)
+When placed before a **script**, saves a **customize** block template of all customizable variables and chat messages to a macro named *destination* (and also sends it to the player's chat).
 
-If there already are any **customize** blocks in front of the script, their customizations are included in the exported template. Otherwise, the template contains the default values of variables and the chat messages the script would use without customization.
+If *destination* is `chat`, no macro is created, and the **customize** block template is only sent to the player's chat.
+
+Any existing script customization is included the exported template, so you only have to edit what you didn't customize before. If run on an uncustomized script, the template just contains the default values of variables and the chat messages the script would use without customization.
+
+If a macro named *destination* already exists, a backup of the entire existing macro is saved, and all non-_!mmm_ prefix and suffix lines in the existing macro are copied to the updated version of it. (For example, prefix lines could be Roll20 macro calls that include general script translation or customization, and a suffix line might be a macro call to the customizable script itself.)
 
 Note that this is a single-line command, not a block.
+
+
+### _!mmm_ **customize export to** *destination* **without backup**
+
+Like **customize export to** above, just without the backup.
+
+Convenient if you don't do very fancy things in your **customize** blocks and don't need no stinkin' backup macros cluttering up your macro library.
 
 
 ## Expressions
