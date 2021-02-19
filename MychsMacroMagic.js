@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.12.10";
+const MMM_VERSION = "1.13.0";
 
 on("chat:message", function(msg)
 {
@@ -28,6 +28,7 @@ on("chat:message", function(msg)
             lastseen: undefined,
             context: new MychScriptContext(),
             script: undefined,
+            customizations: undefined,
             exception: undefined,
         };
 
@@ -99,16 +100,28 @@ on("chat:message", function(msg)
             continue;
         }
 
+        let scriptCommandTokens = scriptMatch.groups.command;
+
         try
         {
-            let scriptCommandTokens = scriptMatch.groups.command;
+            let scriptMain = (player.script || new MychScript());
+            let scriptAdded = scriptMain.addCommand(scriptCommandTokens, player.context);
 
-            let scriptTop = (player.script || new MychScript(new MychScriptVariables()));
-            let scriptAdded = scriptTop.addCommand(scriptCommandTokens, player.context);
-
-            if (!player.script || (scriptAdded.type == "script" && !scriptAdded.complete))
+            if (!player.script)
             {
                 player.script = scriptAdded;
+                player.exception = undefined;
+            }
+            else if (scriptAdded.type == "script" && !scriptAdded.complete)
+            {
+                player.script = scriptAdded;
+                player.customizations = undefined;
+                player.exception = undefined;
+            }
+            else if (scriptAdded.type == "customize" && !scriptAdded.complete)
+            {
+                player.script = scriptAdded;
+                player.customizations = undefined;
                 player.exception = undefined;
             }
         }
@@ -116,23 +129,53 @@ on("chat:message", function(msg)
         {
             player.context.error(exception);
             player.exception = exception;
+
+            if (!player.script)
+            {
+                // top-level script that failed to parse consumes customization stack
+                player.customizations = undefined;
+            }
         }
 
         if (player.script && player.script.complete)
         {
-            if (!player.exception)
-            {
-                if (player.script.type == "set")
-                {
-                    let variableName = player.script.definition.variable;
-                    player.context.whisperback("\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
-                }
-
-                player.script.startExecute();
-            }
+            let [script, scriptException] = [player.script, player.exception];
 
             player.script = undefined;
             player.exception = undefined;
+
+            if (scriptException)
+            {
+                continue;
+            }
+
+            if (script.type == "customize")
+            {
+                player.customizations || (player.customizations = new MychScript().addCommand("$customizations", player.context));
+                player.customizations.nestedScripts.push(script);
+            }
+            else
+            {
+                let scriptCustomizations = player.customizations;
+
+                player.customizations = undefined;
+
+                if (scriptCustomizations)
+                {
+                    scriptCustomizations.nestedScripts.push(script);
+                    script = scriptCustomizations;
+                }
+
+                let scriptVariables = new MychScriptVariables();
+
+                if (script.type == "set")
+                {
+                    let variableName = script.definition.variable;
+                    player.context.whisperback("\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
+                }
+
+                script.startExecute(scriptVariables);
+            }
         }
     }
 });
@@ -146,6 +189,45 @@ class MychScriptContext
     sender = undefined;
 
     pi = Math.PI;
+
+    default = new MychScriptContext.Default();
+    denied = new MychScriptContext.Denied();
+
+    static Default = class
+    {
+        toScalar()
+        {
+            return undefined;
+        }
+
+        toMarkup()
+        {
+            return "<span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>";
+        }
+    }
+
+    static Denied = class
+    {
+        toScalar()
+        {
+            return undefined;
+        }
+
+        toMarkup()
+        {
+            return "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>";
+        }
+    }
+
+    isdefault(value)
+    {
+        return (value instanceof MychScriptContext.Default);
+    }
+
+    isdenied(value)
+    {
+        return (value instanceof MychScriptContext.Denied);
+    }
 
     floor(value)
     {
@@ -323,7 +405,7 @@ class MychScriptContext
 
         let rollResult = yield MychScript.continueExecuteOnCallback(function(rollResultCallback)
         {
-            let sendChatCallback = function(msgs)
+            function sendChatCallback(msgs)
             {
                 let rollResultsMsg = msgs.filter(msg => msg.type == "rollresult")[0];
                 
@@ -335,7 +417,7 @@ class MychScriptContext
 
                 let rollResults = JSON.parse(rollResultsMsg.content);
                 rollResultCallback(context.$decorateRoll({ results: rollResults, expression: rollResultsMsg.origRoll }));
-            };
+            }
 
             sendChat(context.sender || "Mych's Macro Magic (background roll)", "/roll " + MychExpression.coerceString(rollExpression), sendChatCallback, {use3d: true});
         });
@@ -369,7 +451,7 @@ class MychScriptContext
 
     literal(value)
     {
-        return MychExpression.coerceString(value).replace(/[^\w\s]/g, char => "&#" + char.codePointAt(0) + ";")
+        return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";")
     }
 
     highlight(value, type = "normal", tooltip = undefined)
@@ -530,24 +612,6 @@ class MychScriptContext
     {
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
         return (character ? character.id : undefined);
-    }
-
-    static Denied = class
-    {
-        toScalar()
-        {
-            return undefined;
-        }
-
-        toMarkup()
-        {
-            return "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>";
-        }
-    }
-
-    isdenied(value)
-    {
-        return (value instanceof MychScriptContext.Denied);
     }
 
     findattr(nameOrId, table, selection)
@@ -1270,33 +1334,41 @@ class MychScriptContext
 
             statusTableRows.push([ "Context", (contextDescription || "empty" )]);
 
-            let scriptDescription;
+            let scriptDescriptions = [];
+
+            if (player.customizations)
+            {
+                for (let customizeScript of player.customizations.nestedScripts)
+                {
+                    scriptDescriptions.push(customizeScript.type || "uninitialized");
+                }
+            }
 
             if (player.script)
             {
-                let generateScriptSummary = function(script)
+                function generateScriptSummary(script)
                 {
                     if (script.complete)
                     {
                         return script.type || "uninitialized";
                     }
     
-                    let nestedScriptSummaries = script.nestedScripts.map(nestedScript => generateScriptSummary(nestedScript));
-                    return script.type + " [" + nestedScriptSummaries.join(", ") + "...]";
-                };
+                    let nestedScriptSummaries = script.nestedScripts.map(nestedScript => generateScriptSummary(nestedScript)).concat("...");
+                    return script.type + " [" + nestedScriptSummaries.join(", ") + "]";
+                }
     
-                scriptDescription = generateScriptSummary(player.script);
+                scriptDescriptions.push(generateScriptSummary(player.script));
             }
 
-            statusTableRows.push([ "Script", this.literal(scriptDescription || "no script") ]);
+            statusTableRows.push([ "Script", this.literal(scriptDescriptions.join(", ") || "no script") ]);
             statusTableRows.push([ "Error", this.literal(player.exception || "no exception") ]);
         }
 
-        let renderTableBodyRow = function(row)
+        function renderTableBodyRow(row)
         {
             let tableColumnStart = (row.length == 1 ? "<td colspan='2' style='text-align: center'>" : "<td>");
             return "<tr>" + row.map(content => tableColumnStart + content + "</td>").join("") + "</tr>";
-        };
+        }
 
         let statusTableCaption = "<caption>Mych's Macro Magic " + MMM_VERSION + "</caption>";
         let statusTableBody = "<tbody>" + statusTableRows.map(renderTableBodyRow).join("") + "</tbody>";
@@ -1305,11 +1377,98 @@ class MychScriptContext
         
         this.whisperback(statusOutput);
     }
+
+    $exportScript(destination, source, backup = true)
+    {
+        let sourceLines = source.split("\n").filter(line => !line.match(/^\s*$/)).map(line => "!mmm " + line);
+        
+        this.whisperback("<span style='white-space: pre'>" + sourceLines.map(line => this.literal(line)).join("<br/>") + "</span>");
+
+        if (destination == "chat")
+        {
+            return;
+        }
+
+        let messageLines = [];
+
+        let destinationMacro = findObjs({ type: "macro", playerid: this.playerid, name: destination }, { caseInsensitive: true })[0];
+        
+        if (destinationMacro)
+        {
+            let destinationMacroSource = destinationMacro.get("action");
+            let destinationMacroSourceLines = destinationMacroSource.split("\n").filter(line => !line.match(/^\s*$/));
+    
+            let destinationMacroSourcePrefixLines = [];
+            let destinationMacroSourceSuffixLines = [];
+            let destinationMacroSourceLinesAreScript = destinationMacroSourceLines.map(line => !!line.match(/^!mmm\b/));
+            let destinationMacroSourceFirstScriptLineIndex = destinationMacroSourceLinesAreScript.indexOf(true);
+
+            if (destinationMacroSourceFirstScriptLineIndex < 0)
+            {
+                destinationMacroSourcePrefixLines = destinationMacroSourceLines;
+            }
+            else
+            {
+                destinationMacroSourcePrefixLines = destinationMacroSourceLines.slice(0, destinationMacroSourceFirstScriptLineIndex);
+                destinationMacroSourceSuffixLines = destinationMacroSourceLines.slice(destinationMacroSourceLinesAreScript.lastIndexOf(true) + 1);
+            }
+
+            if (backup)
+            {
+                let existingMacroNames = findObjs({ type: "macro", playerid: this.playerid }).map(macro => macro.get("name"));
+
+                let backupMacroSuffixRegExpSource = /^/.source + destination.replace(/(\W)/g, "\\$1") + /_backup_(?<suffix>\d+)$/.source;
+                let backupMacroSuffixRegExp = new RegExp(backupMacroSuffixRegExpSource, "i");
+                
+                let existingBackupMacroMaxSuffix = Math.max(0, ...existingMacroNames.map(name => backupMacroSuffixRegExp.exec(name)).filter(match => match).map(match => parseInt(match.groups.suffix)));
+
+                let backupMacroSuffix = existingBackupMacroMaxSuffix + 1;
+                let backupMacroName = destinationMacro.get("name") + "_backup_" + backupMacroSuffix;
+
+                createObj("macro", { playerid: this.playerid, name: backupMacroName, action: destinationMacroSource });
+
+                messageLines.push("Previous version saved as **..._backup_" + this.literal(backupMacroSuffix) + "**");
+            }
+
+            destinationMacroSource = [...destinationMacroSourcePrefixLines, ...sourceLines, ...destinationMacroSourceSuffixLines].join("\n");
+            destinationMacro.set({ action: destinationMacroSource });
+
+            messageLines.unshift("Updated macro **" + this.literal(destinationMacro.get("name")) + "**");
+        }
+        else
+        {
+            let destinationMacroSource = sourceLines.join("\n");
+            destinationMacro = createObj("macro", { playerid: this.playerid, name: destination, action: destinationMacroSource });
+
+            messageLines.push("Created macro **" + this.literal(destinationMacro.get("name")) + "**");
+        }
+
+        this.whisperback(messageLines.join("<br/>"));
+    }
 }
 
 class MychScriptVariables
 {
-    // generic container
+    constructor()
+    {
+        this.$customizations = {};
+    }
+
+    integrateCustomizations(customizations)
+    {
+        for (let [key, value] of Object.entries(customizations))
+        {
+            if (key.match(/^\w+$/) || !(value instanceof Object))
+            {
+                this.$customizations[key] = value;
+            }
+            else
+            {
+                this.$customizations[key] || (this.$customizations[key] = {});
+                Object.assign(this.$customizations[key], value);
+            }
+        }
+    }
 }
 
 class MychScriptError
@@ -1339,13 +1498,12 @@ class MychScriptExit
 
 class MychScript
 {
-    constructor(variables)
+    constructor()
     {
         this.type = undefined;
         this.source = undefined;
         this.context = undefined;
         this.definition = {};
-        this.variables = variables || {};
         this.nestedScripts = [];
         this.complete = false;
     }
@@ -1374,9 +1532,9 @@ class MychScript
     {
         script:
         {
-            execute: function*()
+            execute: function*(variables)
             {
-                let nestedScriptExit = yield* this.executeNestedScripts();
+                let nestedScriptExit = yield* this.executeNestedScripts(variables);
                 return this.propagateExitOnReturn(nestedScriptExit);
             }
         },
@@ -1414,7 +1572,7 @@ class MychScript
                 this.complete = true;
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 if (this.definition.expression)
                 {
@@ -1422,7 +1580,7 @@ class MychScript
 
                     try
                     {
-                        exitCondition = yield* this.definition.expression.evaluate(this.variables, this.context);
+                        exitCondition = yield* this.definition.expression.evaluate(variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1461,7 +1619,7 @@ class MychScript
                 }
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 let elseBranch = this.definition.elseBranch;
 
@@ -1474,7 +1632,7 @@ class MychScript
 
                     try
                     {
-                        branchCondition = yield* branchScript.definition.expression.evaluate(this.variables, this.context);
+                        branchCondition = yield* branchScript.definition.expression.evaluate(variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1485,14 +1643,14 @@ class MychScript
                     {
                         let nextBranch = this.definition.branches[branchIndex + 1] || elseBranch || { nestedScriptOffset: this.nestedScripts.length };
 
-                        let branchNestedScriptExit = yield* this.executeNestedScripts(branch.nestedScriptOffset, nextBranch.nestedScriptOffset);
+                        let branchNestedScriptExit = yield* this.executeNestedScripts(variables, branch.nestedScriptOffset, nextBranch.nestedScriptOffset);
                         return this.propagateExitOnReturn(branchNestedScriptExit);
                     }
                 }
 
                 if (elseBranch)
                 {
-                    let elseNestedScriptExit = yield* this.executeNestedScripts(elseBranch.nestedScriptOffset);
+                    let elseNestedScriptExit = yield* this.executeNestedScripts(variables, elseBranch.nestedScriptOffset);
                     return this.propagateExitOnReturn(elseNestedScriptExit);
                 }
             },
@@ -1547,35 +1705,100 @@ class MychScript
 
         set:
         {
-            tokens: [ /(?<variable>\w+)/, "=", /(?<expression>.+)/ ],
+            tokens:
+            {
+                assign:         [ /(?<variable>\w+)/, "=", /(?<expression>.+)/ ],
+                customrequired: [ "customizable", /(?<customizable>)(?<variable>\w+)/ ],
+                customdefault:  [ "customizable", /(?<customizable>)(?<variable>\w+)/, "=", /(?<expression>.+)/ ],
+            },
             
             parse: function(args)
             {
                 this.definition.variable = args.variable.value;
+                this.definition.customizable = args.customizable != undefined;
 
-                try
+                if (args.expression)
                 {
-                    this.definition.expressionOffset = args.expression.offset;
-                    this.definition.expression = new MychExpression(args.expression.value);
-                }
-                catch (exception)
-                {
-                    this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    try
+                    {
+                        this.definition.expressionOffset = args.expression.offset;
+                        this.definition.expression = new MychExpression(args.expression.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    }
                 }
 
                 this.complete = true;
             },
             
-            execute: function*()
+            execute: function*(variables)
             {
+                if (this.definition.customizable)
+                {
+                    if (variables.$customizations.hasOwnProperty(this.definition.variable))
+                    {
+                        let customization = variables.$customizations[this.definition.variable];
+
+                        if (!(customization instanceof MychScriptContext.Default))
+                        {
+                            variables[this.definition.variable] = customization;
+                            return;
+                        }
+                    }
+
+                    if (!this.definition.expression)
+                    {
+                        throw new MychScriptError("execute", "require customization or default", this.source, this.source.length);
+                    }
+                }
+
                 try
                 {
-                    this.variables[this.definition.variable] = yield* this.definition.expression.evaluate(this.variables, this.context);
+                    variables[this.definition.variable] = yield* this.definition.expression.evaluate(variables, this.context);
                 }
                 catch (exception)
                 {
                     this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
                 }
+            },
+
+            getCustomization: function(variables)
+            {
+                if (!this.definition.customizable)
+                {
+                    return undefined;
+                }
+
+                let customizationKey = "set." + this.definition.variable;
+                let customizationCommand = "set " + this.definition.variable;
+
+                if (variables.$customizations.hasOwnProperty(this.definition.variable))
+                {
+                    let customization = variables.$customizations[this.definition.variable];
+                    customizationCommand += " = " + (customization instanceof MychScriptContext.Default ? "default" : MychExpression.literal(customization));
+                }
+                else if (this.definition.expression)
+                {
+                    if (this.definition.expression.tokens.length == 1 && this.definition.expression.tokens[0].type == "literal")
+                    {
+                        let onlyExpressionToken = this.definition.expression.tokens[0];
+                        customizationCommand += " = " + MychExpression.literal(onlyExpressionToken.value);
+                    }
+                    else
+                    {
+                        // no customization: evaluate default at script runtime
+                        customizationCommand += " = default";
+                    }
+                }
+                else
+                {
+                    // no customization and no default: show thinking face emoji
+                    customizationCommand += " = \u{1F914}";
+                }
+
+                return [customizationKey, customizationCommand];
             },
         },
 
@@ -1598,11 +1821,11 @@ class MychScript
                 this.complete = true;
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 try
                 {
-                    yield* this.definition.expression.evaluate(this.variables, this.context);
+                    yield* this.definition.expression.evaluate(variables, this.context);
                 }
                 catch (exception)
                 {
@@ -1617,6 +1840,7 @@ class MychScript
             {
                 newline:  [ ":" ],
                 template: [ ":", /(?<template>.+)/ ],
+                custom:   [ "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/ ]
             },
 
             parse: function(args)
@@ -1632,20 +1856,28 @@ class MychScript
                     {
                         this.rethrowTemplateError("parse", exception, this.definition.templateOffset);
                     }
+
+                    if (args.label)
+                    {
+                        this.definition.label = args.label.value;
+                    }
                 }
 
                 this.complete = true;
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 let message;
 
                 if (this.definition.template)
                 {
+                    let translationTemplate = variables.$customizations.$translations && variables.$customizations.$translations[this.definition.label];
+                    let evaluateTemplate = (translationTemplate ? this.definition.template.createTranslated(translationTemplate) : this.definition.template);
+
                     try
                     {
-                        message = yield* this.definition.template.evaluate(this.variables, this.context);
+                        message = yield* evaluateTemplate.evaluate(variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1657,8 +1889,24 @@ class MychScript
                     message = "<br/>";
                 }
 
-                let chatContext = (this.variables.chat ? this.variables : this.context);
+                let chatContext = (variables.chat ? variables : this.context);
                 chatContext.chat(message);
+            },
+
+            getCustomization: function(variables)
+            {
+                if (!this.definition.label)
+                {
+                    return undefined;
+                }
+
+                let translationTemplate = variables.$customizations.$translations && variables.$customizations.$translations[this.definition.label];
+                let customizationTemplate = (translationTemplate ? this.definition.template.createTranslated(translationTemplate) : this.definition.template);
+
+                let customizationKey = "chat." + this.definition.label;
+                let customizationCommand = "translate [" + this.definition.label + "]: " + customizationTemplate.getSourceWithReferences();
+
+                return [customizationKey, customizationCommand];
             },
         },
 
@@ -1686,7 +1934,7 @@ class MychScript
                 }
             },
 
-            execute: function*()
+            execute: function*(variables)
             {
                 let separator = " ";
 
@@ -1694,7 +1942,7 @@ class MychScript
                 {
                     try
                     {
-                        separator = yield* this.definition.expression.evaluate(this.variables, this.context);
+                        separator = yield* this.definition.expression.evaluate(variables, this.context);
                     }
                     catch (exception)
                     {
@@ -1705,27 +1953,185 @@ class MychScript
                 let combineNestedScriptExit;
 
                 let messages = [];
-                let prevChat = this.variables.chat;
+                let prevChat = variables.chat;
 
                 try
                 {
-                    this.variables.chat = function(message)
+                    variables.chat = function(message)
                     {
                         messages.push(message);
                     };
 
-                    combineNestedScriptExit = yield* this.executeNestedScripts();
+                    combineNestedScriptExit = yield* this.executeNestedScripts(variables);
                 }
                 finally
                 {
-                    this.variables.chat = prevChat;
+                    variables.chat = prevChat;
                 }
 
-                let chatContext = (this.variables.chat ? this.variables : this.context);
+                let chatContext = (variables.chat ? variables : this.context);
                 chatContext.chat(messages.join(separator));
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
             },
+        },
+
+        $customizations:
+        {
+            execute: function*(variables)
+            {
+                let nestedScriptIndex;
+
+                for (nestedScriptIndex = 0; nestedScriptIndex < this.nestedScripts.length; ++nestedScriptIndex)
+                {
+                    let nestedScript = this.nestedScripts[nestedScriptIndex];
+
+                    if (variables.$customizations.$export && nestedScript.type != "customize")
+                    {
+                        break;
+                    }
+
+                    try
+                    {
+                        let nestedScriptExit = yield* this.executeNestedScripts(variables, nestedScriptIndex, nestedScriptIndex + 1);
+
+                        if (nestedScriptExit)
+                        {
+                            // redundant as there is no valid command to exit $customizations block
+                            return this.propagateExitOnReturn(nestedScriptExit);
+                        }
+                    }
+                    catch (exception)
+                    {
+                        if (nestedScript.type != "customize")
+                        {
+                            throw exception;
+                        }
+
+                        exception.stage = "customize";
+                        this.context.whisperback(exception);
+    
+                        continue;
+                    }
+                }
+
+                if (!variables.$customizations.$export)
+                {
+                    return undefined;
+                }
+                
+                function* gatherCustomizations(script)
+                {
+                    for (let nestedScript of script.nestedScripts)
+                    {
+                        if (nestedScript.getCustomization)
+                        {
+                            yield nestedScript.getCustomization(variables);
+                        }
+
+                        yield* gatherCustomizations(nestedScript);
+                    }
+                }
+
+                let customizationCommands = {};
+
+                for (let exportedNestedScript of this.nestedScripts.slice(nestedScriptIndex))
+                {
+                    for (let [customizationKey, customizationCommand] of gatherCustomizations(exportedNestedScript))
+                    {
+                        customizationCommands[customizationKey] || (customizationCommands[customizationKey] = customizationCommand);
+                    }
+                }
+
+                let customizationBlock = [];
+
+                customizationBlock.push("customize");
+                customizationBlock.push(...Object.values(customizationCommands).map(command => "   " + command));
+                customizationBlock.push("end customize");
+
+                let customizationBlockSource = customizationBlock.map(line => line + "\n").join("");
+                this.context.$exportScript(variables.$customizations.$export.destination, customizationBlockSource, variables.$customizations.$export.backup);
+
+                return undefined;
+            },
+        },
+
+        customize:
+        {
+            tokens:
+            {
+                block:         [],
+                exportbackup:  [ "export", "to", /(?<destination>\w+)(?<backup>)/ ],
+                exportreplace: [ "export", "to", /(?<destination>\w+)/, "without", "backup" ],
+            },
+
+            parse: function(args)
+            {
+                if (args.destination)
+                {
+                    this.definition.export = true;
+                    this.definition.exportDestination = args.destination.value;
+                    this.definition.exportBackup = !!args.backup;
+
+                    this.complete = true;
+                }
+            },
+
+            execute: function*(variables)
+            {
+                if (this.definition.export)
+                {
+                    variables.$customizations.$export = { destination: this.definition.exportDestination, backup: this.definition.exportBackup };
+                }
+                else
+                {
+                    let nestedVariables = Object.create(variables);
+                    let nestedScriptExit = yield* this.executeNestedScripts(nestedVariables);
+
+                    variables.integrateCustomizations(nestedVariables);
+
+                    return this.propagateExitOnReturn(nestedScriptExit);
+                }
+            },
+        },
+
+        translate:
+        {
+            tokens: [ "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/ ],
+
+            parse: function(args)
+            {
+                this.definition.label = args.label.value;
+
+                try
+                {
+                    this.definition.templateOffset = args.template.offset;
+                    this.definition.template = new MychTemplate(args.template.value);
+                }
+                catch (exception)
+                {
+                    this.rethrowTemplateError("parse", exception, this.definition.templateOffset);
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*(variables)
+            {
+                let translation;
+
+                try
+                {
+                    translation = yield* this.definition.template.createMaterialized(variables, this.context);
+                }
+                catch (exception)
+                {
+                    this.rethrowTemplateError("execute", exception, this.definition.templateOffset);
+                }
+                
+                variables.$translations || (variables.$translations = {});
+                variables.$translations[this.definition.label] = translation;
+            }
         },
     };
 
@@ -1871,6 +2277,7 @@ class MychScript
             }
 
             this.execute = (command.execute || function*() {});
+            this.getCustomization = command.getCustomization;
         
             return this;
         }
@@ -1912,7 +2319,7 @@ class MychScript
                 return this;
             }
 
-            nestedScript = new MychScript(this.variables);
+            nestedScript = new MychScript();
             nestedScript.addCommand(source, context, parentScripts.concat(this));
         
             this.nestedScripts.push(nestedScript);
@@ -1921,11 +2328,11 @@ class MychScript
         }
     }
 
-    *executeNestedScripts(startIndex = undefined, endIndex = undefined)
+    *executeNestedScripts(variables, startIndex = undefined, endIndex = undefined)
     {
         for (let nestedScript of this.nestedScripts.slice(startIndex, endIndex))
         {
-            let nestedScriptExit = yield* nestedScript.execute();
+            let nestedScriptExit = yield* nestedScript.execute(variables);
 
             if (nestedScriptExit)
             {
@@ -1946,9 +2353,9 @@ class MychScript
         return nestedScriptExit;
     }
 
-    startExecute()
+    startExecute(variables)
     {
-        let scriptExecuteGenerator = this.execute();
+        let scriptExecuteGenerator = this.execute(variables);
         this.continueExecute(scriptExecuteGenerator, undefined);
     }
 
@@ -1978,15 +2385,15 @@ class MychScript
 
     static continueExecuteOnCallback(callbackSetup = function(resultCallback) {})
     {
-        let scriptExecuteContinuation = function(script, scriptExecuteGenerator)
+        function scriptExecuteContinuation(script, scriptExecuteGenerator)
         {
-            let resultCallback = function(result)
+            function resultCallback(result)
             {
                 script.continueExecute(scriptExecuteGenerator, result);
-            };
+            }
 
             callbackSetup(resultCallback);
-        };
+        }
 
         return scriptExecuteContinuation;
     }
@@ -2015,6 +2422,7 @@ class MychTemplate
     {
         this.source = undefined;
         this.segments = [];
+        this.expressionSegments = {};
 
         if (source != undefined)
         {
@@ -2035,7 +2443,7 @@ class MychTemplate
     parse(source)
     {
         let segments = [];
-        let segmentRegExp = /(?<string>([^\\$]|\\.|\$(?!\{))+)|\$\{(?<expression>([^}"']|"([^\\"]|\\.)*"|'([^\\']|\\.)*')*)\}/g;
+        let segmentRegExp = /(?<string>([^\\$]|\\.|\$(?!\{|\[\w))+)|\$(\[(?<exlabel>\w+)\])?\{(?<expression>([^}"']|"([^\\"]|\\.)*"|'([^\\']|\\.)*')*)\}|\$\[(?<reflabel>\w+)\]/g;
         let segmentMatch;
 
         let segmentOffset = 0;
@@ -2049,22 +2457,41 @@ class MychTemplate
 
             if (segmentMatch.groups.string)
             {
-                let unescapedString = segmentMatch.groups.string.replace(/\\(.)/g, "$1");
-                segments.push({ type: "string", offset: segmentOffset, value: unescapedString });
+                let string = segmentMatch.groups.string.replace(/\\(.)/g, "$1");
+                let stringSegment = { type: "string", value: string };
+
+                segments.push(stringSegment);
             }
 
             if (segmentMatch.groups.expression)
             {
-                let expressionOffset = segmentOffset + "${".length;
+                let expressionLabel = segmentMatch.groups.exlabel;
+                let expressionOffset = segmentOffset + "${".length + (expressionLabel ? ("[]".length + expressionLabel.length) : 0);
+
                 try
                 {
                     let expression = new MychExpression(segmentMatch.groups.expression);
-                    segments.push({ type: "expression", offset: expressionOffset, expression: expression });
+                    let expressionSegment = { type: "expression", offset: expressionOffset, expression: expression, label: expressionLabel };
+
+                    if (expressionLabel)
+                    {
+                        this.expressionSegments[expressionLabel] = expressionSegment;
+                    }
+
+                    segments.push(expressionSegment);
                 }
                 catch (exception)
                 {
                     this.rethrowExpressionError("parse", exception, expressionOffset);
                 }
+            }
+            
+            if (segmentMatch.groups.reflabel)
+            {
+                let referenceLabel = segmentMatch.groups.reflabel;
+                let referenceSegment = { type: "reference", label: referenceLabel };
+                
+                segments.push(referenceSegment);
             }
 
             segmentOffset = segmentMatch.index + segmentMatch[0].length;
@@ -2078,17 +2505,53 @@ class MychTemplate
         this.segments = segments;
     }
 
-    *evaluate(variables, context)
+    getSourceWithReferences()
     {
-        let contextKeys = Object.keys(context).filter(key => /^(\W|\W.*\W)$/.test(key));
-        let contextKeysRegExp;
-
-        if (contextKeys.length > 0)
+        function reconstructSegment(segment)
         {
-            contextKeysRegExp = new RegExp(contextKeys.map(key => key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/, "\\b")).join("|"), "g");
+            if (segment.type == "string")
+            {
+                return segment.value.replace(/(\$[\{\[]|\\)/, "\\\\$1");
+            }
+
+            if (segment.type == "expression" && segment.label)
+            {
+                return "$[" + segment.label + "]";
+            }
+
+            return "...";
         }
 
-        let evaluatedSegments = [];
+        return this.segments.map(reconstructSegment).join("");
+    }
+
+    static createContextKeysRegExp(context)
+    {
+        let contextKeys = Object.keys(context).filter(key => /^(\W|\W.*\W)$/.test(key));
+
+        if (contextKeys.length == 0)
+        {
+            return undefined;
+        }
+
+        return new RegExp(contextKeys.map(key => key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/, "\\b")).join("|"), "g");
+    }
+
+    static replaceContextKeys(string, contextKeysRegExp, context)
+    {
+        if (!contextKeysRegExp)
+        {
+            return string;
+        }
+
+        return string.replace(contextKeysRegExp, key => MychExpression.coerceMarkup(context[key]));
+    }
+
+    *evaluate(variables, context)
+    {
+        let evaluatedStrings = [];
+
+        let contextKeysRegExp = MychTemplate.createContextKeysRegExp(context);
 
         for (let segment of this.segments)
         {
@@ -2096,15 +2559,8 @@ class MychTemplate
             {
                 case "string":
                 {
-                    let evaluatedString = segment.value;
-
-                    if (contextKeysRegExp)
-                    {
-                        evaluatedString = evaluatedString.replace(contextKeysRegExp,
-                            function(key) { return MychExpression.coerceMarkup(context[key]) });
-                    }
-
-                    evaluatedSegments.push(evaluatedString);
+                    let evaluatedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context);
+                    evaluatedStrings.push(evaluatedString);
                 }
                 break;
 
@@ -2112,8 +2568,8 @@ class MychTemplate
                 {
                     try
                     {
-                        let expressionValue = yield* segment.expression.evaluate(variables, context);
-                        evaluatedSegments.push(MychExpression.coerceMarkup(expressionValue));
+                        let evaluatedExpressionResult = yield* segment.expression.evaluate(variables, context);
+                        evaluatedStrings.push(MychExpression.coerceMarkup(evaluatedExpressionResult));
                     }
                     catch (exception)
                     {
@@ -2121,10 +2577,77 @@ class MychTemplate
                     }
                 }
                 break;
+
+                case "reference":
+                {
+                    let evaluatedReference = "$[" + segment.label + "]";
+                    evaluatedStrings.push(evaluatedReference);
+                }
+                break;
             }
         }
     
-        return evaluatedSegments.join("");
+        return evaluatedStrings.join("");
+    }
+
+    createTranslated(translationTemplate)
+    {
+        let translatedTemplate = new MychTemplate();
+
+        translatedTemplate.source = this.source;
+        translatedTemplate.expressionSegments = this.expressionSegments;
+        translatedTemplate.segments = translationTemplate.segments.map(segment => (segment.type == "reference" ? this.expressionSegments[segment.label] : undefined) || segment);
+
+        return translatedTemplate;
+    }
+
+    *createMaterialized(variables, context)
+    {
+        let materializedTemplate = new MychTemplate();
+
+        materializedTemplate.source = this.source;
+        materializedTemplate.expressionSegments = {};
+
+        let contextKeysRegExp = MychTemplate.createContextKeysRegExp(context);
+
+        for (let segment of this.segments)
+        {
+            switch (segment.type)
+            {
+                case "string":
+                {
+                    let materializedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context);
+                    let materializedStringSegment = { type: "string", value: materializedString };
+
+                    materializedTemplate.segments.push(materializedStringSegment);
+                }
+                break;
+
+                case "expression":
+                {
+                    try
+                    {
+                        let materializedExpressionResult = yield* segment.expression.evaluate(variables, context);
+                        let materializedExpressionSegment = { type: "string", value: MychExpression.coerceMarkup(materializedExpressionResult) };
+
+                        materializedTemplate.segments.push(materializedExpressionSegment);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("materialize", exception, segment.offset);
+                    }
+                }
+                break;
+
+                case "reference":
+                {
+                    materializedTemplate.segments.push(segment);
+                }
+                break;
+            }
+        }
+
+        return materializedTemplate;
     }
 }
 
@@ -2261,6 +2784,20 @@ class MychExpression
         return MychExpressionArgs.of(value);
     }
 
+    static literal(value)
+    {
+        switch (typeof(value))
+        {
+            case "string":
+            {
+                let stringLiteral = "\"" + value.replace(/(["\\])/g, "\\$1") + "\"";
+                return stringLiteral;
+            }
+        }
+
+        return String(value);
+    }
+
     static operators =
     {
         "**": {
@@ -2326,17 +2863,17 @@ class MychExpression
 
     static createTokenRegExp()
     {
-        let compareLengthDecreasing = function(string1, string2)
+        function compareLengthDecreasing(string1, string2)
         {
             // Sort in decreasing order of string length.
             return (string2.length - string1.length);
-        };
+        }
 
-        let createOperatorRegExpSource = function(operator)
+        function createOperatorRegExpSource(operator)
         {
             // Escape all characters that might have special meaning and add boundary assertions.
             return operator.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/g, "\\b");
-        };
+        }
 
         let operatorRegExpSource = Object.keys(MychExpression.operators).sort(compareLengthDecreasing).map(createOperatorRegExpSource).join("|");
 
@@ -2353,7 +2890,7 @@ class MychExpression
             unsupported:          /.+/,
         }
 
-        let createTokenRegExpSource = function([type, pattern])
+        function createTokenRegExpSource([type, pattern])
         {
             if (pattern instanceof RegExp)
             {
@@ -2361,7 +2898,7 @@ class MychExpression
             }
 
             return "(?<" + type + ">" + pattern + ")";
-        };
+        }
 
         return new RegExp(Object.entries(tokenPatterns).map(createTokenRegExpSource).join("|"), "g");
     }
@@ -2432,7 +2969,7 @@ class MychExpression
         let valueStack = [];
         let operationStack = [];
 
-        let reduce = function*(precedence)
+        function* reduce(precedence)
         {
             while (operationStack.length > 0)
             {
@@ -2470,15 +3007,15 @@ class MychExpression
 
                 valueStack.push(executionResult);
             }
-        };
+        }
 
         let expectClosing = [{}];
         let expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
 
-        let getExpectDescription = function()
+        function getExpectDescription()
         {
             return Object.entries(expectTokens).filter(([type, qualifier]) => qualifier).map(([type, qualifier]) => qualifier + " " + type).join(", ");
-        };
+        }
 
         for (let token of this.tokens)
         {

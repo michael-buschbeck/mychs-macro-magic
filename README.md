@@ -107,7 +107,7 @@ See above (and below) for examples.
 
 Sends text to the chat impersonating the player or character who sent the script.
 
-The template is simple text that can contain ${expression} placeholders. When the **chat** command is executed, all ${expression} placeholders are evaluated and substituted into the template text.
+The template is simple text that can contain `${expression}` placeholders. When the **chat** command is executed, all ${expression} placeholders are evaluated and substituted into the template text.
 
 You can use /me, /whisper, and any other Roll20 chat directives in a **chat** command. 
 
@@ -128,6 +128,26 @@ If the template is completely absent, the **chat** command sends a line break in
 | 5    | _!mmm_     **chat:** | *(queue line break)*
 | 6    | _!mmm_     **chat:** Sorry for the trouble! | *(queue message part)*
 | 7    | _!mmm_ **end combine** | ***Finn:*** Attack with `23`<br>Here's `2` damage for you just in case<br>Sorry for the trouble!
+
+
+### _!mmm_ **chat [**<span>_label_</span>**]:** *template*
+
+Like **chat** but allows the template to be customized (or translated) with a **translate** command in a **customize** block. The brackets around **\[**<span>_label_</span>**\]** are literal.
+
+If there's any `${expression}` placeholder in the chat message template, you should add a label to it like so: `$[foo]{expression}` – this makes it possible to reference the expression's result in the translated chat message. In the **translate** command corresponding to this **chat** command, the player can then use `$[foo]` to substitute `${expression}` into their translated message (without even having to know the details of the expression).
+
+See the [**customize** block](#mmm-customize--end-customize) for examples and an extended description.
+
+
+### _!mmm_ **translate [**<span>_label_</span>**]:** *template*
+
+Use **translate** in a **customize** block to provide a customization (or translation) of a **chat** message. The brackets around **\[**<span>_label_</span>**\]** are literal.
+
+The bracketed **\[**<span>_label_</span>**\]** following the **translate** keyword specifies which **chat** message to customize: It's the **chat** command with the same **\[**<span>_label_</span>**\]**. Labels are case-sensitive like variable names. If the script doesn't contain a **chat** command with this **\[**<span>_label_</span>**\]**, nothing happens.
+
+The translated template can reference any `$[foo]{expression}` in the original **chat** message by using `$[foo]` as a placeholder. The corresponding `$[foo]{expression}` will be evaluated when the **chat** command runs, and its result will then be substituted into the translated message. If there is no corresponding labeled expression in the original **chat** message, the `$[foo]` placeholder is kept in the translated message as-is – an easy way to see that something's amiss (perhaps a typo).
+
+See the [**customize** block](#mmm-customize--end-customize) for examples and an extended description.
 
 
 ### _!mmm_ **combine chat** [...] **end combine**
@@ -206,6 +226,44 @@ Evaluates an expression and assigns its results to a variable. If the variable d
 | 8    | _!mmm_ **end script**
 
 
+### _!mmm_ **set customizable** *variable*
+
+Declares a variable that must be **set** in a **customize** block before this script runs.
+
+If there is no **customize** block in front of this script – or if there is, but this variable isn't **set** in it –, the script stops with an error message saying that this variable needs a customized value but doesn't have one. If you'd rather like a default value to be assigned in this case, use the **set customized** variant below (with default expression).
+
+This behavior forces players to use a **customize** block and provide a customization for this variable, making it impossible to run the script on its own. That's better than providing a bad default that breaks the script for some (or all) players when left uncustomized. For example, there probably isn't any particular "default ranged weapon" that every character has in their character sheet – each player must make a conscious decision which of their character's weapons to use.
+
+See the [**customize** block](#mmm-customize--end-customize) for examples and an extended description.
+
+
+### _!mmm_ **set customizable** *variable* = *expression*
+
+Declares a variable that *can* (but doesn't have to) be **set** in a **customize** block before this script runs. If there's no customization for this variable, evaluates the expression and assigns its result to the variable.
+
+Defaults shouldn't be documentation – if you provide a default, make sure the script does something reasonable with it regardless of who runs it. If that's not possible, use the **set customizable** variant above (without a default expression) to force players to provide a customization for this variable.
+
+If you want to use a default that's more complex than a simple expression, you can use the special `default` indicator value and then check with `isdefault()` if the variable was left at its default:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set customizable** WeaponName = **default** | *(use special default indicator value)*
+| 3    | _!mmm_     **if** isdefault(WeaponName) | *(check if WeaponName was left uncustomized)*
+| 4    | _!mmm_         **set** FirstWeaponSkill = getattr(sender, "repeating_attack_$0_skill") | *(get first weapon skill from character sheet)*
+| 5    | _!mmm_         **set** SecondWeaponSkill = getattr(sender, "repeating_attack_$1_skill") | *(get second weapon skill from character sheet)*
+| 6    | _!mmm_         **if** FirstWeaponSkill > SecondWeaponSkill | *(compare weapon skills)*
+| 7    | _!mmm_             **set** WeaponName = getattr(sender, "repeating_attack_$0_weapon") | *(default to first weapon if greater skill than second)*
+| 8    | _!mmm_         **else**
+| 9    | _!mmm_             **set** WeaponName = getattr(sender, "repeating_attack_$1_weapon") | *(default to second weapon otherwise)*
+| 10   | _!mmm_         **end if**
+| 11   | _!mmm_     **end if**
+| 12   | _!mmm_     **chat:** /me attacks with ${WeaponName}! | ***Finn attacks with slingshot!***
+| 13   | _!mmm_ **end script**
+
+See the [**customize** block](#mmm-customize--end-customize) for examples and an extended description.
+
+
 ### _!mmm_ **do** *expression*
 
 Evaluates an expression. This is useful if the expression has side effects, e.g. changes a character attribute. (If the expression returns a result, the result is discarded.)
@@ -276,6 +334,87 @@ Shorthand for doing **exit *block*** inside an **if** block because that's a pre
 Just use whichever you prefer.
 
 
+### _!mmm_ **customize** [...] **end customize**
+
+Placed before a **script** block to customize it. In a **customize** block, use **set** and **translate** commands to customize variables and chat messages in the script that follows.
+
+Consider this script:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set customizable** AmmoName = "ammo" | *(assign default "ammo" to AmmoName)*
+| 3    | _!mmm_     **set** StartAmmoCount = getattr(sender, AmmoName) | *(get current ammo count from attribute "ammo")*
+| 4    | _!mmm_     **if** StartAmmoCount == 0 | *(check if there's still ammo left)*
+| 5    | _!mmm_         **chat** **[**<span>OutOfAmmo</span>**]:** Out of ammo | ***MrBore:*** Out of ammo
+| 6    | _!mmm_     **else**
+| 7    | _!mmm_         **set** EndAmmoCount = setattr(sender, AmmoName, StartAmmoCount - 1) | *(decrement attribute "ammo" and assign to EndAmmoCount)*
+| 8    | _!mmm_         **chat** **[**<span>UsedAmmo</span>**]:** Used one, have $[NumAmmo]{EndAmmoCount} ${AmmoName} left | ***MrBore:*** Used one, have 13 ammo left
+| 9    | _!mmm_     **end if**
+| 10   | _!mmm_ **end script**
+
+This script does a useful thing even if it's a bit dry in terms of style and flavor – and there's only one type of ammo (boringly called "ammo") it supports. What of Finn's arrows and slingshot balls? Luckily enough, the script was made to be *customizable* to let players change some aspects of it without having to meddle with its source code:
+
+- It uses **set customizable** (instead of just **set**) for the `AmmoName` assignment, allowing this variable to be customized.
+- Every **chat** command has a **[**_label_**]** so that the chat message can be translated.
+
+So if a player wants to customize the script, they just have to place a **customize** block in front of it:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **customize**
+| 2    | _!mmm_     **set** AmmoName = "arrows" | *(customize AmmoName to be "arrows" instead of "ammo")*
+| 3    | _!mmm_     **translate** **[**<span>OutOfAmmo</span>**]:** My quiver is empty! Lucky bastards! | *(customize chat message)*
+| 4    | _!mmm_     **translate** **[**<span>UsedAmmo</span>**]:** Shot an arrow, and $[NumAmmo] more to come. | *(customize chat message and include remaining arrows)*
+| 5    | _!mmm_ **end customize**
+| 6    | _!mmm_ **script**
+| 7    | _!mmm_     **set customizable** AmmoName = "ammo" | *(assign "arrows" to AmmoName – ignore "ammo")*
+| 8    | _!mmm_     **set** StartAmmoCount = getattr(sender, AmmoName) | *(get current ammo count from attribute "arrows")*
+| 9    | _!mmm_     **if** StartAmmoCount == 0 | *(check if there are still arrows left)*
+| 10   | _!mmm_         **chat** **[**<span>OutOfAmmo</span>**]:** Out of ammo | ***Finn:*** My quiver is empty! Lucky bastards!
+| 11   | _!mmm_     **else**
+| 12   | _!mmm_         **set** EndAmmoCount = setattr(sender, AmmoName, StartAmmoCount - 1) | *(decrement attribute "arrows" and assign to EndAmmoCount)*
+| 13   | _!mmm_         **chat** **[**<span>UsedAmmo</span>**]:** Used one, have $[NumAmmo]{EndAmmoCount} ${AmmoName} left | ***Finn:*** Shot an arrow, and 13 more to come.
+| 14   | _!mmm_     **end if**
+| 15   | _!mmm_ **end script**
+
+For this to work, the **customize** block must run immediately before the **script** block to be customized. Whatever command, command block, or even *erroneous* command comes after **customize** will consume and then flush all customizations made by it.
+
+You can stack multiple **customize** blocks in front of a **script** block. Customizations will complement one another. If the same variable or chat message is customized more than once, the last customization takes precedence. You can use this, for example, to first apply a general **customize** block that translates all chat messages from "boring programmer" to "charming good-looking rogue" and then a second **customize** block that specializes the script for "arrows" carried in "quivers" versus "slingshot balls" carried in "leather bags" and whatnot.
+
+Script customization comes in handy if the script source isn't under the player's control. For example, the GM may have validated and approved a rather complex (and customizable) ranged-attack script. The GM provides this script as a shared Roll20 macro to all players. Each player in turn creates a mini-macro that starts with a **customize** block and then calls the GM-provided generic attack script.
+
+So with the entire **script** [...] **end script** block above moved to a Roll20 macro named `UseAmmoScript` and shared by the GM, Finn can create his own customized version for shooting arrows (with typical roguish charm and style) just like this:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **customize**
+| 2    | _!mmm_     **set** AmmoName = "arrows" | *(customize AmmoName to be "arrows" instead of "ammo")*
+| 3    | _!mmm_     **translate** **[**<span>OutOfAmmo</span>**]:** My quiver is empty! Lucky bastards! | *(customize chat message)*
+| 4    | _!mmm_     **translate** **[**<span>UsedAmmo</span>**]:** Shot an arrow, and $[NumAmmo] more to come. | *(customize chat message and include remaining arrows)*
+| 5    | _!mmm_ **end customize**
+| 6    | **#UseAmmoScript** | *(call shared Roll20 macro containing the customizable script)*
+
+
+### _!mmm_ **customize export to** *destination*
+
+When placed before a **script** (or a **customize** block in front of it), saves a new **customize** block template containing all customizable variables and chat messages to a macro named *destination* (and also sends it to the player's chat).
+
+If *destination* is `chat`, no macro is created, and the **customize** block template is only sent to the player's chat.
+
+Any existing script customization is included the exported template, so you only have to update what you didn't customize before. If **customize export** is run on an uncustomized script, the template just contains the default values of variables and the chat messages the script would use without customization.
+
+If a macro named *destination* already exists, a backup of the existing macro is saved, and all non-_!mmm_ lines at the beginning and the end of the existing macro are copied to the updated version of it. (For example, lines at the beginning could be Roll20 macro calls that include general script translation or customization, and a line at the end might be a macro call to the customizable script itself.)
+
+Note that this is a single-line command, not a block.
+
+
+### _!mmm_ **customize export to** *destination* **without backup**
+
+Like **customize export** above, just without the backup.
+
+Convenient if you don't do very fancy things in your **customize** blocks and don't need no stinkin' backup macros cluttering up your macro library.
+
 
 ## Expressions
 
@@ -327,14 +466,18 @@ You can use attribute calls like `@{Finn|HP}` as well, but keep in mind that the
 
 There are also a few special *context variables* that are pre-set for you:
 
-| Variable   | Example  | Description
-| ---------- | -------- | -----------
-| `playerid` |          | Player ID (not character ID!) of the player who sent the command
-| `sender`   | "Finn"   | Player or character name who sent the command – subject to the chat "As" drop-down box
-| `version`  | "1.0.1"  | [Semantic version number](https://semver.org) of the MMM scripting engine
-| `pi`       | 3.141... | [Ratio of a circle's circumference to its diameter](https://en.wikipedia.org/wiki/Pi) – useful for geometric calculations
+| Variable   | Example   | Description
+| ---------- | --------- | -----------
+| `playerid` |           | Player ID (not character ID!) of the player who sent the command
+| `sender`   | "Finn"    | Player or character name who sent the command – subject to the chat "As" drop-down box
+| `version`  | "1.0.1"   | [Semantic version number](https://semver.org) of the MMM scripting engine
+| `pi`       | 3.141...  | [Ratio of a circle's circumference to its diameter](https://en.wikipedia.org/wiki/Pi) – useful for geometric calculations
+| `default`  | `default` | Special indicator value that makes `set customizable` apply the default expression
+| `denied`   | `denied`  | Special indicator value returned by `getattr()` when accessing attributes without permission
 
-You can *shadow* these special context variables by setting a custom variable with the same name (and your custom variable will then take precedence for the remainder of the script), but you can't truly change them.
+Don't attempt to use the `default` and `denied` indicator values in comparisons: They're neither numbers nor strings, and when compared as such they'll compare equal to many completely benign values that are neither `default` nor `denied` (like the number zero or an empty string). Use the `isdefault()` and `isdenied()` functions to find out if something is one of these special indicator values.
+
+You can *shadow* these special context variables by setting a custom variable with the same name (and your custom variable will then take precedence for the remainder of the script), but you can't truly change them, and MMM itself will always use their original values anyway.
 
 
 ### Attributes
@@ -386,26 +529,26 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 
 | Syntax         | Precedence  | Category | Description
 | -------------- | ----------- | -------- | -----------
-| *a* `**` *b*   | 1 (highest) | Math     | Calculate *a* to the power of *b*
+| *a* `**` *b*   | 1 (highest) | Math     | Calculate *a* to the power of *b*
 | `+`*a*         | 2           | Math     | Return *a* unchanged (even if *a* is not a number)
 | `-`*a*         | 2           | Math     | Negate *a*
-| *a* `*` *b*    | 3           | Math     | Multiply *a* with *b*
-| *a* `/` *b*    | 3           | Math     | Divide *a* by *b*
-| *a* `%` *b*    | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b* – result always has the sign of *b*
-| *a* `+` *b*    | 4           | Math     | Add *a* and *b*
-| *a* `-` *b*    | 4           | Math     | Subtract *b* from *a*
-| *a* `&` *b*    | 4           | String   | Concatenate *a* and *b*
-| *a* `<` *b*    | 5           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
-| *a* `<=` *b*   | 5           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
-| *a* `>` *b*    | 5           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
-| *a* `>=` *b*   | 5           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
-| *a* `==` *b*   | 6           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
-| *a* `!=` *b*   | 6           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
-| *a* `eq` *b*   | 6           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
-| *a* `ne` *b*   | 6           | Logic    | Return `true` if *a* is alphanumerically unequal to *b*, else `false`
-| *a* `and` *b*  | 7           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
-| *a* `or` *b*   | 8           | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
-| `not` *a*      | 9 (lowest)  | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
+| *a* `*` *b*    | 3           | Math     | Multiply *a* with *b*
+| *a* `/` *b*    | 3           | Math     | Divide *a* by *b*
+| *a* `%` *b*    | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b* – result always has the sign of *b*
+| *a* `+` *b*    | 4           | Math     | Add *a* and *b*
+| *a* `-` *b*    | 4           | Math     | Subtract *b* from *a*
+| *a* `&` *b*    | 4           | String   | Concatenate *a* and *b*
+| *a* `<` *b*    | 5           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
+| *a* `<=` *b*   | 5           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
+| *a* `>` *b*    | 5           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
+| *a* `>=` *b*   | 5           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
+| *a* `==` *b*   | 6           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
+| *a* `!=` *b*   | 6           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
+| *a* `eq` *b*   | 6           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
+| *a* `ne` *b*   | 6           | Logic    | Return `true` if *a* is alphanumerically unequal to *b*, else `false`
+| *a* `and` *b*  | 7           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
+| *a* `or` *b*   | 8           | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
+| `not` *a*      | 9 (lowest)  | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
 
 If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
 
@@ -449,7 +592,8 @@ If you want to calculate the square root of something, you can use the power-of 
 | getattrmax(*name\|id*, *attr*)                     | Attribute | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
 | setattr(*name\|id*, *attr*, *val*)                 | Attribute | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
 | setattrmax(*name\|id*, *attr*, *val*)              | Attribute | setattrmax("Finn", "HP", 25) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
-| isdenied(*expr*)                                   | Attribute | isdenied(getattr("Finn", "HP")) | Return `true` if access to *expr* was denied, else `false`
+| isdenied(*expr*)                                   | Attribute | isdenied(getattr("Finn", "HP")) | Return `true` if *expr* is the special `denied` indicator value (attribute access was denied), else `false`
+| isdefault(*expr*)                                  | Customize | isdefault(default) | Return `true` if *expr* is the special `default` indicator value, else `false`
 
 
 ## Recipes
@@ -561,12 +705,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.12.10
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.13.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.13.0  | 2021-02-17 | Introduce `customize` block, `set customizable`, and `translate`
 | 1.12.0  | 2021-02-10 | Add `isdenied(expr)` to check if `getattr()` access was denied
 | 1.11.0  | 2021-02-07 | Support `status_`... attribute access to token status markers
 | 1.10.0  | 2021-02-07 | Support optional *name\|id* parameter in `roll()` function
