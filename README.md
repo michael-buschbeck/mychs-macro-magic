@@ -527,28 +527,29 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 
 ### Operators
 
-| Syntax         | Precedence  | Category | Description
-| -------------- | ----------- | -------- | -----------
-| *a* `**` *b*   | 1 (highest) | Math     | Calculate *a* to the power of *b*
-| `+`*a*         | 2           | Math     | Return *a* unchanged (even if *a* is not a number)
-| `-`*a*         | 2           | Math     | Negate *a*
-| *a* `*` *b*    | 3           | Math     | Multiply *a* with *b*
-| *a* `/` *b*    | 3           | Math     | Divide *a* by *b*
-| *a* `%` *b*    | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b* – result always has the sign of *b*
-| *a* `+` *b*    | 4           | Math     | Add *a* and *b*
-| *a* `-` *b*    | 4           | Math     | Subtract *b* from *a*
-| *a* `&` *b*    | 4           | String   | Concatenate *a* and *b*
-| *a* `<` *b*    | 5           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
-| *a* `<=` *b*   | 5           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
-| *a* `>` *b*    | 5           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
-| *a* `>=` *b*   | 5           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
-| *a* `==` *b*   | 6           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
-| *a* `!=` *b*   | 6           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
-| *a* `eq` *b*   | 6           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
-| *a* `ne` *b*   | 6           | Logic    | Return `true` if *a* is alphanumerically unequal to *b*, else `false`
-| *a* `and` *b*  | 7           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
-| *a* `or` *b*   | 8           | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
-| `not` *a*      | 9 (lowest)  | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
+| Syntax               | Precedence  | Category | Description
+| -------------------- | ----------- | -------- | -----------
+| *a* `**` *b*         | 1 (highest) | Math     | Calculate *a* to the power of *b*
+| `+`*a*               | 2           | Math     | Return *a* unchanged (even if *a* is not a number)
+| `-`*a*               | 2           | Math     | Negate *a*
+| *a* `*` *b*          | 3           | Math     | Multiply *a* with *b*
+| *a* `/` *b*          | 3           | Math     | Divide *a* by *b*
+| *a* `%` *b*          | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b* – result always has the sign of *b*
+| *a* `+` *b*          | 4           | Math     | Add *a* and *b*
+| *a* `-` *b*          | 4           | Math     | Subtract *b* from *a*
+| *a* `&` *b*          | 5           | String   | Concatenate strings *a* and *b*
+| *a* `<` *b*          | 6           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
+| *a* `<=` *b*         | 6           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
+| *a* `>` *b*          | 6           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
+| *a* `>=` *b*         | 6           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
+| *a* `==` *b*         | 7           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
+| *a* `!=` *b*         | 7           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
+| *a* `eq` *b*         | 7           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
+| *a* `ne` *b*         | 7           | Logic    | Return `true` if *a* is alphanumerically unequal to *b*, else `false`
+| *a* `and` *b*        | 8           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
+| *a* `or` *b*         | 9           | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
+| `not` *a*            | 10          | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
+| *a*`,` *b*`,` *c*... | 11 (lowest) | List     | Make an ordered list of *a*, *b*, *c*, and more – also used for function arguments
 
 If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
 
@@ -705,7 +706,7 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.13.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.13.1
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 

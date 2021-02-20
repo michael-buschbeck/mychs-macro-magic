@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.13.0";
+const MMM_VERSION = "1.13.1";
 
 on("chat:message", function(msg)
 {
@@ -2821,43 +2821,43 @@ class MychExpression
             binary: { precedence: 4, execute: (a,b) => MychExpression.coerceNumber(a) - MychExpression.coerceNumber(b) }
         },
         "&": {
-            binary: { precedence: 4, execute: (a,b) => MychExpression.coerceString(a) + MychExpression.coerceString(b) }
+            binary: { precedence: 5, execute: (a,b) => MychExpression.coerceString(a) + MychExpression.coerceString(b) }
         },
         "<": {
-            binary: { precedence: 5, execute: (a,b) => MychExpression.coerceNumber(a) < MychExpression.coerceNumber(b) }
+            binary: { precedence: 6, execute: (a,b) => MychExpression.coerceNumber(a) < MychExpression.coerceNumber(b) }
         },
         "<=": {
-            binary: { precedence: 5, execute: (a,b) => MychExpression.coerceNumber(a) <= MychExpression.coerceNumber(b) }
+            binary: { precedence: 6, execute: (a,b) => MychExpression.coerceNumber(a) <= MychExpression.coerceNumber(b) }
         },
         ">": {
-            binary: { precedence: 5, execute: (a,b) => MychExpression.coerceNumber(a) > MychExpression.coerceNumber(b) }
+            binary: { precedence: 6, execute: (a,b) => MychExpression.coerceNumber(a) > MychExpression.coerceNumber(b) }
         },
         ">=": {
-            binary: { precedence: 5, execute: (a,b) => MychExpression.coerceNumber(a) >= MychExpression.coerceNumber(b) }
+            binary: { precedence: 6, execute: (a,b) => MychExpression.coerceNumber(a) >= MychExpression.coerceNumber(b) }
         },
         "==": {
-            binary: { precedence: 6, execute: (a,b) => MychExpression.coerceNumber(a) == MychExpression.coerceNumber(b) }
+            binary: { precedence: 7, execute: (a,b) => MychExpression.coerceNumber(a) == MychExpression.coerceNumber(b) }
         },
         "!=": {
-            binary: { precedence: 6, execute: (a,b) => MychExpression.coerceNumber(a) != MychExpression.coerceNumber(b) }
+            binary: { precedence: 7, execute: (a,b) => MychExpression.coerceNumber(a) != MychExpression.coerceNumber(b) }
         },
         "eq": {
-            binary: { precedence: 6, execute: (a,b) => MychExpression.coerceString(a) == MychExpression.coerceString(b) }
+            binary: { precedence: 7, execute: (a,b) => MychExpression.coerceString(a) == MychExpression.coerceString(b) }
         },
         "ne": {
-            binary: { precedence: 6, execute: (a,b) => MychExpression.coerceString(a) != MychExpression.coerceString(b) }
+            binary: { precedence: 7, execute: (a,b) => MychExpression.coerceString(a) != MychExpression.coerceString(b) }
         },
         "and": {
-            binary: { precedence: 7, execute: (a,b) => MychExpression.coerceBoolean(a) && MychExpression.coerceBoolean(b) }
+            binary: { precedence: 8, execute: (a,b) => MychExpression.coerceBoolean(a) && MychExpression.coerceBoolean(b) }
         },
         "or": {
-            binary: { precedence: 8, execute: (a,b) => MychExpression.coerceBoolean(a) || MychExpression.coerceBoolean(b) }
+            binary: { precedence: 9, execute: (a,b) => MychExpression.coerceBoolean(a) || MychExpression.coerceBoolean(b) }
         },
         "not": {
-            unary:  { precedence: 9, execute: (a) => !MychExpression.coerceBoolean(a) },
+            unary:  { precedence: 10, execute: (a) => !MychExpression.coerceBoolean(a) },
         },
         ",": {
-            binary: { precedence: 10, execute: (a,b) => MychExpression.coerceArgs(a).concat(MychExpression.coerceArgs(b)) }
+            binary: { precedence: 11, execute: (a,b) => MychExpression.coerceArgs(a).concat(MychExpression.coerceArgs(b)) }
         },
     };
 
