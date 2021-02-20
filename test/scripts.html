@@ -748,10 +748,11 @@
         {
             console.log(exception);
 
-            document.write("<tr>");
-            document.write("<td class='lineno'>error</td>");
-            document.write("<td class='output'><span class='error'>" + escapeHTML(exception) + "</span></td>")
-            document.write("</tr>")
+            processes.push(
+            {
+                type: "error",
+                message: "<span class='error'>" + escapeHTML(exception) + "</span>",
+            });
         };
 
         MychScriptContext.prototype.getattr = function(characterNameOrId, attributeName)
@@ -943,20 +944,20 @@
                 };
 
                 eventHandlers["chat:message"](msg);
-            }
 
-            while (processes.length > 0)
-            {
-                var process = processes.shift();
-
-                document.write("<tr>");
-                document.write("<td class='lineno'>" + process.type + "</td>");
-                document.write("<td class='output'>" + process.message.replace(/\b(broken)\b/g, "\u274C<span class='error'>$1</span>") + "</td>");
-                document.write("</tr>");
-
-                if (process.execute)
+                while (processes.length > 0)
                 {
-                    process.execute();
+                    var process = processes.shift();
+
+                    document.write("<tr>");
+                    document.write("<td class='lineno'>" + process.type + "</td>");
+                    document.write("<td class='output'>" + process.message.replace(/\b(broken)\b/g, "\u274C<span class='error'>$1</span>") + "</td>");
+                    document.write("</tr>");
+
+                    if (process.execute)
+                    {
+                        process.execute();
+                    }
                 }
             }
 
