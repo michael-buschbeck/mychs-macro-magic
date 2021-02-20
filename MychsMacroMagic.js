@@ -2864,6 +2864,9 @@ class MychExpression
         },
     };
 
+    static minOperatorPrecedence = Math.min(...Object.values(MychExpression.operators).map(variants => Object.values(variants).map(variant => variant.precedence)).flat());
+    static maxOperatorPrecedence = Math.max(...Object.values(MychExpression.operators).map(variants => Object.values(variants).map(variant => variant.precedence)).flat());
+
     static createTokenRegExp()
     {
         function compareLengthDecreasing(string1, string2)
@@ -2883,6 +2886,7 @@ class MychExpression
         let tokenPatterns =
         {
             operator:             operatorRegExpSource,
+            debug:                /\?{1,3}/,
             literalNumber:        /(\.\d+|\d+(\.\d*)?)([eE][-+]?\d+)?/,
             literalBoolean:       /\b(true|false)\b/,
             literalStringDouble:  /"([^"\\]|\\.)*"?/,
@@ -2960,7 +2964,10 @@ class MychExpression
                 break;
             }
 
-            tokens.push({ type: tokenType, offset: tokenMatch.index, value: tokenValue });
+            let offset = tokenMatch.index;
+            let offsetEnd = tokenMatch.index + tokenMatch[0].length;
+
+            tokens.push({ type: tokenType, offset: offset, offsetEnd: offsetEnd, value: tokenValue });
         }
 
         this.source = source;
@@ -3013,15 +3020,19 @@ class MychExpression
         }
 
         let expectClosing = [{}];
-        let expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+        let expectTokens = { operator: "unary", debug: "any", literal: "any", identifier: "any", parenthesis: "opening" };
 
         function getExpectDescription()
         {
             return Object.entries(expectTokens).filter(([type, qualifier]) => qualifier).map(([type, qualifier]) => qualifier + " " + type).join(", ");
         }
 
-        for (let token of this.tokens)
+        let maxEvaluatedTokenIndex;
+
+        for (let tokenIndex = 0; tokenIndex < this.tokens.length; ++tokenIndex)
         {
+            let token = this.tokens[tokenIndex];
+
             let tokenQualifier = "any";
             let expectTokenQualifiers = [expectTokens[token.type]].flat();
 
@@ -3058,18 +3069,62 @@ class MychExpression
                     if (tokenQualifier == "unary")
                     {
                         operationStack.push({ type: "operator", name: token.value, operands: 1, precedence: operator.precedence, execute: operator.execute });
-                        expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+                        expectTokens = { operator: "unary", debug: "any", literal: "any", identifier: "any", parenthesis: "opening" };
                     }
                     else
                     {
+                        maxEvaluatedTokenIndex = tokenIndex - 1;
+
                         yield* reduce(operator.associativity == "right" ? operator.precedence - 1 : operator.precedence);
 
                         operationStack.push({ type: "operator", name: token.value, operands: 2, precedence: operator.precedence, execute: operator.execute });
-                        expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+                        expectTokens = { operator: "unary", debug: "any", literal: "any", identifier: "any", parenthesis: "opening" };
                     }
                 }
                 break;
-                
+
+                case "debug":
+                {
+                    let debugExpression = this;
+                    let debugTokenIndex = tokenIndex;
+
+                    function debug(value)
+                    {
+                        let sourceBegin = debugExpression.tokens[debugTokenIndex].offset;
+                        let sourceEnd = debugExpression.tokens[maxEvaluatedTokenIndex].offsetEnd;
+
+                        let markedSourceBefore = debugExpression.source.substring(0, sourceBegin);
+                        let markedSourceBetween = debugExpression.source.substring(sourceBegin, sourceEnd);
+                        let markedSourceAfter = debugExpression.source.substring(sourceEnd);
+
+                        let highlightStart = "<span style='font-weight: bold; background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black'>";
+                        let highlightStop = "</span>";
+
+                        let debugValue = highlightStart + context.literal(MychExpression.literal(value)) + highlightStop;
+                        let debugSource = context.literal(markedSourceBefore) + highlightStart + context.literal(markedSourceBetween) + highlightStop + context.literal(markedSourceAfter);
+                        
+                        context.whisperback("Partial result " + debugValue + " evaluating: " + debugSource);
+                    
+                        return value;
+                    }
+
+                    let debugPrecedence;
+
+                    switch (token.value.length)
+                    {
+                        case 1: debugPrecedence = MychExpression.minOperatorPrecedence - 1; break;
+                        case 2: debugPrecedence = MychExpression.operators["<"].binary.precedence - 1; break;
+                        case 3: debugPrecedence = MychExpression.maxOperatorPrecedence + 1; break;
+                    }
+
+                    let prevOperation = operationStack[operationStack.length - 1];
+                    let maxDebugPrecedence = (prevOperation ? prevOperation.precedence : MychExpression.maxOperatorPrecedence + 1);
+
+                    operationStack.push({ type: "debug", name: token.value, operands: 1, precedence: Math.min(debugPrecedence, maxDebugPrecedence), execute: debug });
+                    expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+                }
+                break;
+
                 case "literal":
                 {
                     valueStack.push(token.value);
@@ -3107,10 +3162,12 @@ class MychExpression
                     {
                         operationStack.push({ type: "parenthesis", valueStackOffset: valueStack.length });
                         expectClosing.unshift({ parenthesis: "closing" });
-                        expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: ["opening", "closing"] };
+                        expectTokens = { operator: "unary", debug: "any", literal: "any", identifier: "any", parenthesis: ["opening", "closing"] };
                     }
                     else
                     {
+                        maxEvaluatedTokenIndex = tokenIndex - 1;
+
                         yield* reduce();
 
                         let openingParenthesisOperation = operationStack.pop();
@@ -3132,6 +3189,8 @@ class MychExpression
             let expectDescription = getExpectDescription();
             throw new MychExpressionError("evaluate", "expected " + expectDescription, this.source, this.source.length);
         }
+
+        maxEvaluatedTokenIndex = this.tokens.length - 1;
 
         yield* reduce();
 

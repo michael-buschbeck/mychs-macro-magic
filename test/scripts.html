@@ -110,7 +110,7 @@
 </head>
 <body>
     <script>
-        var includedScriptSources = [];
+        var includedScriptSources = [15];
 
         var scriptSources =
         [
@@ -169,6 +169,26 @@
             [
                 "!mmm chat: min() = <${min()}>, min(+123, undef) = ${min(+123, undef)}, min(.) = ${min(5, undefined, 'moo', 999, 2, -3.14)}",
                 "!mmm chat: max() = <${max()}>, min(-456, undef) = ${min(-456, undef)}, max(.) = ${max(5, undefined, 'moo', 999, 2, -3.14)}",
+            ],
+            [
+                "!mmm chat: ${1 + ?}",
+                "!mmm chat: ${1 + ? ? 2}",
+                "!mmm chat: ${1 + ? 2 * 3 + 4}",
+                "!mmm chat: ${1 + ?? 2 * 3 + 4}",
+                "!mmm chat: ${1 + ??? 2 * 3 + 4}",
+                "!mmm chat: ${1 + ?(2 * 3) + 4}",
+                "!mmm chat: ${1 + ?((2 * 3)) + 4}",
+                "!mmm chat: ${1 + ?(2 * 3 + 4)}",
+                "!mmm chat: ${1 + ?((2 * 3 + 4))}",
+                "!mmm chat: ${1 + ?(2 * 3 + ? 4)}",
+                "!mmm chat: ${1 + ?getattr('Dummy', 'AP')}",
+                "!mmm chat: ${?('foo' & 123 & 'bar')}",
+                "!mmm chat: ${1 + ? 2**3 * 4 <= 5}",
+                "!mmm chat: ${1 + ?? 2**3 * 4 <= 5}",
+                "!mmm chat: ${1 + ??? 2**3 * 4 <= 5}",
+                "!mmm chat: ${? 2**3 * 4 <= 5}",
+                "!mmm chat: ${?? 2**3 * 4 <= 5}",
+                "!mmm chat: ${??? 2**3 * 4 <= 5}",
             ],
             [
                 "!mmm chat: this is ${highlight('rather normal')}, ${highlight('rather good', 'good')}, ${highlight('rather bad', 'bad')}, or ${highlight('very important', 'important')} indeed",
