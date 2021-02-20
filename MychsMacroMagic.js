@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.13.4";
+const MMM_VERSION = "1.14.0";
 
 on("chat:message", function(msg)
 {
@@ -1296,6 +1296,21 @@ class MychScriptContext
         updateObj.set(updateKey, updateVal);
 
         return this.$getAttribute(nameOrId, attributeName, max);
+    }
+
+    $debugExpression(result, source, resultSourceBegin, resultSourceEnd)
+    {
+        let markedSourceBefore = source.substring(0, resultSourceBegin);
+        let markedSourceBetween = source.substring(resultSourceBegin, resultSourceEnd);
+        let markedSourceAfter = source.substring(resultSourceEnd);
+
+        let highlightStart = "<span style='font-weight: bold; background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black'>";
+        let highlightStop = "</span>";
+
+        let debugResult = highlightStart + this.literal(MychExpression.literal(result)) + highlightStop;
+        let debugSource = this.literal(markedSourceBefore) + highlightStart + this.literal(markedSourceBetween) + highlightStop + this.literal(markedSourceAfter);
+        
+        this.whisperback(debugResult + " \u25C0\uFE0F " + debugSource);
     }
 
     $statusReset()
@@ -3093,17 +3108,7 @@ class MychExpression
                         let sourceBegin = debugExpression.tokens[debugTokenIndex].offset;
                         let sourceEnd = debugExpression.tokens[maxEvaluatedTokenIndex].offsetEnd;
 
-                        let markedSourceBefore = debugExpression.source.substring(0, sourceBegin);
-                        let markedSourceBetween = debugExpression.source.substring(sourceBegin, sourceEnd);
-                        let markedSourceAfter = debugExpression.source.substring(sourceEnd);
-
-                        let highlightStart = "<span style='font-weight: bold; background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black'>";
-                        let highlightStop = "</span>";
-
-                        let debugValue = highlightStart + context.literal(MychExpression.literal(value)) + highlightStop;
-                        let debugSource = context.literal(markedSourceBefore) + highlightStart + context.literal(markedSourceBetween) + highlightStop + context.literal(markedSourceAfter);
-                        
-                        context.whisperback("Partial result " + debugValue + " evaluating: " + debugSource);
+                        context.$debugExpression(value, debugExpression.source, sourceBegin, sourceEnd);
                     
                         return value;
                     }
