@@ -740,7 +740,7 @@
             processes.push(
             {
                 type: "whisper",
-                message: "(From Mych's Macro Magic):<br/>" + message,
+                message: MychExpression.coerceString(message),
             });
         };
 
