@@ -1298,19 +1298,31 @@ class MychScriptContext
         return this.$getAttribute(nameOrId, attributeName, max);
     }
 
-    $debugExpression(result, source, resultSourceBegin, resultSourceEnd)
+    $debugHighlight(value)
     {
+        let highlightStart = "<span style='font-weight: bold; background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black'>";
+        let highlightStop = "</span>";
+
+        return highlightStart + this.literal(value) + highlightStop;
+    }
+
+    $debugExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
+    {
+        resultSourceEnd 
+
         let markedSourceBefore = source.substring(0, resultSourceBegin);
         let markedSourceBetween = source.substring(resultSourceBegin, resultSourceEnd);
         let markedSourceAfter = source.substring(resultSourceEnd);
 
-        let highlightStart = "<span style='font-weight: bold; background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black'>";
-        let highlightStop = "</span>";
-
-        let debugResult = highlightStart + this.literal(MychExpression.literal(result)) + highlightStop;
-        let debugSource = this.literal(markedSourceBefore) + highlightStart + this.literal(markedSourceBetween) + highlightStop + this.literal(markedSourceAfter);
+        let debugResult = this.$debugHighlight(result);
+        let debugSource = this.literal(markedSourceBefore) + this.$debugHighlight(markedSourceBetween) + this.literal(markedSourceAfter);
         
-        this.whisperback(debugResult + " \u25C0\uFE0F " + debugSource);
+        this.$debugMessage(debugResult + " \u25C0\uFE0F " + debugSource);
+    }
+
+    $debugMessage(message)
+    {
+        this.whisperback("\u{1F50E} " + message);
     }
 
     $statusReset()
@@ -3118,7 +3130,7 @@ class MychExpression
                         let sourceBegin = debugExpression.tokens[debugTokenIndex].offset;
                         let sourceEnd = debugExpression.tokens[maxEvaluatedTokenIndex].offsetEnd;
 
-                        context.$debugExpression(value, debugExpression.source, sourceBegin, sourceEnd);
+                        context.$debugExpression(MychExpression.literal(value), debugExpression.source, sourceBegin, sourceEnd);
                     
                         return value;
                     }
