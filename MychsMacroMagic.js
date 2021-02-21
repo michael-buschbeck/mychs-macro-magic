@@ -2811,6 +2811,16 @@ class MychExpression
                 let stringLiteral = "\"" + value.replace(/(["\\])/g, "\\$1") + "\"";
                 return stringLiteral;
             }
+
+            case "undefined":
+            {
+                return "undef";
+            }
+        }
+
+        if (value instanceof Array)
+        {
+            return value.map(MychExpression.literal).join(", ");
         }
 
         return String(value);
