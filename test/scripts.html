@@ -192,6 +192,25 @@
                 "!mmm chat: ${??? 2**3 * 4 <= 5}",
             ],
             [
+                "!mmm debug do 1 + 2",
+                "!mmm script",
+                "!mmm     set foo = 42",
+                "!mmm     debug do foo",
+                "!mmm end script",
+                "!mmm debug do getattr('Dummy', 'AP')",
+                "!mmm debug do setattr('Dummy', 'AP', getattr('Dummy', 'AP') - 1)"
+            ],
+            [
+                "!mmm debug chat: number is ${3.141}",
+                "!mmm debug chat: string is ${'foo' & 'bar'}",
+                "!mmm debug chat: bool is ${1 == 2}",
+                "!mmm debug chat: undefined is ${undefined}",
+                "!mmm debug chat: list is ${1, 2, 3, 'foo', 'bar', 'baz', undefined}",
+                "!mmm debug chat: default is ${default}",
+                "!mmm debug chat: denied is ${denied}",
+                "!mmm debug chat: roll is ${roll('1d6')}",
+            ],
+            [
                 "!mmm chat: this is ${highlight('rather normal')}, ${highlight('rather good', 'good')}, ${highlight('rather bad', 'bad')}, or ${highlight('very important', 'important')} indeed",
                 "!mmm chat: but hover ${highlight('this', 'normal', 'fancy tooltip')} for a tooltip",
             ],

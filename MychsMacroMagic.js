@@ -2160,6 +2160,99 @@ class MychScript
                 variables.$translations[this.definition.label] = translation;
             }
         },
+
+        debug:
+        {
+            tokens:
+            {
+                chat:      [ "chat", ":", /(?<template>.+)/ ],
+                chatlabel: [ "chat", "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/],
+                do:        [ "do", /(?<expression>.+)/ ],
+            },
+
+            parse: function(args)
+            {
+                if (args.template)
+                {
+                    try
+                    {
+                        this.definition.templateOffset = args.template.offset;
+                        this.definition.template = new MychTemplate(args.template.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowTemplateError("parse", exception, this.definition.templateOffset);
+                    }
+                }
+
+                if (args.label)
+                {
+                    this.definition.label = args.label.value;
+                }
+
+                if (args.expression)
+                {
+                    try
+                    {
+                        this.definition.expressionOffset = args.expression.offset;
+                        this.definition.expression = new MychExpression(args.expression.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    }
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*(variables)
+            {
+                if (this.definition.template)
+                {
+                    let message;
+
+                    try
+                    {
+                        let context = this.context;
+
+                        function debugMarkup(value)
+                        {
+                            if (value && value.toMarkup)
+                            {
+                                return value.toMarkup();
+                            }
+
+                            return context.$debugHighlight(MychExpression.literal(value));
+                        }
+                        
+                        message = yield* this.definition.template.evaluate(variables, this.context, debugMarkup);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowTemplateError("execute", exception, this.definition.templateOffset);
+                    }
+
+                    this.context.$debugMessage(message);
+                }
+
+                if (this.definition.expression)
+                {
+                    let result;
+
+                    try
+                    {
+                        result = yield* this.definition.expression.evaluate(variables, this.context);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
+                    }
+
+                    this.context.$debugExpression(MychExpression.literal(result), this.definition.expression.source);
+                }
+            },
+        },
     };
 
     static parseTokens(tokenPatterns, source, sourceOffset)
@@ -2564,17 +2657,17 @@ class MychTemplate
         return new RegExp(contextKeys.map(key => key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/, "\\b")).join("|"), "g");
     }
 
-    static replaceContextKeys(string, contextKeysRegExp, context)
+    static replaceContextKeys(string, contextKeysRegExp, context, markup)
     {
         if (!contextKeysRegExp)
         {
             return string;
         }
 
-        return string.replace(contextKeysRegExp, key => MychExpression.coerceMarkup(context[key]));
+        return string.replace(contextKeysRegExp, key => markup(context[key]));
     }
 
-    *evaluate(variables, context)
+    *evaluate(variables, context, markup = MychExpression.coerceMarkup)
     {
         let evaluatedStrings = [];
 
@@ -2586,7 +2679,7 @@ class MychTemplate
             {
                 case "string":
                 {
-                    let evaluatedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context);
+                    let evaluatedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context, markup);
                     evaluatedStrings.push(evaluatedString);
                 }
                 break;
@@ -2596,7 +2689,7 @@ class MychTemplate
                     try
                     {
                         let evaluatedExpressionResult = yield* segment.expression.evaluate(variables, context);
-                        evaluatedStrings.push(MychExpression.coerceMarkup(evaluatedExpressionResult));
+                        evaluatedStrings.push(markup(evaluatedExpressionResult));
                     }
                     catch (exception)
                     {
@@ -2628,7 +2721,7 @@ class MychTemplate
         return translatedTemplate;
     }
 
-    *createMaterialized(variables, context)
+    *createMaterialized(variables, context, markup = MychExpression.coerceMarkup)
     {
         let materializedTemplate = new MychTemplate();
 
@@ -2643,7 +2736,7 @@ class MychTemplate
             {
                 case "string":
                 {
-                    let materializedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context);
+                    let materializedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context, markup);
                     let materializedStringSegment = { type: "string", value: materializedString };
 
                     materializedTemplate.segments.push(materializedStringSegment);
@@ -2655,7 +2748,7 @@ class MychTemplate
                     try
                     {
                         let materializedExpressionResult = yield* segment.expression.evaluate(variables, context);
-                        let materializedExpressionSegment = { type: "string", value: MychExpression.coerceMarkup(materializedExpressionResult) };
+                        let materializedExpressionSegment = { type: "string", value: markup(materializedExpressionResult) };
 
                         materializedTemplate.segments.push(materializedExpressionSegment);
                     }
