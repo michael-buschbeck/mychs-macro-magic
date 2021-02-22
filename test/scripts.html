@@ -813,6 +813,7 @@
             }
 
             attributes[attributeName].current = attributeValue;
+            return attributeValue;
         }
 
         MychScriptContext.prototype.setattrmax = function(characterNameOrId, attributeName, attributeValue)
@@ -823,6 +824,7 @@
             }
 
             attributes[attributeName].max = attributeValue;
+            return attributeValue;
         }
 
         function getObj(type, id)
