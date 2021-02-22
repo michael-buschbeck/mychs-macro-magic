@@ -605,9 +605,9 @@ A few examples will make it clearer – notice how the whispered message also hi
 | 2    | _!mmm_ **set** hit = roll("1d20") + `?` skill >= 20   | *(Whisper):*  `12` ◄ roll("1d20") + `? skill` >= 20 | *(just the skill variable)*
 | 3    | _!mmm_ **set** hit = `??` roll("1d20") + skill >= 20  | *(Whisper):*  `21` ◄ `?? roll("1d20") + skill` >= 20 | *(everything up to the `>=` operator)*
 | 4    | _!mmm_ **set** hit = `???` roll("1d20") + skill >= 20 | *(Whisper):*  `true` ◄ `??? roll("1d20") + skill >= 20` | *(everything)*
-| 5    | _!mmm_ **set** result = 2 * `?` (3 * 4 + 5)           | *(Whisper):*  `17` ◄ 2 * `? (3 * 4 + 5)` | *(just the next parenthesized expression)*
-| 6    | _!mmm_ **set** result = 2 * `?` 3 * 4 + 5             | *(Whisper):*  `3` ◄ 2 * `? 3` * 4 + 5 | *(just the next literal – kinda pointless here)*
-| 7    | _!mmm_ **set** result = 2 * `???` 3 * 4 + 5           | *(Whisper):*  `12` ◄ 2 * `??? 3 * 4` + 5 | *(notice how `+ 5` cannot be included due to operator precedence)*
+| 5    | _!mmm_ **set** result = 2 + `?` (3 * 4 + 5)           | *(Whisper):*  `17` ◄ 2 + `? (3 * 4 + 5)` | *(just the next parenthesized expression)*
+| 6    | _!mmm_ **set** result = 2 + `?` 3 * 4 + 5             | *(Whisper):*  `3` ◄ 2 + `? 3` * 4 + 5 | *(just the next literal – kinda pointless here)*
+| 7    | _!mmm_ **set** result = 2 + `???` 3 * 4 + 5           | *(Whisper):*  `12` ◄ 2 + `??? 3 * 4` + 5 | *(notice how `+ 5` cannot be included due to order of operations)*
 
 This works in any place with an expression, of course, not just in **set** – you can use it in **if** and **do** and even inside of ${...} placeholders in **chat** commands. You can use multiple `?`-type operators in the same expression, too, and you'll get a separate whispered message back for each in evaluation order.
 
