@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.13.1";
+const MMM_VERSION = "1.13.2";
 
 on("chat:message", function(msg)
 {
@@ -2992,7 +2992,7 @@ class MychExpression
 
                 if (operation.type == "function")
                 {
-                    executionArguments = executionArguments.flat(1);
+                    executionArguments = executionArguments.flatMap(arg => arg instanceof MychExpressionArgs ? arg : [arg]);
                     executionResult = operation.execute.apply(operation.context, executionArguments);
 
                     if (executionResult && executionResult.next)
