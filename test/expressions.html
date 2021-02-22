@@ -129,7 +129,7 @@
             {
                 var expression = new MychExpression(expressionSource);
 
-                var result = expression.evaluate(variables, new MychScriptContext());
+                var result = expression.evaluate(variables, new MychScriptContext()).next().value;
                 var resultType = (result instanceof Object ? result.constructor.name : typeof(result));
 
                 document.write(escapeHTML(expressionSource) + " = <span class='success'>" + escapeHTML(JSON.stringify(result)) + "</span> <span class='type'>[" + escapeHTML(resultType) + "]</span>");
