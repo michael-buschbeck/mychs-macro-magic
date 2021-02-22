@@ -18,6 +18,23 @@
         {
             return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
+
+        function normalizeHTML(html)
+        {
+            html = String(html);
+
+            html = html.replace(/&#(\d+);/g, function(match, decimal)
+            {
+                let character = String.fromCodePoint(parseInt(decimal));
+                return (["&", "<", ">"].includes(character) ? match : character);
+            });
+
+            html = html.replace(/&#(38|x26);/ig, "&amp;");
+            html = html.replace(/&#(60|x3C);/ig, "&lt;");
+            html = html.replace(/&#(62|x3E);/ig, "&gt;");
+
+            return html;
+        }
     </script>
     <style type="text/css">
         body {
@@ -31,6 +48,26 @@
             border: 1px solid silver;
             margin-bottom: 1em;
             white-space: pre-wrap;
+        }
+
+        div.results-success {
+            padding: 0.5em 1em;
+            border: 1px solid gray;
+            font-family: Calibri, sans-serif;
+            font-weight: bold;
+            font-size: 12pt;
+            color: green;
+            background: #C0FFC0;
+        }
+
+        div.results-failure {
+            padding: 0.5em 1em;
+            border: 1px solid gray;
+            font-family: Calibri, sans-serif;
+            font-weight: bold;
+            font-size: 12pt;
+            color: red;
+            background: #FFC0C0;
         }
 
         td {
@@ -55,7 +92,20 @@
         }
 
         td.output {
-            white-space: normal;
+            font-family: Calibri, sans-serif;
+            white-space: pre-wrap;
+        }
+
+        tr.ok td.output {
+            color: green;
+        }
+
+        tr.unexpected td {
+            color: red;
+        }
+
+        tr.expected td {
+            background: yellow;
         }
 
         div.sheet-rolltemplate-default table {
@@ -101,11 +151,6 @@
             color: gray;
             font-family: Calibri, sans-serif;
         }
-
-        span.error {
-            color: red;
-            font-family: Calibri, sans-serif;
-        }
     </style>
 </head>
 <body>
@@ -116,6 +161,7 @@
         [
             [
                 "!mmm do chat(version)",
+                { chat: /^\d+\.\d+\.\d+$/ },
             ],
             [
                 "!mmm",
@@ -123,110 +169,181 @@
                 "!mmm  ",
                 "!mmm   ",
                 "!mmm    chat: success",
+                { chat: "success" }
             ],
             [
                 "!mmm chat: sender = ${sender}, playerid = ${playerid}, version = ${version}",
+                { chat: /^sender = Tester, playerid = player1234, version = \d+\.\d+\.\d+$/ },
             ],
             [
                 "!mmm set correct = 123 + 456",
+                { whisper: "⚠️ Value of **correct** won't survive being **set** outside of a **script** block" },
             ],
             [
                 "!mmm set missingExpression",
+                { error: "During parse, syntax error in script: set missingExpression❌"}
             ],
             [
                 "!mmm set incorrectAssignmentOperator := 123 + 456",
+                { error: "During parse, syntax error in script: set incorrectAssignmentOperator ❌:= 123 + 456" },
             ],
             [
-                "!mmm do chat('correct')"
+                "!mmm do chat('correct')",
+                { chat: "correct" },
             ],
             [
-                "!mmm do chat 'unknown operator'!"
+                "!mmm do chat 'unknown operator'!",
+                { error: "During parse, syntax error in expression in script: do chat 'unknown operator'❌!" },
             ],
             [
-                "!mmm do chat 'missing parentheses'"
+                "!mmm do chat 'missing parentheses'",
+                { error: "During execute, any literal not expected here (expected opening parenthesis) in expression in script: !mmm do chat ❌'missing parentheses'" }
             ],
             [
                 "!mmm     unknown command",
+                { error: "During parse, unknown command in script:     ❌unknown command" },
             ],
             [
                 "!mmm chat: Hello World! Meaning of life: ${6*7}, current AP: ${getattr('Dummy', 'AP')}",
+                { chat: "Hello World! Meaning of life: 42, current AP: 20" },
             ],
             [
                 "!mmm chat: this <${undefinedValue}> should be empty",
+                { chat: "this <> should be empty" },
             ],
             [
-                "!mmm chat:  11 %  8 = ${ 11 %  8} (3 expected)",
-                "!mmm chat: -11 %  8 = ${-11 %  8} (5 expected)",
-                "!mmm chat:  11 % -8 = ${ 11 % -8} (-5 expected)",
-                "!mmm chat: -11 % -8 = ${-11 % -8} (-3 expected)",
+                "!mmm chat:  11 %  8 = ${ 11 %  8}", { chat:  "11 %  8 = 3" },
+                "!mmm chat: -11 %  8 = ${-11 %  8}", { chat: "-11 %  8 = 5" },
+                "!mmm chat:  11 % -8 = ${ 11 % -8}", { chat:  "11 % -8 = -5" },
+                "!mmm chat: -11 % -8 = ${-11 % -8}", { chat: "-11 % -8 = -3" },
             ],
             [
                 "!mmm chat: floor(.) = (-1.2) = ${floor(-1.2)}, (-1.5) = ${floor(-1.5)}, (-1.7) = ${floor(-1.7)}, (1.2) = ${floor(1.2)}, (1.5) = ${floor(1.5)}, (1.7) = ${floor(1.7)}",
+                { chat: "floor(.) = (-1.2) = -2, (-1.5) = -2, (-1.7) = -2, (1.2) = 1, (1.5) = 1, (1.7) = 1" },
                 "!mmm chat: round(.) = (-1.2) = ${round(-1.2)}, (-1.5) = ${round(-1.5)}, (-1.7) = ${round(-1.7)}, (1.2) = ${round(1.2)}, (1.5) = ${round(1.5)}, (1.7) = ${round(1.7)}",
+                { chat: "round(.) = (-1.2) = -1, (-1.5) = -1, (-1.7) = -2, (1.2) = 1, (1.5) = 2, (1.7) = 2" },
                 "!mmm chat: ceil(.) = (-1.2) = ${ceil(-1.2)}, (-1.5) = ${ceil(-1.5)}, (-1.7) = ${ceil(-1.7)}, (1.2) = ${ceil(1.2)}, (1.5) = ${ceil(1.5)}, (1.7) = ${ceil(1.7)}",
+                { chat: "ceil(.) = (-1.2) = -1, (-1.5) = -1, (-1.7) = -1, (1.2) = 2, (1.5) = 2, (1.7) = 2" },
                 "!mmm chat: abs(.) = (-1.2) = ${abs(-1.2)}, (-1.5) = ${abs(-1.5)}, (-1.7) = ${abs(-1.7)}, (1.2) = ${abs(1.2)}, (1.5) = ${abs(1.5)}, (1.7) = ${abs(1.7)}",
+                { chat: "abs(.) = (-1.2) = 1.2, (-1.5) = 1.5, (-1.7) = 1.7, (1.2) = 1.2, (1.5) = 1.5, (1.7) = 1.7" },
             ],
             [
                 "!mmm chat: min() = <${min()}>, min(+123, undef) = ${min(+123, undef)}, min(.) = ${min(5, undefined, 'moo', 999, 2, -3.14)}",
+                { chat: "min() = <>, min(+123, undef) = 123, min(.) = -3.14" },
                 "!mmm chat: max() = <${max()}>, min(-456, undef) = ${min(-456, undef)}, max(.) = ${max(5, undefined, 'moo', 999, 2, -3.14)}",
+                { chat: "max() = <>, min(-456, undef) = -456, max(.) = 999" },
             ],
             [
                 "!mmm chat: ${1 + ?}",
+                { error: "During execute, expected unary operator, any literal, any identifier, opening parenthesis in expression in template in script: !mmm chat: ${1 + ?❌}" },
                 "!mmm chat: ${1 + ? ? 2}",
+                { error: "During execute, any debug not expected here (expected unary operator, any literal, any identifier, opening parenthesis) in expression in template in script: !mmm chat: ${1 + ? ❌? 2}" },
                 "!mmm chat: ${1 + ???? 2}",
+                { error: "During execute, any debug not expected here (expected unary operator, any literal, any identifier, opening parenthesis) in expression in template in script: !mmm chat: ${1 + ???❌? 2}" },
                 "!mmm chat: ${1 + ? 2 * 3 + 4}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>2</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? 2</span> * 3 + 4" },
+                { chat: "11" },
                 "!mmm chat: ${1 + ?? 2 * 3 + 4}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>6</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?? 2 * 3</span> + 4" },
+                { chat: "11" },
                 "!mmm chat: ${1 + ??? 2 * 3 + 4}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>6</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>??? 2 * 3</span> + 4" },
+                { chat: "11" },
                 "!mmm chat: ${1 + ?(2 * 3) + 4}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>6</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?(2 * 3)</span> + 4" },
+                { chat: "11" },
                 "!mmm chat: ${1 + ?((2 * 3)) + 4}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>6</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?((2 * 3))</span> + 4" },
+                { chat: "11" },
                 "!mmm chat: ${1 + ?(2 * 3 + 4)}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>10</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?(2 * 3 + 4)</span>" },
+                { chat: "11" },
                 "!mmm chat: ${1 + ?((2 * 3 + 4))}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>10</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?((2 * 3 + 4))</span>" },
+                { chat: "11" },
                 "!mmm chat: ${1 + ?(2 * 3 + ? 4)}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>4</span> ◀️ 1 + ?(2 * 3 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? 4</span>)" },
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>10</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?(2 * 3 + ? 4)</span>" },
+                { chat: "11" },
                 "!mmm chat: ${1 + ?getattr('Dummy', 'AP')}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>20</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?getattr('Dummy', 'AP')</span>" },
+                { chat: "21" },
                 "!mmm chat: ${?('foo' & 123 & 'bar')}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>\"foo123bar\"</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?('foo' &amp; 123 &amp; 'bar')</span>" },
+                { chat: "foo123bar" },
                 "!mmm chat: ${1 + ? 2**3 * 4 <= 5}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>2</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? 2</span>**3 * 4 &lt;= 5" },
+                { chat: "false" },
                 "!mmm chat: ${1 + ?? 2**3 * 4 <= 5}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>32</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?? 2**3 * 4</span> &lt;= 5" },
+                { chat: "false" },
                 "!mmm chat: ${1 + ??? 2**3 * 4 <= 5}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>32</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>??? 2**3 * 4</span> &lt;= 5" },
+                { chat: "false" },
                 "!mmm chat: ${? 2**3 * 4 <= 5}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>2</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? 2</span>**3 * 4 &lt;= 5" },
+                { chat: "false" },
                 "!mmm chat: ${?? 2**3 * 4 <= 5}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>32</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?? 2**3 * 4</span> &lt;= 5" },
+                { chat: "false" },
                 "!mmm chat: ${??? 2**3 * 4 <= 5}",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>false</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>??? 2**3 * 4 &lt;= 5</span>" },
+                { chat: "false" },
             ],
             [
                 "!mmm debug do 1 + 2",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>3</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>1 + 2</span>" },
                 "!mmm script",
                 "!mmm     set foo = 42",
                 "!mmm     debug do foo",
                 "!mmm end script",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>42</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>foo</span>" },
                 "!mmm debug do getattr('Dummy', 'AP')",
-                "!mmm debug do setattr('Dummy', 'AP', getattr('Dummy', 'AP') - 1)"
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>20</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>getattr('Dummy', 'AP')</span>" },
+                "!mmm debug do setattr('Dummy', 'AP', getattr('Dummy', 'AP') - 1)",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>19</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>setattr('Dummy', 'AP', getattr('Dummy', 'AP') - 1)</span>" },
             ],
             [
                 "!mmm debug chat: number is ${3.141}",
+                { whisper: "🔎 number is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>3.141</span>" },
                 "!mmm debug chat: string is ${'foo' & 'bar'}",
+                { whisper: "🔎 string is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>\"foobar\"</span>" },
                 "!mmm debug chat: bool is ${1 == 2}",
+                { whisper: "🔎 bool is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>false</span>" },
                 "!mmm debug chat: undefined is ${undefined}",
+                { whisper: "🔎 undefined is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>undef</span>" },
                 "!mmm debug chat: list is ${1, 2, 3, 'foo', 'bar', 'baz', undefined}",
+                { whisper: "🔎 list is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>1, 2, 3, \"foo\", \"bar\", \"baz\", undef</span>" },
                 "!mmm debug chat: default is ${default}",
+                { whisper: "🔎 default is <span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>" },
                 "!mmm debug chat: denied is ${denied}",
+                { whisper: "🔎 denied is <span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>" },
                 "!mmm debug chat: roll is ${roll('1d6')}",
+                { process: "/roll 1d6" },
+                { whisper: /^🔎 roll is <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d6" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">[1-6]<\/span>/ },
             ],
             [
                 "!mmm chat: this is ${highlight('rather normal')}, ${highlight('rather good', 'good')}, ${highlight('rather bad', 'bad')}, or ${highlight('very important', 'important')} indeed",
+                { chat: "this is <span class=\"mmm-highlight mmm-highlight-normal\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #FEF68E;font-weight:bold;font-size:1.1em\">rather normal</span>, <span class=\"mmm-highlight mmm-highlight-good\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #3FB315;font-weight:bold;font-size:1.1em\">rather good</span>, <span class=\"mmm-highlight mmm-highlight-bad\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #B31515;font-weight:bold;font-size:1.1em\">rather bad</span>, or <span class=\"mmm-highlight mmm-highlight-important\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #4A57ED;font-weight:bold;font-size:1.1em\">very important</span> indeed" },
                 "!mmm chat: but hover ${highlight('this', 'normal', 'fancy tooltip')} for a tooltip",
+                { chat: "but hover <span class=\"mmm-highlight mmm-highlight-normal showtip tipsy-n-right\" title=\"fancy tooltip\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #FEF68E;font-weight:bold;font-size:1.1em;cursor:help\">this</span> for a tooltip" },
             ],
             [
                 "!mmm else",
+                { error: "During parse, unexpected \"else\" outside of \"if\" block in script: ❌else" },
             ],
             [
                 "!mmm if true",
                 "!mmm else",
                 "!mmm else",
+                { error: "During parse, unexpected \"else\" after previous \"else\" in same \"if\" block in script: ❌else" },
                 "!mmm end if",
             ],
             [
                 "!mmm if false",
                 "!mmm else if broken syntax in expression",
                 "!mmm end if",
+                { error: "During execute, any identifier not expected here (expected binary operator) in expression in script: !mmm else if broken ❌syntax in expression" },
             ],
             [
                 "!mmm if true",
@@ -236,6 +353,7 @@
                 "!mmm else",
                 "!mmm    chat: broken",
                 "!mmm end if",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm if false",
@@ -245,6 +363,7 @@
                 "!mmm else",
                 "!mmm    chat: broken",
                 "!mmm end if",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm if false",
@@ -254,6 +373,7 @@
                 "!mmm else",
                 "!mmm    chat: correct[1/1]",
                 "!mmm end if",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm if false",
@@ -263,20 +383,26 @@
                 "!mmm else",
                 "!mmm    chat: correct[1/1]",
                 "!mmm end if",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm chat: foo",
+                { chat: "foo" },
                 "!mmm chat: bar",
+                { chat: "bar" },
             ],
             [
                 "!mmm set discardedVariable = 123 + 456",
+                { whisper: "⚠️ Value of **discardedVariable** won't survive being **set** outside of a **script** block" },
                 "!mmm chat: discardedVariable=${discardedVariable}",
+                { chat: "discardedVariable=" },
             ],
             [
                 "!mmm script",
                 "!mmm     set retainedVariable = 123 + 456",
                 "!mmm     chat: retainedVariable=${retainedVariable}",
                 "!mmm end script",
+                { chat: "retainedVariable=579" },
             ],
             [
                 "!mmm script",
@@ -284,10 +410,12 @@
                 "!mmm script",
                 "!mmm     chat: correct[1/1]",
                 "!mmm end script",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm script",
                 "!mmm    end script syntax error",
+                { error: "During parse, syntax error in script:    end script ❌syntax error" },
                 "!mmm end script",
             ],
             [
@@ -295,38 +423,50 @@
                 "!mmm    chat: broken",
                 "!mmm    if true",
                 "!mmm        syntax error",
+                { error: "During parse, unknown command in script:        ❌syntax error" },
                 "!mmm    end if",
                 "!mmm end script",
                 "!mmm chat: correct[1/1]",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm script",
                 "!mmm    chat: broken",
                 "!mmm    if true",
                 "!mmm end script",
+                { error: "During parse, unexpected block end in script: end ❌script" },
                 "!mmm chat: correct[1/1]",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm parse error",
+                { error: "During parse, unknown command in script: ❌parse error" },
                 "!mmm script",
                 "!mmm    chat: correct[1/2]",
                 "!mmm end script",
+                { chat: "correct[1/2]" },
                 "!mmm chat: correct[2/2]",
+                { chat: "correct[2/2]" },
             ],
             [
                 "!mmm parse error",
+                { error: "During parse, unknown command in script: ❌parse error" },
                 "!mmm combine chat",
                 "!mmm    chat: correct[1/2]",
                 "!mmm end combine",
+                { chat: "correct[1/2]" },
                 "!mmm chat: correct[2/2]",
+                { chat: "correct[2/2]" },
             ],
             [
                 "!mmm status",
+                { whisper: /player1234.*Seen.*Context.*Script.*Error/ },
             ],
             [
                 "!mmm combine chat",
                 "!mmm     chat: broken",
                 "!mmm status",
+                { whisper: /player1234.*Seen.*Context.*Script.*combine \[chat, \.\.\.\].*Error/ },
             ],
             [
                 "!mmm script",
@@ -339,22 +479,27 @@
                 "!mmm                 chat: The cake is a lie",
                 "!mmm                 chat: The coffee also",
                 "!mmm status",
+                { whisper: /player1234.*Seen.*Context.*Script.*script \[set, if \[chat, else, combine \[if \[chat, chat, \.\.\.\], \.\.\.\], \.\.\.\], \.\.\.\].*Error/ },
             ],
             [
                 "!mmm combine chat",
                 "!mmm     chat: broken",
                 "!mmm status reset",
-                "!mmm chat: correct[1/1]"
+                { whisper: "All state reset." },
+                "!mmm chat: correct[1/1]",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm script",
                 "!mmm    chat: broken",
                 "!mmm    if true",
                 "!mmm        end unknown",
+                { error: "During parse, unexpected block end in script:        end ❌unknown" },
                 "!mmm    end if",
                 "!mmm    chat: broken",
                 "!mmm end script",
                 "!mmm chat: correct[1/1]",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm script",
@@ -365,6 +510,7 @@
                 "!mmm     end combine",
                 "!mmm     chat: broken",
                 "!mmm end script",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm script",
@@ -375,6 +521,8 @@
                 "!mmm     end combine",
                 "!mmm     chat: correct[3/3]",
                 "!mmm end script",
+                { chat: "correct[1/3] correct[2/3]" },
+                { chat: "correct[3/3]" },
             ],
             [
                 "!mmm script",
@@ -385,6 +533,7 @@
                 "!mmm     end combine",
                 "!mmm     chat: broken",
                 "!mmm end script",
+                { chat: "correct[1/1]" },
             ],
             [
                 "!mmm script",
@@ -395,6 +544,8 @@
                 "!mmm     end combine",
                 "!mmm     chat: correct[2/2]",
                 "!mmm end script",
+                { chat: "correct[1/2]" },
+                { chat: "correct[2/2]" },
             ],
             [
                 "!mmm script",
@@ -405,12 +556,15 @@
                 "!mmm     end if",
                 "!mmm     chat: correct[2/2]",
                 "!mmm end script",
+                { chat: "correct[1/2]" },
+                { chat: "correct[2/2]" },
             ],
             [
                 "!mmm script",
                 "!mmm     combine chat",
                 "!mmm         chat: broken",
                 "!mmm         exit unknown",
+                { error: "During parse, unexpected block exit in script:         exit ❌unknown" },
                 "!mmm         chat: broken",
                 "!mmm     end combine",
                 "!mmm     chat: broken",
@@ -423,6 +577,7 @@
                 "!mmm     chat: current AP: ${getattr('Dummy', 'AP')}",
                 "!mmm     do chat('and even from expressions')",
                 "!mmm end combine",
+                { chat: "Hello World! Meaning of life: 42, current AP: 19 and even from expressions" },
             ],
             [
                 "!mmm combine chat using '//'",
@@ -430,6 +585,7 @@
                 "!mmm     chat: bar",
                 "!mmm     chat: baz",
                 "!mmm end combine",
+                { chat: "foo//bar//baz" },
             ],
             [
                 "!mmm combine chat",
@@ -440,6 +596,7 @@
                 "!mmm        chat: maths broken, abandon universe at once",
                 "!mmm     end if",
                 "!mmm end combine",
+                { chat: "testing maths... maths still work" },
             ],
             [
                 "!mmm combine chat",
@@ -450,12 +607,14 @@
                 "!mmm        chat: maths still work",
                 "!mmm     end if",
                 "!mmm end combine",
+                { chat: "testing maths... maths still work" },
             ],
             [
                 "!mmm script",
                 "!mmm     set roll = [[1d6]]",
                 "!mmm     chat: rolled ${roll}",
                 "!mmm end script",
+                { chat: /^rolled <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d6" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">[1-6]<\/span>$/ },
             ],
             [
                 "!mmm script",
@@ -463,6 +622,8 @@
                 "!mmm     set roll = $[[0]]",
                 "!mmm     chat: rolled ${roll}, say again: ${$[[0]]}, that is to say: $[[0]]",
                 "!mmm end script",
+                { chat: /^attacking with <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d20" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">([1-9]|[1-2][0-9])<\/span>$/ },
+                { chat: /^rolled <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d20" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">([1-9]|[1-2][0-9])<\/span>, say again: <span class="mmm-highlight mmm-highlight-\1 showtip tipsy-n-right" title="Rolling 1d20" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">\2<\/span>, that is to say: <span class="mmm-highlight mmm-highlight-\1 showtip tipsy-n-right" title="Rolling 1d20" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">\2<\/span>$/ },
             ],
             [
                 "!mmm script",
@@ -471,6 +632,9 @@
                 "!mmm    chat: critical: ${iscritical(roll)}",
                 "!mmm    chat: fumble: ${isfumble(roll)}",
                 "!mmm end script",
+                { chat: /^attacking with <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d3" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">[1-3]<\/span>$/ },
+                { chat: /^critical: (true|false)$/ },
+                { chat: /^fumble: (true|false)$/ },
             ],
             [
                 "!mmm combine chat",
@@ -484,9 +648,11 @@
                 "!mmm    end if",
                 "!mmm    chat: attack with ${roll}",
                 "!mmm end combine",
+                { chat: /^(critical|fumbled|unremarkable) attack with <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d3" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">[1-3]<\/span>$/ },
             ],
             [
                 "!mmm chat: fumble: ${isfumble($[[0]])}, critical: ${iscritical($[[0]])}, roll: [[1d3]]",
+                { chat: /^fumble: (true|false), critical: (true|false), roll: <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d3" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">[1-3]<\/span>$/ },
             ],
             [
                 "!mmm script",
@@ -499,12 +665,20 @@
                 "!mmm         chat: Dealt ${damageRoll} points of damage",
                 "!mmm     end if",
                 "!mmm end script",
+                { chat: "Going to attack..." },
+                { process: "/roll 1d20+12" },
+                { chat: /^Rolled attack <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d20\+12" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">([1-9]|[1-2][0-9]|3[0-2])<\/span>$/ },
+                { chat: "Success! Rolling damage...", optional: true },
+                { process: "/roll 1d6", optional: true },
+                { chat: /^Dealt <span class="mmm-highlight mmm-highlight-(good|bad|normal) showtip tipsy-n-right" title="Rolling 1d6" style="padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #[0-9A-F]{6};font-weight:bold;font-size:1.1em;cursor:help">[1-6]<\/span> points of damage$/, optional: true },
             ],
             [
                 "!mmm script",
                 "!mmm     do roll('1d20')",
                 "!mmm     do syntax error",
                 "!mmm end script",
+                { process: "/roll 1d20" },
+                { error: "During execute, any identifier not expected here (expected binary operator) in expression in script: !mmm     do syntax ❌error" },
             ],
             [
                 "!mmm script",
@@ -514,6 +688,7 @@
                 "!mmm         chat: baz}} quux",
                 "!mmm     end combine",
                 "!mmm end script",
+                { chat: "{{foo= bar baz}} quux" },
             ],
             [
                 "!mmm script",
@@ -523,12 +698,14 @@
                 "!mmm         chat: second paragraph",
                 "!mmm     end combine",
                 "!mmm end script",
+                { chat: "first paragraph <br/> second paragraph" },
             ],
             [
                 "!mmm script",
                 "!mmm     set customizable foo",
                 "!mmm     chat: broken, foo=${foo}",
                 "!mmm end script",
+                { error: "During execute, require customization or default in script: !mmm     set customizable foo❌" },
             ],
             [
                 "!mmm customize",
@@ -538,12 +715,14 @@
                 "!mmm     set customizable foo",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm script",
                 "!mmm     set customizable foo = 'correct'",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm customize",
@@ -553,6 +732,7 @@
                 "!mmm     set customizable foo = 'broken'",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm customize",
@@ -563,6 +743,8 @@
                 "!mmm     set customizable foo",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { process: "/roll 1d20" },
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm customize",
@@ -572,6 +754,7 @@
                 "!mmm     set foo = 'correct'",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm customize",
@@ -581,6 +764,7 @@
                 "!mmm     set customizable foo = 'correct'",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm customize",
@@ -594,6 +778,7 @@
                 "!mmm     set customizable bar",
                 "!mmm     chat: correct, foo=${foo}, bar=${bar}",
                 "!mmm end script",
+                { chat: "correct, foo=correct, bar=correct" },
             ],
             [
                 "!mmm customize",
@@ -608,6 +793,7 @@
                 "!mmm     set customizable bar",
                 "!mmm     chat: correct, foo=${foo}, bar=${bar}",
                 "!mmm end script",
+                { chat: "correct, foo=correct, bar=correct" },
             ],
             [
                 "!mmm customize",
@@ -622,12 +808,14 @@
                 "!mmm     set customizable bar",
                 "!mmm     chat: correct, foo=${foo}, bar=${bar}",
                 "!mmm status",
+                { whisper: /player1234.*Seen.*Context.*Script.*customize, customize, script \[set, set, chat, \.\.\.\].*Error/ },
             ],
             [
                 "!mmm customize",
                 "!mmm     set foo = 'broken'",
                 "!mmm end customize",
                 "!mmm syntax error",
+                { error: "During parse, unknown command in script: ❌syntax error" },
                 "!mmm customize",
                 "!mmm     set bar = 'correct'",
                 "!mmm end customize",
@@ -636,16 +824,19 @@
                 "!mmm     set customizable bar",
                 "!mmm     chat: correct, foo=${foo}, bar=${bar}",
                 "!mmm end script",
+                { chat: "correct, foo=correct, bar=correct" },
             ],
             [
                 "!mmm customize",
                 "!mmm     set foo = 'broken'",
                 "!mmm     syntax error",
+                { error: "During parse, unknown command in script:     ❌syntax error" },
                 "!mmm end customize",
                 "!mmm script",
                 "!mmm     set customizable foo = 'correct'",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm customize",
@@ -654,11 +845,13 @@
                 "!mmm customize",
                 "!mmm     set foo = 'broken'",
                 "!mmm     syntax error",
+                { error: "During parse, unknown command in script:     ❌syntax error" },
                 "!mmm end customize",
                 "!mmm script",
                 "!mmm     set customizable foo",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm customize",
@@ -672,6 +865,8 @@
                 "!mmm     set customizable foo",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { whisper: "During customize, any identifier not expected here (expected binary operator) in expression in script:     do syntax ❌error" },
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm customize",
@@ -684,12 +879,14 @@
                 "!mmm     set customizable foo = 'correct'",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
+                { chat: "correct, foo=correct" },
             ],
             [
                 "!mmm script",
                 "!mmm     set meaning = 42",
                 "!mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{meaning*2}, thrice is ${meaning*3}",
                 "!mmm end script",
+                { chat: "meaning is 42, twice the meaning is 84, thrice is 126" },
             ],
             [
                 "!mmm customize",
@@ -702,6 +899,8 @@
                 "!mmm     chat [foo]: broken foo",
                 "!mmm     chat [bar]: broken bar",
                 "!mmm end script",
+                { chat: "correct foo translation" },
+                { chat: "correct bar translation" },
             ],
             [
                 "!mmm customize",
@@ -711,6 +910,7 @@
                 "!mmm     set meaning = 42",
                 "!mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{meaning*2}, thrice is ${meaning*3}",
                 "!mmm end script",
+                { chat: "Bedeutung is 42, doppelte Bedeutung ist 84, und sonst $[gibtsnich]" },
             ],
             [
                 "!mmm customize",
@@ -721,6 +921,7 @@
                 "!mmm     set meaning = 42",
                 "!mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{meaning*2}, thrice is ${meaning*3}",
                 "!mmm end script",
+                { chat: "Bedeutung is 42, doppelte Bedeutung ist 84, aber 123 ist unbedeutend" },
             ],
             [
                 "!mmm customize",
@@ -730,6 +931,7 @@
                 "!mmm     set meaning = 42",
                 "!mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{syntax error meaning*2}, thrice is ${meaning*3}",
                 "!mmm end script",
+                { error: "During execute, any identifier not expected here (expected binary operator) in expression in template in script: !mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{syntax ❌error meaning*2}, thrice is ${meaning*3}" },
             ],
             [
                 "!mmm customize",
@@ -744,6 +946,9 @@
                 "!mmm     chat [defaultChat]: correct default chat with $[broken_placeholder]{'correct labeled expression'} and ${'correct expression without label'} and $[correct_misplaced_label]",
                 "!mmm     chat [defaultChat]: correct redundant default chat with $[broken_placeholder]{'correct labeled expression'} and ${'correct expression without label'} and $[correct_misplaced_label]",
                 "!mmm end script",
+                { chat: "correct translated chat message with correct labeled expression" },
+                { chat: "correct default chat with correct labeled expression and correct expression without label and $[correct_misplaced_label]" },
+                { chat: "correct redundant default chat with correct labeled expression and correct expression without label and $[correct_misplaced_label]" },
             ],
             [
                 "!mmm customize export to chat",
@@ -760,6 +965,14 @@
                 "!mmm     chat [defaultChat]: correct default chat with $[correct_placeholder]{'broken labeled expression'} and ${'broken expression without label'} and $[broken_misplaced_label]",
                 "!mmm     chat [defaultChat]: broken redundant default chat with $[broken_placeholder]{'broken labeled expression'} and ${'broken expression without label'} and $[broken_misplaced_label]",
                 "!mmm end script",
+                { whisper: "<span style='white-space: pre'>!mmm customize<br/>" +
+                           "!mmm    set customizedSetting = \"correct \\\"customized\\\" setting\"<br/>" +
+                           "!mmm    set settingWithoutDefault = 🤔<br/>" +
+                           "!mmm    set settingWithSimpleDefault = \"correct \\\"default\\\" setting\"<br/>" +
+                           "!mmm    set settingWithExpressionDefault = default<br/>" +
+                           "!mmm    translate [translatedChat]: correct translated chat message with ...<br/>" +
+                           "!mmm    translate [defaultChat]: correct default chat with $[correct_placeholder] and ... and ...<br/>" +
+                           "!mmm end customize</span>" },
             ],
         ];
 
@@ -791,7 +1004,7 @@
             processes.push(
             {
                 type: "error",
-                message: "<span class='error'>" + escapeHTML(exception) + "</span>",
+                message: escapeHTML(exception),
             });
         };
 
@@ -925,6 +1138,10 @@
             return rollResults;
         }
 
+        let numTestsRun = 0;
+        let numTestsSuccessful = 0;
+        let testsFailed = [];
+
         for (let scriptSourceIndex = 0; scriptSourceIndex < scriptSources.length; ++scriptSourceIndex)
         {
             if (includedScriptSources.length > 0 && !includedScriptSources.includes(scriptSourceIndex))
@@ -940,7 +1157,9 @@
 
             MychScriptContext.players = {};
 
-            for (let scriptSourceLineIndex = 0; scriptSourceLineIndex < scriptSource.length; ++scriptSourceLineIndex)
+            let testSuccessful = true;
+
+            for (let scriptSourceLineIndex = 0, scriptSourceLineNumber = 1; scriptSourceLineIndex < scriptSource.length; ++scriptSourceLineIndex, ++scriptSourceLineNumber)
             {
                 let scriptSourceLine = scriptSource[scriptSourceLineIndex];
                 let scriptSourceRolls = [];
@@ -962,7 +1181,7 @@
                 document.write("<tr>");
                 
                 document.write("<td class='lineno'>");
-                document.write(scriptSourceLineIndex + 1);
+                document.write(scriptSourceLineNumber);
                 document.write("</td>");
 
                 document.write("<td>");
@@ -975,6 +1194,13 @@
 
                 document.write("</td>");
                 document.write("</tr>");
+
+                let expectedProcessOutputs = [];
+
+                while (scriptSource[scriptSourceLineIndex + 1] instanceof Object)
+                {
+                    expectedProcessOutputs.push(scriptSource[++scriptSourceLineIndex]);
+                }
 
                 let msg =
                 {
@@ -991,19 +1217,125 @@
                 {
                     let process = processes.shift();
 
-                    document.write("<tr>");
-                    document.write("<td class='lineno'>" + process.type + "</td>");
-                    document.write("<td class='output'>" + process.message.replace(/\b(broken)\b/g, "\u274C<span class='error'>$1</span>") + "</td>");
-                    document.write("</tr>");
+                    let expectedProcessOutput = expectedProcessOutputs.shift();
+                    let expectedProcessOutputSatisfied = false;
+                    let expectedProcessType;
+                    let expectedProcessMessage;
+
+                    if (expectedProcessOutput)
+                    {
+                        [expectedProcessType, expectedProcessMessage] = Object.entries(expectedProcessOutput)[0];
+
+                        let receivedProcessMessage = normalizeHTML(process.message);
+
+                        if (process.type == expectedProcessType)
+                        {
+                            if (expectedProcessMessage instanceof RegExp)
+                            {
+                                expectedProcessOutputSatisfied = expectedProcessMessage.exec(receivedProcessMessage);
+                            }
+                            else if (expectedProcessMessage == undefined)
+                            {
+                                expectedProcessOutputSatisfied = true;
+                            }
+                            else
+                            {
+                                expectedProcessMessage = normalizeHTML(expectedProcessMessage);
+                                expectedProcessOutputSatisfied = (expectedProcessMessage == receivedProcessMessage);
+                            }
+                        }
+
+                        if (!expectedProcessOutputSatisfied)
+                        {
+                            console.log("type expected:", expectedProcessType, "received:", process.type);
+                            console.log("message expected:", expectedProcessMessage);
+                            console.log("message received:", receivedProcessMessage);
+                        }
+                    }
+
+                    if (expectedProcessOutputSatisfied)
+                    {
+                        document.write("<tr class='ok'>");
+                        document.write("<td class='lineno'>" + process.type + "</td>");
+                        document.write("<td class='output'>" + process.message + "</td>");
+                        document.write("</tr>");
+                    }
+                    else
+                    {
+                        testSuccessful = false;
+
+                        document.write("<tr class='unexpected'>");
+                        document.write("<td class='lineno'>" + process.type + "</td>");
+                        document.write("<td class='output'>" + process.message + "</td>");
+                        document.write("</tr>");
+
+                        if (expectedProcessOutput)
+                        {
+                            if (expectedProcessMessage instanceof RegExp)
+                            {
+                                expectedProcessMessage = escapeHTML(expectedProcessMessage);
+                            }
+
+                            document.write("<tr class='expected'>");
+                            document.write("<td class='lineno'>" + expectedProcessType + "</td>");
+                            document.write("<td class='output'>" + expectedProcessMessage + "</td>");
+                            document.write("</tr>");
+                        }
+                    }
 
                     if (process.execute)
                     {
                         process.execute();
                     }
                 }
+
+                for (let expectedProcessOutput of expectedProcessOutputs)
+                {
+                    if (expectedProcessOutput.optional)
+                    {
+                        continue;
+                    }
+                    
+                    testSuccessful = false;
+
+                    let [expectedProcessType, expectedProcessMessage] = Object.entries(expectedProcessOutput)[0];
+
+                    if (expectedProcessMessage instanceof RegExp)
+                    {
+                        expectedProcessMessage = escapeHTML(expectedProcessMessage);
+                    }
+
+                    document.write("<tr class='expected'>");
+                    document.write("<td class='lineno'>" + expectedProcessType + "</td>");
+                    document.write("<td class='output'>" + expectedProcessMessage + "</td>");
+                    document.write("</tr>");
+                }
+
+                expectedProcessOutputs.length = 0;
             }
 
             document.write("</table>");
+            document.write("</div>");
+
+            numTestsRun += 1;
+            numTestsSuccessful += (testSuccessful ? 1 : 0);
+
+            if (!testSuccessful)
+            {
+                testsFailed.push(scriptSourceIndex);
+            }
+        }
+
+        if (numTestsSuccessful == numTestsRun)
+        {
+            document.write("<div class='results-success'>");
+            document.write("Success: Ran " + numTestsRun + " test scripts, all successful.");
+            document.write("</div>");
+        }
+        else
+        {
+            document.write("<div class='results-failure'>");
+            document.write("Failed: Ran " + numTestsRun + " test scripts, " + (numTestsRun - numTestsSuccessful) + " failed (script index " + testsFailed.join(", ") + ")");
             document.write("</div>");
         }
     </script>
