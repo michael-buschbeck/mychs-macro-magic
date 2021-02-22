@@ -553,6 +553,28 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 
 If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
 
+There are also three special debug operators: `?` *expr*, `??` *expr*, and `???` *expr*. They don't quite fit into the table above because they don't actually change the result of the expression they're used in. Instead, they just whisper a partial expression result back at you, and then continue evaluating the expression as if nothing happened.
+
+| Syntax       | Precedence     | Category | Description
+| ------------ | -------------- | -------- | -----------
+| `?` *expr*   | higher than 1  | Debug    | Whisper the partial result of **as little as possible** from the following expression to the user – usually the very next literal, variable name, or function call
+| `??` *expr*  | higher than 6  | Debug    | Whisper the partial result the following expression **up to the next comparison operator** to the user without changing evaluation order – can stop short of the next comparison operator if capturing more would change the order of operations
+| `???` *expr* | very low            | Debug    | Whisper the partial result of **as much as possible** from the following expression to the user – can stop short of the end of the expression if capturing more would change the order of operations
+
+A few examples will make it clearer – notice how the whispered message also highlights the partial expression whose result is shown:
+
+| Line | Commands | What happens? | Explanation
+| ---- | -------- | ------------- | -----------
+| 1    | _!mmm_ **set** hit = `?` roll("1d20") + skill >= 20   | *Whisper:*  `9` ◄ `? roll("1d20")` + skill >= 20 | *(just the roll result)*
+| 2    | _!mmm_ **set** hit = roll("1d20") + `?` skill >= 20   | *Whisper:*  `12` ◄ roll("1d20") + `? skill` >= 20 | *(just the skill variable)*
+| 3    | _!mmm_ **set** hit = `??` roll("1d20") + skill >= 20  | *Whisper:*  `21` ◄ `?? roll("1d20") + skill` >= 20 | *(everything up to the `>=` operator)*
+| 4    | _!mmm_ **set** hit = `???` roll("1d20") + skill >= 20 | *Whisper:*  `true` ◄ `??? roll("1d20") + skill >= 20` | *(everything)*
+| 5    | _!mmm_ **set** result = 2 * `?` (3 * 4 + 5)           | *Whisper:*  `17` ◄ 2 * `? (3 * 4 + 5)` | *(just the next parenthesized expression)*
+| 6    | _!mmm_ **set** result = 2 * `?` 3 * 4 + 5             | *Whisper:*  `3` ◄ 2 * `? 3` * 4 + 5 | *(just the next literal – kinda pointless here)*
+| 7    | _!mmm_ **set** result = 2 * `???` 3 * 4 + 5           | *Whisper:*  `12` ◄ 2 * `??? 3 * 4` + 5 | *(notice how `+ 5` cannot be included due to operator precedence)*
+
+This works in any place with an expression, of course, not just in **set** – you can use it in **if** and **do** and even inside of ${...} placeholders in **chat** commands. You can use multiple `?`-type operators in the same expression, too, and you'll get a separate whispered message back for each in evaluation order.
+
 
 ### Functions
 
@@ -706,12 +728,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.13.1
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.14.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.14.0  | 2021-02-22 | Introduce `debug chat`, `debug do`, and the `?` debug operators
 | 1.13.0  | 2021-02-17 | Introduce `customize` block, `set customizable`, and `translate`
 | 1.12.0  | 2021-02-10 | Add `isdenied(expr)` to check if `getattr()` access was denied
 | 1.11.0  | 2021-02-07 | Support `status_`... attribute access to token status markers
