@@ -1300,7 +1300,7 @@ class MychScriptContext
 
     $debugHighlight(value)
     {
-        let highlightStart = "<span style='font-weight: bold; background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black'>";
+        let highlightStart = "<span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>";
         let highlightStop = "</span>";
 
         return highlightStart + this.literal(value) + highlightStop;
