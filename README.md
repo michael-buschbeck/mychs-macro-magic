@@ -416,6 +416,42 @@ Like **customize export** above, just without the backup.
 Convenient if you don't do very fancy things in your **customize** blocks and don't need no stinkin' backup macros cluttering up your macro library.
 
 
+### _!mmm_ **debug chat:** *template*
+
+Like **chat** but made for debugging, so it does two things differently:
+
+- It whispers the chat message back at you instead of posting it to public chat.
+- If there is any ${expression} placeholder in the chat message template, its result is substituted into the whispered message with a special highlight and as if it were an expression literal. While that's not as pretty, it has the benefit of being completely unambiguous as to what you're getting there: a number, or a string, or an undefined value, or a list, or whatever else.
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **debug chat:** Current health: ${getattr("Finn", "HP")} | *(Whisper):*  Current health: `"23"`
+| 2    | _!mmm_ **debug chat:** Half health: ${getattr("Finn", "HP") / 2} | *(Whisper):*  Half health: `11.5`
+| 3    | _!mmm_ **debug chat:** Health not great: ${getattr("Finn", "HP") < 5} | *(Whisper):*  Health not great: `false`
+| 4    | _!mmm_ **debug chat:** Attribute tables: ${findattr("Finn")} | *(Whisper):*  Attribute tables: `"attack", "defense", "armor"`
+
+The way this command is designed, you can just slap the `debug` keyword in front of any old `chat` command in your script to get some extra insight into how it's composed (or why it doesn't work the way you thought). This even works if there's a **[**_label_**]** for translation, which will be ignored.
+
+You can't combine **debug chat** outputs with **combine chat** – they'll simply be ignored by **combine chat** (because they're whispered directly to you).
+
+
+### _!mmm_ **debug do** *expression*
+
+Like **do** but made for debugging, so it does one thing differently:
+
+- The result of evaluating the expression as well as the expression itself are both whispered back to you (and *then* the result is discarded).
+
+Using **debug do** is most useful as a way to quickly get insight into the contents of variables or function call outputs:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **debug do** CurrentHealth | *(Whisper):*  `9` ◄ `CurrentHealth`
+| 2    | _!mmm_ **debug do** getattr("Finn", "EP") | *(Whisper):*  `17` ◄ `getattr("Finn", "EP")`
+| 3    | _!mmm_ **debug do** "initial", CurrentHealth, CurrentEndurance | *(Whisper):*  `"initial", 9, 17` ◄ `"initial", CurrentHealth, CurrentEndurance`
+
+The effect of **debug do** is similar to putting a `???` debug operator (see [operators](#operators) below) in front of the expression of a regular **do** command. The difference between using one or the other is mostly one of convenience: Use `???` if you want to look into an expression that's integral part of your script's operation, and **debug do** if you plan on removing this debug output again once you're done debugging. It's just easier to keep track of what to keep and what to delete after a debugging session that way.
+
+
 ## Expressions
 
 Expressions are used everywhere: in **set** and **do** commands; as the condition in **if** and **else if** commands; for the separator in the **combine chat using** command; and even inside ${...} placeholders in the message text for the **chat** command.
@@ -552,6 +588,28 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | *a*`,` *b*`,` *c*... | 11 (lowest) | List     | Make an ordered list of *a*, *b*, *c*, and more – also used for function arguments
 
 If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
+
+There are also three special debug operators: `?` *expr*, `??` *expr*, and `???` *expr*. They don't quite fit into the table above because they don't actually change the result of the expression they're used in. Instead, they just whisper a partial expression result back at you, and then continue evaluating the expression as if nothing happened.
+
+| Syntax       | Precedence     | Category | Description
+| ------------ | -------------- | -------- | -----------
+| `?` *expr*   | higher than 1  | Debug    | Whisper the partial result of **as little as possible** from the following expression to the user – usually the very next literal, variable name, or function call
+| `??` *expr*  | higher than 6  | Debug    | Whisper the partial result the following expression **up to the next comparison operator** to the user without changing evaluation order – can stop short of the next comparison operator if capturing more would change the order of operations
+| `???` *expr* | very low            | Debug    | Whisper the partial result of **as much as possible** from the following expression to the user – can stop short of the end of the expression if capturing more would change the order of operations
+
+A few examples will make it clearer – notice how the whispered message also highlights the partial expression whose result is shown:
+
+| Line | Commands | What happens? | Explanation
+| ---- | -------- | ------------- | -----------
+| 1    | _!mmm_ **set** hit = `?` roll("1d20") + skill >= 20   | *(Whisper):*  `9` ◄ `? roll("1d20")` + skill >= 20 | *(just the roll result)*
+| 2    | _!mmm_ **set** hit = roll("1d20") + `?` skill >= 20   | *(Whisper):*  `12` ◄ roll("1d20") + `? skill` >= 20 | *(just the skill variable)*
+| 3    | _!mmm_ **set** hit = `??` roll("1d20") + skill >= 20  | *(Whisper):*  `21` ◄ `?? roll("1d20") + skill` >= 20 | *(everything up to the `>=` operator)*
+| 4    | _!mmm_ **set** hit = `???` roll("1d20") + skill >= 20 | *(Whisper):*  `true` ◄ `??? roll("1d20") + skill >= 20` | *(everything)*
+| 5    | _!mmm_ **set** result = 2 + `?` (3 * 4 + 5)           | *(Whisper):*  `17` ◄ 2 + `? (3 * 4 + 5)` | *(just the next parenthesized expression)*
+| 6    | _!mmm_ **set** result = 2 + `?` 3 * 4 + 5             | *(Whisper):*  `3` ◄ 2 + `? 3` * 4 + 5 | *(just the next literal – kinda pointless here)*
+| 7    | _!mmm_ **set** result = 2 + `???` 3 * 4 + 5           | *(Whisper):*  `12` ◄ 2 + `??? 3 * 4` + 5 | *(notice how `+ 5` cannot be included due to order of operations)*
+
+This works in any place with an expression, of course, not just in **set** – you can use it in **if** and **do** and even inside of ${...} placeholders in **chat** commands. You can use multiple `?`-type operators in the same expression, too, and you'll get a separate whispered message back for each in evaluation order.
 
 
 ### Functions
@@ -706,12 +764,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.13.1
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.14.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.14.0  | 2021-02-22 | Introduce `debug chat`, `debug do`, and the `?` debug operators
 | 1.13.0  | 2021-02-17 | Introduce `customize` block, `set customizable`, and `translate`
 | 1.12.0  | 2021-02-10 | Add `isdenied(expr)` to check if `getattr()` access was denied
 | 1.11.0  | 2021-02-07 | Support `status_`... attribute access to token status markers

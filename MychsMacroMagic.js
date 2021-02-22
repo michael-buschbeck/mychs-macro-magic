@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.13.4";
+const MMM_VERSION = "1.14.0";
 
 on("chat:message", function(msg)
 {
@@ -1298,6 +1298,33 @@ class MychScriptContext
         return this.$getAttribute(nameOrId, attributeName, max);
     }
 
+    $debugHighlight(value)
+    {
+        let highlightStart = "<span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>";
+        let highlightStop = "</span>";
+
+        return highlightStart + this.literal(value) + highlightStop;
+    }
+
+    $debugExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
+    {
+        resultSourceEnd 
+
+        let markedSourceBefore = source.substring(0, resultSourceBegin);
+        let markedSourceBetween = source.substring(resultSourceBegin, resultSourceEnd);
+        let markedSourceAfter = source.substring(resultSourceEnd);
+
+        let debugResult = this.$debugHighlight(result);
+        let debugSource = this.literal(markedSourceBefore) + this.$debugHighlight(markedSourceBetween) + this.literal(markedSourceAfter);
+        
+        this.$debugMessage(debugResult + " \u25C0\uFE0F " + debugSource);
+    }
+
+    $debugMessage(message)
+    {
+        this.whisperback("\u{1F50E} " + message);
+    }
+
     $statusReset()
     {
         MychScriptContext.players = {};
@@ -2133,6 +2160,99 @@ class MychScript
                 variables.$translations[this.definition.label] = translation;
             }
         },
+
+        debug:
+        {
+            tokens:
+            {
+                chat:      [ "chat", ":", /(?<template>.+)/ ],
+                chatlabel: [ "chat", "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/],
+                do:        [ "do", /(?<expression>.+)/ ],
+            },
+
+            parse: function(args)
+            {
+                if (args.template)
+                {
+                    try
+                    {
+                        this.definition.templateOffset = args.template.offset;
+                        this.definition.template = new MychTemplate(args.template.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowTemplateError("parse", exception, this.definition.templateOffset);
+                    }
+                }
+
+                if (args.label)
+                {
+                    this.definition.label = args.label.value;
+                }
+
+                if (args.expression)
+                {
+                    try
+                    {
+                        this.definition.expressionOffset = args.expression.offset;
+                        this.definition.expression = new MychExpression(args.expression.value);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    }
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*(variables)
+            {
+                if (this.definition.template)
+                {
+                    let message;
+
+                    try
+                    {
+                        let context = this.context;
+
+                        function debugMarkup(value)
+                        {
+                            if (value && value.toMarkup)
+                            {
+                                return value.toMarkup();
+                            }
+
+                            return context.$debugHighlight(MychExpression.literal(value));
+                        }
+                        
+                        message = yield* this.definition.template.evaluate(variables, this.context, debugMarkup);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowTemplateError("execute", exception, this.definition.templateOffset);
+                    }
+
+                    this.context.$debugMessage(message);
+                }
+
+                if (this.definition.expression)
+                {
+                    let result;
+
+                    try
+                    {
+                        result = yield* this.definition.expression.evaluate(variables, this.context);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
+                    }
+
+                    this.context.$debugExpression(MychExpression.literal(result), this.definition.expression.source);
+                }
+            },
+        },
     };
 
     static parseTokens(tokenPatterns, source, sourceOffset)
@@ -2537,17 +2657,17 @@ class MychTemplate
         return new RegExp(contextKeys.map(key => key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/, "\\b")).join("|"), "g");
     }
 
-    static replaceContextKeys(string, contextKeysRegExp, context)
+    static replaceContextKeys(string, contextKeysRegExp, context, markup)
     {
         if (!contextKeysRegExp)
         {
             return string;
         }
 
-        return string.replace(contextKeysRegExp, key => MychExpression.coerceMarkup(context[key]));
+        return string.replace(contextKeysRegExp, key => markup(context[key]));
     }
 
-    *evaluate(variables, context)
+    *evaluate(variables, context, markup = MychExpression.coerceMarkup)
     {
         let evaluatedStrings = [];
 
@@ -2559,7 +2679,7 @@ class MychTemplate
             {
                 case "string":
                 {
-                    let evaluatedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context);
+                    let evaluatedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context, markup);
                     evaluatedStrings.push(evaluatedString);
                 }
                 break;
@@ -2569,7 +2689,7 @@ class MychTemplate
                     try
                     {
                         let evaluatedExpressionResult = yield* segment.expression.evaluate(variables, context);
-                        evaluatedStrings.push(MychExpression.coerceMarkup(evaluatedExpressionResult));
+                        evaluatedStrings.push(markup(evaluatedExpressionResult));
                     }
                     catch (exception)
                     {
@@ -2601,7 +2721,7 @@ class MychTemplate
         return translatedTemplate;
     }
 
-    *createMaterialized(variables, context)
+    *createMaterialized(variables, context, markup = MychExpression.coerceMarkup)
     {
         let materializedTemplate = new MychTemplate();
 
@@ -2616,7 +2736,7 @@ class MychTemplate
             {
                 case "string":
                 {
-                    let materializedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context);
+                    let materializedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context, markup);
                     let materializedStringSegment = { type: "string", value: materializedString };
 
                     materializedTemplate.segments.push(materializedStringSegment);
@@ -2628,7 +2748,7 @@ class MychTemplate
                     try
                     {
                         let materializedExpressionResult = yield* segment.expression.evaluate(variables, context);
-                        let materializedExpressionSegment = { type: "string", value: MychExpression.coerceMarkup(materializedExpressionResult) };
+                        let materializedExpressionSegment = { type: "string", value: markup(materializedExpressionResult) };
 
                         materializedTemplate.segments.push(materializedExpressionSegment);
                     }
@@ -2796,6 +2916,16 @@ class MychExpression
                 let stringLiteral = "\"" + value.replace(/(["\\])/g, "\\$1") + "\"";
                 return stringLiteral;
             }
+
+            case "undefined":
+            {
+                return "undef";
+            }
+        }
+
+        if (value instanceof Array)
+        {
+            return value.map(MychExpression.literal).join(", ");
         }
 
         return String(value);
@@ -2864,6 +2994,9 @@ class MychExpression
         },
     };
 
+    static minOperatorPrecedence = Math.min(...Object.values(MychExpression.operators).map(variants => Object.values(variants).map(variant => variant.precedence)).flat());
+    static maxOperatorPrecedence = Math.max(...Object.values(MychExpression.operators).map(variants => Object.values(variants).map(variant => variant.precedence)).flat());
+
     static createTokenRegExp()
     {
         function compareLengthDecreasing(string1, string2)
@@ -2883,6 +3016,7 @@ class MychExpression
         let tokenPatterns =
         {
             operator:             operatorRegExpSource,
+            debug:                /\?{1,3}/,
             literalNumber:        /(\.\d+|\d+(\.\d*)?)([eE][-+]?\d+)?/,
             literalBoolean:       /\b(true|false)\b/,
             literalStringDouble:  /"([^"\\]|\\.)*"?/,
@@ -2960,7 +3094,10 @@ class MychExpression
                 break;
             }
 
-            tokens.push({ type: tokenType, offset: tokenMatch.index, value: tokenValue });
+            let offset = tokenMatch.index;
+            let offsetEnd = tokenMatch.index + tokenMatch[0].length;
+
+            tokens.push({ type: tokenType, offset: offset, offsetEnd: offsetEnd, value: tokenValue });
         }
 
         this.source = source;
@@ -3013,15 +3150,19 @@ class MychExpression
         }
 
         let expectClosing = [{}];
-        let expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+        let expectTokens = { operator: "unary", debug: "any", literal: "any", identifier: "any", parenthesis: "opening" };
 
         function getExpectDescription()
         {
             return Object.entries(expectTokens).filter(([type, qualifier]) => qualifier).map(([type, qualifier]) => qualifier + " " + type).join(", ");
         }
 
-        for (let token of this.tokens)
+        let maxEvaluatedTokenIndex;
+
+        for (let tokenIndex = 0; tokenIndex < this.tokens.length; ++tokenIndex)
         {
+            let token = this.tokens[tokenIndex];
+
             let tokenQualifier = "any";
             let expectTokenQualifiers = [expectTokens[token.type]].flat();
 
@@ -3058,18 +3199,52 @@ class MychExpression
                     if (tokenQualifier == "unary")
                     {
                         operationStack.push({ type: "operator", name: token.value, operands: 1, precedence: operator.precedence, execute: operator.execute });
-                        expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+                        expectTokens = { operator: "unary", debug: "any", literal: "any", identifier: "any", parenthesis: "opening" };
                     }
                     else
                     {
+                        maxEvaluatedTokenIndex = tokenIndex - 1;
+
                         yield* reduce(operator.associativity == "right" ? operator.precedence - 1 : operator.precedence);
 
                         operationStack.push({ type: "operator", name: token.value, operands: 2, precedence: operator.precedence, execute: operator.execute });
-                        expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+                        expectTokens = { operator: "unary", debug: "any", literal: "any", identifier: "any", parenthesis: "opening" };
                     }
                 }
                 break;
-                
+
+                case "debug":
+                {
+                    let debugExpression = this;
+                    let debugTokenIndex = tokenIndex;
+
+                    function debug(value)
+                    {
+                        let sourceBegin = debugExpression.tokens[debugTokenIndex].offset;
+                        let sourceEnd = debugExpression.tokens[maxEvaluatedTokenIndex].offsetEnd;
+
+                        context.$debugExpression(MychExpression.literal(value), debugExpression.source, sourceBegin, sourceEnd);
+                    
+                        return value;
+                    }
+
+                    let debugPrecedence;
+
+                    switch (token.value.length)
+                    {
+                        case 1: debugPrecedence = MychExpression.minOperatorPrecedence - 1; break;
+                        case 2: debugPrecedence = MychExpression.operators["<"].binary.precedence - 1; break;
+                        case 3: debugPrecedence = MychExpression.maxOperatorPrecedence + 1; break;
+                    }
+
+                    let prevOperation = operationStack[operationStack.length - 1];
+                    let maxDebugPrecedence = (prevOperation ? prevOperation.precedence : MychExpression.maxOperatorPrecedence + 1);
+
+                    operationStack.push({ type: "debug", name: token.value, operands: 1, precedence: Math.min(debugPrecedence, maxDebugPrecedence), execute: debug });
+                    expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: "opening" };
+                }
+                break;
+
                 case "literal":
                 {
                     valueStack.push(token.value);
@@ -3107,10 +3282,12 @@ class MychExpression
                     {
                         operationStack.push({ type: "parenthesis", valueStackOffset: valueStack.length });
                         expectClosing.unshift({ parenthesis: "closing" });
-                        expectTokens = { operator: "unary", literal: "any", identifier: "any", parenthesis: ["opening", "closing"] };
+                        expectTokens = { operator: "unary", debug: "any", literal: "any", identifier: "any", parenthesis: ["opening", "closing"] };
                     }
                     else
                     {
+                        maxEvaluatedTokenIndex = tokenIndex - 1;
+
                         yield* reduce();
 
                         let openingParenthesisOperation = operationStack.pop();
@@ -3132,6 +3309,8 @@ class MychExpression
             let expectDescription = getExpectDescription();
             throw new MychExpressionError("evaluate", "expected " + expectDescription, this.source, this.source.length);
         }
+
+        maxEvaluatedTokenIndex = this.tokens.length - 1;
 
         yield* reduce();
 
