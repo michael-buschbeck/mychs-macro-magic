@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.13.3";
+const MMM_VERSION = "1.13.4";
 
 on("chat:message", function(msg)
 {
@@ -647,7 +647,7 @@ class MychScriptContext
                 tableNames[tableName.toLowerCase()] = tableName;
             }
 
-            return Object.values(tableNames).join(", ");
+            return Object.values(tableNames);
         }
 
         let tableRegExpSource = MychExpression.coerceString(table).replace(/(\W)/g, "\\$1");
@@ -676,7 +676,7 @@ class MychScriptContext
                 colNames[colName.toLowerCase()] = colName;
             }
 
-            return Object.values(colNames).join(", ");
+            return Object.values(colNames);
         }
 
         let conditions = {};
