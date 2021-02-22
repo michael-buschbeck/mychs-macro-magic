@@ -110,9 +110,9 @@
 </head>
 <body>
     <script>
-        var includedScriptSources = [];
+        let includedScriptSources = [];
 
-        var scriptSources =
+        let scriptSources =
         [
             [
                 "!mmm do chat(version)",
@@ -763,9 +763,9 @@
             ],
         ];
 
-        var processes = [];
+        let processes = [];
 
-        var attributes =
+        let attributes =
         {
             AP: { current: 20, max: 30 },
         };
@@ -839,15 +839,15 @@
 
         function sendChat(sender, message, callback, options)
         {
-            var results = [];
+            let results = [];
 
-            var rollRegExp = /^\/roll\s+(?<expression>.+)/i;
-            var rollMatch = rollRegExp.exec(message);
+            let rollRegExp = /^\/roll\s+(?<expression>.+)/i;
+            let rollMatch = rollRegExp.exec(message);
 
             if (rollMatch)
             {
-                var rollExpression = rollMatch.groups.expression;
-                var rollResults = executeRoll(rollExpression);
+                let rollExpression = rollMatch.groups.expression;
+                let rollResults = executeRoll(rollExpression);
 
                 results.push({ who: sender, type: "rollresult", content: JSON.stringify(rollResults), origRoll: rollExpression });
             }
@@ -858,7 +858,7 @@
 
             if (callback)
             {
-                var sendChatProcess = function()
+                let sendChatProcess = function()
                 {
                     callback(results);
                 }
@@ -882,19 +882,19 @@
 
         function executeRoll(rollExpression)
         {
-            var rollExpressionRegExp = /^(?<numDice>\d+)?d(?<numSides>\d+)(?<modifier>[-+]\d+)?$/i;
-            var rollExpressionMatch = rollExpressionRegExp.exec(rollExpression);
+            let rollExpressionRegExp = /^(?<numDice>\d+)?d(?<numSides>\d+)(?<modifier>[-+]\d+)?$/i;
+            let rollExpressionMatch = rollExpressionRegExp.exec(rollExpression);
 
             if (!rollExpressionMatch)
             {
                 return undefined;
             }
 
-            var numDice = parseInt(rollExpressionMatch.groups.numDice || 1);
-            var numSides = parseInt(rollExpressionMatch.groups.numSides);
-            var modifier = parseInt(rollExpressionMatch.groups.modifier || 0)
+            let numDice = parseInt(rollExpressionMatch.groups.numDice || 1);
+            let numSides = parseInt(rollExpressionMatch.groups.numSides);
+            let modifier = parseInt(rollExpressionMatch.groups.modifier || 0)
 
-            var rollResults = 
+            let rollResults = 
             {
                 rolls:
                 [
@@ -910,7 +910,7 @@
 
             for (; numDice > 0; --numDice)
             {
-                var rollValue = Math.floor(Math.random() * numSides) + 1;
+                let rollValue = Math.floor(Math.random() * numSides) + 1;
                 
                 rollResults.rolls[0].results.push({ v: rollValue });
                 rollResults.total += rollValue;
@@ -925,14 +925,14 @@
             return rollResults;
         }
 
-        for (var scriptSourceIndex = 0; scriptSourceIndex < scriptSources.length; ++scriptSourceIndex)
+        for (let scriptSourceIndex = 0; scriptSourceIndex < scriptSources.length; ++scriptSourceIndex)
         {
             if (includedScriptSources.length > 0 && !includedScriptSources.includes(scriptSourceIndex))
             {
                 continue;
             }
 
-            var scriptSource = scriptSources[scriptSourceIndex];
+            let scriptSource = scriptSources[scriptSourceIndex];
 
             document.write("<div class='script'>");
             document.write("<table>");
@@ -940,12 +940,12 @@
 
             MychScriptContext.players = {};
 
-            for (var scriptSourceLineIndex = 0; scriptSourceLineIndex < scriptSource.length; ++scriptSourceLineIndex)
+            for (let scriptSourceLineIndex = 0; scriptSourceLineIndex < scriptSource.length; ++scriptSourceLineIndex)
             {
-                var scriptSourceLine = scriptSource[scriptSourceLineIndex];
-                var scriptSourceRolls = [];
+                let scriptSourceLine = scriptSource[scriptSourceLineIndex];
+                let scriptSourceRolls = [];
 
-                var originalScriptSourceLine = scriptSourceLine;
+                let originalScriptSourceLine = scriptSourceLine;
 
                 scriptSourceLine = scriptSourceLine.replace(/\[\[([^\]]*[^\d\]][^\]]*)\]\]/gi,
                     function(substring, rollExpression)
@@ -976,7 +976,7 @@
                 document.write("</td>");
                 document.write("</tr>");
 
-                var msg =
+                let msg =
                 {
                     type: "api",
                     playerid: "player1234",
@@ -989,7 +989,7 @@
 
                 while (processes.length > 0)
                 {
-                    var process = processes.shift();
+                    let process = processes.shift();
 
                     document.write("<tr>");
                     document.write("<td class='lineno'>" + process.type + "</td>");
