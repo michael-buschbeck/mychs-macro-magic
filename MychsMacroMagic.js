@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.14.2";
+const MMM_VERSION = "1.14.3";
 
 on("chat:message", function(msg)
 {
@@ -382,12 +382,17 @@ class MychScriptContext
         if (rollExpressionIfNameOrId == undefined)
         {
             nameOrId = this.sender;
-            rollExpression = nameOrIdOrRollExpression;
+            rollExpression = MychExpression.coerceString(nameOrIdOrRollExpression);
         }
         else
         {
-            nameOrId = nameOrIdOrRollExpression;
-            rollExpression = rollExpressionIfNameOrId;
+            nameOrId = MychExpression.coerceString(nameOrIdOrRollExpression);
+            rollExpression = MychExpression.coerceString(rollExpressionIfNameOrId);
+        }
+
+        if (rollExpression.match(/^\s*$/))
+        {
+            return undefined;
         }
 
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);

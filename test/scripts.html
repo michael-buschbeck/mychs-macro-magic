@@ -674,6 +674,13 @@
             ],
             [
                 "!mmm script",
+                "!mmm     set undefResult = roll(undef)",
+                "!mmm     chat: roll(undef) = <${undefResult}>",
+                "!mmm end script",
+                { chat: "roll(undef) = <>" },
+            ],
+            [
+                "!mmm script",
                 "!mmm     do roll('1d20')",
                 "!mmm     do syntax error",
                 "!mmm end script",
