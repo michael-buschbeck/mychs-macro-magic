@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.14.1";
+const MMM_VERSION = "1.14.2";
 
 on("chat:message", function(msg)
 {
@@ -2053,7 +2053,12 @@ class MychScript
                     {
                         if (nestedScript.getCustomization)
                         {
-                            yield nestedScript.getCustomization(variables);
+                            let nestedCustomization = nestedScript.getCustomization(variables);
+                            
+                            if (nestedCustomization)
+                            {
+                                yield nestedCustomization;
+                            }
                         }
 
                         yield* gatherCustomizations(nestedScript);

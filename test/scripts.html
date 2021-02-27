@@ -974,6 +974,22 @@
                            "!mmm    translate [defaultChat]: correct default chat with $[correct_placeholder] and ... and ...<br/>" +
                            "!mmm end customize</span>" },
             ],
+            [
+                "!mmm customize export to chat",
+                "!mmm script",
+                "!mmm     chat: no label",
+                "!mmm end script",
+                { whisper: "<span style='white-space: pre'>!mmm customize<br/>" +
+                           "!mmm end customize</span>" },
+            ],
+            [
+                "!mmm customize export to chat",
+                "!mmm script",
+                "!mmm     set not_customizable = 123",
+                "!mmm end script",
+                { whisper: "<span style='white-space: pre'>!mmm customize<br/>" +
+                           "!mmm end customize</span>" },
+            ],
         ];
 
         let processes = [];
