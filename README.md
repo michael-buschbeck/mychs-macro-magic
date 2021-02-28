@@ -582,9 +582,9 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | *a* `!=` *b*         | 7           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
 | *a* `eq` *b*         | 7           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
 | *a* `ne` *b*         | 7           | Logic    | Return `true` if *a* is alphanumerically unequal to *b*, else `false`
-| *a* `and` *b*        | 8           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
-| *a* `or` *b*         | 9           | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
-| `not` *a*            | 10          | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
+| `not` *a*            | 8           | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
+| *a* `and` *b*        | 9           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
+| *a* `or` *b*         | 10          | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
 | *a*`,` *b*`,` *c*... | 11 (lowest) | List     | Make an ordered list of *a*, *b*, *c*, and more – also used for function arguments
 
 If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
@@ -764,7 +764,7 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.14.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.14.4
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
