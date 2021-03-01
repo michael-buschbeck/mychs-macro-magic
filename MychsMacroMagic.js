@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.14.4";
+const MMM_VERSION = "1.15.0";
 
 on("chat:message", function(msg)
 {
@@ -202,12 +202,20 @@ class MychScriptContext
 
         toMarkup()
         {
-            return "<span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>";
+            let label = "default";
+            let style = "background: gray; border: 2px solid gray; color: white; font-weight: bold";
+
+            return "<span style=\"" + style + "\">" + label + "</span>";
         }
     }
 
     static Denied = class
     {
+        constructor(reason = undefined)
+        {
+            this.reason = reason;
+        }
+
         toScalar()
         {
             return undefined;
@@ -215,7 +223,16 @@ class MychScriptContext
 
         toMarkup()
         {
-            return "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>";
+            let label = "denied";
+            let style = "background: red; border: 2px solid red; color: white; font-weight: bold";
+            
+            if (this.reason == undefined)
+            {
+                return "<span class=\"mmm-denied\" style=\"" + style + "\">" + label + "</span>";
+            }
+        
+            let tooltip = this.reason.replace(/"/g, "&quot;");
+            return "<span class=\"mmm-denied showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "\">" + label + "</span>";
         }
     }
 
@@ -627,7 +644,7 @@ class MychScriptContext
 
         if (!character || !this.$canControl(character))
         {
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Denied("Character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
         }
 
         if (arguments.length == 1)
@@ -1023,7 +1040,7 @@ class MychScriptContext
                 return "none";
             }
 
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Denied("Character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
         }
 
         let lookupObj = undefined;
@@ -1147,7 +1164,7 @@ class MychScriptContext
 
         if (!this.$canViewAttribute(lookupObj, attributeName))
         {
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
         }
 
         if (!lookupKey)
@@ -1164,7 +1181,7 @@ class MychScriptContext
 
         if (!character && !token)
         {
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Denied("Character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
         }
 
         let updateObj = undefined;
@@ -1175,7 +1192,7 @@ class MychScriptContext
         {
             case "permission":
             {
-                return new MychScriptContext.Denied();
+                return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character or token <strong>" + this.literal(nameOrId) + "</strong> cannot be modified");
             }
 
             case "name":
@@ -1295,7 +1312,7 @@ class MychScriptContext
 
         if (!updateKey || !this.$canControlAttribute(updateObj, attributeName))
         {
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character or token <strong>" + this.literal(nameOrId) + "</strong> cannot be modified");
         }
 
         updateObj.set(updateKey, updateVal);
