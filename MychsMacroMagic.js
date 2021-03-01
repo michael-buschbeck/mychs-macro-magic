@@ -638,6 +638,18 @@ class MychScriptContext
 
     findattr(nameOrId, table, selection)
     {
+        if (this.isdenied(nameOrId))
+        {
+            return nameOrId;
+        }
+
+        nameOrId = MychExpression.coerceString(nameOrId);
+
+        if (nameOrId == "")
+        {
+            return undefined;
+        }
+
         const firstSelectionArgIndex = 2;
 
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
@@ -1031,6 +1043,23 @@ class MychScriptContext
 
     $getAttribute(nameOrId, attributeName, max = false)
     {
+        if (this.isdenied(nameOrId))
+        {
+            return nameOrId;
+        }
+
+        if (this.isdenied(attributeName))
+        {
+            return attributeName;
+        }
+
+        nameOrId = MychExpression.coerceString(nameOrId);
+
+        if (nameOrId == "")
+        {
+            return undefined;
+        }
+
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character && !token)
@@ -1177,6 +1206,23 @@ class MychScriptContext
 
     $setAttribute(nameOrId, attributeName, attributeValue, max = false)
     {
+        if (this.isdenied(nameOrId))
+        {
+            return nameOrId;
+        }
+
+        if (this.isdenied(attributeName))
+        {
+            return attributeName;
+        }
+
+        nameOrId = MychExpression.coerceString(nameOrId);
+
+        if (nameOrId == "")
+        {
+            return undefined;
+        }
+
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character && !token)
