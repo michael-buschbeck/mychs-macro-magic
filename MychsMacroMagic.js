@@ -1338,14 +1338,21 @@ class MychScriptContext
                     break;
                 }
 
-                if (character && this.$canControlAttribute(character, attributeName))
+                if (character)
                 {
-                    updateObj =
-                        findObjs({ type: "attribute", characterid: character.id, name: attributeName }, { caseInsensitive: true })[0] ||
-                        createObj("attribute", { characterid: character.id, name: attributeName });
+                    if (!this.$canControlAttribute(character, attributeName))
+                    {
+                        updateObj = character;
+                    }
+                    else
+                    {
+                        updateObj =
+                            findObjs({ type: "attribute", characterid: character.id, name: attributeName }, { caseInsensitive: true })[0] ||
+                            createObj("attribute", { characterid: character.id, name: attributeName });
 
-                    updateKey = (max ? "max" : "current");
-                    updateVal = MychExpression.coerceScalar(attributeValue);
+                        updateKey = (max ? "max" : "current");
+                        updateVal = MychExpression.coerceScalar(attributeValue);
+                    }
                 }
             }
             break;
