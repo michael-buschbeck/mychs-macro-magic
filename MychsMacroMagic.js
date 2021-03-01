@@ -2243,7 +2243,7 @@ class MychScript
 
                         function debugMarkup(value)
                         {
-                            if (value && value.toMarkup)
+                            if (value && value.toMarkup instanceof Function)
                             {
                                 return value.toMarkup();
                             }
@@ -2936,6 +2936,13 @@ class MychExpression
 
     static literal(value)
     {
+        if (value instanceof Array)
+        {
+            return value.map(MychExpression.literal).join(", ");
+        }
+
+        value = MychExpression.coerceScalar(value);
+
         switch (typeof(value))
         {
             case "string":
@@ -2948,11 +2955,6 @@ class MychExpression
             {
                 return "undef";
             }
-        }
-
-        if (value instanceof Array)
-        {
-            return value.map(MychExpression.literal).join(", ");
         }
 
         return String(value);
