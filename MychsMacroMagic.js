@@ -1330,8 +1330,6 @@ class MychScriptContext
 
     $debugExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
     {
-        resultSourceEnd 
-
         let markedSourceBefore = source.substring(0, resultSourceBegin);
         let markedSourceBetween = source.substring(resultSourceBegin, resultSourceEnd);
         let markedSourceAfter = source.substring(resultSourceEnd);
