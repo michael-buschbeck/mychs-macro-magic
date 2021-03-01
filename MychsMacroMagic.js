@@ -2858,17 +2858,19 @@ class MychExpression
 
     static coerceString(value)
     {
-        if (value == undefined || value == null)
-        {
-            return "";
-        }
-
         if (value instanceof Array)
         {
             return value.map(MychExpression.coerceString).join(", ");
         }
 
-        return String(MychExpression.coerceScalar(value));
+        value = MychExpression.coerceScalar(value);
+
+        if (value == undefined || value == null)
+        {
+            return "";
+        }
+
+        return String(value);
     }
 
     static coerceNumber(value)
