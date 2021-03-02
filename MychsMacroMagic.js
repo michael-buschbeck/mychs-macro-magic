@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.14.4";
+const MMM_VERSION = "1.15.0";
 
 on("chat:message", function(msg)
 {
@@ -192,6 +192,7 @@ class MychScriptContext
 
     default = new MychScriptContext.Default();
     denied = new MychScriptContext.Denied();
+    unknown = new MychScriptContext.Unknown();
 
     static Default = class
     {
@@ -202,20 +203,10 @@ class MychScriptContext
 
         toMarkup()
         {
-            return "<span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>";
-        }
-    }
+            let label = "default";
+            let style = "background: gray; border: 2px solid gray; color: white; font-weight: bold";
 
-    static Denied = class
-    {
-        toScalar()
-        {
-            return undefined;
-        }
-
-        toMarkup()
-        {
-            return "<span style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>";
+            return "<span style=\"" + style + "\">" + label + "</span>";
         }
     }
 
@@ -224,9 +215,66 @@ class MychScriptContext
         return (value instanceof MychScriptContext.Default);
     }
 
+    static DiagnosticUndef = class
+    {
+        constructor(reason = undefined)
+        {
+            this.reason = reason;
+        }
+
+        toScalar()
+        {
+            return undefined;
+        }
+
+        toMarkup()
+        {
+            let style = "background: " + this.backColor + "; border: 2px solid " + this.backColor + "; color: " + this.textColor + "; font-weight: bold";
+            
+            if (this.reason == undefined)
+            {
+                return "<span class=\"mmm-" + this.label + "\" style=\"" + style + "\">" + this.label + "</span>";
+            }
+        
+            let tooltip = this.reason.replace(/"/g, "&quot;");
+            return "<span class=\"mmm-" + this.label + " showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "; cursor: help\">" + this.label + "</span>";
+        }
+    }
+
+    static Unknown = class extends MychScriptContext.DiagnosticUndef
+    {
+        label = "unknown";
+
+        backColor = "darkorange";
+        textColor = "white";
+    }
+
+    static Denied = class extends MychScriptContext.DiagnosticUndef
+    {
+        label = "denied";
+
+        backColor = "red";
+        textColor = "white";
+    }
+
+    isunknown(value)
+    {
+        return (value instanceof MychScriptContext.Unknown);
+    }
+
     isdenied(value)
     {
         return (value instanceof MychScriptContext.Denied);
+    }
+
+    getreason(value)
+    {
+        if (value instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return value.reason;
+        }
+        
+        return new MychScriptContext.Unknown("Only <strong>denied</strong> and <strong>unknown</strong> values can have a reason");
     }
 
     floor(value)
@@ -392,7 +440,7 @@ class MychScriptContext
 
         if (rollExpression.match(/^\s*$/))
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Roll expression empty");
         }
 
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
@@ -438,7 +486,7 @@ class MychScriptContext
         }
         catch (exception)
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Roll result required");
         }
     }
 
@@ -450,7 +498,7 @@ class MychScriptContext
         }
         catch
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Roll result required");
         }
     }
 
@@ -574,7 +622,12 @@ class MychScriptContext
         let playerPageId = Campaign().get("playerpageid");
         let playerPage = getObj("page", playerPageId)
 
-        return (playerPage ? playerPage.get("scale_units") : undefined);
+        if (!playerPage)
+        {
+            return MychScriptContext.Unknown("Player page currently unset")
+        }
+
+        return playerPage.get("scale_units");
     }
 
     distscale()
@@ -584,7 +637,7 @@ class MychScriptContext
 
         if (!playerPage)
         {
-            return undefined;
+            return MychScriptContext.Unknown("Player page currently unset")
         }
 
         let gridUnitsPerGridCell = playerPage.get("snapping_increment");
@@ -603,7 +656,7 @@ class MychScriptContext
 
         if (!playerPage)
         {
-            return undefined;
+            return MychScriptContext.Unknown("Player page currently unset")
         }
 
         let gridUnitsPerGridCell = playerPage.get("snapping_increment");
@@ -616,18 +669,36 @@ class MychScriptContext
     getcharid(nameOrId)
     {
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
-        return (character ? character.id : undefined);
+
+        if (!character)
+        {
+            return new MychScriptContext.Unknown("Character or token <strong>" + this.literal(nameOrId) + "</strong> not found")
+        }
+
+        return character.id;
     }
 
     findattr(nameOrId, table, selection)
     {
+        if (nameOrId instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return nameOrId;
+        }
+
+        nameOrId = MychExpression.coerceString(nameOrId);
+
+        if (nameOrId == "")
+        {
+            return new MychScriptContext.Unknown("Character or token name or identifier not specified");
+        }
+
         const firstSelectionArgIndex = 2;
 
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character || !this.$canControl(character))
         {
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Denied("Character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
         }
 
         if (arguments.length == 1)
@@ -692,7 +763,7 @@ class MychScriptContext
             let colName = MychExpression.coerceString(arguments[argIndex]);
             let colValue = MychExpression.coerceString(arguments[argIndex + 1]);
 
-            conditions[colName.toLowerCase()] = colValue.toLowerCase();
+            conditions[colName.toLowerCase()] = { normalizedValue: colValue.toLowerCase(), originalValue: colValue, originalName: colName };
             conditionCount += 1;
         }
 
@@ -720,7 +791,9 @@ class MychScriptContext
 
             rowInfos[rowId] = rowInfos[rowId] || { conditionCount: 0, lookupAttributeName: undefined };
 
-            if (conditions[colName.toLowerCase()] == colValue.toLowerCase())
+            let condition = conditions[colName.toLowerCase()];
+
+            if (condition && condition.normalizedValue == colValue.toLowerCase())
             {
                 rowInfos[rowId].conditionCount += 1;
             }
@@ -739,7 +812,12 @@ class MychScriptContext
             }
         }
 
-        return undefined;
+        let nameOrIdDescription = "character <strong>" + this.literal(nameOrId) + "</strong>";
+        let tableDescription = "character sheet table <strong>" + this.literal(table) + "</strong>";
+        let lookupColDescription = "column <strong>" + this.literal(lookupColName) + "</strong>";
+        let conditionsDescription = Object.values(conditions).map(condition => "<strong>" + this.literal(condition.originalName) + "</strong> is <strong>" + this.literal(condition.originalValue) + "</strong>").join(" and ");
+
+        return new MychScriptContext.Unknown("No row with " + lookupColDescription + " found in " + tableDescription + " of " + nameOrIdDescription + " where " + conditionsDescription);
     }
 
     getattr(nameOrId, attributeName)
@@ -766,7 +844,7 @@ class MychScriptContext
     {
         if (!this.playerid || !obj || !obj.get)
         {
-            return undefined;
+            return false;
         }
 
         if (playerIsGM(this.playerid))
@@ -1014,6 +1092,30 @@ class MychScriptContext
 
     $getAttribute(nameOrId, attributeName, max = false)
     {
+        if (nameOrId instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return nameOrId;
+        }
+
+        if (attributeName instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return attributeName;
+        }
+
+        nameOrId = MychExpression.coerceString(nameOrId);
+
+        if (nameOrId == "")
+        {
+            return new MychScriptContext.Unknown("Charakter or token name or identifier not specified");
+        }
+
+        attributeName = MychExpression.coerceString(attributeName);
+
+        if (attributeName == "")
+        {
+            return new MychScriptContext.Unknown("Attribute name not specified");
+        }
+
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character && !token)
@@ -1023,7 +1125,7 @@ class MychScriptContext
                 return "none";
             }
 
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Denied("Character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
         }
 
         let lookupObj = undefined;
@@ -1142,17 +1244,18 @@ class MychScriptContext
         
         if (!lookupObj)
         {
-            return undefined;
-        }
-
-        if (!this.$canViewAttribute(lookupObj, attributeName))
-        {
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Unknown("Attribute <strong>" + this.literal(attributeName) + "</strong> does not exist");
         }
 
         if (!lookupKey)
         {
-            return undefined;
+            let currentOrMaxDescription = (max ? "Maximum" : "Current");
+            return new MychScriptContext.Unknown(currentOrMaxDescription + " value of attribute <strong>" + this.literal(attributeName) + "</strong> does not exist");
+        }
+
+        if (!this.$canViewAttribute(lookupObj, attributeName))
+        {
+            return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
         }
 
         return lookupMod(lookupObj.get(lookupKey));
@@ -1160,11 +1263,35 @@ class MychScriptContext
 
     $setAttribute(nameOrId, attributeName, attributeValue, max = false)
     {
+        if (nameOrId instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return nameOrId;
+        }
+
+        if (attributeName instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return attributeName;
+        }
+
+        nameOrId = MychExpression.coerceString(nameOrId);
+
+        if (nameOrId == "")
+        {
+            return new MychScriptContext.Unknown("Charakter or token name or identifier not specified");
+        }
+
+        attributeName = MychExpression.coerceString(attributeName);
+
+        if (attributeName == "")
+        {
+            return new MychScriptContext.Unknown("Attribute name not specified");
+        }
+
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character && !token)
         {
-            return new MychScriptContext.Denied();
+            return new MychScriptContext.Denied("Character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
         }
 
         let updateObj = undefined;
@@ -1175,7 +1302,7 @@ class MychScriptContext
         {
             case "permission":
             {
-                return new MychScriptContext.Denied();
+                return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character or token <strong>" + this.literal(nameOrId) + "</strong> cannot be modified");
             }
 
             case "name":
@@ -1275,14 +1402,21 @@ class MychScriptContext
                     break;
                 }
 
-                if (character && this.$canControlAttribute(character, attributeName))
+                if (character)
                 {
-                    updateObj =
-                        findObjs({ type: "attribute", characterid: character.id, name: attributeName }, { caseInsensitive: true })[0] ||
-                        createObj("attribute", { characterid: character.id, name: attributeName });
+                    if (!this.$canControlAttribute(character, attributeName))
+                    {
+                        updateObj = character;
+                    }
+                    else
+                    {
+                        updateObj =
+                            findObjs({ type: "attribute", characterid: character.id, name: attributeName }, { caseInsensitive: true })[0] ||
+                            createObj("attribute", { characterid: character.id, name: attributeName });
 
-                    updateKey = (max ? "max" : "current");
-                    updateVal = MychExpression.coerceScalar(attributeValue);
+                        updateKey = (max ? "max" : "current");
+                        updateVal = MychExpression.coerceScalar(attributeValue);
+                    }
                 }
             }
             break;
@@ -1290,12 +1424,18 @@ class MychScriptContext
         
         if (!updateObj)
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Attribute <strong>" + this.literal(attributeName) + "</strong> does not exist and cannot be created");
         }
 
-        if (!updateKey || !this.$canControlAttribute(updateObj, attributeName))
+        if (!updateKey)
         {
-            return new MychScriptContext.Denied();
+            let currentOrMaxDescription = (max ? "Maximum" : "Current");
+            return new MychScriptContext.Unknown(currentOrMaxDescription + " value of attribute <strong>" + this.literal(attributeName) + "</strong> does not exist and cannot be created");
+        }
+        
+        if (!this.$canControlAttribute(updateObj, attributeName))
+        {
+            return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character or token <strong>" + this.literal(nameOrId) + "</strong> cannot be modified");
         }
 
         updateObj.set(updateKey, updateVal);
@@ -1311,15 +1451,23 @@ class MychScriptContext
         return highlightStart + this.literal(value) + highlightStop;
     }
 
+    $debugCoerceMarkup(value)
+    {
+        if (value && value.toMarkup instanceof Function)
+        {
+            return value.toMarkup();
+        }
+
+        return this.$debugHighlight(MychExpression.literal(value));
+    }
+
     $debugExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
     {
-        resultSourceEnd 
-
         let markedSourceBefore = source.substring(0, resultSourceBegin);
         let markedSourceBetween = source.substring(resultSourceBegin, resultSourceEnd);
         let markedSourceAfter = source.substring(resultSourceEnd);
 
-        let debugResult = this.$debugHighlight(result);
+        let debugResult = this.$debugCoerceMarkup(result);
         let debugSource = this.literal(markedSourceBefore) + this.$debugHighlight(markedSourceBetween) + this.literal(markedSourceAfter);
         
         this.$debugMessage(debugResult + " \u25C0\uFE0F " + debugSource);
@@ -2224,19 +2372,7 @@ class MychScript
 
                     try
                     {
-                        let context = this.context;
-
-                        function debugMarkup(value)
-                        {
-                            if (value && value.toMarkup)
-                            {
-                                return value.toMarkup();
-                            }
-
-                            return context.$debugHighlight(MychExpression.literal(value));
-                        }
-                        
-                        message = yield* this.definition.template.evaluate(variables, this.context, debugMarkup);
+                        message = yield* this.definition.template.evaluate(variables, this.context, value => this.context.$debugCoerceMarkup(value));
                     }
                     catch (exception)
                     {
@@ -2259,7 +2395,7 @@ class MychScript
                         this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
                     }
 
-                    this.context.$debugExpression(MychExpression.literal(result), this.definition.expression.source);
+                    this.context.$debugExpression(result, this.definition.expression.source);
                 }
             },
         },
@@ -2843,17 +2979,19 @@ class MychExpression
 
     static coerceString(value)
     {
-        if (value == undefined || value == null)
-        {
-            return "";
-        }
-
         if (value instanceof Array)
         {
             return value.map(MychExpression.coerceString).join(", ");
         }
 
-        return String(MychExpression.coerceScalar(value));
+        value = MychExpression.coerceScalar(value);
+
+        if (value == undefined || value == null)
+        {
+            return "";
+        }
+
+        return String(value);
     }
 
     static coerceNumber(value)
@@ -2919,6 +3057,13 @@ class MychExpression
 
     static literal(value)
     {
+        if (value instanceof Array)
+        {
+            return value.map(MychExpression.literal).join(", ");
+        }
+
+        value = MychExpression.coerceScalar(value);
+
         switch (typeof(value))
         {
             case "string":
@@ -2931,11 +3076,6 @@ class MychExpression
             {
                 return "undef";
             }
-        }
-
-        if (value instanceof Array)
-        {
-            return value.map(MychExpression.literal).join(", ");
         }
 
         return String(value);
@@ -3233,7 +3373,7 @@ class MychExpression
                         let sourceBegin = debugExpression.tokens[debugTokenIndex].offset;
                         let sourceEnd = debugExpression.tokens[maxEvaluatedTokenIndex].offsetEnd;
 
-                        context.$debugExpression(MychExpression.literal(value), debugExpression.source, sourceBegin, sourceEnd);
+                        context.$debugExpression(value, debugExpression.source, sourceBegin, sourceEnd);
                     
                         return value;
                     }
