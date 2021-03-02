@@ -215,7 +215,7 @@ class MychScriptContext
         return (value instanceof MychScriptContext.Default);
     }
 
-    static DiagnosticResult = class
+    static DiagnosticUndef = class
     {
         constructor(reason = undefined)
         {
@@ -241,7 +241,7 @@ class MychScriptContext
         }
     }
 
-    static Unknown = class extends MychScriptContext.DiagnosticResult
+    static Unknown = class extends MychScriptContext.DiagnosticUndef
     {
         label = "unknown";
 
@@ -249,7 +249,7 @@ class MychScriptContext
         textColor = "white";
     }
 
-    static Denied = class extends MychScriptContext.DiagnosticResult
+    static Denied = class extends MychScriptContext.DiagnosticUndef
     {
         label = "denied";
 
@@ -269,7 +269,7 @@ class MychScriptContext
 
     getreason(value)
     {
-        return (value instanceof MychScriptContext.DiagnosticResult ? value.reason : undefined);
+        return (value instanceof MychScriptContext.DiagnosticUndef ? value.reason : undefined);
     }
 
     floor(value)
@@ -675,7 +675,7 @@ class MychScriptContext
 
     findattr(nameOrId, table, selection)
     {
-        if (nameOrId instanceof MychScriptContext.DiagnosticResult)
+        if (nameOrId instanceof MychScriptContext.DiagnosticUndef)
         {
             return nameOrId;
         }
@@ -1087,12 +1087,12 @@ class MychScriptContext
 
     $getAttribute(nameOrId, attributeName, max = false)
     {
-        if (nameOrId instanceof MychScriptContext.DiagnosticResult)
+        if (nameOrId instanceof MychScriptContext.DiagnosticUndef)
         {
             return nameOrId;
         }
 
-        if (attributeName instanceof MychScriptContext.DiagnosticResult)
+        if (attributeName instanceof MychScriptContext.DiagnosticUndef)
         {
             return attributeName;
         }
@@ -1258,12 +1258,12 @@ class MychScriptContext
 
     $setAttribute(nameOrId, attributeName, attributeValue, max = false)
     {
-        if (nameOrId instanceof MychScriptContext.DiagnosticResult)
+        if (nameOrId instanceof MychScriptContext.DiagnosticUndef)
         {
             return nameOrId;
         }
 
-        if (attributeName instanceof MychScriptContext.DiagnosticResult)
+        if (attributeName instanceof MychScriptContext.DiagnosticUndef)
         {
             return attributeName;
         }
