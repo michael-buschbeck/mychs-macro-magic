@@ -237,7 +237,7 @@ class MychScriptContext
             }
         
             let tooltip = this.reason.replace(/"/g, "&quot;");
-            return "<span class=\"mmm-" + this.label + " showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "\">" + this.label + "</span>";
+            return "<span class=\"mmm-" + this.label + " showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "; cursor: help\">" + this.label + "</span>";
         }
     }
 
