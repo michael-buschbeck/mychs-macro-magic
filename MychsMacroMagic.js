@@ -675,7 +675,7 @@ class MychScriptContext
 
     findattr(nameOrId, table, selection)
     {
-        if (this.isdenied(nameOrId))
+        if (nameOrId instanceof MychScriptContext.DiagnosticResult)
         {
             return nameOrId;
         }
@@ -1087,12 +1087,12 @@ class MychScriptContext
 
     $getAttribute(nameOrId, attributeName, max = false)
     {
-        if (this.isdenied(nameOrId))
+        if (nameOrId instanceof MychScriptContext.DiagnosticResult)
         {
             return nameOrId;
         }
 
-        if (this.isdenied(attributeName))
+        if (attributeName instanceof MychScriptContext.DiagnosticResult)
         {
             return attributeName;
         }
@@ -1258,12 +1258,12 @@ class MychScriptContext
 
     $setAttribute(nameOrId, attributeName, attributeValue, max = false)
     {
-        if (this.isdenied(nameOrId))
+        if (nameOrId instanceof MychScriptContext.DiagnosticResult)
         {
             return nameOrId;
         }
 
-        if (this.isdenied(attributeName))
+        if (attributeName instanceof MychScriptContext.DiagnosticResult)
         {
             return attributeName;
         }
