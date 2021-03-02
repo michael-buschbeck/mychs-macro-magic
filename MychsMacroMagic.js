@@ -1104,6 +1104,13 @@ class MychScriptContext
             return new MychScriptContext.Unknown("Charakter or token name or identifier not specified");
         }
 
+        attributeName = MychExpression.coerceString(attributeName);
+
+        if (attributeName == "")
+        {
+            return new MychScriptContext.Unknown("Attribute name not specified");
+        }
+
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
 
         if (!character && !token)
@@ -1266,6 +1273,13 @@ class MychScriptContext
         if (nameOrId == "")
         {
             return new MychScriptContext.Unknown("Charakter or token name or identifier not specified");
+        }
+
+        attributeName = MychExpression.coerceString(attributeName);
+
+        if (attributeName == "")
+        {
+            return new MychScriptContext.Unknown("Attribute name not specified");
         }
 
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
