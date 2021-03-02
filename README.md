@@ -509,11 +509,14 @@ There are also a few special *context variables* that are pre-set for you:
 | `version`  | "1.0.1"   | [Semantic version number](https://semver.org) of the MMM scripting engine
 | `pi`       | 3.141...  | [Ratio of a circle's circumference to its diameter](https://en.wikipedia.org/wiki/Pi) – useful for geometric calculations
 | `default`  | `default` | Special indicator value that makes `set customizable` apply the default expression
-| `denied`   | `denied`  | Special indicator value returned by `getattr()` when accessing attributes without permission
+| `denied`   | `denied`  | Special indicator value returned by `getattr()` and `setattr()` when accessing attributes without permission
+| `unknown`  | `unknown` | Special indicator value returned by a function when it is unable to produce a meaningful result given its arguments and/or the current state of the game
 
-Don't attempt to use the `default` and `denied` indicator values in comparisons: They're neither numbers nor strings, and when compared as such they'll compare equal to many completely benign values that are neither `default` nor `denied` (like the number zero or an empty string). Use the `isdefault()` and `isdenied()` functions to find out if something is one of these special indicator values.
+Don't attempt to use the `default`, `denied`, and `unknown` indicator values in comparisons: They're neither numbers nor strings, and when compared as such they'll compare equal to many completely benign values that are neither `default` nor `denied` nor `unknown` (like the number zero or an empty string). Use the `isdefault()`, `isdenied()`, and `isunknown()` functions to find out if something is one of these special indicator values.
 
 You can *shadow* these special context variables by setting a custom variable with the same name (and your custom variable will then take precedence for the remainder of the script), but you can't truly change them, and MMM itself will always use their original values anyway.
+
+All `denied` and `unknown` values that were *returned by a function* carry some useful diagnostics with them: When rendered to chat (where they show up as the words "denied" or "unknown" on a pretty colored background), you can point your mouse at them to get a tooltip that tells you exactly what went wrong – or, in the case of `denied`, at least exactly what the script attempted that got denied. To get programmatic access to the diagnostic reason carried by a `denied` or `unknown` result, use the `getreason()` function.
 
 
 ### Attributes
@@ -651,8 +654,10 @@ This works in any place with an expression, of course, not just in **set** – y
 | getattrmax(*name\|id*, *attr*)                     | Attribute | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
 | setattr(*name\|id*, *attr*, *val*)                 | Attribute | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
 | setattrmax(*name\|id*, *attr*, *val*)              | Attribute | setattrmax("Finn", "HP", 25) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
-| isdenied(*expr*)                                   | Attribute | isdenied(getattr("Finn", "HP")) | Return `true` if *expr* is the special `denied` indicator value (attribute access was denied), else `false`
+| isdenied(*expr*)                                   | Attribute | isdenied(getattr("Finn", "HP")) | Return `true` if *expr* is a special `denied` indicator value (attribute access was denied), else `false`
 | isdefault(*expr*)                                  | Customize | isdefault(default) | Return `true` if *expr* is the special `default` indicator value, else `false`
+| isunknown(*expr*)                                  | Debug     | isunknown(result) | Return `true` if *expr* is a special `unknown` indicator result (the called function was unable to produce a meaningful result given its arguments and/or the current state of the game), else `false`
+| getreason(*expr*)                                  | Debug     | getreason(result) = "Sunspots" | Return the diagnostic reason carried by a `denied` or `unknown` result
 
 
 ## Recipes
@@ -764,12 +769,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.14.4
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.15.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.15.0  | 2021-03-02 | Add diagnostic tooltips to `denied` and new `unknown` results
 | 1.14.0  | 2021-02-22 | Introduce `debug chat`, `debug do`, and the `?` debug operators
 | 1.13.0  | 2021-02-17 | Introduce `customize` block, `set customizable`, and `translate`
 | 1.12.0  | 2021-02-10 | Add `isdenied(expr)` to check if `getattr()` access was denied
