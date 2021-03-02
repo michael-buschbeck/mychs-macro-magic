@@ -192,6 +192,7 @@ class MychScriptContext
 
     default = new MychScriptContext.Default();
     denied = new MychScriptContext.Denied();
+    unknown = new MychScriptContext.Unknown();
 
     static Default = class
     {
@@ -209,7 +210,12 @@ class MychScriptContext
         }
     }
 
-    static Denied = class
+    isdefault(value)
+    {
+        return (value instanceof MychScriptContext.Default);
+    }
+
+    static DiagnosticResult = class
     {
         constructor(reason = undefined)
         {
@@ -223,27 +229,47 @@ class MychScriptContext
 
         toMarkup()
         {
-            let label = "denied";
-            let style = "background: red; border: 2px solid red; color: white; font-weight: bold";
+            let style = "background: " + this.backColor + "; border: 2px solid " + this.backColor + "; color: " + this.textColor + "; font-weight: bold";
             
             if (this.reason == undefined)
             {
-                return "<span class=\"mmm-denied\" style=\"" + style + "\">" + label + "</span>";
+                return "<span class=\"mmm-" + this.label + "\" style=\"" + style + "\">" + this.label + "</span>";
             }
         
             let tooltip = this.reason.replace(/"/g, "&quot;");
-            return "<span class=\"mmm-denied showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "\">" + label + "</span>";
+            return "<span class=\"mmm-" + this.label + " showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "\">" + this.label + "</span>";
         }
     }
 
-    isdefault(value)
+    static Unknown = class extends MychScriptContext.DiagnosticResult
     {
-        return (value instanceof MychScriptContext.Default);
+        label = "unknown";
+
+        backColor = "darkorange";
+        textColor = "white";
+    }
+
+    static Denied = class extends MychScriptContext.DiagnosticResult
+    {
+        label = "denied";
+
+        backColor = "red";
+        textColor = "white";
+    }
+
+    isunknown(value)
+    {
+        return (value instanceof MychScriptContext.Unknown);
     }
 
     isdenied(value)
     {
         return (value instanceof MychScriptContext.Denied);
+    }
+
+    getreason(value)
+    {
+        return (value instanceof MychScriptContext.DiagnosticResult ? value.reason : undefined);
     }
 
     floor(value)
@@ -409,7 +435,7 @@ class MychScriptContext
 
         if (rollExpression.match(/^\s*$/))
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Roll expression empty");
         }
 
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
@@ -455,7 +481,7 @@ class MychScriptContext
         }
         catch (exception)
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Roll result required");
         }
     }
 
@@ -467,7 +493,7 @@ class MychScriptContext
         }
         catch
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Roll result required");
         }
     }
 
@@ -591,7 +617,12 @@ class MychScriptContext
         let playerPageId = Campaign().get("playerpageid");
         let playerPage = getObj("page", playerPageId)
 
-        return (playerPage ? playerPage.get("scale_units") : undefined);
+        if (!playerPage)
+        {
+            return MychScriptContext.Unknown("Player page currently unset")
+        }
+
+        return playerPage.get("scale_units");
     }
 
     distscale()
@@ -601,7 +632,7 @@ class MychScriptContext
 
         if (!playerPage)
         {
-            return undefined;
+            return MychScriptContext.Unknown("Player page currently unset")
         }
 
         let gridUnitsPerGridCell = playerPage.get("snapping_increment");
@@ -620,7 +651,7 @@ class MychScriptContext
 
         if (!playerPage)
         {
-            return undefined;
+            return MychScriptContext.Unknown("Player page currently unset")
         }
 
         let gridUnitsPerGridCell = playerPage.get("snapping_increment");
@@ -633,7 +664,13 @@ class MychScriptContext
     getcharid(nameOrId)
     {
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
-        return (character ? character.id : undefined);
+
+        if (!character)
+        {
+            return new MychScriptContext.Unknown("Character or token <strong>" + this.literal(nameOrId) + "</strong> not found")
+        }
+
+        return character.id;
     }
 
     findattr(nameOrId, table, selection)
@@ -647,7 +684,7 @@ class MychScriptContext
 
         if (nameOrId == "")
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Character or token name or identifier not specified");
         }
 
         const firstSelectionArgIndex = 2;
@@ -768,7 +805,12 @@ class MychScriptContext
             }
         }
 
-        return undefined;
+        let nameOrIdDescription = "character <strong>" + this.literal(nameOrId) + "</strong>";
+        let tableDescription = "character sheet table <strong>" + this.literal(table) + "</strong>";
+        let lookupColDescription = "column <strong>" + this.literal(lookupColName) + "</strong>";
+        let conditionsDescription = Object.entries(conditions).map(([colName, colValue]) => "<strong>" + this.literal(colName) + "</strong> is <strong>" + this.literal(colValue) + "</strong>").join(" and ");
+
+        return new MychScriptContext.Unknown("No row found for " + lookupColDescription + " where " + conditionsDescription + " in " + tableDescription + " of " + nameOrIdDescription);
     }
 
     getattr(nameOrId, attributeName)
@@ -795,7 +837,7 @@ class MychScriptContext
     {
         if (!this.playerid || !obj || !obj.get)
         {
-            return undefined;
+            return false;
         }
 
         if (playerIsGM(this.playerid))
@@ -1057,7 +1099,7 @@ class MychScriptContext
 
         if (nameOrId == "")
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Charakter or token name or identifier not specified");
         }
 
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
@@ -1188,17 +1230,18 @@ class MychScriptContext
         
         if (!lookupObj)
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Attribute <strong>" + this.literal(attributeName) + "</strong> does not exist");
+        }
+
+        if (!lookupKey)
+        {
+            let currentOrMaxDescription = (max ? "Maximum" : "Current");
+            return new MychScriptContext.Unknown(currentOrMaxDescription + " value of attribute <strong>" + this.literal(attributeName) + "</strong> does not exist");
         }
 
         if (!this.$canViewAttribute(lookupObj, attributeName))
         {
             return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
-        }
-
-        if (!lookupKey)
-        {
-            return undefined;
         }
 
         return lookupMod(lookupObj.get(lookupKey));
@@ -1220,7 +1263,7 @@ class MychScriptContext
 
         if (nameOrId == "")
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Charakter or token name or identifier not specified");
         }
 
         let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
@@ -1360,10 +1403,16 @@ class MychScriptContext
         
         if (!updateObj)
         {
-            return undefined;
+            return new MychScriptContext.Unknown("Attribute <strong>" + this.literal(attributeName) + "</strong> does not exist and cannot be created");
         }
 
-        if (!updateKey || !this.$canControlAttribute(updateObj, attributeName))
+        if (!updateKey)
+        {
+            let currentOrMaxDescription = (max ? "Maximum" : "Current");
+            return new MychScriptContext.Unknown(currentOrMaxDescription + " value of attribute <strong>" + this.literal(attributeName) + "</strong> does not exist and cannot be created");
+        }
+        
+        if (!this.$canControlAttribute(updateObj, attributeName))
         {
             return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character or token <strong>" + this.literal(nameOrId) + "</strong> cannot be modified");
         }

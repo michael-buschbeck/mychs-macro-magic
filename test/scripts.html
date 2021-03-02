@@ -669,6 +669,12 @@
                 { chat: /^fumble: (true|false)$/ },
             ],
             [
+                "!mmm chat: broken critical: ${iscritical('not a roll')}",
+                { chat: "broken critical: <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Roll result required\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span>" },
+                "!mmm chat: broken fumble: ${isfumble('not a roll')}",
+                { chat: "broken fumble: <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Roll result required\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span>" }
+            ],
+            [
                 "!mmm combine chat",
                 "!mmm    set roll = [[1d3]]",
                 "!mmm    if iscritical(roll)",
@@ -707,9 +713,9 @@
             [
                 "!mmm script",
                 "!mmm     set undefResult = roll(undef)",
-                "!mmm     chat: roll(undef) = <${undefResult}>",
+                "!mmm     chat: roll(undef) = ${undefResult}",
                 "!mmm end script",
-                { chat: "roll(undef) = <>" },
+                { chat: "roll(undef) = <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Roll expression empty\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span>" },
             ],
             [
                 "!mmm script",
