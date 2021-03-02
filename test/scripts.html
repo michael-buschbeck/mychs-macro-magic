@@ -1277,13 +1277,14 @@
                     let expectedProcessType;
                     let expectedProcessMessage;
 
+                    let receivedProcessType = process.type;
+                    let receivedProcessMessage = normalizeHTML(process.message);
+
                     if (expectedProcessOutput)
                     {
                         [expectedProcessType, expectedProcessMessage] = Object.entries(expectedProcessOutput)[0];
 
-                        let receivedProcessMessage = normalizeHTML(process.message);
-
-                        if (process.type == expectedProcessType)
+                        if (receivedProcessType == expectedProcessType)
                         {
                             if (expectedProcessMessage instanceof RegExp)
                             {
@@ -1299,20 +1300,13 @@
                                 expectedProcessOutputSatisfied = (expectedProcessMessage == receivedProcessMessage);
                             }
                         }
-
-                        if (!expectedProcessOutputSatisfied)
-                        {
-                            console.log("type expected:", expectedProcessType, "received:", process.type);
-                            console.log("message expected:", expectedProcessMessage);
-                            console.log("message received:", receivedProcessMessage);
-                        }
                     }
 
                     if (expectedProcessOutputSatisfied)
                     {
                         document.write("<tr class='ok'>");
-                        document.write("<td class='lineno'>" + process.type + "</td>");
-                        document.write("<td class='output'>" + process.message + "</td>");
+                        document.write("<td class='lineno'>" + receivedProcessType + "</td>");
+                        document.write("<td class='output'>" + receivedProcessMessage + "</td>");
                         document.write("</tr>");
                     }
                     else
@@ -1320,9 +1314,12 @@
                         testSuccessful = false;
 
                         document.write("<tr class='unexpected'>");
-                        document.write("<td class='lineno'>" + process.type + "</td>");
-                        document.write("<td class='output'>" + process.message + "</td>");
+                        document.write("<td class='lineno'>" + receivedProcessType + "</td>");
+                        document.write("<td class='output'>" + receivedProcessMessage + "</td>");
                         document.write("</tr>");
+
+                        console.log("type received:", receivedProcessType);
+                        console.log("message received:", receivedProcessMessage);
 
                         if (expectedProcessOutput)
                         {
@@ -1335,6 +1332,9 @@
                             document.write("<td class='lineno'>" + expectedProcessType + "</td>");
                             document.write("<td class='output'>" + expectedProcessMessage + "</td>");
                             document.write("</tr>");
+
+                            console.log("type expected:", expectedProcessType);
+                            console.log("message expected:", expectedProcessMessage);
                         }
                     }
 
@@ -1364,6 +1364,9 @@
                     document.write("<td class='lineno'>" + expectedProcessType + "</td>");
                     document.write("<td class='output'>" + expectedProcessMessage + "</td>");
                     document.write("</tr>");
+
+                    console.log("type expected:", expectedProcessType);
+                    console.log("message expected:", expectedProcessMessage);
                 }
 
                 expectedProcessOutputs.length = 0;
