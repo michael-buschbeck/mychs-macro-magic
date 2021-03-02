@@ -758,7 +758,7 @@ class MychScriptContext
             let colName = MychExpression.coerceString(arguments[argIndex]);
             let colValue = MychExpression.coerceString(arguments[argIndex + 1]);
 
-            conditions[colName.toLowerCase()] = colValue.toLowerCase();
+            conditions[colName.toLowerCase()] = { normalizedValue: colValue.toLowerCase(), originalValue: colValue, originalName: colName };
             conditionCount += 1;
         }
 
@@ -786,7 +786,9 @@ class MychScriptContext
 
             rowInfos[rowId] = rowInfos[rowId] || { conditionCount: 0, lookupAttributeName: undefined };
 
-            if (conditions[colName.toLowerCase()] == colValue.toLowerCase())
+            let condition = conditions[colName.toLowerCase()];
+
+            if (condition && condition.normalizedValue == colValue.toLowerCase())
             {
                 rowInfos[rowId].conditionCount += 1;
             }
@@ -808,9 +810,9 @@ class MychScriptContext
         let nameOrIdDescription = "character <strong>" + this.literal(nameOrId) + "</strong>";
         let tableDescription = "character sheet table <strong>" + this.literal(table) + "</strong>";
         let lookupColDescription = "column <strong>" + this.literal(lookupColName) + "</strong>";
-        let conditionsDescription = Object.entries(conditions).map(([colName, colValue]) => "<strong>" + this.literal(colName) + "</strong> is <strong>" + this.literal(colValue) + "</strong>").join(" and ");
+        let conditionsDescription = Object.values(conditions).map(condition => "<strong>" + this.literal(condition.originalName) + "</strong> is <strong>" + this.literal(condition.originalValue) + "</strong>").join(" and ");
 
-        return new MychScriptContext.Unknown("No row found for " + lookupColDescription + " where " + conditionsDescription + " in " + tableDescription + " of " + nameOrIdDescription);
+        return new MychScriptContext.Unknown("No row with " + lookupColDescription + " found in " + tableDescription + " of " + nameOrIdDescription + " where " + conditionsDescription);
     }
 
     getattr(nameOrId, attributeName)
