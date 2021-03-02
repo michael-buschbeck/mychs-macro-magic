@@ -269,7 +269,12 @@ class MychScriptContext
 
     getreason(value)
     {
-        return (value instanceof MychScriptContext.DiagnosticUndef ? value.reason : undefined);
+        if (value instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return value.reason;
+        }
+        
+        return new MychScriptContext.Unknown("Only <strong>denied</strong> and <strong>unknown</strong> values can have a reason");
     }
 
     floor(value)
