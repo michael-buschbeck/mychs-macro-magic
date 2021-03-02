@@ -1341,8 +1341,7 @@
                         document.write("<td class='output'>" + receivedProcessMessage + "</td>");
                         document.write("</tr>");
 
-                        console.log("type received:", receivedProcessType);
-                        console.log("message received:", receivedProcessMessage);
+                        console.log("received:", JSON.stringify({ [receivedProcessType]: receivedProcessMessage }));
 
                         if (expectedProcessOutput)
                         {
@@ -1356,8 +1355,7 @@
                             document.write("<td class='output'>" + expectedProcessMessage + "</td>");
                             document.write("</tr>");
 
-                            console.log("type expected:", expectedProcessType);
-                            console.log("message expected:", expectedProcessMessage);
+                            console.log("expected:", JSON.stringify({ [expectedProcessType]: expectedProcessMessage }));
                         }
                     }
 
@@ -1388,8 +1386,7 @@
                     document.write("<td class='output'>" + expectedProcessMessage + "</td>");
                     document.write("</tr>");
 
-                    console.log("type expected:", expectedProcessType);
-                    console.log("message expected:", expectedProcessMessage);
+                    console.log("expected:", JSON.stringify({ [expectedProcessType]: expectedProcessMessage }));
                 }
 
                 expectedProcessOutputs.length = 0;
