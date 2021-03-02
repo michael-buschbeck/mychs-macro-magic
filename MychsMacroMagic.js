@@ -1446,13 +1446,23 @@ class MychScriptContext
         return highlightStart + this.literal(value) + highlightStop;
     }
 
+    $debugCoerceMarkup(value)
+    {
+        if (value && value.toMarkup instanceof Function)
+        {
+            return value.toMarkup();
+        }
+
+        return this.$debugHighlight(MychExpression.literal(value));
+    }
+
     $debugExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
     {
         let markedSourceBefore = source.substring(0, resultSourceBegin);
         let markedSourceBetween = source.substring(resultSourceBegin, resultSourceEnd);
         let markedSourceAfter = source.substring(resultSourceEnd);
 
-        let debugResult = this.$debugHighlight(result);
+        let debugResult = this.$debugCoerceMarkup(result);
         let debugSource = this.literal(markedSourceBefore) + this.$debugHighlight(markedSourceBetween) + this.literal(markedSourceAfter);
         
         this.$debugMessage(debugResult + " \u25C0\uFE0F " + debugSource);
@@ -2357,19 +2367,7 @@ class MychScript
 
                     try
                     {
-                        let context = this.context;
-
-                        function debugMarkup(value)
-                        {
-                            if (value && value.toMarkup instanceof Function)
-                            {
-                                return value.toMarkup();
-                            }
-
-                            return context.$debugHighlight(MychExpression.literal(value));
-                        }
-                        
-                        message = yield* this.definition.template.evaluate(variables, this.context, debugMarkup);
+                        message = yield* this.definition.template.evaluate(variables, this.context, value => this.context.$debugCoerceMarkup(value));
                     }
                     catch (exception)
                     {
@@ -2392,7 +2390,7 @@ class MychScript
                         this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
                     }
 
-                    this.context.$debugExpression(MychExpression.literal(result), this.definition.expression.source);
+                    this.context.$debugExpression(result, this.definition.expression.source);
                 }
             },
         },
@@ -3370,7 +3368,7 @@ class MychExpression
                         let sourceBegin = debugExpression.tokens[debugTokenIndex].offset;
                         let sourceEnd = debugExpression.tokens[maxEvaluatedTokenIndex].offsetEnd;
 
-                        context.$debugExpression(MychExpression.literal(value), debugExpression.source, sourceBegin, sourceEnd);
+                        context.$debugExpression(value, debugExpression.source, sourceBegin, sourceEnd);
                     
                         return value;
                     }
