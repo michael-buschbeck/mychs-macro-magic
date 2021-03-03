@@ -23,123 +23,1053 @@
         body {
             font-family: Consolas, monospace;
             font-size: 9pt;
+            line-height: 13pt;
         }
 
-        div.expression
-        {
-            padding: 0.5em 1em 0.5em 1em;
+        div.expression {
+            padding: 0.5em 1em 1em 1em;
             border: 1px solid silver;
             margin-bottom: 1em;
             white-space: pre-wrap;
         }
 
-        span.success {
-            color: green;
+        div.results-success {
+            padding: 0.5em 1em;
+            border: 1px solid gray;
+            font-family: Calibri, sans-serif;
             font-weight: bold;
+            font-size: 12pt;
+            color: green;
+            background: #C0FFC0;
         }
 
-        span.type {
+        div.results-failure {
+            padding: 0.5em 1em;
+            border: 1px solid gray;
+            font-family: Calibri, sans-serif;
+            font-weight: bold;
+            font-size: 12pt;
+            color: red;
+            background: #FFC0C0;
+        }
+
+        table {
+            table-layout: fixed;
+        }
+
+        td.expression-header {
+            font-family: Calibri, sans-serif;
+            font-weight: bold;
+            font-size: 10pt;
+            padding-bottom: 0.5em;
+        }
+
+        td.lineno {
+            width: 3em;
+            color: gray;
+            font-family: Calibri, sans-serif;
+            text-align: right;
+            padding-right: 1em;
+        }
+
+        tr.token-header {
             color: gray;
             font-family: Calibri, sans-serif;
         }
 
-        span.error {
-            color: red;
+        tr.token-header td {
+            padding-top: 8pt;
+        }
+
+        tr.token td.token-source {
+            width: 20em;
+            border-top: 1px solid #E8E8E8;
+        }
+
+        tr.token td.token-type {
+            width: 20em;
             font-family: Calibri, sans-serif;
+            border-top: 1px solid #E8E8E8;
+        }
+
+        tr.token td.rule-name {
+            width: 20em;
+            font-family: Calibri, sans-serif;
+            border-top: 1px solid #E8E8E8;
+        }
+
+        tr.token td.evaluation {
+            padding-right: 1.5em;
+            font-family: Calibri, sans-serif;
+            border-top: 1px solid #E8E8E8;
+        }
+
+        tr.token td.evaluation.constant {
+            color: #C0C0C0;
+        }
+
+        td.output.debug {
+            font-family: Calibri, sans-serif;
+            white-space: pre-wrap;
+        }
+
+        td.output.error {
+            font-family: Calibri, sans-serif;
+            white-space: pre-wrap;
+        }
+
+        td.output.yield {
+            white-space: pre-wrap;
+        }
+
+        td.output.result {
+            white-space: pre-wrap;
+        }
+
+        tr.ok td.output {
+            color: green;
+        }
+
+        tr.unexpected td {
+            color: red;
+        }
+
+        tr.expected td {
+            background: yellow;
         }
     </style>
 </head>
 <body>
     <script>
-        var variables =
+        let includedExpressionSources = [];
+
+        let expressionSources =
+        [
+            [
+                "version",
+                { result: MychExpression.literal(MMM_VERSION) },
+            ],
+            [
+                "1 + 2 * 3",
+                { result: "7" },
+            ],
+            [
+                "(1 + 2) * 3",
+                { result: "9" },
+            ],
+            [
+                "strlen('ookook')",
+                { result: "6" },
+            ],
+            [
+                "(1 == 1)",
+                { result: "true" },
+            ],
+            [
+                "(1 == 2)",
+                { result: "false" },
+            ],
+            [
+                "(1 == 1) and (2 != 3)",
+                { result: "true" },
+            ],
+            [
+                "1 + ()",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + (❌)" },
+            ],
+            [
+                "1 * ()",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 * (❌)" },
+            ],
+            [
+                "3 * (() + 2)",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 3 * ((❌) + 2)" },
+            ],
+            [
+                "2 ** 8",
+                { result: "256" },
+            ],
+            [
+                "2 ** 2 ** 3",
+                { result: "256" },
+            ],
+            [
+                "list12, list345",
+                { result: "1, 2, 3, 4, 5" },
+            ],
+            [
+                "list12[]",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: list12[❌]" },
+            ],
+            [
+                "list12[0] + list345[1 + 1]",
+                { result: "6" },
+            ],
+            [
+                "list12[0][1]",
+                { error: "During parse, expected binary operator, or property lookup, or end of expression in expression: list12[0]❌[1]" },
+            ],
+            [
+                "list12[0)",
+                { error: "During parse, expected binary operator, or property lookup, or closing bracket in expression: list12[0❌)" },
+            ],
+            [
+                "(11, 22, 33)[2]",
+                { result: "33" },
+            ],
+            [
+                "args()",
+                { result: "" },
+            ],
+            [
+                "args(())",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: args((❌))" },
+            ],
+            [
+                "args(1)",
+                { result: "1" },
+            ],
+            [
+                "args(1, 'two', 3, 'four')",
+                { result: "1, \"two\", 3, \"four\"" },
+            ],
+            [
+                "args(list12, list345)",
+                { result: "1, 2, 3, 4, 5" },
+            ],
+            [
+                "args((1, 'two'), (3, 'four'))",
+                { result: "1, \"two\", 3, \"four\"" },
+            ],
+            [
+                "argnum()",
+                { result: "0" },
+            ],
+            [
+                "argnum(1, 2, 3, 4)",
+                { result: "4" },
+            ],
+            [
+                "argnum(1, (2, 3, 4))",
+                { result: "4" },
+            ],
+            [
+                "argnum((1, 2, 3), 4)",
+                { result: "4" },
+            ],
+            [
+                "argnum((1, 2), (3, 4))",
+                { result: "4" },
+            ],
+            [
+                "argnum(list345)",
+                { result: "1" },
+            ],
+            [
+                "argnum(1, list345)",
+                { result: "2" },
+            ],
+            [
+                "argnum(list345, 2)",
+                { result: "2" },
+            ],
+            [
+                "argnum(1, list345, 2)",
+                { result: "3" },
+            ],
+            [
+                "listnum(arg1(1, list345, 2))",
+                { result: "3" },
+            ],
+            [
+                "argnum(undef)",
+                { result: "1" },
+            ],
+            [
+                "argnum(1, undef)",
+                { result: "2" },
+            ],
+            [
+                "argnum(undef, 2)",
+                { result: "2" },
+            ],
+            [
+                "argnum(1, undef, 2)",
+                { result: "3" },
+            ],
+            [
+                "argnum(denied)",
+                { result: "1" },
+            ],
+            [
+                "argnum(1, denied)",
+                { result: "2" },
+            ],
+            [
+                "argnum(denied, 2)",
+                { result: "2" },
+            ],
+            [
+                "argnum(1, denied, 2)",
+                { result: "3" },
+            ],
+            [
+                "isdenied(arg1(1, denied, 2))",
+                { result: "true" },
+            ],
+            [
+                "argnum(unknown)",
+                { result: "1" },
+            ],
+            [
+                "argnum(1, unknown)",
+                { result: "2" },
+            ],
+            [
+                "argnum(unknown, 2)",
+                { result: "2" },
+            ],
+            [
+                "argnum(1, unknown, 2)",
+                { result: "3" },
+            ],
+            [
+                "isunknown(arg1(1, unknown, 2))",
+                { result: "true" },
+            ],
+            [
+                "argnum(default)",
+                { result: "1" },
+            ],
+            [
+                "argnum(1, default)",
+                { result: "2" },
+            ],
+            [
+                "argnum(default, 2)",
+                { result: "2" },
+            ],
+            [
+                "argnum(1, default, 2)",
+                { result: "3" },
+            ],
+            [
+                "isdefault(arg1(1, default, 2))",
+                { result: "true" },
+            ],
+            [
+                "getattr('Char1', 'HP')",
+                { result: "\"15\"" },
+            ],
+            [
+                "async('background process', 999)",
+                { yield: "\"background process\"" },
+                { result: "999" },
+            ],
+            [
+                "async('background process', 999) + 1",
+                { yield: "\"background process\"" },
+                { result: "1000" },
+            ],
+            [
+                "--+-+-+-strlen('ookook')",
+                { result: "-6" },
+            ],
+            [
+                "strlen(1 + 10 + 90)",
+                { result: "3" },
+            ],
+            [
+                "structABC.propA & structABC.propB",
+                { result: "\"A!B!\"" },
+            ],
+            [
+                "structABC.('prop' & 'A')",
+                { result: "\"A!\"" },
+            ],
+            [
+                "structABC.unknownProp",
+                { result: "undef" },
+            ],
+            [
+                "noStruct.someProp",
+                { result: "\"(unknown property 'someProp')\"" },
+            ],
+            [
+                "'literal string'.someProp",
+                { result: "\"(unknown property 'someProp')\"" },
+            ],
+            [
+                "6+++++7",
+                { result: "13" },
+            ],
+            [
+                "6++-++7",
+                { result: "-1" },
+            ],
+            [
+                "(((1)",
+                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or closing parenthesis in expression: (((1)❌" },
+            ],
+            [
+                "(((1))",
+                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or closing parenthesis in expression: (((1))❌" },
+            ],
+            [
+                "(((1)))",
+                { result: "1" },
+            ],
+            [
+                "(((1))))",
+                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or end of expression in expression: (((1)))❌)" },
+            ],
+            [
+                "(((1)))]",
+                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or end of expression in expression: (((1)))❌]" },
+            ],
+            [
+                "(3 + (2 + (1) *",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: (3 + (2 + (1) *❌" },
+            ],
+            [
+                "(1 + 2 * 3 + 4 ** 5) - foo / bar + (6 + 7, (8 + 9) * 10 - strlen('foo \\'bar\\' baz \\\\quux'))",
+                { result: "1181.7302631578948" },
+            ],
+            [
+                "(1 + 2 * 3 + 4 ** 5) - foo! / bar(6 + 7, (8 + 9) * 10)",
+                { error: "During parse, syntax error in expression: (1 + 2 * 3 + 4 ** 5) - foo❌! / bar(6 + 7, (8 + 9) * 10)" },
+            ],
+            [
+                "(1 + 2 * 3 + 4 ** 5) - foo / bar(6 + 7)",
+                { error: "During evaluate, invalid function in expression: (1 + 2 * 3 + 4 ** 5) - foo / bar❌(6 + 7)" },
+            ],
+            [
+                "(1 + 2 * 3 + 4 ** 5) - foo / quux(6 + 7)",
+                { error: "During evaluate, unknown function in expression: (1 + 2 * 3 + 4 ** 5) - foo / quux❌(6 + 7)" },
+            ],
+            [
+                ") + 123",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: ❌) + 123" },
+            ],
+            [
+                "* 456",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: ❌* 456" },
+            ],
+            [
+                "1 + ?",
+                { error: "During parse, expected unary operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + ?❌" },
+            ],
+            [
+                "1 + ? ? 2",
+                { error: "During parse, expected unary operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + ? ❌? 2" },
+            ],
+            [
+                "1 + ???? 2",
+                { error: "During parse, expected unary operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + ???❌? 2" },
+            ],
+            [
+                "1 + ? 2 * 3 + 4",
+                { debug: "❰2❱ ← 1 + ? ❰2❱ * 3 + 4" },
+                { result: "11" },
+            ],
+            [
+                "1 + ?? 2 * 3 + 4",
+                { debug: "❰6❱ ← 1 + ?? ❰2 * 3❱ + 4" },
+                { result: "11" },
+            ],
+            [
+                "1 + ??? 2 * 3 + 4",
+                { debug: "❰6❱ ← 1 + ??? ❰2 * 3❱ + 4" },
+                { result: "11" },
+            ],
+            [
+                "1 + ?(2 * 3) + 4",
+                { debug: "❰6❱ ← 1 + ?❰(2 * 3)❱ + 4" },
+                { result: "11" },
+            ],
+            [
+                "1 + ?((2 * 3)) + 4",
+                { debug: "❰6❱ ← 1 + ?❰((2 * 3))❱ + 4" },
+                { result: "11" },
+            ],
+            [
+                "1 + ?(2 * 3 + 4)",
+                { debug: "❰10❱ ← 1 + ?❰(2 * 3 + 4)❱" },
+                { result: "11" },
+            ],
+            [
+                "1 + ?((2 * 3 + 4))",
+                { debug: "❰10❱ ← 1 + ?❰((2 * 3 + 4))❱" },
+                { result: "11" },
+            ],
+            [
+                "1 + ?(2 * 3 + ? 4)",
+                { debug: "❰4❱ ← 1 + ?(2 * 3 + ? ❰4❱)" },
+                { debug: "❰10❱ ← 1 + ?❰(2 * 3 + ? 4)❱" },
+                { result: "11" },
+            ],
+            [
+                "1 + ?getattr('Dummy', 'HP')",
+                { debug: "❰\"15\"❱ ← 1 + ?❰getattr('Dummy', 'HP')❱" },
+                { result: "16" },
+            ],
+            [
+                "?('foo' & 123 & 'bar')",
+                { debug: "❰\"foo123bar\"❱ ← ?❰('foo' & 123 & 'bar')❱" },
+                { result: "\"foo123bar\"" },
+            ],
+            [
+                "1 + ? 2**3 * 4 <= 5",
+                { debug: "❰2❱ ← 1 + ? ❰2❱**3 * 4 <= 5" },
+                { result: "false" },
+            ],
+            [
+                "1 + ?? 2**3 * 4 <= 5",
+                { debug: "❰32❱ ← 1 + ?? ❰2**3 * 4❱ <= 5" },
+                { result: "false" },
+            ],
+            [
+                "1 + ??? 2**3 * 4 <= 5",
+                { debug: "❰32❱ ← 1 + ??? ❰2**3 * 4❱ <= 5" },
+                { result: "false" },
+            ],
+            [
+                "? 2**3 * 4 <= 5",
+                { debug: "❰2❱ ← ? ❰2❱**3 * 4 <= 5" },
+                { result: "false" },
+            ],
+            [
+                "?? 2**3 * 4 <= 5",
+                { debug: "❰32❱ ← ?? ❰2**3 * 4❱ <= 5" },
+                { result: "false" },
+            ],
+            [
+                "??? 2**3 * 4 <= 5",
+                { debug: "❰false❱ ← ??? ❰2**3 * 4 <= 5❱" },
+                { result: "false" },
+            ],
+            [
+                "? default + 123",
+                { debug: "❰undef❱ ← ? ❰default❱ + 123" },
+                { result: "123" },
+            ],
+            [
+                "? denied + 123",
+                { debug: "❰undef❱ ← ? ❰denied❱ + 123" },
+                { result: "123" },
+            ],
+            [
+                "? unknown + 123",
+                { debug: "❰undef❱ ← ? ❰unknown❱ + 123" },
+                { result: "123" },
+            ],
+            [
+                "true",
+                { result: "true" },
+            ],
+            [
+                "false",
+                { result: "false" },
+            ],
+            [
+                "11 % 8",
+                { result: "3" },
+            ],
+            [
+                "-11 % 8",
+                { result: "5" },
+            ],
+            [
+                "11 % -8",
+                { result: "-5" },
+            ],
+            [
+                "-11 % -8",
+                { result: "-3" },
+            ],
+            [
+                "min()",
+                { result: "undef" },
+            ],
+            [
+                "min(+123, undef)",
+                { result: "123" },
+            ],
+            [
+                "min(-456, undef)",
+                { result: "-456" },
+            ],
+            [
+                "min(5, undefined, 'moo', 999, 2, -3.14)",
+                { result: "-3.14" },
+            ],
+            [
+                "max()",
+                { result: "undef" },
+            ],
+            [
+                "max(5, undefined, 'moo', 999, 2, -3.14)",
+                { result: "999" },
+            ],
+            [
+                "floor(-1.2)",
+                { result: "-2" },
+            ],
+            [
+                "floor(-1.5)",
+                { result: "-2" },
+            ],
+            [
+                "floor(-1.7)",
+                { result: "-2" },
+            ],
+            [
+                "floor(1.2)",
+                { result: "1" },
+            ],
+            [
+                "floor(1.5)",
+                { result: "1" },
+            ],
+            [
+                "floor(1.7)",
+                { result: "1" },
+            ],
+            [
+                "round(-1.2)",
+                { result: "-1" },
+            ],
+            [
+                "round(-1.5)",
+                { result: "-1" },
+            ],
+            [
+                "round(-1.7)",
+                { result: "-2" },
+            ],
+            [
+                "round(1.2)",
+                { result: "1" },
+            ],
+            [
+                "round(1.5)",
+                { result: "2" },
+            ],
+            [
+                "round(1.7)",
+                { result: "2" },
+            ],
+            [
+                "ceil(-1.2)",
+                { result: "-1" },
+            ],
+            [
+                "ceil(-1.5)",
+                { result: "-1" },
+            ],
+            [
+                "ceil(-1.7)",
+                { result: "-1" },
+            ],
+            [
+                "ceil(1.2)",
+                { result: "2" },
+            ],
+            [
+                "ceil(1.5)",
+                { result: "2" },
+            ],
+            [
+                "ceil(1.7)",
+                { result: "2" },
+            ],
+            [
+                "abs(-1.5)",
+                { result: "1.5" },
+            ],
+            [
+                "abs(1.5)",
+                { result: "1.5" },
+            ],
+        ];
+
+        let outputs = [];
+
+        MychScriptContext.prototype.strlen = function(value)
+        {
+            return MychExpression.coerceString(value).length;
+        }
+
+        MychScriptContext.prototype.args = function(...values)
+        {
+            return values;
+        }
+
+        MychScriptContext.prototype.argnum = function(...args)
+        {
+            return args.length;
+        }
+
+        MychScriptContext.prototype.arg0 = function(...args)
+        {
+            return args[0];
+        }
+
+        MychScriptContext.prototype.arg1 = function(...args)
+        {
+            return args[1];
+        }
+
+        MychScriptContext.prototype.arg2 = function(...args)
+        {
+            return args[2];
+        }
+
+        MychScriptContext.prototype.listnum = function(list)
+        {
+            if (list instanceof MychExpressionArgs)
+            {
+                console.log("Require list, got", list);
+                return new MychScriptContext.Unknown("Require list, got args");
+            }
+
+            if (Array.isArray(list))
+            {
+                return list.length;
+            }
+            
+            console.log("Require list, got", list);
+            return new MychScriptContext.Unknown("Require list, got " + typeof(list));
+        }
+
+        MychScriptContext.prototype.getattr = function(characterName, attributeName)
+        {
+            return "15";
+        }
+
+        MychScriptContext.prototype.async = function*(intermediate, result)
+        {
+            yield intermediate;
+            return result;
+        }
+
+        MychScriptContext.prototype.getprop = function(struct, key)
+        {
+            return "(unknown property '" + key + "')";
+        }
+
+        MychScriptContext.prototype.$debugSendExpression = function(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
+        {
+            let markedSourceBefore = source.substring(0, resultSourceBegin);
+            let markedSourceBetween = source.substring(resultSourceBegin, resultSourceEnd);
+            let markedSourceAfter = source.substring(resultSourceEnd);
+
+            let debugResult = "\u2770" + MychExpression.literal(result) + "\u2771";
+            let debugSource = markedSourceBefore + "\u2770" + markedSourceBetween + "\u2771" + markedSourceAfter;
+
+            outputs.push(
+            {
+                type: "debug",
+                text: debugResult + " \u2190 " + debugSource,
+            });
+        }
+
+        let variables =
         {
             foo: 123,
             bar: 456,
             
-            len: function(value)
-            {
-                return MychExpression.coerceString(value).length;
-            },
+            list12: [1, 2],
+            list345: [3, 4, 5],
 
-            count: function(values)
+            structABC:
             {
-                return arguments.length;
-            },
+                getProperty: function(key) { return this[key] },
 
-            list: function(values)
-            {
-                var elements = [];
-                for (var i = 0; i < arguments.length; ++i)
-                {
-                    elements.push("<" + arguments[i] + ">");
-                }
-                return elements.join("|");
+                propA: "A!",
+                propB: "B!",
+                propC: "C!",
             },
-
-            getattr: function(characterName, attributeName)
-            {
-                return "15";
-            },
-
-            array1: [1, 2],
-            array2: [3, 4, 5],
         };
 
-        var expressionSources =
-        [
-            "version",
-            "1+2*3",
-            "(1+2)*3",
-            "len('ookook')",
-            "(1==1)",
-            "(1==2)",
-            "(1==1) and (2!=3)",
-            "1+()",
-            "1*()",
-            "3*(()+2)",
-            "2**8",
-            "array1,array2",
-            "list()",
-            "list(())",
-            "list(1)",
-            "list(1,'two',3,'four')",
-            "list(array1, array2)",
-            "list((1,'two'),(3,'four'))",
-            "getattr('Char1', 'AP')",
-            "--+-+-+-len('ookook')",
-            "len(1+10+90)",
-            "6+++++7",
-            "6++-++7",
-            "(((1))",
-            "(((1)))",
-            "(((1))))",
-            "(3+(2+(1)*",
-            "(1+2*3+4**5)-foo/bar+(6+7,(8+9)*10-len('foo \\'bar\\' baz \\\\quux'))",
-            "(1+2*3+4**5)-foo!/bar(6+7,(8+9)*10)",
-            "(1+2*3+4**5)-foo/bar(6+7)",
-            ")+123",
-            "*456",
-        ];
+        let numTestsRun = 0;
+        let numTestsSuccessful = 0;
+        let testsFailed = [];
 
-        for (expressionSource of expressionSources)
+        for (let expressionSourceIndex = 0; expressionSourceIndex < expressionSources.length; ++expressionSourceIndex)
         {
+            if (includedExpressionSources.length > 0 && !includedExpressionSources.includes(expressionSourceIndex))
+            {
+                continue;
+            }
+
+            let testSuccessful = true;
+
+            let expressionSource = expressionSources[expressionSourceIndex][0];
+            let expectedOutputs = expressionSources[expressionSourceIndex].slice(1);
+            
             document.write("<div class='expression'>");
+            document.write("<table>");
+            document.write("<tr><td></td><td class='expression-header' colspan='4'>test expression " + expressionSourceIndex + "</td></tr>");
+
+            document.write("<tr>");
+            document.write("<td class='lineno'>source</td>")
+            document.write("<td colspan='4'>" + escapeHTML(expressionSource) + "</td>");
+            document.write("</tr>");
+
+            let expression = new MychExpression();
             
             try
             {
-                var expression = new MychExpression(expressionSource);
+                expression.parse(expressionSource, new MychScriptContext());
 
-                var result = expression.evaluate(variables, new MychScriptContext()).next().value;
-                var resultType = (result instanceof Object ? result.constructor.name : typeof(result));
+                let resultGenerator = expression.evaluate(variables);
+                let resultContainer;
 
-                document.write(escapeHTML(expressionSource) + " = <span class='success'>" + escapeHTML(JSON.stringify(result)) + "</span> <span class='type'>[" + escapeHTML(resultType) + "]</span>");
+                while (!(resultContainer = resultGenerator.next()).done)
+                {
+                    outputs.push(
+                    {
+                        type: "yield",
+                        text: MychExpression.literal(resultContainer.value),
+                    });
+                }
+
+                outputs.push(
+                {
+                    type: "result",
+                    text: MychExpression.literal(resultContainer.value),
+                });
+
+                if (expression.isConstant())
+                {
+                    let constantResult = expression.evaluateConstant();
+
+                    if (resultContainer.value !== constantResult)
+                    {
+                        console.log("result:", resultContainer.value, "constant:", constantResult);
+                        throw "Constant result not equal to variable result";
+                    }
+                }
             }
             catch (exception)
             {
                 console.log(exception);
-                document.write(escapeHTML(expressionSource) + " = <span class='error'>" + escapeHTML(exception) + "</span>");
+
+                outputs.push(
+                {
+                    type: "error",
+                    text: String(exception),
+                });
             }
 
+            while (outputs.length > 0)
+            {
+                let output = outputs.shift();
+
+                let expectedOutput = expectedOutputs.shift();
+                let expectedOutputSatisfied = false;
+                let expectedOutputType;
+                let expectedOutputText;
+
+                let receivedOutputType = output.type;
+                let receivedOutputText = output.text;
+
+                if (expectedOutput)
+                {
+                    [expectedOutputType, expectedOutputText] = Object.entries(expectedOutput)[0];
+                    expectedOutputSatisfied = (receivedOutputType == expectedOutputType && receivedOutputText == expectedOutputText);
+                }
+
+                if (expectedOutputSatisfied)
+                {
+                    document.write("<tr class='ok'>");
+                    document.write("<td class='lineno'>" + receivedOutputType + "</td>")
+                    document.write("<td class='output " + receivedOutputType + "' colspan='4'>" + escapeHTML(receivedOutputText) + "</td>");
+                    document.write("</tr>");
+                }
+                else
+                {
+                    testSuccessful = false;
+
+                    document.write("<tr class='unexpected'>");
+                    document.write("<td class='lineno'>" + receivedOutputType + "</td>")
+                    document.write("<td class='output " + receivedOutputType + "' colspan='4'>" + escapeHTML(receivedOutputText) + "</td>");
+                    document.write("</tr>");
+
+                    console.log("received:", JSON.stringify({ [receivedOutputType]: receivedOutputText }));
+
+                    if (expectedOutput)
+                    {
+                        document.write("<tr class='expected'>");
+                        document.write("<td class='lineno'>" + expectedOutputType + "</td>")
+                        document.write("<td class='output " + expectedOutputType + "' colspan='4'>" + escapeHTML(expectedOutputText) + "</td>");
+                        document.write("</tr>");
+
+                        console.log("expected:", JSON.stringify({ [expectedOutputType]: expectedOutputText }));
+                    }
+                }
+            }
+
+            for (let expectedOutput of expectedOutputs)
+            {
+                testSuccessful = false;
+
+                [expectedOutputType, expectedOutputText] = Object.entries(expectedOutput)[0];
+
+                document.write("<tr class='expected'>");
+                document.write("<td class='lineno'>" + expectedOutputType + "</td>")
+                document.write("<td class='output " + expectedOutputType + "' colspan='4'>" + escapeHTML(expectedOutputText) + "</td>");
+                document.write("</tr>");
+
+                console.log("expected:", JSON.stringify({ [expectedOutputType]: expectedOutputText }));
+            }
+
+            expectedOutputs.length = 0;
+
+            let dependencyEntriesPerRow = expression.tokens.map(token => []);
+            let numDependencyLevels = 0;
+            let numDependencyEvaluators = 0;
+            let numDependencyEvaluatorsToLevel = [0];
+
+            if (expression.evaluator)
+            {
+                let evaluators = expression.evaluator.argEvaluators ? [expression.evaluator] : [];
+
+                while (evaluators.length > 0)
+                {
+                    let nextEvaluators = [];
+
+                    for (let evaluator of evaluators)
+                    {
+                        for (let argIndex = 0; argIndex < evaluator.argEvaluators.length; ++argIndex)
+                        {
+                            let argEvaluator = evaluator.argEvaluators[argIndex];
+
+                            if (argEvaluator == undefined)
+                            {
+                                continue;
+                            }
+
+                            for (let tokenIndex = 0; tokenIndex < expression.tokens.length; ++tokenIndex)
+                            {
+                                let token = expression.tokens[tokenIndex];
+
+                                if (token.offset < argEvaluator.sourceOffset || token.offset + token.length > argEvaluator.sourceOffset + argEvaluator.sourceLength)
+                                {
+                                    continue;
+                                }
+
+                                dependencyEntriesPerRow[tokenIndex][numDependencyLevels] =
+                                {
+                                    evaluatorIndex: numDependencyEvaluators,
+                                    argIndex: argIndex,
+                                    argEvaluator: argEvaluator,
+                                };
+                            }
+
+                            nextEvaluators.push(argEvaluator);
+                        }
+
+                        numDependencyEvaluators += 1;
+                    }
+
+                    evaluators = nextEvaluators.filter(evaluator => evaluator.argEvaluators);
+
+                    numDependencyLevels += 1;
+                    numDependencyEvaluatorsToLevel[numDependencyLevels] = numDependencyEvaluators;
+                }
+
+                dependencyEntriesPerRow[dependencyEntriesPerRow.length - 1] = [];
+            }
+
+            document.write("<tr class='token-header'>");
+            document.write("<td></td>")
+            document.write("<td>token</td>");
+            document.write("<td>type</td>");
+            document.write("<td>rule</td>");
+
+            if (numDependencyLevels == 0)
+            {
+                document.write("<td>evaluation</td>");
+            }
+            else
+            {
+                let colspan = numDependencyLevels;
+                document.write("<td colspan='" + colspan + "'>evaluation</td>");
+            }
+
+            document.write("</tr>");
+
+            for (let tokenIndex = 0; tokenIndex < expression.tokens.length; ++tokenIndex)
+            {
+                let token = expression.tokens[tokenIndex];
+
+                document.write("<tr class='token'>");
+                document.write("<td class='lineno'>" + tokenIndex + "</td>")
+                document.write("<td class='token-source'>" + escapeHTML(expression.source.substr(token.offset, token.length)) + "</td>")
+                document.write("<td class='token-type'>" + escapeHTML(token.type) + "</td>")
+                document.write("<td class='rule-name'>" + escapeHTML(token.ruleName || "") + "</td>")
+
+                let dependencyEntriesForRow = dependencyEntriesPerRow[tokenIndex];
+
+                if (dependencyEntriesForRow.length == 0)
+                {
+                    let colspan = numDependencyLevels;
+                    document.write("<td colspan='" + colspan + "' class='evaluation'></td>");
+                }
+                else
+                {
+                    for (let dependencyLevel = 0; dependencyLevel < dependencyEntriesForRow.length; ++dependencyLevel)
+                    {
+                        let dependencyEntry = dependencyEntriesForRow[dependencyLevel];
+
+                        let dependencyDescriptionOrder = 1 + (numDependencyEvaluators - numDependencyEvaluatorsToLevel[dependencyLevel + 1]) + dependencyEntry.evaluatorIndex - numDependencyEvaluatorsToLevel[dependencyLevel];
+                        let dependencyDescriptionArgument = String.fromCharCode(dependencyEntry.argIndex + "A".charCodeAt(0));
+                        let dependencyDescription = dependencyDescriptionOrder + dependencyDescriptionArgument;
+
+                        let evaluationVariabilityClass = dependencyEntry.argEvaluator.isConstant ? "constant" : "variable";
+
+                        if (dependencyLevel < dependencyEntriesForRow.length - 1)
+                        {
+                            document.write("<td class='evaluation " + evaluationVariabilityClass + "'>");
+                        }
+                        else
+                        {
+                            let colspan = numDependencyLevels - (dependencyEntriesForRow.length - 1);
+                            document.write("<td class='evaluation " + evaluationVariabilityClass + "' colspan='" + colspan + "'>");
+                        }
+
+                        document.write(escapeHTML(dependencyDescription));
+                        document.write("</td>");
+                    }
+                }
+
+                document.write("</tr>");
+            }
+
+            document.write("</table>");
+            document.write("</div>");
+
+            numTestsRun += 1;
+            numTestsSuccessful += (testSuccessful ? 1 : 0);
+
+            if (!testSuccessful)
+            {
+                testsFailed.push(expressionSourceIndex);
+            }
+        }
+
+        if (numTestsSuccessful == numTestsRun)
+        {
+            document.write("<div class='results-success'>");
+            document.write("Success: Evaluated " + numTestsRun + " test expressions, all successful.");
+            document.write("</div>");
+        }
+        else
+        {
+            document.write("<div class='results-failure'>");
+            document.write("Failed: Evaluated " + numTestsRun + " test expressions, " + (numTestsRun - numTestsSuccessful) + " failed (expression index " + testsFailed.join(", ") + ")");
             document.write("</div>");
         }
     </script>
