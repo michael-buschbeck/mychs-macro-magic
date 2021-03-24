@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.15.2";
+const MMM_VERSION = "1.16.0";
 
 on("chat:message", function(msg)
 {
@@ -978,6 +978,8 @@ class MychScriptContext
 
             case "left":
             case "top":
+            case "width":
+            case "height":
             case "rotation":
             {
                 return this.$canView(obj);
@@ -1200,12 +1202,14 @@ class MychScriptContext
             }
             break;
 
+            case "width":
+            case "height":
             case "rotation":
             {
                 if (!max)
                 {
                     lookupObj = token;
-                    lookupKey = "rotation";
+                    lookupKey = attributeName;
                 }
             }
             break;
@@ -1361,12 +1365,14 @@ class MychScriptContext
             }
             break;
 
+            case "width":
+            case "height":
             case "rotation":
             {
                 if (!max)
                 {
                     updateObj = token;
-                    updateKey = "rotation";
+                    updateKey = attributeName;
                     updateVal = MychExpression.coerceNumber(attributeValue);
                 }
             }

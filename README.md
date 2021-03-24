@@ -546,6 +546,8 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `status_`...      | `true`               | write  |       | Token's status markers – `false` to hide, `true` to show, or any single digit to show with an overlay – see below
 | `left`            | `350` / `1750`       | write  | read  | Token's X coordinate on the table
 | `top`             | `350` / `1750`       | write  | read  | Token's Y coordinate on the table
+| `width`           | `70`                 | write  |       | Token's width (subject to its rotation)
+| `height`          | `70`                 | write  |       | Token's height (subject to its rotation)
 | `rotation`        | `45`                 | write  |       | Token's clockwise rotation in degrees
 | *(anything else)* |                      | write  | write | Character attribute – e.g. `HP` or any custom attribute
 
@@ -769,12 +771,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.15.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.16.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.16.0  | 2021-03-24 | Support `width` and `height` token attributes
 | 1.15.0  | 2021-03-02 | Add diagnostic tooltips to `denied` and new `unknown` results
 | 1.14.0  | 2021-02-22 | Introduce `debug chat`, `debug do`, and the `?` debug operators
 | 1.13.0  | 2021-02-17 | Introduce `customize` block, `set customizable`, and `translate`
