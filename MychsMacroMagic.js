@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.15.0";
+const MMM_VERSION = "1.15.1";
 
 on("chat:message", function(msg)
 {
@@ -1488,6 +1488,15 @@ class MychScriptContext
     {
         let statusTableRows = [];
 
+        let staticContextVariableTests =
+        {
+            version:  v => v == MMM_VERSION,
+            pi:       v => v == Math.PI,
+            default:  v => this.isdefault(v),
+            denied:   v => this.isdenied(v),
+            unknown:  v => this.isunknown(v),
+        };
+
         for (let [playerId, player] of Object.entries(MychScriptContext.players))
         {
             let playerObj = getObj("player", playerId);
@@ -1508,6 +1517,12 @@ class MychScriptContext
 
             for (let [contextVariableName, contextVariableValue] of Object.entries(player.context))
             {
+                if (staticContextVariableTests.hasOwnProperty(contextVariableName) &&
+                    staticContextVariableTests[contextVariableName](contextVariableValue))
+                {
+                    continue;
+                }
+
                 let contextVariableMarkup = (contextVariableValue && contextVariableValue.toMarkup ? contextVariableValue.toMarkup() : this.literal(JSON.stringify(contextVariableValue)));
                 contextDescription += "**" + this.literal(contextVariableName) + "** = " + contextVariableMarkup + "<br/>";
             }
