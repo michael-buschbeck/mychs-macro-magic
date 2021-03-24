@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.15.1";
+const MMM_VERSION = "1.15.2";
 
 on("chat:message", function(msg)
 {
@@ -171,7 +171,7 @@ on("chat:message", function(msg)
                 if (script.type == "set")
                 {
                     let variableName = script.definition.variable;
-                    player.context.whisperback("\u26A0\uFE0F Value of **" + variableName + "** won't survive being **set** outside of a **script** block");
+                    player.context.whisperback("\u26A0\uFE0F Value of <strong>" + variableName + "</strong> won't survive being <strong>set</strong> outside of a <strong>script</strong> block");
                 }
 
                 script.startExecute(scriptVariables);
@@ -1524,7 +1524,7 @@ class MychScriptContext
                 }
 
                 let contextVariableMarkup = (contextVariableValue && contextVariableValue.toMarkup ? contextVariableValue.toMarkup() : this.literal(JSON.stringify(contextVariableValue)));
-                contextDescription += "**" + this.literal(contextVariableName) + "** = " + contextVariableMarkup + "<br/>";
+                contextDescription += this.literal(contextVariableName) + " = " + contextVariableMarkup + "<br/>";
             }
 
             statusTableRows.push([ "Context", (contextDescription || "empty" )]);
@@ -1622,20 +1622,20 @@ class MychScriptContext
 
                 createObj("macro", { playerid: this.playerid, name: backupMacroName, action: destinationMacroSource });
 
-                messageLines.push("Previous version saved as **..._backup_" + this.literal(backupMacroSuffix) + "**");
+                messageLines.push("Previous version saved as <strong>..._backup_" + this.literal(backupMacroSuffix) + "</strong>");
             }
 
             destinationMacroSource = [...destinationMacroSourcePrefixLines, ...sourceLines, ...destinationMacroSourceSuffixLines].join("\n");
             destinationMacro.set({ action: destinationMacroSource });
 
-            messageLines.unshift("Updated macro **" + this.literal(destinationMacro.get("name")) + "**");
+            messageLines.unshift("Updated macro <strong>" + this.literal(destinationMacro.get("name")) + "</strong>");
         }
         else
         {
             let destinationMacroSource = sourceLines.join("\n");
             destinationMacro = createObj("macro", { playerid: this.playerid, name: destination, action: destinationMacroSource });
 
-            messageLines.push("Created macro **" + this.literal(destinationMacro.get("name")) + "**");
+            messageLines.push("Created macro <strong>" + this.literal(destinationMacro.get("name")) + "</strong>");
         }
 
         this.whisperback(messageLines.join("<br/>"));
