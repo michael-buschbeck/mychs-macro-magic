@@ -1,0 +1,263 @@
+!rem // Midgard Combat Defense Script
+!rem // v1.1.1 2021-03-29
+!rem // 
+!rem //   * Bugfix: Angriffschaden = 0 wird nicht mehr abgefangen.
+!rem
+!mmm script
+!mmm
+!rem   // Config: set defaults for customizable variables
+!rem   //
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
+!rem   //
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cWeaponLabel = "Abwehr ohne Schild"
+!mmm   set customizable cOwnID = getattr(sender, "character_id")
+!mmm
+!rem   // Refetch character_id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = getattr(cOwnID, "character_id")
+!mmm   if isdenied(cOwnID) or isunknown(cOwnID)
+!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
+!mmm     exit script
+!mmm   end if
+!rem
+!rem   // Collect attack data and exit if no defense necessary
+!mmm   set attackResult = ?{Angriffswert|0 }
+!mmm   set criticalAttack = ?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}
+!mmm   set attackDamage = ?{Schaden laut Angreifer|0}
+!mmm   set armorPiercing = ?{Angriff mit schweren, scharfen Geschossen| Nein, 0 | Ja: Lang-/Kompositbogen, 1 | Ja: Schwere Armbrust, 1 }
+!mmm   set parryWeaponUsable = ?{Angriff mit Schild oder Parierwaffe parierbar| Ja,1| Nein,0}
+!mmm   if attackResult < 20
+!mmm     do whisperback("Abbruch: Angriff mit **" & attackResult & "** war nicht erfolgreich, keine Abwehr nötig.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Init
+!mmm   set ownName = getattr(cOwnID, "name")
+!mmm   set effDefense = getattr(cOwnID, "Abwehr") + getattr(cOwnID, "BonusAbwehr")
+!mmm   set armorLabel = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
+!mmm   set armorProtection = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "RüsLP"))
+!mmm   set endurance = getattr(cOwnID, "AP")
+!mmm   set health = getattr(cOwnID, "LP")
+!mmm   set maxHealth = getattrmax(cOwnID, "LP")
+!mmm   set parryWeapon = false
+!mmm   if parryWeaponUsable
+!mmm     set parryWeapon = (getattr(cOwnID,findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
+!mmm   end if
+!mmm
+!rem   // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
+!mmm   if parryWeapon and parryWeaponUsable and endurance > 0
+!mmm     set effParryWeaponSkill = getattr(cOwnID, findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) + getattr(cOwnID, findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "WaffeAbwB"))
+!mmm     set parryWeaponEnduranceProtection = getattr(cOwnID,findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
+!mmm     set effDefense = effDefense + effParryWeaponSkill
+!mmm   else if parryWeapon
+!mmm     do whisperback("Parierwaffe " & cWeaponLabel & " wegen Erschöpfung (AP=0) nicht berücksichtigt.")
+!mmm   end if
+!mmm
+!rem   // Collect defense modifiers
+!mmm   set modifiers = 0
+!mmm   set autoModifiers = 0
+!mmm   set modifierLog = ""
+!rem   // 1. Defender exhausted
+!mmm   if endurance <= 0
+!mmm     set autoModifiers = autoModifiers - 4
+!mmm     set modifierLog = modifierLog & " {{Erschöpft (eigene AP: 0)=-4}} "
+!mmm   end if
+!rem   // 2. Dropdown prompt: Focused defense, surprise
+!mmm   set semiManualModifiers = ?{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0 | Konzentrierte Abwehr +4,+4 | Ich greife überstürzt an -2,-2 | Ich bin überrascht -4,-4 } 
+!mmm   if semiManualModifiers == 4
+!mmm     set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
+!mmm   else if semiManualModifiers == -2
+!mmm     set modifierLog = modifierLog & " {{Überstürzter eigener Angriff=-2}} "
+!mmm   else if semiManualModifiers == -4
+!mmm     set modifierLog = modifierLog & " {{Überraschender Angriff=-4}} "
+!mmm   end if
+!rem   // Add manual modifiers from user input
+!mmm   set manualModifiers = ?{Weitere spezielle Abwehrmodifikatoren|0}
+!mmm   set modifiers = modifiers + autoModifiers + semiManualModifiers + manualModifiers
+!mmm   if manualModifiers != 0
+!mmm     if manualModifiers > 0
+!mmm       set manualModifiers = "+" & manualModifiers
+!mmm     end if
+!mmm     set modifierLog = modifierLog & " {{Manuelle Modifikatoren=" & manualModifiers & "}} "
+!mmm   end if
+!mmm   if modifierLog eq ""
+!mmm     set modifierLog = " {{Boni/Mali=keine}} "
+!mmm   end if
+!rem
+!rem   // Run & format rolls
+!mmm   set defenseRoll = roll("1d20")
+!mmm   set defenseResult = defenseRoll + effDefense + modifiers
+!mmm   if modifiers == 0
+!mmm     set modifiers = "+/-0"
+!mmm   else if modifiers > 0
+!mmm     set modifiers = "+" & modifiers
+!mmm   end if
+!mmm   set defenseResultLog = defenseResult & " = (1d20:" & defenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
+!mmm
+!mmm   if iscritical(defenseRoll)
+!mmm     set defenseResult = highlight(defenseResult, "good", defenseResultLog)
+!mmm   else if isfumble(defenseRoll)
+!mmm     set defenseResult = highlight(defenseResult, "bad", defenseResultLog)
+!mmm   else 
+!mmm     set defenseResult = highlight(defenseResult, "normal", defenseResultLog)
+!mmm   end if
+!mmm
+!mmm   set effEnduranceLoss = 0
+!mmm   set effHealthLoss = 0
+!mmm
+!mmm   if (criticalAttack == 0 and (defenseResult >= attackResult or iscritical(defenseRoll))) or (criticalAttack == 1 and iscritical(defenseRoll))
+!rem     // Defense successful
+!mmm     set defenseSuccess = true
+!mmm
+!rem     // Calculate endurance damage (may be reduced due to parry weapon or shield properties, which are stored as negative values)
+!mmm     if parryWeaponEnduranceProtection
+!mmm       set effEnduranceLoss = attackDamage + parryWeaponEnduranceProtection
+!mmm       if effEnduranceLoss < 0
+!mmm         set effEnduranceLoss = 0
+!mmm       end if
+!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "=AP-Verlust " & parryWeaponEnduranceProtection & "}} "
+!mmm     else
+!mmm       set effEnduranceLoss = attackDamage
+!mmm     end if
+!mmm
+!mmm   else 
+!rem     // Defense failed
+!mmm     set defenseSuccess = false
+!mmm
+!rem     // Defender loses full hit points worth of endurance regardless of armor
+!mmm     set effEnduranceLoss = attackDamage
+!mmm
+!rem     // Calculate damage to health depending on armor
+!mmm     if armorProtection > 0
+!mmm       if armorProtection > 3 and armorPiercing == 1
+!mmm         set armorProtection = 3
+!mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & " (reduziert wg. scharfen, schweren Geschossen)}} "
+!mmm       else
+!mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & "}} "
+!mmm       end if
+!mmm       set effHealthLoss = attackDamage - armorProtection
+!mmm       if effHealthLoss < 0
+!mmm         set effHealthLoss = 0
+!mmm       end if
+!mmm     else
+!mmm       set effHealthLoss = attackDamage
+!mmm     end if
+!mmm   end if
+!mmm
+!rem   // Process loss of endurance, if any, and applicable consequences
+!mmm   set newEndurance = highlight(endurance - effEnduranceLoss, "normal", "bin fit!")
+!mmm   if newEndurance <= 0 
+!rem     // AP=0: Green token marker
+!mmm     set newEndurance = highlight(0, "bad", "erschöpft")
+!mmm     do setattr(cOwnID, "status_green", true)
+!mmm   end if
+!mmm   do setattr(cOwnID, "AP", newEndurance)
+!mmm
+!rem   // Process loss of health and applicable consequences 
+!mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
+!mmm   if newHealth <= 0
+!rem     // LP<=0: Death zone marker
+!mmm     set newHealth = highlight(newHealth, "bad", "(fast) tot")
+!mmm     do setattr(cOwnID, "status_death_zone", true)
+!mmm   else if newHealth <= 3 
+!rem     // LP<=3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
+!mmm     set newHealth = highlight(newHealth, "bad", "sehr schwer verletzt")
+!mmm     do setattr(cOwnID, "status_red", true)
+!mmm   else if newHealth <= .5 * maxHealth
+!rem     // LP<=50%: Yellow token marker => endurance and movement to be limited to 50%
+!mmm     set newHealth = highlight(newHealth, "important", "schwer verletzt")
+!mmm     do setattr(cOwnID, "status_yellow", true)
+!mmm   end if
+!mmm   do setattr(cOwnID, "LP", newHealth)
+!mmm   if effHealthLoss > 0 and newHealth < 0
+!mmm     set timeToDie = roll("1d6" & newHealth) 
+!mmm   end if
+!rem
+!rem   // Verbose output
+!mmm   if cVerbose
+!mmm     combine chat
+!mmm       if defenseSuccess
+!mmm         chat       [DefenseSuccess]:           Ich winde mich, strecke mich, wehre mich, und erleide nur einen **leichten Treffer**.
+!mmm         if newHealth < 0
+!mmm           chat     [OngoingCriticalInjury]:    ***Ich bin immer noch lebensgefährlich verletzt, mein Countdown läuft weiter.*** [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Jetzt könnte ich eine heilende Hand gebrauchen...***
+!mmm         end if
+!mmm       else
+!mmm         if criticalAttack 
+!mmm           chat     [DefenseFailureCritDamage]: Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer **kritischer Treffer**.
+!mmm         else 
+!mmm           chat     [DefenseFailureRegDamage]:  Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer Treffer.
+!mmm         end if
+!mmm         if effHealthLoss > 0.33 * maxHealth
+!mmm           chat     [DefenseFailureHugeHit]:    AAAAAAARRG! Blut spritzt, Knochen brechen, solche Treffer halte ich nicht viele aus!
+!mmm         else if effHealthLoss > .2 * maxHealth
+!mmm           chat     [DefenseFailureSeriousHit]: AAAH! Das darf mir nicht oft passieren.
+!mmm         else if effHealthLoss > .1 * maxHealth
+!mmm           chat     [DefenseFailureModestHit]:  Aua!
+!mmm         else if effHealthLoss > 0
+!mmm           chat     [DefenseFailureMinorHit]:   Au. Pieks. Na warte!
+!mmm         else 
+!mmm           chat     [DefenseFailureNoDamage]:   Doch kein Problem für meine $[armorLabel]{armorLabel}, außer Schweiß verliere ich nichts.
+!mmm         end if
+!mmm         if newHealth < 0 and timeToDie < 0
+!mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{ownName}, out. [x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
+!mmm         else if newHealth < 0 and timeToDie >= 0
+!mmm           chat     [EffectsCriticalInjury]:    ***Ich bin lebensgefährlich verletzt.*** Ich habe noch **$[timeToDie]{timeToDie+0} Minuten** zu leben. [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Jetzt könnte ich eine heilende Hand gebrauchen...***
+!mmm         end if
+!mmm       end if 
+!mmm     end combine
+!mmm   end if
+!rem
+!rem   // Data table
+!mmm   combine chat
+!mmm     chat: ${"&"}{template:default} 
+!mmm     if (not parryWeapon) or (parryWeapon and endurance > 0)
+!mmm       chat: {{name=Abwehr: ${cWeaponLabel}}} 
+!mmm     else 
+!mmm       chat: {{name=Abwehr (erschöpft)}} 
+!mmm     end if 
+!mmm     if armorPiercing == 1 and attackDamage > 3
+!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (mit schwerem, scharfem Geschoss => Rüstungsschutz auf 3 begrenzt)}}
+!mmm     else 
+!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden**}}
+!mmm     end if
+!mmm     chat: {{Abwehr=${defenseResult}&nbsp;(**Wurf**&nbsp;${defenseRoll})}}
+!mmm     chat: {{Boni/Mali=**${modifiers}**}}
+!mmm     if defenseSuccess
+!mmm       chat: {{Erfolg=**Leichter Treffer**}}
+!mmm       chat: {{Schaden=**${effEnduranceLoss}&nbsp;AP**}}
+!mmm     else if criticalAttack
+!mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
+!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP +&nbsp;krit.&nbsp;Schaden!**}}
+!mmm     else 
+!mmm       chat: {{Fehlschlag=**Schwerer Treffer**}}
+!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
+!mmm     end if
+!mmm     if newHealth < 0 and timeToDie < 0
+!mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
+!mmm     else 
+!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
+!mmm       if newHealth > 3 and newHealth <= 0.5 * maxHealth
+!mmm         chat: {{Schwer verletzt=max. halbe AP, halbe Bewegung}}
+!mmm       else if newHealth > 0 and newHealth <= 3
+!mmm         chat: {{Dem Tode nah=handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
+!mmm       else if newHealth == 0
+!mmm         chat: {{Apathisch=handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
+!mmm       else if newHealth < 0 and defenseSuccess
+!mmm         chat: {{Tödlich verwundet=**Countdown läuft**}}
+!mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
+!mmm         chat: {{Tödlich verwundet=**${timeToDie} Minuten bis zum Tod**}}
+!mmm       end if
+!mmm       if newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
+!mmm         chat: {{Erschöpft=(-4 auf alles, max. Last reduziert)}}
+!mmm       end if
+!mmm     end if
+!mmm   end combine
+!mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
+!mmm   chat: /w ${ownName} ${"&"}{template:default} ${modifierLog}
+!mmm   if parryWeapon and iscritical(defenseRoll)
+!mmm     chat: /w "${ownName}"  ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm     chat: /w GM            ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm   end if
+!mmm end script
