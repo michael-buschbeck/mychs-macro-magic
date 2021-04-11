@@ -8,7 +8,7 @@ Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dab
 
 - [Features & Anwendung](#features--anwendung)
 - [Todo-Liste](#todo-liste)
-- [Beispiel-Konfiguration](#beispiel--konfiguration)
+- [Beispiel-Konfiguration](#beispiel-konfiguration)
 - [What's new?](#changelog)
 
 
@@ -28,26 +28,27 @@ Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der 
 
 #### Geschichtenerzählerausgabe
 
-`cVerbose = **[true|false]**` schaltet die Geschichtenerzählerausgabe an/ab. Nur wer `cVerbose = true` setzt, braucht sich über die `!mmm translate [...]: ...`-Zeilen Gedanken zu machen.
+`cVerbose = [true|false]` schaltet die Geschichtenerzählerausgabe an/ab. Nur wer `cVerbose = true` setzt, braucht sich über die `!mmm translate [...]: ...`-Zeilen Gedanken zu machen.
 
 Die letzte Zeile `#defend` ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein (entweder beim Charakter oder beim GM).
 
+![Screenshot](mmm-defense-1.1-mit-chatmenue.png)
 ![Screenshot](mmm-defense-1.1-plattenruestung-neu.png)
 
 ### Datenabfragen
 
 Das Skript fragt bei jedem Start eine Reihe von Daten zum Angriff ab, ob relevant oder nicht:
--  *Angriffswert:* `EW:Angriff`, gegen den die Abwehr gelingen soll.
--  *Kritischer Erfolg beim Angriff:* Ja/Nein.
--  *Schaden laut Angreifer:* Ergebnis des Schadenswurfs, der abgewehrt oder durch Rüstungsschutz reduziert werden soll.
--  *Angriff mit schweren, scharfen Geschossen:* Ja/Nein. (Für den Sonderfall, dass Plattenrüstungen gegen solche Geschosse nur bis max. 3 Punkte schützen.)
--  *Angriff mit Schild oder Parierwaffe parierbar:* Ja/Nein. (Wenn nein, können keine Schilde oder Parierwaffen benutzt werden. Waffenspezifische Regeln siehe *Kodex: 70*).
--  *Standard-Abwehrmodifikatoren:*
+- *Angriffswert:* `EW:Angriff`, gegen den die Abwehr gelingen soll.
+- *Kritischer Erfolg beim Angriff:* Ja/Nein.
+- *Schaden laut Angreifer:* Ergebnis des Schadenswurfs, der abgewehrt oder durch Rüstungsschutz reduziert werden soll.
+- *Angriff mit schweren, scharfen Geschossen:* Ja/Nein. (Für den Sonderfall, dass Plattenrüstungen gegen solche Geschosse nur bis max. 3 Punkte schützen.)
+- *Angriff mit Schild oder Parierwaffe parierbar:* Ja/Nein. (Wenn nein, können keine Schilde oder Parierwaffen benutzt werden. Waffenspezifische Regeln siehe *Kodex: 70*).
+- *Standard-Abwehrmodifikatoren:*
   -  keine: *Normale Abwehr +/-0*
-  -  *Konzentrierte Abwehr +4*
-  -  *Ich greife überstürzt an -2*
-  -  *Ich bin überrascht -4*
--  *Weitere spezielle Abwehrmodifikatoren:* Zahlenwert, nach Bedarf.
+  - *Konzentrierte Abwehr +4*
+  - *Ich greife überstürzt an -2*
+  - *Ich bin überrascht -4*
+- *Weitere spezielle Abwehrmodifikatoren:* Zahlenwert, nach Bedarf.
 
 ## Todo-Liste
 
@@ -73,7 +74,7 @@ Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzu
 
 1.1.1 2021-03-29
 
-- Bugfix: Angriffschaden = 0 wird nicht mehr abgefangen.
+- Bugfix: Angriffsschaden = 0 wird nicht mehr abgefangen.
 
 1.1 2021-03-14
 
