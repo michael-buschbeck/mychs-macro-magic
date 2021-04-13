@@ -1,7 +1,8 @@
 !rem // Midgard Combat Defense Script
-!rem // v1.1.1 2021-03-29
+!rem // v1.2 2021-04-13
 !rem // 
-!rem //   * Bugfix: Angriffschaden = 0 wird nicht mehr abgefangen.
+!rem // - #2: Animierten Würfel für den Hauptwurf eingebaut
+!rem // - Schaden = 0 wird als Sonderschaden ausgegeben
 !rem
 !mmm script
 !mmm
@@ -23,7 +24,7 @@
 !mmm   end if
 !rem
 !rem   // Collect attack data and exit if no defense necessary
-!mmm   set attackResult = ?{Angriffswert|0 }
+!mmm   set attackResult = ?{Angriffswert|0}
 !mmm   set criticalAttack = ?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}
 !mmm   set attackDamage = ?{Schaden laut Angreifer|0}
 !mmm   set armorPiercing = ?{Angriff mit schweren, scharfen Geschossen| Nein, 0 | Ja: Lang-/Kompositbogen, 1 | Ja: Schwere Armbrust, 1 }
@@ -87,7 +88,9 @@
 !mmm   end if
 !rem
 !rem   // Run & format rolls
-!mmm   set defenseRoll = roll("1d20")
+!rem // !mmm   set defenseRoll = roll("1d20")
+/me würfelt [[1d20]]
+!mmm   set defenseRoll = $[[0]]
 !mmm   set defenseResult = defenseRoll + effDefense + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
@@ -172,7 +175,7 @@
 !mmm   end if
 !mmm   do setattr(cOwnID, "LP", newHealth)
 !mmm   if effHealthLoss > 0 and newHealth < 0
-!mmm     set timeToDie = roll("1d6" & newHealth) 
+!mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
 !mmm   end if
 !rem
 !rem   // Verbose output
@@ -219,15 +222,25 @@
 !mmm     end if 
 !mmm     if armorPiercing == 1 and attackDamage > 3
 !mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (mit schwerem, scharfem Geschoss => Rüstungsschutz auf 3 begrenzt)}}
-!mmm     else 
+!mmm     else if attackDamage == 0
+!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;Sonderschaden**}}
+!mmm     else
 !mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden**}}
 !mmm     end if
 !mmm     chat: {{Abwehr=${defenseResult}&nbsp;(**Wurf**&nbsp;${defenseRoll})}}
 !mmm     chat: {{Boni/Mali=**${modifiers}**}}
-!mmm     if defenseSuccess
+!mmm     if attackDamage == 0 and defenseSuccess
+!mmm       chat: {{Erfolg=**Abwehr gelungen**}}
+!mmm     else if attackDamage == 0 and (not defenseSuccess) and criticalAttack
+!mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
+!mmm       chat: {{Schaden=**SPEZIAL**}}
+!mmm     else if attackDamage == 0 and (not defenseSuccess) and (not criticalAttack)
+!mmm       chat: {{Fehlschlag=**Schwerer Treffer**}}
+!mmm       chat: {{Schaden=**SPEZIAL**}}
+!mmm     else if attackDamage > 0 and defenseSuccess
 !mmm       chat: {{Erfolg=**Leichter Treffer**}}
 !mmm       chat: {{Schaden=**${effEnduranceLoss}&nbsp;AP**}}
-!mmm     else if criticalAttack
+!mmm     else if attackDamage > 0 and (not defenseSuccess) and criticalAttack
 !mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
 !mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP +&nbsp;krit.&nbsp;Schaden!**}}
 !mmm     else 
