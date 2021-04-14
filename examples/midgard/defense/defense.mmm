@@ -1,8 +1,7 @@
 !rem // Midgard Combat Defense Script
-!rem // v1.2 2021-04-13
+!rem // v1.2.1 2021-04-14
 !rem // 
-!rem // - #2: Animierten Würfel für den Hauptwurf eingebaut
-!rem // - Schaden = 0 wird als Sonderschaden ausgegeben
+!rem // - #2: Elegantere Integration des Animierten Würfels für den Abwehrwurf 
 !rem
 !mmm script
 !mmm
@@ -88,8 +87,7 @@
 !mmm   end if
 !rem
 !rem   // Run & format rolls
-!rem // !mmm   set defenseRoll = roll("1d20")
-/me würfelt [[1d20]]
+&{template:none} [[1d20]] {{}}
 !mmm   set defenseRoll = $[[0]]
 !mmm   set defenseResult = defenseRoll + effDefense + modifiers
 !mmm   if modifiers == 0
