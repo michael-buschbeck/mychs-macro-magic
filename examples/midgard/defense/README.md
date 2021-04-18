@@ -1,6 +1,6 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.2 vom 2021-04-14,** erfordert MMM 1.16.0+, ist in unserem Midgard-Spiel installiert (`#defend`).
+Aktuelle Version: **1.2.1 vom 2021-04-14,** erfordert MMM 1.16.0+, ist in unserem Midgard-Spiel installiert (`#defend`).
 
 Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dabei werden die eigene Erschöpfung (-4 bei AP:0) und die eingestellte Rüstung automatisch und weitere Modifikatoren nach Benutzerauswahl und -eingabe berücksichtigt, und die Konsequenzen umgesetzt (Abzüge AP und LP, ggf. Ausgabe der Folgen). Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen.
 
