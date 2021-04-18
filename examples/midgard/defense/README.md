@@ -1,6 +1,6 @@
-# MMM-Abwehrskript für Midgard
+# MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.1.1 vom 2021-03-29,** erfordert MMM 1.16.0+, ist im Midgard-Spiel installiert (`#defend`).
+Aktuelle Version: **1.1.1 vom 2021-03-29,** erfordert MMM 1.16.0+, ist in unserem Midgard-Spiel installiert (`#defend`).
 
 Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dabei werden die eigene Erschöpfung (-4 bei AP:0) und die eingestellte Rüstung automatisch und weitere Modifikatoren nach Benutzerauswahl und -eingabe berücksichtigt, und die Konsequenzen umgesetzt (Abzüge AP und LP, ggf. Ausgabe der Folgen). Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen.
 
@@ -55,7 +55,7 @@ Das Skript fragt bei jedem Start eine Reihe von Daten zum Angriff ab, ob relevan
 - Sobald MMM Zugriff und Verarbeitung von Tabellen erlaubt, könnte das Skript alle verfügbaren Abwehrwaffen und Schilde zur Auswahl anbieten und, falls nur eine vorhanden ist, als Default komplett auf die Definition in einem Konfigurationsskript verzichten.
 - Die weiteren Konsequenzen schwerer Verwundungen könnten automatisch umgesetzt werden (reduzierte AP und Bewegungsweite wegen niedriger LP).
 - Ein Heilungsskript wäre gut, das die ganzen Zustandsmarker (rot, gelb, grün, Totenkopf) wieder automatisch entfernt und zeitweilige Einschränkungen von AP oder Bewegung rückgängig macht.
-- Es gibt noch zwei Sonderfälle für [[abwehr_nahkampf_boni_und_malusse|Abwehrmodifikatoren]], die -- samt der dann notwendigen Verschachtelung unterschiedlicher Kombinationen -- noch nicht eingebaut sind (schwere Beinverletzung und vollständige Dunkelheit).
+- Es gibt noch zwei Sonderfälle für [Abwehrmodifikatoren](https://midgard.alienn.net/doku.php?id=abwehr_nahkampf_boni_und_malusse), die -- samt der dann notwendigen Verschachtelung unterschiedlicher Kombinationen -- noch nicht eingebaut sind (schwere Beinverletzung und vollständige Dunkelheit).
 
 ## Beispiel-Konfiguration
 
