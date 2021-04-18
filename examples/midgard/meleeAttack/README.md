@@ -1,6 +1,6 @@
 # MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.5.1 vom 2021-03-27,** erfordert MMM 1.16.0+, ist in unserem Midgard-Spiel (`#melee`) und TEST-Spiel (`mmmMeleeAttack`) installiert.
+Aktuelle Version: **1.6 vom 2021-03-27,** erfordert MMM 1.16.0+, ist in unserem Midgard-Spiel (`#melee`) und TEST-Spiel (`mmmMeleeAttack`) installiert.
 
 Das MMM-basierte Midgard-Nahkampfskript wickelt Nahkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben sowie im Detail an Spieler und GM geflüstert.
 
@@ -89,6 +89,12 @@ Minimalbeispiel für ein Kurzschwert, ohne die Erzählerei zu verändern (Voraus
 ```
 
 ## Changelog
+
+1.6 2021-03-27 (requires MMM 1.16.0+)
+
+- Sonderfunktion magischer Zusatzschaden aufgeräumt: ES FÄLLT WEG: cWeaponMagic, magische Waffen werden nun automatisch aus dem Charakterbogen erkannt. INKOMPATIBEL: cWeaponMagicMarker & cWeaponMagicDamage sowie die Chat-Zeile AttackOpeningMagicDamage fallen auch weg, neu dafür: cMagicExtraDamageMarker, cMagicExtraDamage, cMagicExtraDamageLabel sowie die Chat-Zeilen AttackOpeningExtraMagicDamage und AttackSuccessClosingExtraMagicDamage
+- Dropdown-Modifikatoren werden nun einzeln dokumentiert, und weitere Kombinationen ergänzt
+- Verbose=true: Schwere des Schadens wird nun verbal dargestellt, Nullschaden wie eine 1 beim Schadenswurf.
 
 1.5.1 2021-03-25
 
