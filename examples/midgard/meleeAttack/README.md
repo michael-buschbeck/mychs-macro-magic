@@ -1,6 +1,6 @@
-# MMM-Angriffsskript (Nahkampf) für Midgard
+# MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.5.1 vom 2021-03-27,** erfordert MMM 1.16.0+, ist im Midgard-Spiel (`#melee`) und im TEST-Spiel (`mmmMeleeAttack`) installiert.
+Aktuelle Version: **1.5.1 vom 2021-03-27,** erfordert MMM 1.16.0+, ist in unserem Midgard-Spiel (`#melee`) und TEST-Spiel (`mmmMeleeAttack`) installiert.
 
 Das MMM-basierte Midgard-Nahkampfskript wickelt Nahkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben sowie im Detail an Spieler und GM geflüstert.
 
@@ -36,7 +36,7 @@ Mindestens muss ein Konfig-Skript eine der vom Charakter geführten Waffen dekla
 !mmm set cWeaponMagicDamage = "[Würfelwurf, z.B. 1d+1]"
 (...)
 ```
-*) "MMM-Token-Marker" bezieht sich auf einen gültigen Namen für einen Roll20-Token-Marker in der [[https://github.com/michael-buschbeck/mychs-macro-magic#attributes|MMM-Notation]], wie z.B. ''status_all_for_one''.
+*) "MMM-Token-Marker" bezieht sich auf einen gültigen Namen für einen Roll20-Token-Marker in der [MMM-Notation](https://github.com/michael-buschbeck/mychs-macro-magic#attributes), wie z.B. ''status_all_for_one''.
 
 #### Unterschiedliche Charaktere/NPCs
 
