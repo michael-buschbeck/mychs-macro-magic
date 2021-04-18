@@ -71,7 +71,7 @@ Das Skript fragt bei jedem Start neben dem Ziel des Angriffs (auf gegnerisches T
 
 - Sobald MMM Zugriff und Verarbeitung von Tabellen erlaubt, könnte das Skript alle verfügbaren Angriffswaffen zur Auswahl anbieten und, falls nur eine vorhanden ist, als Default komplett auf die Definition in einem Konfigurationsskript verzichten.
 - Lassen sich die Effekte von Angriffen ins Handgemenge besser automatisieren? Erstmal +4 auf Ziel im Handgemenge, aber es muss dann automatisch bestimmt werden, welche der Parteien im Handgemenge zufällig getroffen wurde. Lohnt das?
-- Geziele Angriffe auf Körperteile / Scharfschießen
+- Gezielte Angriffe auf Körperteile / Scharfschießen
 - Kritische Fehler-/Erfolgsereignisse automatisch auswürfeln, ausgeben und soweit wie möglich umsetzen.
 
 
