@@ -646,6 +646,8 @@ This works in any place with an expression, of course, not just in **set** – y
 | distunits()                                        | Board     | distunits() = "m"    | Return name of distance units used on the current game board
 | distscale()                                        | Board     | distscale() = 0.0714 | Return number of game board distance units per pixel
 | distsnap()                                         | Board     | distsnap() = 70      | Return number of pixels between grid lines – if grid lines disabled, zero
+| spawnfx(*type*, *left*, *top*)                     | Board     | spawnfx("nova-blood", 70, 70) | **[Side effect]** Spawns visual effect *type* around coordinates *left*, *top*
+| spawnfx(*type*, *left1*, *top1*, *left2*, *top2*)  | Board     | | **[Side effect]** Spawns directional visual effect *type* going from coordinates *left1*, *top1* to coordinates *left2*, *top2*
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
 | findattr(*name\|id*)                               | Attribute | findattr("Finn") | List available character sheet table names – see below
@@ -771,12 +773,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.16.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.17.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.17.0  | 2021-04-18 | Add `spawnfx()` to spawn visual effects
 | 1.16.0  | 2021-03-24 | Support `width` and `height` token attributes
 | 1.15.0  | 2021-03-02 | Add diagnostic tooltips to `denied` and new `unknown` results
 | 1.14.0  | 2021-02-22 | Introduce `debug chat`, `debug do`, and the `?` debug operators
