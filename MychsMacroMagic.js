@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.16.0";
+const MMM_VERSION = "1.17.0";
 
 on("chat:message", function(msg)
 {
@@ -664,6 +664,26 @@ class MychScriptContext
         let pixelsPerGridCell = pixelsPerGridUnit * gridUnitsPerGridCell;
 
         return pixelsPerGridCell;
+    }
+
+    spawnfx(type, x1, y1, x2, y2)
+    {
+        type = MychExpression.coerceString(type);
+
+        x1 = MychExpression.coerceNumber(x1);
+        y1 = MychExpression.coerceNumber(y1);
+
+        if (x2 == undefined)
+        {
+            spawnFx(x1, y1, type);
+        }
+        else
+        {
+            x2 = MychExpression.coerceNumber(x2);
+            y2 = MychExpression.coerceNumber(y2);
+    
+            spawnFxBetweenPoints({x: x1, y: y1}, {x: x2, y: y2}, type);
+        }
     }
 
     getcharid(nameOrId)
