@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
-!rem // v1.2.1 2021-04-14
+!rem // v1.3.0 2021-04-18
 !rem // 
-!rem // - #2: Elegantere Integration des Animierten Würfels für den Abwehrwurf 
+!rem // - Visuelle Effekte für leichte, schwere und kritische Treffer ergänzt (MMM 1.17.0)
 !rem
 !mmm script
 !mmm
@@ -238,12 +238,15 @@
 !mmm     else if attackDamage > 0 and defenseSuccess
 !mmm       chat: {{Erfolg=**Leichter Treffer**}}
 !mmm       chat: {{Schaden=**${effEnduranceLoss}&nbsp;AP**}}
+!mmm       do spawnfx("bubbling-water", getattr(cOwnID, "left"), getattr(cOwnID, "top"))
 !mmm     else if attackDamage > 0 and (not defenseSuccess) and criticalAttack
 !mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
 !mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP +&nbsp;krit.&nbsp;Schaden!**}}
+!mmm       do spawnfx("nova-blood", getattr(cOwnID, "left"), getattr(cOwnID, "top"))
 !mmm     else 
 !mmm       chat: {{Fehlschlag=**Schwerer Treffer**}}
 !mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
+!mmm       do spawnfx("bubbling-blood", getattr(cOwnID, "left"), getattr(cOwnID, "top"))
 !mmm     end if
 !mmm     if newHealth < 0 and timeToDie < 0
 !mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
