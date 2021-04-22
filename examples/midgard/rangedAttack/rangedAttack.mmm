@@ -1,8 +1,6 @@
 !rem // Midgard Ranged Attack Script
-!rem // v1.7 2021-03-27 (requires MMM 1.16.0 or higher)
-!rem //   * Abstände werden nun zwischen Tokenrändern berechnet (statt zwischen Mittelpunkten; erfordert MMM 1.16.0 oder höher)
-!rem //   * Optionale magische Munition mit Angriffsbonus und Zusatzschaden kann nun genutzt werden
-!rem //   * Bugfix: negativer Schaden wird abgefangen
+!rem // v1.8.x 2021-04-14 (requires MMM 1.16.0 or higher)
+!rem // - #2: 3D-Würfel integriert
 !rem
 !mmm script
 !mmm
@@ -212,7 +210,10 @@
 !mmm   end if
 !rem
 !rem   // Run & format rolls
-!mmm   set attackRoll = roll("1d20")
+!rem   // Possibly, one could move this into the config script and run the damage roll (or both) pulled from the weapon row in the Angriff table:
+!rem   // &{template:none} [[@{Yorric MacRathgar|repeating_angriff_-MEr2Q3qFFNZyf3Uj7EA_WaffeSchaden}+@{Yorric MacRathgar|repeating_angriff_-MEr2Q3qFFNZyf3Uj7EA_WaffeEfSchB}]] {{}}
+&{template:none} [[1d20]] {{}}
+!mmm   set attackRoll = $[[0]]
 !mmm   set attackResult = attackRoll + effAttack + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
