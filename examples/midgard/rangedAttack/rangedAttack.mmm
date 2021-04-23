@@ -210,8 +210,6 @@
 !mmm   end if
 !rem
 !rem   // Run & format rolls
-!rem   // Possibly, one could move this into the config script and run the damage roll (or both) pulled from the weapon row in the Angriff table:
-!rem   // &{template:none} [[@{Yorric MacRathgar|repeating_angriff_-MEr2Q3qFFNZyf3Uj7EA_WaffeSchaden}+@{Yorric MacRathgar|repeating_angriff_-MEr2Q3qFFNZyf3Uj7EA_WaffeEfSchB}]] {{}}
 &{template:none} [[1d20]] {{}}
 !mmm   set attackRoll = $[[0]]
 !mmm   set attackResult = attackRoll + effAttack + modifiers
