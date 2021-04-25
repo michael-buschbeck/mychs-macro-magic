@@ -1,6 +1,10 @@
 # MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.6 vom 2021-03-27,** erfordert MMM 1.16.0+, ist in unserem Midgard-Spiel (`#melee`) und TEST-Spiel (`mmmMeleeAttack`) installiert.
+Aktuelle Version: **1.7 vom 2021-03-25,** erfordert MMM 1.16.0+.
+
+Aufruf: 
+- Hauptspiel ("Midgard"): ``#melee`` 
+- Testspiel ("TEST"): ``#mmmMeleeAttack``
 
 Das MMM-basierte Midgard-Nahkampfskript wickelt Nahkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben sowie im Detail an Spieler und GM geflüstert.
 
