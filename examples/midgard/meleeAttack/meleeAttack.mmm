@@ -1,9 +1,14 @@
 !rem // Midgard Melee Attack Script
-!rem // v1.7.0-pre 2021-04-23 (requires MMM 1.16.0+)
+!rem // v1.7.0 2021-04-25 (requires MMM 1.16.0+)
 !rem // - 3D-Wurf für den Angriffswürfel
+!rem // - Intern: MMM-Versionscheck beim Start
 !rem
 !mmm script
-!rem   //chat: "Midgard Melee Attack Script v1.6"
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.16
+!mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
