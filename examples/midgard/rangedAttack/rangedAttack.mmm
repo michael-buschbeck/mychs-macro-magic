@@ -1,8 +1,14 @@
 !rem // Midgard Ranged Attack Script
-!rem // v1.8.x 2021-04-14 (requires MMM 1.16.0 or higher)
+!rem // v1.8.0 2021-04-25 (requires MMM 1.16.0 or higher)
 !rem // - #2: 3D-Würfel integriert
+!rem // - Intern: MMM-Versionscheck beim Start
 !rem
 !mmm script
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.16
+!mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
