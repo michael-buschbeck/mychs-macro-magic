@@ -94,7 +94,12 @@ Minimalbeispiel für ein Kurzschwert, ohne die Erzählerei zu verändern (Voraus
 
 ## Changelog
 
-1.6 2021-03-27 (requires MMM 1.16.0+)
+1.7.0 2021-04-25 (requires MMM 1.16.0+)
+
+- 3D-Würfel für den Erfolgswurf
+- Intern: MMM-Versionscheck beim Start
+
+1.6.0 2021-03-27 (requires MMM 1.16.0+)
 
 - Sonderfunktion magischer Zusatzschaden aufgeräumt: ES FÄLLT WEG: cWeaponMagic, magische Waffen werden nun automatisch aus dem Charakterbogen erkannt. INKOMPATIBEL: cWeaponMagicMarker & cWeaponMagicDamage sowie die Chat-Zeile AttackOpeningMagicDamage fallen auch weg, neu dafür: cMagicExtraDamageMarker, cMagicExtraDamage, cMagicExtraDamageLabel sowie die Chat-Zeilen AttackOpeningExtraMagicDamage und AttackSuccessClosingExtraMagicDamage
 - Dropdown-Modifikatoren werden nun einzeln dokumentiert, und weitere Kombinationen ergänzt
@@ -107,7 +112,7 @@ Minimalbeispiel für ein Kurzschwert, ohne die Erzählerei zu verändern (Voraus
 -  Magischer Sonderschaden wird nur bei erfolgreichen Angriffen an GM und Spieler ausgegeben
 -  Cleanup: Fehler "WeaponNotFound" wird nicht mehr als Spielausgabe sondern als Konfigurationsfehler behandelt
 
-1.5 2021-03-14
+1.5.0 2021-03-14
 
 -  Ausgabe und Code für Schadensbestandteile optimiert
 -  Zugriffsverweigerung auf Ziele wird nun korrekt abgefangen (erfordert MMM 1.15.0+)

@@ -96,13 +96,18 @@ Minimalbeispiel für ein Wurfmesser, ohne die Erzählerei zu verändern (Vorauss
 
 ## Changelog
 
-v1.7 2021-03-27
+1.8.0 2021-04-25 (requires MMM 1.16.0+)
+
+- 3D-Würfel für den Erfolgswurf
+- Intern: MMM-Versionscheck beim Start
+
+1.7.0 2021-03-27
 
 - Abstände werden nun zwischen Tokenrändern berechnet (statt zwischen Mittelpunkten; erfordert MMM 1.16.0 oder höher)
 -  Optionale magische Munition mit Angriffsbonus und Zusatzschaden kann nun genutzt werden
 -  Bugfix: negativer Schaden wird abgefangen
 
-v1.6beta 2021-03-14
+1.6beta 2021-03-14
 
 -  MMM-Lokalisierung eingebaut
 -  Senderunabhängigen Zugriff auf den angreifenden Charakter portiert
