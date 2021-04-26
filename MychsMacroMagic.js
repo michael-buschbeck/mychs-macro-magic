@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.17.0";
+const MMM_VERSION = "1.17.1";
 
 on("chat:message", function(msg)
 {
@@ -1034,7 +1034,7 @@ class MychScriptContext
             case "character":
             {
                 let playerPageId = Campaign().get("playerpageid");
-                let tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: playerPageId });
+                let tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: playerPageId, layer: "objects" });
                 return (tokens ? tokens[0] : undefined);
             }
         }
