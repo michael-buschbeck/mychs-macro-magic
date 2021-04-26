@@ -37,12 +37,36 @@ on("chat:message", function(msg)
         player.context.$consumeRolls(msg.inlinerolls);
     }
 
+    let msgSelected = msg.selected ? msg.selected.map(entry => entry._id) : [];
+    
+    if (msgSelected.join(",") != player.context.selected.join(","))
+    {
+        player.context.selected = msgSelected;
+    }
+
     player.context.sender = msg.who;
     player.context.playerid = msg.playerid;
 
     if (msg.type != "api")
     {
         return;
+    }
+
+    if (msg.playerid == "API" && MychScriptContext.impersonate.length > 0)
+    {
+        let impersonate = MychScriptContext.impersonate.shift();
+
+        log("===== MMM impersonating " + impersonate.playerid + " for API script command: " + msg.content);//|XXX
+
+        msg.playerid = impersonate.playerid;
+        msg.selected = impersonate.selected.map(id => findObjs({ id: id })).flat().map(obj => ({ _id: obj.get("id"), _type: obj.get("type") }));
+
+        if (msg.selected.length == 0)
+        {
+            msg.selected = undefined;
+        }
+
+        log("===== MMM passing selected=" + JSON.stringify(msg.selected));//|XXX
     }
 
     let statusSource = msg.content;
@@ -178,10 +202,12 @@ on("chat:message", function(msg)
 class MychScriptContext
 {
     static players = {};
+    static impersonate = [];
 
     version = MMM_VERSION;
     playerid = undefined;
     sender = undefined;
+    selected = [];
 
     pi = Math.PI;
 
@@ -584,6 +610,17 @@ class MychScriptContext
     chat(message)
     {
         let [character, token] = this.$getCharacterAndTokenObjs(this.sender);
+
+        if (message.startsWith("!"))
+        {
+            MychScriptContext.impersonate.push(
+            {
+                playerid: this.playerid,
+                selected: this.selected,
+            });
+
+            log("===== MMM going to impersonate " + this.playerid + " for API next script command"); //|XXX
+        }
 
         if (character)
         {
