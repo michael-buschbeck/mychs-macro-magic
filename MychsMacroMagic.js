@@ -5,20 +5,6 @@ const MMM_VERSION = "1.17.1";
 
 on("chat:message", function(msg)
 {
-    let msgContext = new MychScriptContext();
-    let msgContextUpdated = false;
-    
-    if (msg.type == "rollresult")
-    {
-        msgContext.$consumeRolls([{ results: JSON.parse(msg.content), expression: msg.origRoll }]);
-        msgContextUpdated = true;
-    }
-    else if (msg.inlinerolls && msg.inlinerolls.length > 0)
-    {
-        msgContext.$consumeRolls(msg.inlinerolls);
-        msgContextUpdated = true;
-    }
-
     let player = MychScriptContext.players[msg.playerid];
 
     if (!player)
@@ -37,9 +23,18 @@ on("chat:message", function(msg)
 
     player.lastseen = new Date();
 
-    if (msgContextUpdated)
+    if (msg.type == "rollresult")
     {
-        player.context = msgContext;
+        let rolls =
+        [{
+            results: JSON.parse(msg.content),
+            expression: msg.origRoll,
+        }];
+        player.context.$consumeRolls(rolls);
+    }
+    else if (msg.inlinerolls && msg.inlinerolls.length > 0)
+    {
+        player.context.$consumeRolls(msg.inlinerolls);
     }
 
     player.context.sender = msg.who;
@@ -417,6 +412,16 @@ class MychScriptContext
         {
             let rollReference = "$[[" + rollIndex + "]]";
             this[rollReference] = this.$decorateRoll(rolls[rollIndex]);
+        }
+
+        for (let rollIndex = rolls.length;; ++rollIndex)
+        {
+            let rollReference = "$[[" + rollIndex + "]]";
+            if (this[rollReference] == undefined)
+            {
+                break;
+            }
+            delete this[rollReference];
         }
 
         return rolls.length;
