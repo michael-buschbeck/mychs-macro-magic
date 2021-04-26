@@ -2567,7 +2567,7 @@ class MychScript
 
             if (command.tokens)
             {
-                let commandTokensAlternatives = (command.tokens instanceof Array ? [command.tokens] : Object.values(command.tokens));
+                let commandTokensAlternatives = (Array.isArray(command.tokens) ? [command.tokens] : Object.values(command.tokens));
                 let maxSourceOffsetAlternative = sourceOffset;
 
                 for (let commandTokens of commandTokensAlternatives)
@@ -3037,7 +3037,7 @@ class MychExpression
 
     static coerceScalar(value)
     {
-        if (value instanceof Array)
+        if (Array.isArray(value))
         {
             return value[value.length - 1];
         }
@@ -3062,7 +3062,7 @@ class MychExpression
 
     static coerceString(value)
     {
-        if (value instanceof Array)
+        if (Array.isArray(value))
         {
             return value.map(MychExpression.coerceString).join(", ");
         }
@@ -3140,7 +3140,7 @@ class MychExpression
 
     static literal(value)
     {
-        if (value instanceof Array)
+        if (Array.isArray(value))
         {
             return value.map(MychExpression.literal).join(", ");
         }
