@@ -1,14 +1,14 @@
 !rem // Midgard Melee Attack Script
-!rem // v1.6 2021-03-27 (requires MMM 1.16.0+)
-!rem //   * Sonderfunktion magischer Zusatzschaden aufgeräumt: ES FÄLLT WEG: cWeaponMagic, magische Waffen werden nun
-!rem //     automatisch aus dem Charakterbogen erkannt. INKOMPATIBEL: cWeaponMagicMarker & cWeaponMagicDamage sowie die 
-!rem //     Chat-Zeile AttackOpeningMagicDamage fallen auch weg, neu dafür: cMagicExtraDamageMarker, cMagicExtraDamage, 
-!rem //     cMagicExtraDamageLabel sowie die Chat-Zeilen AttackOpeningExtraMagicDamage und AttackSuccessClosingExtraMagicDamage
-!rem //   * Dropdown-Modifikatoren werden nun einzeln dokumentiert, und weitere Kombinationen ergänzt
-!rem //   * Verbose=true: Schwere des Schadens wird nun verbal dargestellt, Nullschaden wie eine 1 beim Schadenswurf.
+!rem // v1.7.0 2021-04-25 (requires MMM 1.16.0+)
+!rem // - 3D-Wurf für den Angriffswürfel
+!rem // - Intern: MMM-Versionscheck beim Start
 !rem
 !mmm script
-!mmm   chat: "Midgard Melee Attack Script v1.6"
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.16
+!mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
@@ -141,7 +141,8 @@
 !mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + manualModifiers
 !rem
 !rem   // Run & format rolls
-!mmm   set attackRoll = roll("1d20")
+&{template:none} [[1d20]] {{}}
+!mmm   set attackRoll = $[[0]]
 !mmm   set attackResult = attackRoll + effAttack + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"

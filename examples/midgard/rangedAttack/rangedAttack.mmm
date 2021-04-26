@@ -1,10 +1,14 @@
 !rem // Midgard Ranged Attack Script
-!rem // v1.7 2021-03-27 (requires MMM 1.16.0 or higher)
-!rem //   * Abstände werden nun zwischen Tokenrändern berechnet (statt zwischen Mittelpunkten; erfordert MMM 1.16.0 oder höher)
-!rem //   * Optionale magische Munition mit Angriffsbonus und Zusatzschaden kann nun genutzt werden
-!rem //   * Bugfix: negativer Schaden wird abgefangen
+!rem // v1.8.0 2021-04-25 (requires MMM 1.16.0 or higher)
+!rem // - #2: 3D-Würfel integriert
+!rem // - Intern: MMM-Versionscheck beim Start
 !rem
 !mmm script
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.16
+!mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
@@ -212,7 +216,8 @@
 !mmm   end if
 !rem
 !rem   // Run & format rolls
-!mmm   set attackRoll = roll("1d20")
+&{template:none} [[1d20]] {{}}
+!mmm   set attackRoll = $[[0]]
 !mmm   set attackResult = attackRoll + effAttack + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
