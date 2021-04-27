@@ -162,6 +162,7 @@
 !mmm   end if
 !mmm   if modifierLog eq ""
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
+!mmm     set modifierTooltip = " Boni/Mali&nbsp;&nbsp;&nbsp;keine "
 !mmm   end if
 !mmm   set modifiers = highlight(modifiers, "normal", modifierTooltip)
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
