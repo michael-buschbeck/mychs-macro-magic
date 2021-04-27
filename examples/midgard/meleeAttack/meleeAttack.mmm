@@ -1,7 +1,6 @@
 !rem // Midgard Melee Attack Script
-!rem // v1.7.0 2021-04-25 (requires MMM 1.16.0+)
-!rem // - 3D-Wurf für den Angriffswürfel
-!rem // - Intern: MMM-Versionscheck beim Start
+!rem // v1.7.1-pre1 2021-04-27 (requires MMM 1.16.0+)
+!rem // - Modifikatoren-Log als Tooltip ergänzt
 !rem
 !mmm script
 !rem   // MMM compatibility check: die if MMM version too low
@@ -83,10 +82,12 @@
 !mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
 !mmm   set modifierLog = ""
+!mmm   set modifierTooltip = ""
 !rem   // 1. Attacker exhausted
 !mmm   if getattr(cOwnID, "AP") <= 0
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & ownName & "].AP:0)=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 2. Target exhausted
 !mmm   if isdenied(foeEndurance) 
@@ -94,41 +95,50 @@
 !mmm   else if foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft ([" & foeName & "].AP:" & foeEndurance & ")=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !rem   // 3. Attack from behind
 !mmm   if (foeViewAngle < -90) or (foeViewAngle > 90)
 !mmm     set autoModifiers = autoModifiers + 2
 !mmm     set modifierLog = modifierLog & " {{Angriff von hinten=+2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;von&nbsp;hinten&nbsp;&nbsp;&nbsp;+2 "
 !mmm   end if
 !rem   // 4. Collect additional standard modifiers from user via dropdown menu
 !mmm   set semiAutoModCode = ?{Standard-Angriffsmodifikatoren|   Normaler Angriff +/-0, ?{Normaler Angriff +/- ... &#124;      NORMAL HALT +/-0              &#44; 1 &#124;      Angriff von oben (70cm+) +2   &#44; 2 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 3 &#124;      Wehrloses Ziel +4             &#44; 5 &#124;      Panisch fliehendes Ziel +4    &#44; 7   &#125; |   Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ... &#124;      Nix weiter +/-0               &#44; 11 &#124;      Angriff von oben (70cm+) +2   &#44; 22 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 33 &#124;      Wehrloses Ziel +4             &#44; 55 &#124;      Panisch fliehendes Ziel +4    &#44; 77   &#125; |   Überstürzter Angriff -6, ?{Überstürzter Angriff -6 +/- ... &#124;      Nix weiter +/-0               &#44; 13 &#124;      Angriff von oben (70cm+) +2   &#44; 26 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 39 &#124;      Wehrloses Ziel +4             &#44; 65 &#124;      Panisch fliehendes Ziel +4    &#44; 91   &#125; |   Völlige Dunkelheit/Blendung -6, ?{Völlige Dunkelheit/Blendung -6 +/- ... &#124;      Nix weiter +/-0               &#44; 17 &#124;      Angriff von oben (70cm+) +2   &#44; 34 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 51 &#124;      Wehrloses Ziel +4             &#44; 85 &#124;      Panisch fliehendes Ziel +4    &#44; 119 &#124;       Spontaner Angriff -4 &#44; ?{Völlige Dunkelheit/Blendung -6 Spontaner Angriff -4 +/- ... &amp;#124;         Das war alles               &amp;#44; 187 &amp;#124;         Angriff von oben (70cm+) +2 &amp;#44; 374 &amp;#124;         Liegendes Ziel (ich stehe) +4 &amp;#44; 561 &amp;#124;         Wehrloses Ziel +4           &amp;#44; 935 &amp;#124;         Panisch fliehendes Ziel +4  &amp;#44; 1309       &amp;#125; &#124;       Überstürzter Angriff -6 &#44; ?{Völlige Dunkelheit/Blendung -6 Überstürzter Angriff -6 +/- ... &amp;#124;        Das war alles               &amp;#44; 221 &amp;#124;        Angriff von oben (70cm+) +2 &amp;#44; 442 &amp;#124;        Liegendes Ziel (ich stehe) +4 &amp;#44; 663 &amp;#124;        Wehrloses Ziel +4           &amp;#44; 1105 &amp;#124;        Panisch fliehendes Ziel +4  &amp;#44; 1547       &amp;#125;    &#125; }
 !mmm   if semiAutoModCode % 17 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 6
 !mmm     set modifierLog = modifierLog & " {{Völlige Dunkelheit / geblendet=-6}} "
+!mmm     set modifierTooltip = modifierTooltip & " Völlige&nbsp;Dunkelheit/geblendet&nbsp;&nbsp;&nbsp;-6 "
 !mmm   end if
 !mmm   if semiAutoModCode % 13 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 6
 !mmm     set modifierLog = modifierLog & " {{Überstürzter Angriff=-6}} "
+!mmm     set modifierTooltip = modifierTooltip & " Überstürzter&nbsp;Angriff&nbsp;&nbsp;&nbsp;-6 "
 !mmm   end if
 !mmm   if semiAutoModCode % 11 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Spontaner Angriff=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Spontaner&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !mmm   if semiAutoModCode % 7 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel flieht panisch=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;flieht&nbsp;panisch&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !mmm   if semiAutoModCode % 5 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel wehrlos=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;wehrlos&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !mmm   if semiAutoModCode % 3 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel liegt=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;liegt&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !mmm   if semiAutoModCode % 2 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 2
 !mmm     set modifierLog = modifierLog & " {{Angriff von oben=+2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;von&nbsp;oben&nbsp;&nbsp;&nbsp;+2 "
 !mmm   end if
 !rem   // Ask for individual modifiers and sum up the various modifiers
 !mmm   set manualModifiers = ?{Weitere spezielle Angriffsmodifikatoren|0}
@@ -137,6 +147,7 @@
 !mmm       set manualModifiers = "+" & manualModifiers
 !mmm     end if
 !mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & manualModifiers & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & manualModifiers & " "
 !mmm   end if
 !mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + manualModifiers
 !rem
@@ -152,7 +163,7 @@
 !mmm   if modifierLog eq ""
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
 !mmm   end if
-!mmm   set modifiers = highlight(modifiers, "normal")
+!mmm   set modifiers = highlight(modifiers, "normal", modifierTooltip)
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
 !mmm   if iscritical(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)

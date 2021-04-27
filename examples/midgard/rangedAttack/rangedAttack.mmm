@@ -124,6 +124,7 @@
 !mmm   end if
 !rem
 !rem   // Collect attack modifiers
+!mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
