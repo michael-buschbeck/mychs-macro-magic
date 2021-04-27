@@ -1,6 +1,8 @@
 !rem // Midgard Ranged Attack Script
-!rem // v1.8.2-pre1 2021-04-26 (requires MMM 1.16.0 or higher)
+!rem // v1.8.3-pre1 2021-04-27 (requires MMM 1.16.0 or higher)
 !rem // - Modifikatoren-Log als Tooltip ergänzt
+!rem // - Anpassbarkeit der Tabellenausgabe entfernt
+!rem // - Unicode-Emojis für Erschöpfung ergänzt
 !rem
 !mmm script
 !rem   // MMM compatibility check: die if MMM version too low
@@ -49,6 +51,10 @@
 !mmm   end if
 !rem
 !rem   // Init
+!rem   // - Constants
+!mmm   set emojiExhausted = "🥴"
+!mmm   set emojiLock = "🔒"
+!rem   // - Character & NPC data
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
@@ -135,7 +141,7 @@
 !mmm       set cAmmoMagicSkillBonus = "+" & cAmmoMagicSkillBonus
 !mmm     end if 
 !mmm     set modifierLog = modifierLog & " {{" & cAmmoMagicLabel & "=" & cAmmoMagicSkillBonus & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " " & cAmmoMagicLabel & "&nbsp;&nbsp;&nbsp;" & cAmmoMagicSkillBonus & " "
+!mmm     set modifierTooltip = modifierTooltip & " " & cAmmoMagicLabel & "&nbsp;&nbsp;&nbsp;" & cAmmoMagicSkillBonus & "<br/> "
 !mmm   end if
 !rem   // 1. Distance
 !mmm   if distance > cRangeUpperBoundMid
@@ -164,7 +170,8 @@
 !mmm   end if
 !rem   // 3. Target exhausted
 !mmm   if isdenied(foeEndurance) 
-!mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP: Zugriff verweigert=ggf. EW+2}}"
+!mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP&nbsp;" & emojiLock & "=**ggf. EW+2**}}"
+!mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
 !mmm   else if foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft ([" & foeName & "].AP:" & foeEndurance & ")=+4}} "
@@ -286,6 +293,15 @@
 !mmm     set outputWeaponLabel = cWeaponType & " *" & cWeaponName & "*"
 !mmm   end if
 !mmm
+!rem   // Prepare visual indicator of exhaustion or lack to access to endurance attribute for output
+!mmm   if isdenied(foeEndurance)
+!mmm     set foeEnduranceIndicator = highlight(emojiLock, "bad", foeName & ".AP: Zugriff verweigert")
+!mmm   else if foeEndurance <= 0
+!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "normal", foeName & ".AP:0")
+!mmm   else
+!mmm     set foeEnduranceIndicator = ""
+!mmm   end if 
+!mmm
 !mmm   if cVerbose
 !mmm     combine chat
 !mmm       if not cAmmoMagic
@@ -318,27 +334,24 @@
 !rem
 !rem   // Add data table for easy reference
 !mmm   combine chat
-!mmm     chat   [AttackTableHeading]:           ${"&"}{template:default} {{name=Angriff mit $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} *}} 
-!mmm     chat   [AttackRow1Target]:             {{Ziel=**$[targetName]{foeName}**}}
+!mmm     chat:      ${"&"}{template:default} {{name=Angriff mit $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} *}} 
+!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${foeEnduranceIndicator}}}
 !mmm     if iscritical(attackRoll)
-!mmm       chat [AttackRow2ResultCS]:           {{Kritischer Erfolg=$[attackResult]{attackResult}&nbsp;(**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Kritischer Erfolg=$[attackResult]{attackResult}&nbsp;(**Wurf** $[attackRoll]{attackRoll})}}
 !mmm     else if attackResult >= 20
-!mmm       chat [AttackRow2Result]:             {{Erfolg=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
 !mmm     else 
-!mmm       chat [AttackRow2Result]:             {{Fehlschlag=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
 !mmm     end if
-!mmm     chat   [AttackRow3Modifiers]:          {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
-!mmm     if isdenied(foeEndurance) 
-!mmm       chat [AttackRow3bExhausted]:         {{Ziel erschöpft?=${highlight("AP: Zugriff verweigert", "bad")}}}
-!mmm     end if
-!mmm     chat   [AttackRow4Distance]:           {{Entfernung=$[distance]{distance} $[distanceUnits]{distanceUnits} ($[distanceGridCells]{round(distance/(distsnap()*distscale()))} Planquadrate, $[rangeBracket]{rangeBracket})}}
+!mmm     chat:      {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
+!mmm     chat:      {{Entfernung=$[distance]{distance} $[distanceUnits]{distanceUnits} ($[distanceGridCells]{round(distance/(distsnap()*distscale()))} Planquadrate, $[rangeBracket]{rangeBracket})}}
 !mmm     if attackFromBehind
-!mmm       chat [AttackRow4FromBehind]:         {{Angriff von hinten=Kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
+!mmm       chat:    {{Angriff von hinten=Kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
 !mmm     end if 
 !mmm     if attackResult >= 20
-!mmm       chat [AttackRow5Damage]:             {{Schaden=$[damageResult]{damageResult}}}
+!mmm       chat:    {{Schaden=$[damageResult]{damageResult}}}
 !mmm     end if
-!mmm     chat   [AttackRow6AmmoCount]:          {{$[ammoLabel]{ammoLabel}=$[ammoCount]{ammoCount}}}
+!mmm     chat:      {{$[ammoLabel]{ammoLabel}=$[ammoCount]{ammoCount}}}
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w ${ownName} ${"&"}{template:default} ${modifierLog}
