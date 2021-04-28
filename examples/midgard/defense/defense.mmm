@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
-!rem // v1.3.0 2021-04-18
+!rem // v1.3.1 2021-04-27
 !rem // 
-!rem // - Visuelle Effekte für leichte, schwere und kritische Treffer ergänzt (MMM 1.17.0)
+!rem // - Modifikatoren-Log als Tooltip ergänzt
 !rem
 !mmm script
 !mmm
@@ -59,19 +59,24 @@
 !mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
 !mmm   set modifierLog = ""
+!mmm   set modifierTooltip = ""
 !rem   // 1. Defender exhausted
 !mmm   if endurance <= 0
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Erschöpft (eigene AP: 0)=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 2. Dropdown prompt: Focused defense, surprise
 !mmm   set semiManualModifiers = ?{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0 | Konzentrierte Abwehr +4,+4 | Ich greife überstürzt an -2,-2 | Ich bin überrascht -4,-4 } 
 !mmm   if semiManualModifiers == 4
 !mmm     set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Konzentrierte&nbsp;Abwehr&nbsp;&nbsp;&nbsp;+4 "
 !mmm   else if semiManualModifiers == -2
 !mmm     set modifierLog = modifierLog & " {{Überstürzter eigener Angriff=-2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Überstürzter&nbsp;eigener&nbsp;Angriff&nbsp;&nbsp;&nbsp;-2 "
 !mmm   else if semiManualModifiers == -4
 !mmm     set modifierLog = modifierLog & " {{Überraschender Angriff=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Überraschender&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // Add manual modifiers from user input
 !mmm   set manualModifiers = ?{Weitere spezielle Abwehrmodifikatoren|0}
@@ -81,9 +86,11 @@
 !mmm       set manualModifiers = "+" & manualModifiers
 !mmm     end if
 !mmm     set modifierLog = modifierLog & " {{Manuelle Modifikatoren=" & manualModifiers & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " Manuelle&nbsp;Modifikatoren&nbsp;&nbsp;&nbsp;" & manualModifiers & " "
 !mmm   end if
 !mmm   if modifierLog eq ""
 !mmm     set modifierLog = " {{Boni/Mali=keine}} "
+!mmm     set modifierTooltip = " Boni/Mali&nbsp;&nbsp;&nbsp;keine "
 !mmm   end if
 !rem
 !rem   // Run & format rolls

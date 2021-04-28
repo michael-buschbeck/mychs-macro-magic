@@ -1,6 +1,6 @@
 # MMM-Angriffsskript (Fernkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.8 vom 2021-04-25,** erfordert MMM 1.16.0+.
+Aktuelle Version: **1.8.3 vom 2021-04-27,** erfordert MMM 1.16.0+.
 
 Aufruf: 
 - Hauptspiel ("Midgard"): ``#RangeAttack`` 
@@ -95,6 +95,11 @@ Minimalbeispiel für ein Wurfmesser, ohne die Erzählerei zu verändern (Vorauss
 ```
 
 ## Changelog
+
+1.8.3 2021-04-27 (requires MMM 1.16.0 or higher)
+- Modifikatoren-Log als Tooltip ergänzt
+- Anpassbarkeit der Tabellenausgabe entfernt
+- Unicode-Emojis für Erschöpfung ergänzt
 
 1.8.0 2021-04-25 (requires MMM 1.16.0+)
 

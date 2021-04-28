@@ -1,7 +1,8 @@
 !rem // Midgard Ranged Attack Script
-!rem // v1.8.0 2021-04-25 (requires MMM 1.16.0 or higher)
-!rem // - #2: 3D-Würfel integriert
-!rem // - Intern: MMM-Versionscheck beim Start
+!rem // v1.8.3 2021-04-27 (requires MMM 1.16.0 or higher)
+!rem // - Modifikatoren-Log als Tooltip ergänzt
+!rem // - Anpassbarkeit der Tabellenausgabe entfernt
+!rem // - Unicode-Emojis für Erschöpfung ergänzt
 !rem
 !mmm script
 !rem   // MMM compatibility check: die if MMM version too low
@@ -50,6 +51,10 @@
 !mmm   end if
 !rem
 !rem   // Init
+!rem   // - Constants
+!mmm   set emojiExhausted = "🥴"
+!mmm   set emojiLock = "🔒"
+!rem   // - Character & NPC data
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
@@ -125,8 +130,10 @@
 !mmm   end if
 !rem
 !rem   // Collect attack modifiers
+!mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
 !mmm   set modifierLog = ""
+!mmm   set modifierTooltip = ""
 !rem   // Before we get to the specifics of this attack: if we have magic ammunition with a skill bonus, add that
 !mmm   if cAmmoMagicSkillBonus
 !mmm     set autoModifiers = autoModifiers + cAmmoMagicSkillBonus
@@ -134,6 +141,7 @@
 !mmm       set cAmmoMagicSkillBonus = "+" & cAmmoMagicSkillBonus
 !mmm     end if 
 !mmm     set modifierLog = modifierLog & " {{" & cAmmoMagicLabel & "=" & cAmmoMagicSkillBonus & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & cAmmoMagicLabel & "&nbsp;&nbsp;&nbsp;" & cAmmoMagicSkillBonus & "<br/> "
 !mmm   end if
 !rem   // 1. Distance
 !mmm   if distance > cRangeUpperBoundMid
@@ -141,62 +149,76 @@
 !mmm     set rangeDescription = "großer Entfernung"
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{" & rangeBracket & "=-4}}"
+!mmm     set modifierTooltip = modifierTooltip & " " & rangeBracket & "&nbsp;&nbsp;&nbsp;-4 "
 !mmm   else if distance > cRangeUpperBoundClose
 !mmm     set rangeBracket = "Mittelbereich: " & (cRangeUpperBoundClose+1) & "-" & cRangeUpperBoundMid & "m"
 !mmm     set rangeDescription = "mittlerer Entfernung"
 !mmm     set autoModifiers = autoModifiers - 2
 !mmm     set modifierLog = modifierLog & " {{" & rangeBracket & "=-2}}"
+!mmm     set modifierTooltip = modifierTooltip & " " & rangeBracket & "&nbsp;&nbsp;&nbsp;-2 "
 !mmm   else
 !mmm     set rangeBracket = "Nahbereich: 0-" & cRangeUpperBoundClose & "m"
 !mmm     set rangeDescription = "geringer Entfernung"
 !mmm     set modifierLog = modifierLog & " {{" & rangeBracket & "=+/-0}}"
+!mmm     set modifierTooltip = modifierTooltip & " " & rangeBracket & "&nbsp;&nbsp;&nbsp;+/-0 "
 !mmm   end if
 !rem   // 2. Attacker exhausted
 !mmm   if getattr(cOwnID, "AP") <= 0
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & ownName & "].AP:0)=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 3. Target exhausted
 !mmm   if isdenied(foeEndurance) 
-!mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP: Zugriff verweigert=ggf. EW+2}}"
+!mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP&nbsp;" & emojiLock & "=**ggf. EW+2**}}"
+!mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
 !mmm   else if foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft ([" & foeName & "].AP:" & foeEndurance & ")=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !rem   // 4. Collect additional standard modifiers from user via dropdown menu
-!mmm   set semiAutoModCode = ?{Weitere Angriffsmodifikatoren (außer Entfernung)|   Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;      NORMAL HALT +/-0                              &#44; 0     &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 2     &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 3     &#124;      Großes Ziel (2xMensch) +2                     &#44; 5     &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 7     &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 17      &#125; |   Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ...&#124;      SONST NIX +/-0                                &#44; 11    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 22    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 33    &#124;      Großes Ziel (2xMensch) +2                     &#44; 55    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 77    &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 143   &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 187      &#125; |   Schnelles Ziel (30m+/Runde) -2, ?{Schnelles Ziel -2 +/- ...&#124;      SONST NIX +/-0                                &#44; 13    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 26    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 39    &#124;      Großes Ziel (2xMensch) +2                     &#44; 65    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 91    &#124;      Spontaner Angriff -4                          &#44; 143   &#124;      Sorgfältig gezielt +4                         &#44; 247      &#125; |   Sorgfältig gezielt +4, ?{Sorgfältig gezielt +4 +/- ...&#124;      SONST NIX +/-0                                &#44; 19    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 38    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 57    &#124;      Großes Ziel (2xMensch) +2                     &#44; 95    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 133   &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 247      &#125;}
+!mmm   set semiAutoModCode = ?{Weitere Angriffsmodifikatoren (außer Entfernung)|   Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;      NORMAL HALT +/-0                              &#44; 1     &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 2     &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 3     &#124;      Großes Ziel (2xMensch) +2                     &#44; 5     &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 7     &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 17      &#125; |   Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ...&#124;      SONST NIX +/-0                                &#44; 11    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 22    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 33    &#124;      Großes Ziel (2xMensch) +2                     &#44; 55    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 77    &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 143   &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 187      &#125; |   Schnelles Ziel (30m+/Runde) -2, ?{Schnelles Ziel -2 +/- ...&#124;      SONST NIX +/-0                                &#44; 13    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 26    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 39    &#124;      Großes Ziel (2xMensch) +2                     &#44; 65    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 91    &#124;      Spontaner Angriff -4                          &#44; 143   &#124;      Sorgfältig gezielt +4                         &#44; 247      &#125; |   Sorgfältig gezielt +4, ?{Sorgfältig gezielt +4 +/- ...&#124;      SONST NIX +/-0                                &#44; 19    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 38    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 57    &#124;      Großes Ziel (2xMensch) +2                     &#44; 95    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 133   &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 247      &#125;}
 !mmm   if semiAutoModCode % 19 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Sorgfältig gezielt=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Sorgfältig&nbsp;gezielt&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !mmm   if semiAutoModCode % 17 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Angriff ins Handgemenge=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;ins&nbsp;Handgemenge&nbsp;&nbsp;&nbsp;+4 "
 !rem     // TODO: Remind user to throw dice to identify actual target!
 !mmm   end if
 !mmm   if semiAutoModCode % 13 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 2
 !mmm     set modifierLog = modifierLog & " {{Schnelles Ziel=-2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Schnelles&nbsp;Ziel&nbsp;&nbsp;&nbsp;-2 "
 !mmm   end if
 !mmm   if semiAutoModCode % 11 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Spontaner Angriff=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Spontaner&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !mmm   if semiAutoModCode % 7 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Riesiges Ziel=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Riesiges&nbsp;Ziel&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !mmm   if semiAutoModCode % 5 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 2
 !mmm     set modifierLog = modifierLog & " {{Großes Ziel=+2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Großes&nbsp;Ziel&nbsp;&nbsp;&nbsp;+2 "
 !mmm   end if
 !mmm   if semiAutoModCode % 3 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 2
 !mmm     set modifierLog = modifierLog & " {{Kleines/halb verdecktes Ziel=-2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Kleines/halb&nbsp;verdecktes&nbsp;Ziel&nbsp;&nbsp;&nbsp;-2 "
 !mmm   end if
 !mmm   if semiAutoModCode % 2 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers -4
 !mmm     set modifierLog = modifierLog & " {{Sehr kleines Ziel=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Sehr&nbsp;kleines&nbsp;Ziel&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // Ask for individual modifiers and sum up the various modifiers
 !mmm   set manualModifiers = ?{Weitere spezielle Angriffsmodifikatoren|0}
@@ -205,6 +227,7 @@
 !mmm       set manualModifiers = "+" & manualModifiers
 !mmm     end if
 !mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & manualModifiers & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & manualModifiers & " "
 !mmm   end if
 !mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + manualModifiers
 !rem
@@ -227,7 +250,7 @@
 !mmm   if modifierLog eq ""
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
 !mmm   end if
-!mmm   set modifiers = highlight(modifiers, "normal")
+!mmm   set modifiers = highlight(modifiers, "normal", modifierTooltip)
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
 !mmm   if iscritical(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
@@ -270,6 +293,15 @@
 !mmm     set outputWeaponLabel = cWeaponType & " *" & cWeaponName & "*"
 !mmm   end if
 !mmm
+!rem   // Prepare visual indicator of exhaustion or lack to access to endurance attribute for output
+!mmm   if isdenied(foeEndurance)
+!mmm     set foeEnduranceIndicator = highlight(emojiLock, "bad", foeName & ".AP: Zugriff verweigert")
+!mmm   else if foeEndurance <= 0
+!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "normal", foeName & ".AP:0")
+!mmm   else
+!mmm     set foeEnduranceIndicator = ""
+!mmm   end if 
+!mmm
 !mmm   if cVerbose
 !mmm     combine chat
 !mmm       if not cAmmoMagic
@@ -302,27 +334,24 @@
 !rem
 !rem   // Add data table for easy reference
 !mmm   combine chat
-!mmm     chat   [AttackTableHeading]:           ${"&"}{template:default} {{name=Angriff mit $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} *}} 
-!mmm     chat   [AttackRow1Target]:             {{Ziel=**$[targetName]{foeName}**}}
+!mmm     chat:      ${"&"}{template:default} {{name=Angriff mit $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} *}} 
+!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${foeEnduranceIndicator}}}
 !mmm     if iscritical(attackRoll)
-!mmm       chat [AttackRow2ResultCS]:           {{Kritischer Erfolg=$[attackResult]{attackResult}&nbsp;(**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Kritischer Erfolg=$[attackResult]{attackResult}&nbsp;(**Wurf** $[attackRoll]{attackRoll})}}
 !mmm     else if attackResult >= 20
-!mmm       chat [AttackRow2Result]:             {{Erfolg=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
 !mmm     else 
-!mmm       chat [AttackRow2Result]:             {{Fehlschlag=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
 !mmm     end if
-!mmm     chat   [AttackRow3Modifiers]:          {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
-!mmm     if isdenied(foeEndurance) 
-!mmm       chat [AttackRow3bExhausted]:         {{Ziel erschöpft?=${highlight("AP: Zugriff verweigert", "bad")}}}
-!mmm     end if
-!mmm     chat   [AttackRow4Distance]:           {{Entfernung=$[distance]{distance} $[distanceUnits]{distanceUnits} ($[distanceGridCells]{round(distance/(distsnap()*distscale()))} Planquadrate, $[rangeBracket]{rangeBracket})}}
+!mmm     chat:      {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
+!mmm     chat:      {{Entfernung=$[distance]{distance} $[distanceUnits]{distanceUnits} ($[distanceGridCells]{round(distance/(distsnap()*distscale()))} Planquadrate, $[rangeBracket]{rangeBracket})}}
 !mmm     if attackFromBehind
-!mmm       chat [AttackRow4FromBehind]:         {{Angriff von hinten=Kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
+!mmm       chat:    {{Angriff von hinten=Kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
 !mmm     end if 
 !mmm     if attackResult >= 20
-!mmm       chat [AttackRow5Damage]:             {{Schaden=$[damageResult]{damageResult}}}
+!mmm       chat:    {{Schaden=$[damageResult]{damageResult}}}
 !mmm     end if
-!mmm     chat   [AttackRow6AmmoCount]:          {{$[ammoLabel]{ammoLabel}=$[ammoCount]{ammoCount}}}
+!mmm     chat:      {{$[ammoLabel]{ammoLabel}=$[ammoCount]{ammoCount}}}
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w ${ownName} ${"&"}{template:default} ${modifierLog}
