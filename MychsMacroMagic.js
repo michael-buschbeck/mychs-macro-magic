@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.17.1";
+const MMM_VERSION = "1.17.2";
 
 on("chat:message", function(msg)
 {
@@ -52,21 +52,15 @@ on("chat:message", function(msg)
         return;
     }
 
-    if (msg.playerid == "API" && MychScriptContext.impersonate.length > 0)
+    if (msg.playerid == "API" && MychScriptContext.impersonation)
     {
-        let impersonate = MychScriptContext.impersonate.shift();
-
-        log("===== MMM impersonating " + impersonate.playerid + " for API script command: " + msg.content);//|XXX
-
-        msg.playerid = impersonate.playerid;
-        msg.selected = impersonate.selected.map(id => findObjs({ id: id })).flat().map(obj => ({ _id: obj.get("id"), _type: obj.get("type") }));
+        msg.playerid = MychScriptContext.impersonation.playerid;
+        msg.selected = MychScriptContext.impersonation.selected.map(id => findObjs({ id: id })).flat().map(obj => ({ _id: obj.get("id"), _type: obj.get("type") }));
 
         if (msg.selected.length == 0)
         {
             msg.selected = undefined;
         }
-
-        log("===== MMM passing selected=" + JSON.stringify(msg.selected));//|XXX
     }
 
     let statusSource = msg.content;
@@ -202,7 +196,7 @@ on("chat:message", function(msg)
 class MychScriptContext
 {
     static players = {};
-    static impersonate = [];
+    static impersonation = undefined;
 
     version = MMM_VERSION;
     playerid = undefined;
@@ -607,34 +601,61 @@ class MychScriptContext
         return result;
     }
 
-    chat(message)
+    $getChatSender()
     {
         let [character, token] = this.$getCharacterAndTokenObjs(this.sender);
 
+        if (character)
+        {
+            return "character|" + character.id;
+        }
+
+        if (this.playerid)
+        {
+            return "player|" + this.playerid;
+        }
+
+        if (this.sender)
+        {
+            return this.sender;
+        }
+
+        return "Mych's Macro Magic";
+    }
+
+    chat(message)
+    {
+        let sender = this.$getChatSender();
+
         if (message.startsWith("!"))
         {
-            MychScriptContext.impersonate.push(
+            let impersonation =
             {
                 playerid: this.playerid,
                 selected: this.selected,
-            });
+            };
 
-            log("===== MMM going to impersonate " + this.playerid + " for API next script command"); //|XXX
+            let prevImpersonation;
+
+            function startImpersonation()
+            {
+                prevImpersonation = MychScriptContext.impersonation;
+                MychScriptContext.impersonation = impersonation;
+            }
+
+            function stopImpersonation()
+            {
+                MychScriptContext.impersonation = prevImpersonation;
+            }
+
+            sendChat(sender, "/direct MMM starts impersonation of " + impersonation.playerid, startImpersonation)
+            sendChat(sender, message);
+            sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
         }
-
-        if (character)
+        else
         {
-            sendChat("character|" + character.id, message);
-            return;
+            sendChat(sender, message);
         }
-        
-        if (this.playerid)
-        {
-            sendChat("player|" + this.playerid, message);
-            return;
-        }
-
-        sendChat(this.sender || "Mych's Macro Magic", message);
     }
 
     whisperback(message)
