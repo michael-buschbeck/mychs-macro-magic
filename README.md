@@ -666,6 +666,21 @@ This works in any place with an expression, of course, not just in **set** – y
 
 ## Recipes
 
+### Calling other API scripts
+
+There are plenty of amazing API scripts around to satisfy your every need (or whim). You can call other API scripts from an MMM script to combine their powers.
+
+To call another API script, just do what you'd do in person: Send a chat message with the API script command you want.
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **chat:** !Spawn --name\|Fireball --offset\|1,-1 | *(Calls [Spawn](https://app.roll20.net/forum/permalink/9649899/) to make a fireball appear next to the selected token)*
+
+There's a wrinkle though: To properly support this, MMM must be loaded _before_ that other API script. Ask your GM to make sure that MMM appears earlier than the other API script you'd like to call from MMM in your game's list of API scripts. If that's not the case, the GM should delete and re-add the other script – that'll put it at the end of the list.
+
+Why (if you're curious): To properly impersonate you to the other API script, MMM must manipulate the chat message it sent on your behalf to include your actual information (player ID and selected tokens). MMM can easily do this if it can get hands on the chat message before it reaches the other API script, which means that MMM's chat handler must be executed before the other API script's chat handler. Since chat handlers are executed in the same order API scripts were loaded, MMM must be loaded before the other API script.
+
+
 ### Using findattr() to determine character sheet attribute names
 
 The `findattr()` function helps you determine the attribute name to query (or update) anything that's in an extensible table in a character sheet.

@@ -1,24 +1,10 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.17.1";
+const MMM_VERSION = "1.17.2";
 
 on("chat:message", function(msg)
 {
-    let msgContext = new MychScriptContext();
-    let msgContextUpdated = false;
-    
-    if (msg.type == "rollresult")
-    {
-        msgContext.$consumeRolls([{ results: JSON.parse(msg.content), expression: msg.origRoll }]);
-        msgContextUpdated = true;
-    }
-    else if (msg.inlinerolls && msg.inlinerolls.length > 0)
-    {
-        msgContext.$consumeRolls(msg.inlinerolls);
-        msgContextUpdated = true;
-    }
-
     let player = MychScriptContext.players[msg.playerid];
 
     if (!player)
@@ -37,9 +23,25 @@ on("chat:message", function(msg)
 
     player.lastseen = new Date();
 
-    if (msgContextUpdated)
+    if (msg.type == "rollresult")
     {
-        player.context = msgContext;
+        let rolls =
+        [{
+            results: JSON.parse(msg.content),
+            expression: msg.origRoll,
+        }];
+        player.context.$consumeRolls(rolls);
+    }
+    else if (msg.inlinerolls && msg.inlinerolls.length > 0)
+    {
+        player.context.$consumeRolls(msg.inlinerolls);
+    }
+
+    let msgSelected = msg.selected ? msg.selected.map(entry => entry._id) : [];
+    
+    if (msgSelected.join(",") != player.context.selected.join(","))
+    {
+        player.context.selected = msgSelected;
     }
 
     player.context.sender = msg.who;
@@ -48,6 +50,17 @@ on("chat:message", function(msg)
     if (msg.type != "api")
     {
         return;
+    }
+
+    if (msg.playerid == "API" && MychScriptContext.impersonation)
+    {
+        msg.playerid = MychScriptContext.impersonation.playerid;
+        msg.selected = MychScriptContext.impersonation.selected.map(id => findObjs({ id: id })).flat().map(obj => ({ _id: obj.get("id"), _type: obj.get("type") }));
+
+        if (msg.selected.length == 0)
+        {
+            msg.selected = undefined;
+        }
     }
 
     let statusSource = msg.content;
@@ -183,10 +196,12 @@ on("chat:message", function(msg)
 class MychScriptContext
 {
     static players = {};
+    static impersonation = undefined;
 
     version = MMM_VERSION;
     playerid = undefined;
     sender = undefined;
+    selected = [];
 
     pi = Math.PI;
 
@@ -419,6 +434,16 @@ class MychScriptContext
             this[rollReference] = this.$decorateRoll(rolls[rollIndex]);
         }
 
+        for (let rollIndex = rolls.length;; ++rollIndex)
+        {
+            let rollReference = "$[[" + rollIndex + "]]";
+            if (this[rollReference] == undefined)
+            {
+                break;
+            }
+            delete this[rollReference];
+        }
+
         return rolls.length;
     }
 
@@ -576,23 +601,61 @@ class MychScriptContext
         return result;
     }
 
-    chat(message)
+    $getChatSender()
     {
         let [character, token] = this.$getCharacterAndTokenObjs(this.sender);
 
         if (character)
         {
-            sendChat("character|" + character.id, message);
-            return;
-        }
-        
-        if (this.playerid)
-        {
-            sendChat("player|" + this.playerid, message);
-            return;
+            return "character|" + character.id;
         }
 
-        sendChat(this.sender || "Mych's Macro Magic", message);
+        if (this.playerid)
+        {
+            return "player|" + this.playerid;
+        }
+
+        if (this.sender)
+        {
+            return this.sender;
+        }
+
+        return "Mych's Macro Magic";
+    }
+
+    chat(message)
+    {
+        let sender = this.$getChatSender();
+
+        if (message.startsWith("!"))
+        {
+            let impersonation =
+            {
+                playerid: this.playerid,
+                selected: this.selected,
+            };
+
+            let prevImpersonation;
+
+            function startImpersonation()
+            {
+                prevImpersonation = MychScriptContext.impersonation;
+                MychScriptContext.impersonation = impersonation;
+            }
+
+            function stopImpersonation()
+            {
+                MychScriptContext.impersonation = prevImpersonation;
+            }
+
+            sendChat(sender, "/direct MMM starts impersonation of " + impersonation.playerid, startImpersonation)
+            sendChat(sender, message);
+            sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
+        }
+        else
+        {
+            sendChat(sender, message);
+        }
     }
 
     whisperback(message)
@@ -2525,7 +2588,7 @@ class MychScript
 
             if (command.tokens)
             {
-                let commandTokensAlternatives = (command.tokens instanceof Array ? [command.tokens] : Object.values(command.tokens));
+                let commandTokensAlternatives = (Array.isArray(command.tokens) ? [command.tokens] : Object.values(command.tokens));
                 let maxSourceOffsetAlternative = sourceOffset;
 
                 for (let commandTokens of commandTokensAlternatives)
@@ -2995,7 +3058,7 @@ class MychExpression
 
     static coerceScalar(value)
     {
-        if (value instanceof Array)
+        if (Array.isArray(value))
         {
             return value[value.length - 1];
         }
@@ -3020,7 +3083,7 @@ class MychExpression
 
     static coerceString(value)
     {
-        if (value instanceof Array)
+        if (Array.isArray(value))
         {
             return value.map(MychExpression.coerceString).join(", ");
         }
@@ -3098,7 +3161,7 @@ class MychExpression
 
     static literal(value)
     {
-        if (value instanceof Array)
+        if (Array.isArray(value))
         {
             return value.map(MychExpression.literal).join(", ");
         }
