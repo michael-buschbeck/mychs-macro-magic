@@ -26,11 +26,9 @@
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
 !rem   //  cSense               ...
 !rem   //  cSuccessMessage      ...
 !rem   //
-!mmm   set customizable cVerbose = true
 !mmm   set customizable cSense = "Sehen"
 !mmm   set customizable cSuccessMessage = "Du siehst etwas aufblitzen in der Ferne im Gebüsch..."
 !mmm   set customizable cSenseModifier = 0
