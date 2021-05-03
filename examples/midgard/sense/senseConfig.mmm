@@ -1,0 +1,325 @@
+!rem // This file contains fragments to be stored in separate Roll20 macros 
+!rem // (which can be collected in a single character sheet dedicated to that purpose):
+!rem // 
+!rem // - Chatmenü zur Auswahl: senseMenu
+!rem // - Sehen für einzeln/1-6/alle: senseSeeSingle, senseSeeGroup, senseSeeAll
+!rem // - Hören für einzeln/1-6/alle: senseHearSingle, senseHearGroup, senseHearAll
+!rem // - Riechen für einzeln/1-6/alle: senseSmellSingle, senseSmellGroup, senseSmellAll
+!rem // - Schmecken für einzeln/1-6/alle: senseTasteSingle, senseTasteGroup, senseTasteAll
+!rem // - Nachtsicht für einzeln/1-6/alle: senseNVSingle, senseNVGroup, senseNVAll
+!rem // - Sechster Sinn für einzeln/1-6/alle: senseSixSingle, senseSixGroup, senseSixAll
+!rem // 
+
+!rem // senseMenu
+/w GM &{template:default} {{name=Wahrnehmung}}  {{ Sechster Sinn }}  {{ [Einzeln](~senseSixSingle) &nbsp; [Gruppe](~senseSixGroup) &nbsp; [Alle](~senseSixAll) }} {{ Sehen }}  {{ [Einzeln](~senseSeeSingle) &nbsp; [Gruppe](~senseSeeGroup) &nbsp; [Alle](~senseSeeAll) }} {{ Hören }}  {{ [Einzeln](~senseHearSingle) &nbsp; [Gruppe](~senseHearGroup) &nbsp; [Alle](~senseHearAll) }} {{ Riechen }}  {{ [Einzeln](~senseSmellSingle) &nbsp; [Gruppe](~senseSmellGroup) &nbsp; [Alle](~senseSmellAll) }} {{ Schmecken }}  {{ [Einzeln](~senseTasteSingle) &nbsp; [Gruppe](~senseTasteGroup) &nbsp; [Alle](~senseTasteAll) }} {{ Nachtsicht }}  {{ [Einzeln](~senseNVSingle) &nbsp; [Gruppe](~senseNVGroup) &nbsp; [Alle](~senseNVAll) }}
+
+!rem // senseSeeSingle
+!mmm customize
+!rem
+!mmm   set cSense = "Sehen"
+!mmm   set cSenseMode = "single"
+!mmm   set cSenseModifier = ?{Modifikator|-8}
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Spiegelt sich da nicht was in der Sonne? Poliertes Metall ... eine Waffe ... die jemand zurechtrückt?}"
+!mmm   set cRegularFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cCriticalFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cChar1ID = "@{target|Wer soll die Chance bekommen?|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseSeeGroup 
+!mmm customize
+!rem
+!mmm   set cSense = "Sehen"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Spiegelt sich da nicht was in der Sonne? Poliertes Metall ... eine Waffe ... die jemand zurechtrückt?}"
+!mmm   set cRegularFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cCriticalFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cChar1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set cChar2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set cChar3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set cChar4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set cChar5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set cChar6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseSeeAll 
+!mmm customize
+!rem
+!mmm   set cSense = "Sehen"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = -8
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Spiegelt sich da nicht was in der Sonne? Poliertes Metall ... eine Waffe ... die jemand zurechtrückt?}"
+!mmm   set cRegularFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cCriticalFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cChar1ID = "-MFXIKG9zCxQLxsEZ6PW"
+!mmm   set cChar2ID = "-MF0on5H-EnbMJQxQDhQ"
+!mmm   set cChar3ID = "-MF0l4ve_sPrzpbctzUM"
+!mmm   set cChar4ID = "-MFMpuvq2hfA-Y3i4EAe"
+!mmm   set cChar5ID = "-MEnkmmvHcco4HHxg8R0"
+!mmm   set cChar6ID = "-MGKyDWy10K_y3FS4VKi"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseHearSingle
+!mmm customize
+!rem
+!mmm   set cSense = "Hören"
+!mmm   set cSenseMode = "single"
+!mmm   set cSenseModifier = ?{Modifikator|-8}
+!mmm   set cSuccessMessage = "?{Hört ihr was? Nachricht für Aufmerksame|Irgendwo hörst du was!}"
+!mmm   set cRegularFailureMessage = "Du hörst nichts besonderes hier."
+!mmm   set cCriticalFailureMessage = "Du hörst nichts besonderes hier."
+!mmm   set cChar1ID = "@{target|Wer soll die Chance bekommen?|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseHearGroup 
+!mmm customize
+!rem
+!mmm   set cSense = "Hören"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Irgendwo hörst du was!}"
+!mmm   set cRegularFailureMessage = "Du hörst nichts besonderes hier."
+!mmm   set cCriticalFailureMessage = "Du hörst nichts besonderes hier."
+!mmm   set cChar1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set cChar2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set cChar3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set cChar4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set cChar5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set cChar6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseHearAll 
+!mmm customize
+!rem
+!mmm   set cSense = "Hören"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = -8
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Irgendwo hörst du was!}"
+!mmm   set cRegularFailureMessage = "Du hörst nichts besonderes hier."
+!mmm   set cCriticalFailureMessage = "Du hörst nichts besonderes hier."
+!mmm   set cChar1ID = "-MFXIKG9zCxQLxsEZ6PW"
+!mmm   set cChar2ID = "-MF0on5H-EnbMJQxQDhQ"
+!mmm   set cChar3ID = "-MF0l4ve_sPrzpbctzUM"
+!mmm   set cChar4ID = "-MFMpuvq2hfA-Y3i4EAe"
+!mmm   set cChar5ID = "-MEnkmmvHcco4HHxg8R0"
+!mmm   set cChar6ID = "-MGKyDWy10K_y3FS4VKi"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseSmellSingle
+!mmm customize
+!rem
+!mmm   set cSense = "Riechen/Schmecken"
+!mmm   set cSenseMode = "single"
+!mmm   set cSenseModifier = ?{Modifikator|-8}
+!mmm   set cSuccessMessage = "?{Riecht ihr was? Nachricht für Aufmerksame|Irgendwas riecht hier ziemlich speziell.}"
+!mmm   set cRegularFailureMessage = "Du riechst nichts besonderes hier."
+!mmm   set cCriticalFailureMessage = "Du riechst nichts besonderes hier."
+!mmm   set cChar1ID = "@{target|Wer soll die Chance bekommen?|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseSmellGroup 
+!mmm customize
+!rem
+!mmm   set cSense = "Riechen/Schmecken"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSuccessMessage = "?{Riecht ihr was? Nachricht für Aufmerksame|Irgendwas riecht hier ziemlich speziell.}"
+!mmm   set cRegularFailureMessage = "Du riechst nichts besonderes hier."
+!mmm   set cCriticalFailureMessage = "Du riechst nichts besonderes hier."
+!mmm   set cChar1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set cChar2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set cChar3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set cChar4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set cChar5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set cChar6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseSmellAll 
+!mmm customize
+!rem
+!mmm   set cSense = "Riechen/Schmecken"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = -8
+!mmm   set cSuccessMessage = "?{Riecht ihr was? Nachricht für Aufmerksame|Irgendwas riecht hier ziemlich speziell.}"
+!mmm   set cRegularFailureMessage = "Du riechst nichts besonderes hier."
+!mmm   set cCriticalFailureMessage = "Du riechst nichts besonderes hier."
+!mmm   set cChar1ID = "-MFXIKG9zCxQLxsEZ6PW"
+!mmm   set cChar2ID = "-MF0on5H-EnbMJQxQDhQ"
+!mmm   set cChar3ID = "-MF0l4ve_sPrzpbctzUM"
+!mmm   set cChar4ID = "-MFMpuvq2hfA-Y3i4EAe"
+!mmm   set cChar5ID = "-MEnkmmvHcco4HHxg8R0"
+!mmm   set cChar6ID = "-MGKyDWy10K_y3FS4VKi"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseTasteSingle
+!mmm customize
+!rem
+!mmm   set cSense = "Riechen/Schmecken"
+!mmm   set cSenseMode = "single"
+!mmm   set cSenseModifier = ?{Modifikator|-8}
+!mmm   set cSuccessMessage = "?{Schmeckt ihr was? Nachricht für Aufmerksame|Irgendwas schmeckt ziemlich speziell.}"
+!mmm   set cRegularFailureMessage = "Du schmeckst nichts besonderes."
+!mmm   set cCriticalFailureMessage = "Du schmeckst nichts besonderes."
+!mmm   set cChar1ID = "@{target|Wer soll die Chance bekommen?|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseTasteGroup 
+!mmm customize
+!rem
+!mmm   set cSense = "Riechen/Schmecken"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSuccessMessage = "?{Schmeckt ihr was? Nachricht für Aufmerksame|Irgendwas schmeckt ziemlich speziell.}"
+!mmm   set cRegularFailureMessage = "Du schmeckst nichts besonderes."
+!mmm   set cCriticalFailureMessage = "Du schmeckst nichts besonderes."
+!mmm   set cChar1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set cChar2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set cChar3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set cChar4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set cChar5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set cChar6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseTasteAll 
+!mmm customize
+!rem
+!mmm   set cSense = "Riechen/Schmecken"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = -8
+!mmm   set cSuccessMessage = "?{Schmeckt ihr was? Nachricht für Aufmerksame|Irgendwas schmeckt ziemlich speziell.}"
+!mmm   set cRegularFailureMessage = "Du schmeckst nichts besonderes."
+!mmm   set cCriticalFailureMessage = "Du schmeckst nichts besonderes."
+!mmm   set cChar1ID = "-MFXIKG9zCxQLxsEZ6PW"
+!mmm   set cChar2ID = "-MF0on5H-EnbMJQxQDhQ"
+!mmm   set cChar3ID = "-MF0l4ve_sPrzpbctzUM"
+!mmm   set cChar4ID = "-MFMpuvq2hfA-Y3i4EAe"
+!mmm   set cChar5ID = "-MEnkmmvHcco4HHxg8R0"
+!mmm   set cChar6ID = "-MGKyDWy10K_y3FS4VKi"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseNVSingle
+!mmm customize
+!rem
+!mmm   set cSense = "Nachtsicht"
+!mmm   set cSenseMode = "single"
+!mmm   set cSenseModifier = ?{Modifikator|-8}
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Ein unnatürlicher Schatten?}"
+!mmm   set cRegularFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cCriticalFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cChar1ID = "@{target|Wer soll die Chance bekommen?|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseNVGroup 
+!mmm customize
+!rem
+!mmm   set cSense = "Nachtsicht"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Ein unnatürlicher Schatten?}"
+!mmm   set cRegularFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cCriticalFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cChar1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set cChar2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set cChar3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set cChar4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set cChar5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set cChar6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseNVAll 
+!mmm customize
+!rem
+!mmm   set cSense = "Nachtsicht"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = -8
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Ein unnatürlicher Schatten?}"
+!mmm   set cRegularFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cCriticalFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
+!mmm   set cChar1ID = "-MFXIKG9zCxQLxsEZ6PW"
+!mmm   set cChar2ID = "-MF0on5H-EnbMJQxQDhQ"
+!mmm   set cChar3ID = "-MF0l4ve_sPrzpbctzUM"
+!mmm   set cChar4ID = "-MFMpuvq2hfA-Y3i4EAe"
+!mmm   set cChar5ID = "-MEnkmmvHcco4HHxg8R0"
+!mmm   set cChar6ID = "-MGKyDWy10K_y3FS4VKi"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseSixSingle 
+!mmm customize
+!rem
+!mmm   set cSense = "Sechster Sinn"
+!mmm   set cSenseMode = "single"
+!mmm   set cSuccessMessage = "?{Spürt ihr was? Nachricht für Aufmerksame|Ahhhh -- da ist dir gerade ein kalter Schauer den Rücken hinuntergelaufen!}"
+!mmm   set cRegularFailureMessage = ""
+!mmm   set cCriticalFailureMessage = ""
+!mmm   set cChar1ID = "@{target|Wer soll die Chance bekommen?|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseSixGroup
+!mmm customize
+!rem
+!mmm   set cSense = "Sechster Sinn"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSuccessMessage = "?{Spürt ihr was? Nachricht für Aufmerksame|Ahhhh -- da ist dir gerade ein kalter Schauer den Rücken hinuntergelaufen!}"
+!mmm   set cRegularFailureMessage = ""
+!mmm   set cCriticalFailureMessage = ""
+!mmm   set cChar1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set cChar2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set cChar3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set cChar4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set cChar5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set cChar6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
+
+!rem // senseSixAll
+!mmm customize
+!rem
+!mmm   set cSense = "Sechster Sinn"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = -8
+!mmm   set cSuccessMessage = "?{Spürt ihr was? Nachricht für Aufmerksame|Ahhhh -- da ist dir gerade ein kalter Schauer den Rücken hinuntergelaufen!}"
+!mmm   set cRegularFailureMessage = ""
+!mmm   set cCriticalFailureMessage = ""
+!mmm   set cChar1ID = "-MFXIKG9zCxQLxsEZ6PW"
+!mmm   set cChar2ID = "-MF0on5H-EnbMJQxQDhQ"
+!mmm   set cChar3ID = "-MF0l4ve_sPrzpbctzUM"
+!mmm   set cChar4ID = "-MFMpuvq2hfA-Y3i4EAe"
+!mmm   set cChar5ID = "-MEnkmmvHcco4HHxg8R0"
+!mmm   set cChar6ID = "-MGKyDWy10K_y3FS4VKi"
+!rem
+!mmm end customize
+%{MacroSheet|senseLogic}
