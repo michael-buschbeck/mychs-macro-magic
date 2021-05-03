@@ -1,0 +1,104 @@
+!rem // This file contains fragments to be stored in separate Roll20 macros:
+!rem // 
+!rem // 
+!rem // 
+!rem // 
+
+### senseMenu ###
+/w GM &{template:default} {{name=Wahrnehmung}}  {{ Sechster Sinn }}  {{ [Einzeln](!&#13;#senseCallSixSingle) &nbsp; [Gruppe](!&#13;#senseCallSixGroup) &nbsp; [Alle](!&#13;#senseCallSixAll) }} {{ Sehen }}  {{ [Einzeln](!&#13;#senseCallSeeSingle) &nbsp; [Gruppe](!&#13;#senseCallSeeGroup) &nbsp; [Alle](!&#13;#senseCallSeeAll) }} {{ Hören }}  {{ [Einzeln](!&#13;#senseCallHearSingle) &nbsp; [Gruppe](!&#13;#senseCallHearGroup) &nbsp; [Alle](!&#13;#senseCallHearAll) }} {{ Riechen }}  {{ [Einzeln](!&#13;#senseCallSmellSingle) &nbsp; [Gruppe](!&#13;#senseCallSmellGroup) &nbsp; [Alle](!&#13;#senseCallSmellAll) }} {{ Schmecken }}  {{ [Einzeln](!&#13;#senseCallTasteSingle) &nbsp; [Gruppe](!&#13;#senseCallTasteGroup) &nbsp; [Alle](!&#13;#senseCallTasteAll) }} {{ Nachtsicht }}  {{ [Einzeln](!&#13;#senseCallNVSingle) &nbsp; [Gruppe](!&#13;#senseCallNVGroup) &nbsp; [Alle](!&#13;#senseCallNVAll) }}
+
+### senseSeeSingle ### 
+!mmm customize
+!rem
+!rem   // cSense muss exakt einer der Wahrnehmungsfertigkeiten des Charakterblattes entsprechen ("Sehen", "Hören", "Riechen/Schmecken", "Nachtsicht")
+!mmm   set cSense = "Sehen"
+!rem
+!rem   //
+!mmm   set cSenseMode = "single"
+!rem
+!rem   // cSenseModifier fragt den Modifikator ab. GILT NUR FÜR NORMALE WAHRNEHMUNG!
+!mmm   set cSenseModifier = ?{Modifikator|-8}
+!rem
+!rem   // cSuccessMessage ist die Nachricht, die den aufmerksamen Spielern zugeflüstert wird. 
+!rem   // Der Eingabeprompt für den GM muss hier definiert & abhängig von cSense auf den
+!rem   // jeweiligen Sinn ("Seht/Hört/Riecht" usw.) angepasst werden:
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Spiegelt sich da nicht was in der Sonne? Poliertes Metall ... eine Waffe ... die jemand zurechtrückt?}"
+!rem
+!rem   // 
+!mmm   set cChar1ID = "@{target|Wer soll die Chance bekommen?|character_id}"
+!rem
+!mmm end customize
+
+### senseSeeGroup ### 
+!mmm customize
+!rem
+!mmm   set cSense = "Sehen"
+!mmm   set cSenseMode = "all"
+!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Spiegelt sich da nicht was in der Sonne? Poliertes Metall ... eine Waffe ... die jemand zurechtrückt?}"
+!mmm   set cChar1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set cChar2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set cChar3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set cChar4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set cChar5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set cChar6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!mmm end customize
+
+### senseSeeAll ### 
+!mmm customize
+!rem
+!mmm   set cSense = "Sehen"
+!mmm   set cSenseMode = "all"
+!mmm   set cSenseModifier = -8
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Spiegelt sich da nicht was in der Sonne? Poliertes Metall ... eine Waffe ... die jemand zurechtrückt?}"
+!mmm   set cChar1ID = "-MFXIKG9zCxQLxsEZ6PW"
+!mmm   set cChar2ID = "-MF0on5H-EnbMJQxQDhQ"
+!mmm   set cChar3ID = "-MF0l4ve_sPrzpbctzUM"
+!mmm   set cChar4ID = "-MFMpuvq2hfA-Y3i4EAe"
+!mmm   set cChar5ID = "-MEnkmmvHcco4HHxg8R0"
+!mmm   set cChar6ID = "-MGKyDWy10K_y3FS4VKi"
+!rem
+!mmm end customize
+
+### senseSixSingle ### 
+!mmm customize
+!rem
+!mmm   set cSense = "Sechster Sinn"
+!mmm   set cSenseMode = "single"
+!mmm   set cSuccessMessage = "?{Spürt ihr was? Nachricht für Aufmerksame|Ahhhh -- da ist dir gerade ein kalter Schauer den Rücken hinuntergelaufen!}"
+!mmm   set cChar1ID = "@{target|Wer soll die Chance bekommen?|character_id}"
+!rem
+!mmm end customize
+
+### senseSixGroup ### 
+!mmm customize
+!rem
+!mmm   set cSense = "Sechster Sinn"
+!mmm   set cSenseMode = "group"
+!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSuccessMessage = "?{Spürt ihr was? Nachricht für Aufmerksame|Ahhhh -- da ist dir gerade ein kalter Schauer den Rücken hinuntergelaufen!}"
+!mmm   set cChar1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set cChar2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set cChar3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set cChar4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set cChar5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set cChar6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!mmm end customize
+
+### senseSixAll ### 
+!mmm customize
+!rem
+!mmm   set cSense = "Sechster Sinn"
+!mmm   set cSenseMode = "all"
+!mmm   set cSenseModifier = -8
+!mmm   set cSuccessMessage = "?{Spürt ihr was? Nachricht für Aufmerksame|Ahhhh -- da ist dir gerade ein kalter Schauer den Rücken hinuntergelaufen!}"
+!mmm   set cChar1ID = "-MFXIKG9zCxQLxsEZ6PW"
+!mmm   set cChar2ID = "-MF0on5H-EnbMJQxQDhQ"
+!mmm   set cChar3ID = "-MF0l4ve_sPrzpbctzUM"
+!mmm   set cChar4ID = "-MFMpuvq2hfA-Y3i4EAe"
+!mmm   set cChar5ID = "-MEnkmmvHcco4HHxg8R0"
+!mmm   set cChar6ID = "-MGKyDWy10K_y3FS4VKi"
+!rem
+!mmm end customize
