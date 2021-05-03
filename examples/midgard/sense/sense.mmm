@@ -1,0 +1,236 @@
+!rem // Midgard Multi-Sense Script (ugly implementation for a hard-coded number of six PCs)
+!rem // v1.0.0-pre 2021-04-24
+!rem // 
+!rem // - Initial working implementation
+!rem
+!mmm customize
+!rem
+!rem   // cSense muss exakt einer der Wahrnehmungsfertigkeiten des Charakterblattes entsprechen: 
+!rem   // - "Sehen"
+!rem   // - "Hören"
+!rem   // - "Riechen/Schmecken"
+!rem   // - "Nachtsicht"
+!mmm   set cSense = "Sechster Sinn"
+!rem
+!rem   // cSenseModifier fragt den Modifikator ab. GILT NUR FÜR NORMALE WAHRNEHMUNG => 
+!rem   // FÜR DEN SECHSTEN SINN BITTE LÖSCHEN (auskommentieren reicht nicht, Box kommt trotzdem)
+!rem//   set cSenseModifier = ? {Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | GM-Eingabe,? {Modifikator&#124;&#125; }
+!rem
+!rem   // cSuccessMessage ist die Nachricht, die den aufmerksamen Spielern zugeflüstert wird. 
+!rem   // Der Eingabeprompt für den GM muss hier definiert & abhängig von cSense auf den
+!rem   // jeweiligen Sinn ("Seht/Hört/Riecht" usw.) angepasst werden:
+!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Spiegelt sich da nicht was in der Sonne? Poliertes Metall ... eine Waffe ... die jemand zurechtrückt?}"
+!rem
+!mmm end customize
+!mmm script
+!rem
+!rem   // Config: set defaults for customizable variables
+!rem   //
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cSense               ...
+!rem   //  cSuccessMessage      ...
+!rem   //
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cSense = "Sehen"
+!mmm   set customizable cSuccessMessage = "Du siehst etwas aufblitzen in der Ferne im Gebüsch..."
+!mmm   set customizable cSenseModifier = 0
+!mmm
+!rem   // Initialize: collect difficulty and selection of player-characters to get a shot at sensing something
+!rem   //
+!mmm   set char1ID = "@{target|Wer soll eine Chance bekommen? (1)|character_id}"
+!mmm   set char2ID = "@{target|Wer soll eine Chance bekommen? (2)|character_id}"
+!mmm   set char3ID = "@{target|Wer soll eine Chance bekommen? (3)|character_id}"
+!mmm   set char4ID = "@{target|Wer soll eine Chance bekommen? (4)|character_id}"
+!mmm   set char5ID = "@{target|Wer soll eine Chance bekommen? (5)|character_id}"
+!mmm   set char6ID = "@{target|Wer soll eine Chance bekommen? (6)|character_id}"
+!rem
+!rem   // Due diligence: A poor man's loop over selected tokens to each if each is a unique character token with access to the sense skill we need
+!rem   //
+!mmm   set char1ID = getattr(char1ID, "character_id")
+!mmm   if isdenied(char1ID) or isunknown(char1ID)
+!mmm     debug chat: The selected token (${char1ID}) was selected more than once or does not belong to an accessible character. Skipping.
+!mmm     set char1ID = false
+!mmm   end if
+!mmm   if char1ID
+!rem     // Special case: the sixth sense is only a bonus and requires selecting a different skill
+!mmm     if cSense eq "Sechster Sinn" and getattr(char1ID, findattr(char1ID, "sinne", "Fertigkeit2", cSense, "FW2")) > 0
+!mmm       set effSenseSkill = "Wahrnehmung"
+!mmm     else
+!mmm       set effSenseSkill = cSense
+!mmm     end if 
+!mmm     set char1EffectiveSkill = getattr(char1ID, findattr(char1ID, "sinne", "Fertigkeit2", effSenseSkill, "FW2")) + getattr(char1ID, findattr(char1ID, "sinne", "Fertigkeit2", effSenseSkill, "Fertigkeitsbonus2"))
+!mmm     if not char1EffectiveSkill
+!mmm       do whisperback("The first selected character (" & char1ID & ") does not allow access to the " & effSenseSkill & " skill, or the character might lack that skill completely. Skipping.") 
+!mmm     end if
+!mmm   end if
+!mmm   set char2ID = getattr(char2ID, "character_id")
+!mmm   if isdenied(char2ID) or isunknown(char2ID) or (char2ID == char1ID)
+!mmm     debug chat: The selected token (${char2ID}) was selected more than once or does not belong to an accessible character. Skipping.
+!mmm     set char2ID = false
+!mmm   end if
+!mmm   if char2ID
+!rem     // Special case: the sixth sense is only a bonus and requires selecting a different skill
+!mmm     if cSense eq "Sechster Sinn" and getattr(char2ID, findattr(char2ID, "sinne", "Fertigkeit2", cSense, "FW2")) > 0
+!mmm       set effSenseSkill = "Wahrnehmung"
+!mmm     else
+!mmm       set effSenseSkill = cSense
+!mmm     end if 
+!mmm     set char2EffectiveSkill = getattr(char2ID, findattr(char2ID, "sinne", "Fertigkeit2", effSenseSkill, "FW2")) + getattr(char2ID, findattr(char2ID, "sinne", "Fertigkeit2", effSenseSkill, "Fertigkeitsbonus2"))
+!mmm     if not char2EffectiveSkill
+!mmm       do whisperback("The selected character (" & char2ID & ") does not allow access to the " & effSenseSkill & " skill, or the character might lack that skill completely. Skipping.") 
+!mmm     end if
+!mmm   end if
+!mmm   set char3ID = getattr(char3ID, "character_id")
+!mmm   if isdenied(char3ID) or isunknown(char3ID) or (char3ID == char2ID) or (char3ID == char1ID)
+!mmm     debug chat: The selected token (${char3ID}) was selected more than once or does not belong to an accessible character. Skipping.
+!mmm     set char3ID = false
+!mmm   end if
+!mmm   if char3ID
+!rem     // Special case: the sixth sense is only a bonus and requires selecting a different skill
+!mmm     if cSense eq "Sechster Sinn" and getattr(char3ID, findattr(char3ID, "sinne", "Fertigkeit2", cSense, "FW2")) > 0
+!mmm       set effSenseSkill = "Wahrnehmung"
+!mmm     else
+!mmm       set effSenseSkill = cSense
+!mmm     end if 
+!mmm     set char3EffectiveSkill = getattr(char3ID, findattr(char3ID, "sinne", "Fertigkeit2", effSenseSkill, "FW2")) + getattr(char3ID, findattr(char3ID, "sinne", "Fertigkeit2", effSenseSkill, "Fertigkeitsbonus2"))
+!mmm     if not char3EffectiveSkill
+!mmm       do whisperback("The selected character (" & char3ID & ") does not allow access to the " & effSenseSkill & " skill, or the character might lack that skill completely. Skipping.") 
+!mmm     end if
+!mmm   end if
+!mmm   set char4ID = getattr(char4ID, "character_id")
+!mmm   if isdenied(char4ID) or isunknown(char4ID) or (char4ID == char3ID) or (char4ID == char2ID) or (char4ID == char1ID)
+!mmm     debug chat: The selected token (${char4ID}) was selected more than once or does not belong to an accessible character. Skipping.
+!mmm     set char4ID = false
+!mmm   end if
+!mmm   if char4ID
+!rem     // Special case: the sixth sense is only a bonus and requires selecting a different skill
+!mmm     if cSense eq "Sechster Sinn" and getattr(char4ID, findattr(char4ID, "sinne", "Fertigkeit2", cSense, "FW2")) > 0
+!mmm       set effSenseSkill = "Wahrnehmung"
+!mmm     else
+!mmm       set effSenseSkill = cSense
+!mmm     end if 
+!mmm     set char4EffectiveSkill = getattr(char4ID, findattr(char4ID, "sinne", "Fertigkeit2", effSenseSkill, "FW2")) + getattr(char4ID, findattr(char4ID, "sinne", "Fertigkeit2", effSenseSkill, "Fertigkeitsbonus2"))
+!mmm     if not char4EffectiveSkill
+!mmm       do whisperback("The selected character (" & char4ID & ") does not allow access to the " & effSenseSkill & " skill, or the character might lack that skill completely. Skipping.") 
+!mmm     end if
+!mmm   end if
+!mmm   set char5ID = getattr(char5ID, "character_id")
+!mmm   if isdenied(char5ID) or isunknown(char5ID) or (char5ID == char4ID) or (char5ID == char3ID) or (char5ID == char2ID) or (char5ID == char1ID)
+!mmm     debug chat: The selected token (${char5ID}) was selected more than once or does not belong to an accessible character. Skipping.
+!mmm     set char5ID = false
+!mmm   end if
+!mmm   if char5ID
+!rem     // Special case: the sixth sense is only a bonus and requires selecting a different skill
+!mmm     if cSense eq "Sechster Sinn" and getattr(char5ID, findattr(char5ID, "sinne", "Fertigkeit2", cSense, "FW2")) > 0
+!mmm       set effSenseSkill = "Wahrnehmung"
+!mmm     else
+!mmm       set effSenseSkill = cSense
+!mmm     end if 
+!mmm     set char5EffectiveSkill = getattr(char5ID, findattr(char5ID, "sinne", "Fertigkeit2", effSenseSkill, "FW2")) + getattr(char5ID, findattr(char5ID, "sinne", "Fertigkeit2", effSenseSkill, "Fertigkeitsbonus2"))
+!mmm     if not char5EffectiveSkill
+!mmm       do whisperback("The selected character (" & char5ID & ") does not allow access to the " & effSenseSkill & " skill, or the character might lack that skill completely. Skipping.") 
+!mmm     end if
+!mmm   end if
+!mmm   set char6ID = getattr(char6ID, "character_id")
+!mmm   if isdenied(char6ID) or isunknown(char6ID) or (char6ID == char5ID) or (char6ID == char4ID) or (char6ID == char3ID) or (char6ID == char2ID) or (char6ID == char1ID)
+!mmm     debug chat: The selected token (${char6ID}) was selected more than once or does not belong to an accessible character. Skipping.
+!mmm     set char6ID = false
+!mmm   end if
+!mmm   if char6ID
+!rem     // Special case: the sixth sense is only a bonus and requires selecting a different skill
+!mmm     if cSense eq "Sechster Sinn" and getattr(char6ID, findattr(char6ID, "sinne", "Fertigkeit2", cSense, "FW2")) > 0
+!mmm       set effSenseSkill = "Wahrnehmung"
+!mmm     else
+!mmm       set effSenseSkill = cSense
+!mmm     end if 
+!mmm     set char6EffectiveSkill = getattr(char6ID, findattr(char6ID, "sinne", "Fertigkeit2", effSenseSkill, "FW2")) + getattr(char6ID, findattr(char6ID, "sinne", "Fertigkeit2", effSenseSkill, "Fertigkeitsbonus2"))
+!mmm     if not char6EffectiveSkill
+!mmm       do whisperback("The selected character (" & char6ID & ") does not allow access to the " & effSenseSkill & " skill, or the character might lack that skill completely. Skipping.") 
+!mmm     end if
+!mmm   end if
+!mmm
+!rem   // The main event, which starts with initializing the GM's reporting table
+!rem   //
+!mmm   combine chat
+!mmm     chat: /w GM ${"&"}{template:default} {{name=${cSense}: Erfolge}} 
+!mmm
+!rem     // Execute sense rolls, again in a poor man's loop over six character slots
+!rem     // TODO: report critical failures to GM, as well (successes are already covered)
+!rem     //
+!mmm     if char1EffectiveSkill
+!mmm       set char1SenseResult = ? roll("1d20+" & (char1EffectiveSkill + cSenseModifier))
+!mmm       if char1SenseResult >= 20 or iscritical(char1SenseResult)
+!rem         // Success
+!mmm         set char1Name = getattr(char1ID, "character_name")
+!mmm         chat: /w GM {{1:${char1Name}=${char1SenseResult}}}
+!mmm       end if
+!mmm     end if
+!mmm     if char2EffectiveSkill
+!mmm       set char2SenseResult = ? roll("1d20+" & (char2EffectiveSkill + cSenseModifier))
+!mmm       if char2SenseResult >= 20 or iscritical(char2SenseResult)
+!rem         // Success
+!mmm         set char2Name = getattr(char2ID, "character_name")
+!mmm         chat: /w GM {{2:${char2Name}=${char2SenseResult}}}
+!mmm       end if
+!mmm     end if
+!mmm     if char3EffectiveSkill
+!mmm       set char3SenseResult = ? roll("1d20+" & (char3EffectiveSkill + cSenseModifier))
+!mmm       if char3SenseResult >= 20 or iscritical(char3SenseResult)
+!rem         // Success
+!mmm         set char3Name = getattr(char3ID, "character_name")
+!mmm         chat: /w GM {{3:${char3Name}=${char3SenseResult}}}
+!mmm       end if
+!mmm     end if
+!mmm     if char4EffectiveSkill
+!mmm       set char4SenseResult = ? roll("1d20+" & (char4EffectiveSkill + cSenseModifier))
+!mmm       if char4SenseResult >= 20 or iscritical(char4SenseResult)
+!rem         // Success
+!mmm         set char4Name = getattr(char4ID, "character_name")
+!mmm         chat: /w GM {{4:${char4Name}=${char4SenseResult}}}
+!mmm       end if
+!mmm     end if
+!mmm     if char5EffectiveSkill
+!mmm       set char5SenseResult = ? roll("1d20+" & (char5EffectiveSkill + cSenseModifier))
+!mmm       if char5SenseResult >= 20 or iscritical(char5SenseResult)
+!rem         // Success
+!mmm         set char5Name = getattr(char5ID, "character_name")
+!mmm         chat: /w GM {{5:${char5Name}=${char5SenseResult}}}
+!mmm       end if
+!mmm     end if
+!mmm     if char6EffectiveSkill
+!mmm       set char6SenseResult = ? roll("1d20+" & (char6EffectiveSkill + cSenseModifier))
+!mmm       if char6SenseResult >= 20 or iscritical(char6SenseResult)
+!rem         // Success
+!mmm         set char6Name = getattr(char6ID, "character_name")
+!mmm         chat: /w GM {{6:${char6Name}=${char6SenseResult}}}
+!mmm       end if
+!mmm     end if
+!mmm
+!rem     // Check if no character at all was successful, to complete diagnostic output to GM
+!mmm     if not (char1Name or char2Name or char3Name or char4Name or char5Name or char6Name)
+!mmm       chat: /w GM {{(keine)=}}
+!mmm     end if
+!mmm   end combine
+!mmm
+!rem   // Closing the curtain: Report results to players (another poor man's loop)
+!rem   //
+!mmm   if char1Name
+!mmm     chat: /w "${char1Name}" ${cSuccessMessage}
+!mmm   end if
+!mmm   if char2Name
+!mmm     chat: /w "${char2Name}" ${cSuccessMessage}
+!mmm   end if
+!mmm   if char3Name
+!mmm     chat: /w "${char3Name}" ${cSuccessMessage}
+!mmm   end if
+!mmm   if char4Name
+!mmm     chat: /w "${char4Name}" ${cSuccessMessage}
+!mmm   end if
+!mmm   if char5Name
+!mmm     chat: /w "${char5Name}" ${cSuccessMessage}
+!mmm   end if
+!mmm   if char6Name
+!mmm     chat: /w "${char6Name}" ${cSuccessMessage}
+!mmm   end if
+!mmm
+!mmm end script
