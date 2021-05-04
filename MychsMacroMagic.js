@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.17.3";
+const MMM_VERSION = "1.18.0";
 
 on("chat:message", function(msg)
 {
@@ -561,18 +561,19 @@ class MychScriptContext
             "font-size": "1.1em",
         };
 
-        let borderStyleOverrides =
+        let styleOverrides =
         {
-            "good":      "2px solid #3FB315",
-            "bad":       "2px solid #B31515",
-            "important": "2px solid #4A57ED",
+            "good":      { "border": "2px solid #3FB315" },
+            "bad":       { "border": "2px solid #B31515" },
+            "important": { "border": "2px solid #4A57ED" },
+            "info":      { "border": "2px solid #E0E0E0", "background-color": "#E0E0E0" }
         };
 
-        styles["border"] = borderStyleOverrides[MychExpression.coerceString(type)] || styles["border"];
+        styles = { ...styles, ...styleOverrides[MychExpression.coerceString(type)] };
 
         if (tooltip)
         {
-            styles["cursor"] =  "help";
+            styles["cursor"] = "help";
         }
 
         let valueLiteral = this.literal(value);
