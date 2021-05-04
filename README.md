@@ -637,8 +637,9 @@ This works in any place with an expression, of course, not just in **set** – y
 | len(*str*)                                         | String    | len("foo") = 3   | Return the number of character in string *str*
 | literal(*str*)                                     | String    | literal("1<2") = "1\&lt;2" | Escape all HTML control characters in string *str*
 | highlight(*str*)                                   | String    |  | When output to chat, highlight string *str* with a pretty box
-| highlight(*str*, *type*)                           | String    |  | ...with a colored outline depending on *type* = "normal", "important", "good", "bad"
+| highlight(*str*, *type*)                           | String    |  | ...with a colored outline depending on *type* = "normal", "important" (blue), "good" (green), "bad" (red), "info" (simple gray box)
 | highlight(*str*, *type*, *tooltip*)                | String    |  | ...with a tooltip popping up on mouse hover
+| highlight(*roll*, default, *tooltip*)              | String    | highlight(\[\[1d20]], default, "woo!") | ...with a colored outline depending on the roll result and a custom tooltip for the roll
 | roll(*expr*)                                       | Roll      | roll("1d20+12") = 23 | Run a roll expression through Roll20's dice engine and return its result
 | roll(*name\|id*, *expr*)                           | Roll      | roll("Finn", "@{HP}") = 15 | ...evaluated in context of character *name\|id* (instead of `sender`)
 | iscritical(*roll*)                                 | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
@@ -788,12 +789,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.17.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.18.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.18.0  | 2021-05-04 | Improve `highlight()` with `"info"` and `default` types
 | 1.17.0  | 2021-04-18 | Add `spawnfx()` to spawn visual effects
 | 1.16.0  | 2021-03-24 | Support `width` and `height` token attributes
 | 1.15.0  | 2021-03-02 | Add diagnostic tooltips to `denied` and new `unknown` results
