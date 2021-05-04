@@ -655,6 +655,22 @@
                 { chat: "foo//bar//baz" },
             ],
             [
+                "!mmm combine chat using highlight('//')",
+                "!mmm     chat: foo",
+                "!mmm     chat: bar",
+                "!mmm end combine",
+                { chat: "foo<span class=\"mmm-highlight mmm-highlight-normal\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #FEF68E;font-weight:bold;font-size:1.1em\">//</span>bar" },
+            ],
+            [
+                "!mmm combine chat using highlight('//')",
+                "!mmm     chat: !foo",
+                "!mmm     chat: bar",
+                "!mmm end combine",
+                { process: "/direct MMM starts impersonation of player1234" },
+                { chat: "!foo//bar" },
+                { process: "/direct MMM stops impersonation of player1234" },
+            ],
+            [
                 "!mmm combine chat",
                 "!mmm     chat: testing maths...",
                 "!mmm     if 1 < 2",
@@ -675,6 +691,14 @@
                 "!mmm     end if",
                 "!mmm end combine",
                 { chat: "testing maths... maths still work" },
+            ],
+            [
+                "!mmm chat: denied=${denied} default=${default} unknown=${unknown} highlight=${highlight('text', 'normal', 'tooltip')} roll=[[1d1]]",
+                { chat: "denied=<span class=\"mmm-denied\" style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span> default=<span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span> unknown=<span class=\"mmm-unknown\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span> highlight=<span class=\"mmm-highlight mmm-highlight-normal showtip tipsy-n-right\" title=\"tooltip\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #FEF68E;font-weight:bold;font-size:1.1em;cursor:help\">text</span> roll=<span class=\"mmm-highlight mmm-highlight-important showtip tipsy-n-right\" title=\"Rolling 1d1\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #4A57ED;font-weight:bold;font-size:1.1em;cursor:help\">1</span>" },
+                "!mmm chat: !api denied=${denied} default=${default} unknown=${unknown} highlight=${highlight('text', 'normal', 'tooltip')} roll=[[1d1]]",
+                { process: "/direct MMM starts impersonation of player1234"},
+                { chat: "!api denied= default= unknown= highlight=text roll=1"},
+                { process: "/direct MMM stops impersonation of player1234" },
             ],
             [
                 "!mmm script",
@@ -1077,11 +1101,6 @@
         let attributes =
         {
             AP: { current: 20, max: 30 },
-        };
-
-        MychScriptContext.prototype.chat = function(message)
-        {
-            sendChat(this.sender || "Mych's Macro Magic", message);
         };
 
         MychScriptContext.prototype.whisperback = function(message)

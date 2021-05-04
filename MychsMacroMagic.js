@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.17.2";
+const MMM_VERSION = "1.17.3";
 
 on("chat:message", function(msg)
 {
@@ -626,8 +626,9 @@ class MychScriptContext
     chat(message)
     {
         let sender = this.$getChatSender();
+        let messageString = MychExpression.coerceString(message);
 
-        if (message.startsWith("!"))
+        if (messageString.startsWith("!"))
         {
             let impersonation =
             {
@@ -649,12 +650,14 @@ class MychScriptContext
             }
 
             sendChat(sender, "/direct MMM starts impersonation of " + impersonation.playerid, startImpersonation)
-            sendChat(sender, message);
+            sendChat(sender, messageString);
             sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
         }
         else
         {
-            sendChat(sender, message);
+            let messageMarkup = MychExpression.coerceMarkup(message);
+
+            sendChat(sender, messageMarkup);
         }
     }
 
@@ -671,7 +674,9 @@ class MychScriptContext
             recipient = "\"" + recipient + "\"";
         }
 
-        sendChat("Mych's Macro Magic", "/w " + recipient + " <br/>" + message, null, { noarchive: true });
+        let messageMarkup = MychExpression.coerceMarkup(message);
+
+        sendChat("Mych's Macro Magic", "/w " + recipient + " <br/>" + messageMarkup, null, { noarchive: true });
     }
 
     error(exception)
@@ -1534,37 +1539,45 @@ class MychScriptContext
 
     $debugHighlight(value)
     {
+        let literalValue = this.literal(value);
+
         let highlightStart = "<span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>";
         let highlightStop = "</span>";
 
-        return highlightStart + this.literal(value) + highlightStop;
+        let highlight =
+        {
+            toScalar: () => literalValue,
+            toMarkup: () => highlightStart + literalValue + highlightStop,
+        };
+
+        return highlight;
     }
 
-    $debugCoerceMarkup(value)
+    $debugExpression(value)
     {
         if (value && value.toMarkup instanceof Function)
         {
-            return value.toMarkup();
+            return value;
         }
 
         return this.$debugHighlight(MychExpression.literal(value));
     }
 
-    $debugExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
+    $debugSendExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
     {
         let markedSourceBefore = source.substring(0, resultSourceBegin);
         let markedSourceBetween = source.substring(resultSourceBegin, resultSourceEnd);
         let markedSourceAfter = source.substring(resultSourceEnd);
 
-        let debugResult = this.$debugCoerceMarkup(result);
-        let debugSource = this.literal(markedSourceBefore) + this.$debugHighlight(markedSourceBetween) + this.literal(markedSourceAfter);
+        let debugResult = MychExpression.coerceMarkup(this.$debugExpression(result));
+        let debugSource = this.literal(markedSourceBefore) + MychExpression.coerceMarkup(this.$debugHighlight(markedSourceBetween)) + this.literal(markedSourceAfter);
         
-        this.$debugMessage(debugResult + " \u25C0\uFE0F " + debugSource);
+        this.$debugSendMessage(debugResult + " \u25C0\uFE0F " + debugSource);
     }
 
-    $debugMessage(message)
+    $debugSendMessage(message)
     {
-        this.whisperback("\u{1F50E} " + message);
+        this.whisperback("\u{1F50E} " + MychExpression.coerceMarkup(message));
     }
 
     $statusReset()
@@ -2253,8 +2266,14 @@ class MychScript
                     variables.chat = prevChat;
                 }
 
+                let combinedMessages =
+                {
+                    toScalar: () => messages.map(MychExpression.coerceString).join(MychExpression.coerceString(separator)),
+                    toMarkup: () => messages.map(MychExpression.coerceMarkup).join(MychExpression.coerceMarkup(separator)),
+                };
+
                 let chatContext = (variables.chat ? variables : this.context);
-                chatContext.chat(messages.join(separator));
+                chatContext.chat(combinedMessages);
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
             },
@@ -2476,14 +2495,14 @@ class MychScript
 
                     try
                     {
-                        message = yield* this.definition.template.evaluate(variables, this.context, value => this.context.$debugCoerceMarkup(value));
+                        message = yield* this.definition.template.evaluate(variables, this.context, value => this.context.$debugExpression(value));
                     }
                     catch (exception)
                     {
                         this.rethrowTemplateError("execute", exception, this.definition.templateOffset);
                     }
 
-                    this.context.$debugMessage(message);
+                    this.context.$debugSendMessage(message);
                 }
 
                 if (this.definition.expression)
@@ -2499,7 +2518,7 @@ class MychScript
                         this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
                     }
 
-                    this.context.$debugExpression(result, this.definition.expression.source);
+                    this.context.$debugSendExpression(result, this.definition.expression.source);
                 }
             },
         },
@@ -2907,19 +2926,56 @@ class MychTemplate
         return new RegExp(contextKeys.map(key => key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/, "\\b")).join("|"), "g");
     }
 
-    static replaceContextKeys(string, contextKeysRegExp, context, markup)
+    static evaluateContextKeys(string, contextKeysRegExp, context, convertExpression = value => value)
     {
-        if (!contextKeysRegExp)
+        if (!contextKeysRegExp || !contextKeysRegExp.test(string))
         {
             return string;
         }
 
-        return string.replace(contextKeysRegExp, key => markup(context[key]));
+        let evaluatedSegments = [];
+
+        let contextKeysMatch;
+        let stringBegin = 0;
+
+        contextKeysRegExp.lastIndex = 0;
+
+        while (contextKeysMatch = contextKeysRegExp.exec(string))
+        {
+            if (stringBegin < contextKeysMatch.index)
+            {
+                let stringEnd = contextKeysMatch.index;
+                evaluatedSegments.push(string.substring(stringBegin, stringEnd))
+            }
+
+            let contextKey = contextKeysMatch[0];
+            evaluatedSegments.push(convertExpression(context[contextKey]));
+
+            stringBegin = contextKeysRegExp.lastIndex;
+        }
+
+        if (stringBegin < string.length)
+        {
+            evaluatedSegments.push(string.substring(stringBegin));
+        }
+
+        if (evaluatedSegments.length <= 1)
+        {
+            return evaluatedSegments[0];
+        }
+
+        let combinedEvaluatedSegments =
+        {
+            toScalar: () => evaluatedSegments.map(MychExpression.coerceString).join(""),
+            toMarkup: () => evaluatedSegments.map(MychExpression.coerceMarkup).join(""),
+        };
+
+        return combinedEvaluatedSegments;
     }
 
-    *evaluate(variables, context, markup = MychExpression.coerceMarkup)
+    *evaluate(variables, context, convertExpression = value => value)
     {
-        let evaluatedStrings = [];
+        let evaluatedSegments = [];
 
         let contextKeysRegExp = MychTemplate.createContextKeysRegExp(context);
 
@@ -2929,8 +2985,8 @@ class MychTemplate
             {
                 case "string":
                 {
-                    let evaluatedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context, markup);
-                    evaluatedStrings.push(evaluatedString);
+                    let evaluatedString = MychTemplate.evaluateContextKeys(segment.value, contextKeysRegExp, context, convertExpression);
+                    evaluatedSegments.push(evaluatedString);
                 }
                 break;
 
@@ -2939,7 +2995,7 @@ class MychTemplate
                     try
                     {
                         let evaluatedExpressionResult = yield* segment.expression.evaluate(variables, context);
-                        evaluatedStrings.push(markup(evaluatedExpressionResult));
+                        evaluatedSegments.push(convertExpression(evaluatedExpressionResult));
                     }
                     catch (exception)
                     {
@@ -2951,13 +3007,24 @@ class MychTemplate
                 case "reference":
                 {
                     let evaluatedReference = "$[" + segment.label + "]";
-                    evaluatedStrings.push(evaluatedReference);
+                    evaluatedSegments.push(evaluatedReference);
                 }
                 break;
             }
         }
-    
-        return evaluatedStrings.join("");
+
+        if (evaluatedSegments.length <= 1)
+        {
+            return evaluatedSegments[0];
+        }
+
+        let combinedEvaluatedSegments =
+        {
+            toScalar: () => evaluatedSegments.map(MychExpression.coerceString).join(""),
+            toMarkup: () => evaluatedSegments.map(MychExpression.coerceMarkup).join(""),
+        };
+
+        return combinedEvaluatedSegments;
     }
 
     createTranslated(translationTemplate)
@@ -2971,7 +3038,7 @@ class MychTemplate
         return translatedTemplate;
     }
 
-    *createMaterialized(variables, context, markup = MychExpression.coerceMarkup)
+    *createMaterialized(variables, context, convertExpression = value => value)
     {
         let materializedTemplate = new MychTemplate();
 
@@ -2986,7 +3053,7 @@ class MychTemplate
             {
                 case "string":
                 {
-                    let materializedString = MychTemplate.replaceContextKeys(segment.value, contextKeysRegExp, context, markup);
+                    let materializedString = MychExpression.coerceString(MychTemplate.evaluateContextKeys(segment.value, contextKeysRegExp, context, convertExpression));
                     let materializedStringSegment = { type: "string", value: materializedString };
 
                     materializedTemplate.segments.push(materializedStringSegment);
@@ -2998,7 +3065,7 @@ class MychTemplate
                     try
                     {
                         let materializedExpressionResult = yield* segment.expression.evaluate(variables, context);
-                        let materializedExpressionSegment = { type: "string", value: markup(materializedExpressionResult) };
+                        let materializedExpressionSegment = { type: "string", value: convertExpression(materializedExpressionResult) };
 
                         materializedTemplate.segments.push(materializedExpressionSegment);
                     }
@@ -3477,7 +3544,7 @@ class MychExpression
                         let sourceBegin = debugExpression.tokens[debugTokenIndex].offset;
                         let sourceEnd = debugExpression.tokens[maxEvaluatedTokenIndex].offsetEnd;
 
-                        context.$debugExpression(value, debugExpression.source, sourceBegin, sourceEnd);
+                        context.$debugSendExpression(value, debugExpression.source, sourceBegin, sourceEnd);
                     
                         return value;
                     }
