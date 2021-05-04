@@ -410,12 +410,7 @@ class MychScriptContext
 
         decoratedRoll.toMarkup = function()
         {
-            let isRollCritical = context.iscritical(this);
-            let isRollFumbled = context.isfumble(this);
-
-            let highlightType = (isRollCritical && isRollFumbled) ? "important" : isRollCritical ? "good" : isRollFumbled ? "bad" : "normal";
-
-            return context.highlight(this, highlightType, this.expression ? ("Rolling " + this.expression) : undefined).toMarkup();
+            return context.highlight(this, undefined, this.expression ? ("Rolling " + this.expression) : undefined).toMarkup();
         };
 
         return decoratedRoll;
@@ -532,7 +527,7 @@ class MychScriptContext
         return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";")
     }
 
-    highlight(value, type = "normal", tooltip = undefined)
+    highlight(value, type = undefined, tooltip = undefined)
     {
         let result;
         
@@ -569,7 +564,17 @@ class MychScriptContext
             "info":      { "border": "2px solid #E0E0E0", "background-color": "#E0E0E0" }
         };
 
-        styles = { ...styles, ...styleOverrides[MychExpression.coerceString(type)] };
+        type = MychExpression.coerceString(type);
+
+        if (type == "")
+        {
+            let isRollCritical = MychExpression.coerceBoolean(this.iscritical(value));
+            let isRollFumbled = MychExpression.coerceBoolean(this.isfumble(value));
+
+            type = (isRollCritical && isRollFumbled) ? "important" : isRollCritical ? "good" : isRollFumbled ? "bad" : "normal";
+        }
+
+        styles = { ...styles, ...styleOverrides[type] };
 
         if (tooltip)
         {
