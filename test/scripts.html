@@ -718,6 +718,14 @@
             ],
             [
                 "!mmm script",
+                "!mmm     set roll1 = [[1d1]]",
+                "!mmm     set roll2 = [[2d1]]",
+                "!mmm     chat: ${roll1}, ${roll2}",
+                "!mmm end script",
+                { chat: "<span class=\"mmm-highlight mmm-highlight-important showtip tipsy-n-right\" title=\"Rolling 1d1\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #4A57ED;font-weight:bold;font-size:1.1em;cursor:help\">1</span>, <span class=\"mmm-highlight mmm-highlight-important showtip tipsy-n-right\" title=\"Rolling 2d1\" style=\"padding:0 3px 0 3px;color:black;background-color:#FEF68E;border:2px solid #4A57ED;font-weight:bold;font-size:1.1em;cursor:help\">2</span>" },
+            ],
+            [
+                "!mmm script",
                 "!mmm    chat: attacking with [[1d3]]",
                 "!mmm    set roll = $[[0]]",
                 "!mmm    chat: critical: ${iscritical(roll)}",
