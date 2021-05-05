@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.18.0";
+const MMM_VERSION = "1.18.1";
 
 on("chat:message", function(msg)
 {
@@ -21,6 +21,9 @@ on("chat:message", function(msg)
         MychScriptContext.players[msg.playerid] = player;
     }
 
+    let msgContext = new MychScriptContext();
+    let msgContextHasRolls = false;
+
     player.lastseen = new Date();
 
     if (msg.type == "rollresult")
@@ -30,22 +33,31 @@ on("chat:message", function(msg)
             results: JSON.parse(msg.content),
             expression: msg.origRoll,
         }];
-        player.context.$consumeRolls(rolls);
+
+        msgContext.$consumeRolls(rolls);
+        msgContextHasRolls = true;
     }
     else if (msg.inlinerolls && msg.inlinerolls.length > 0)
     {
-        player.context.$consumeRolls(msg.inlinerolls);
+        msgContext.$consumeRolls(msg.inlinerolls);
+        msgContextHasRolls = true;
     }
 
-    let msgSelected = msg.selected ? msg.selected.map(entry => entry._id) : [];
-    
-    if (msgSelected.join(",") != player.context.selected.join(","))
+    msgContext.selected = msg.selected ? msg.selected.map(entry => entry._id) : [];
+
+    msgContext.sender = msg.who;
+    msgContext.playerid = msg.playerid;
+
+    if (msgContextHasRolls || msgContext.sender != player.context.sender || String(msgContext.selected) != String(player.context.selected))
     {
-        player.context.selected = msgSelected;
-    }
+        if (!msgContextHasRolls)
+        {
+            msgContext.$cloneRolls(player.context);
+            msgContextHasRolls = true;
+        }
 
-    player.context.sender = msg.who;
-    player.context.playerid = msg.playerid;
+        player.context = msgContext;
+    }
 
     if (msg.type != "api")
     {
@@ -418,18 +430,15 @@ class MychScriptContext
 
     $consumeRolls(rolls)
     {
-        if (!rolls || rolls.length == 0)
-        {
-            return 0;
-        }
+        let rollIndex = 0;
 
-        for (let rollIndex = 0; rollIndex < rolls.length; ++rollIndex)
+        for (; rollIndex < rolls.length; ++rollIndex)
         {
             let rollReference = "$[[" + rollIndex + "]]";
             this[rollReference] = this.$decorateRoll(rolls[rollIndex]);
         }
 
-        for (let rollIndex = rolls.length;; ++rollIndex)
+        for (;; ++rollIndex)
         {
             let rollReference = "$[[" + rollIndex + "]]";
             if (this[rollReference] == undefined)
@@ -438,8 +447,31 @@ class MychScriptContext
             }
             delete this[rollReference];
         }
+    }
 
-        return rolls.length;
+    $cloneRolls(context)
+    {
+        let rollIndex = 0;
+
+        for (;; ++rollIndex)
+        {
+            let rollReference = "$[[" + rollIndex + "]]";
+            if (context[rollReference] == undefined)
+            {
+                break;
+            }
+            this[rollReference] = context[rollReference];
+        }
+
+        for (;; ++rollIndex)
+        {
+            let rollReference = "$[[" + rollIndex + "]]";
+            if (this[rollReference] == undefined)
+            {
+                break;
+            }
+            delete this[rollReference];
+        }
     }
 
     *roll(nameOrIdOrRollExpression, rollExpressionIfNameOrId = undefined)
