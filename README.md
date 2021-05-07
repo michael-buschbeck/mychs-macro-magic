@@ -506,6 +506,7 @@ There are also a few special *context variables* that are pre-set for you:
 | ---------- | --------- | -----------
 | `playerid` |           | Player ID (not character ID!) of the player who sent the command
 | `sender`   | "Finn"    | Player or character name who sent the command – subject to the chat "As" drop-down box
+| `selected` |           | List of token IDs of the tokens currently selected by the player on the game board – may be empty
 | `version`  | "1.0.1"   | [Semantic version number](https://semver.org) of the MMM scripting engine
 | `pi`       | 3.141...  | [Ratio of a circle's circumference to its diameter](https://en.wikipedia.org/wiki/Pi) – useful for geometric calculations
 | `default`  | `default` | Special indicator value that makes `set customizable` apply the default expression
