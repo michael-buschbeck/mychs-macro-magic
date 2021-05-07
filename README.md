@@ -210,6 +210,44 @@ That said – anything that's evaluated by the Roll20 macro engine *before* the 
 In the example above, the "Heal if necessary?" question will pop up even before the entire script runs – actually, just when the **else if** line is received by the Roll20 chat engine and before it's sent to the MMM scripting engine. So this question will be asked even if Finn is sufficiently healthy to not even want healing. Unfortunately, the only way to make roll queries conditional is with conventional (and limited) Roll20 macro magic.
 
 
+### _!mmm_ **for** *variable* **in** *expression* [...] **end for**
+
+Executes a block of commands once for each element from a list given by *expression*. Assigns each element in turn to *variable* (in the same order elements appear in the list) and then executes the block before continuing with the next element (if any).
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **for** color **in** "red", "green", "blue" | *(start of loop)*
+| 2    | _!mmm_     **chat:** Do you feel ${color} today? | ***Finn:*** Do you feel red today?<br>***Finn:*** Do you feel green today?<br>***Finn:*** Do you feel blue today?
+| 3    | _!mmm_ **end for** | *(end of loop)*
+
+After the last iteration, the *variable* is deleted again. However, if you use **exit for** to exit the loop early before all elements are exhausted, *variable* retains its most recent value:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **for** token **in** selected | *(loop over all selected tokens)*
+| 3    | _!mmm_         **exit for if** getattr(token, "HP") > 10 | *(exit loop early if token is healthy enough)*
+| 4    | _!mmm_     **end for**
+| 5    | _!mmm_     **if** token | *(did the loop exit early?)*
+| 6    | _!mmm_         **chat:** ${getattr(token, "name")} seems healthy enough! | ***Finn:*** Yorrick seems healthy enough!
+| 7    | _!mmm_     **else**
+| 8    | _!mmm_         **chat:** Everyone seems pretty banged up.
+| 9    | _!mmm_     **end if**
+| 10   | _!mmm_ **end script**
+
+Useful things you can loop over:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **for** thing **in** "sword", "mug", "hat" | *(just a hard-coded bunch of similar things)*
+| 2    | _!mmm_ **for** token **in** selected | *(tokens currently selected by the player)*
+| 3    | _!mmm_ **for** table **in** findattr(sender) | *(character sheet table names)*
+| 4    | _!mmm_ **for** column **in** findattr(sender, table) | *(character sheet table columns)*
+| 5    | _!mmm_ **for** value **in** findattr(sender, table, column) | *(character sheet table column values)*
+
+You can also nest loops if you want – but be careful not to accidentally flood the chat with messages or even stall the entire game because you're doing too much stuff recursively iterating through all your levels of nested loops.
+
+
 ### _!mmm_ **set** *variable* = *expression*
 
 Evaluates an expression and assigns its results to a variable. If the variable doesn't exist yet, it's created; if it already exists, its previous value is replaced.
@@ -790,12 +828,13 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.18.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.19.0
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.19.0  | 2021-05-07 | Add `for` loop
 | 1.18.0  | 2021-05-04 | Improve `highlight()` with `"info"` and `default` types
 | 1.17.0  | 2021-04-18 | Add `spawnfx()` to spawn visual effects
 | 1.16.0  | 2021-03-24 | Support `width` and `height` token attributes
