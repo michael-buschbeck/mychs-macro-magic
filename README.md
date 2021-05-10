@@ -240,12 +240,12 @@ Useful things you can loop over:
 | Line | Commands | What happens?
 | ---- | -------- | -------------
 | 1    | _!mmm_ **for** thing **in** "sword", "mug", "hat" | *(just a hard-coded bunch of similar things)*
-| 2    | _!mmm_ **for** token **in** selected | *(tokens currently selected by the player)*
-| 3    | _!mmm_ **for** table **in** findattr(sender) | *(character sheet table names)*
-| 4    | _!mmm_ **for** column **in** findattr(sender, table) | *(character sheet table columns)*
-| 5    | _!mmm_ **for** value **in** findattr(sender, table, column) | *(character sheet table column values)*
+| 2    | _!mmm_ **for** tokenId **in** selected | *(all tokens currently selected by the player)*
+| 3    | _!mmm_ **for** tableName **in** findattr(sender) | *(all character sheet tables)*
+| 4    | _!mmm_ **for** columnName **in** findattr(sender, table) | *(all column names of a character sheet table)*
+| 5    | _!mmm_ **for** attrName **in** findattr(sender, table, column) | *(all attribute names in one column for all rows of a character sheet table)*
 
-You can also nest loops if you want – but be careful not to accidentally flood the chat with messages or even stall the entire game because you're doing too much stuff recursively iterating through all your levels of nested loops.
+You can also nest loops if you want – but be careful not to accidentally flood the chat with messages or even stall the entire game because you're going again and again and again and _again_ through your innermost nested loop.
 
 
 ### _!mmm_ **set** *variable* = *expression*
