@@ -930,12 +930,17 @@ class MychScriptContext
             }
         }
 
-        for (let [rowId, rowInfo] of Object.entries(rowInfos))
+        let attributeNames = Object.values(rowInfos).filter(rowInfo => rowInfo.lookupAttributeName && rowInfo.conditionCount == conditionCount).map(rowInfo => rowInfo.lookupAttributeName);
+
+        if (attributeNames.length > 0)
         {
-            if (rowInfo.lookupAttributeName && rowInfo.conditionCount == conditionCount)
+            let result =
             {
-                return rowInfo.lookupAttributeName;
-            }
+                toScalar: () => attributeNames[0],
+                toList:   () => attributeNames,
+            };
+
+            return result;
         }
 
         let nameOrIdDescription = "character <strong>" + this.literal(nameOrId) + "</strong>";
@@ -3325,6 +3330,11 @@ class MychExpression
         if (Array.isArray(value))
         {
             return value;
+        }
+
+        if (value && value.toList instanceof Function)
+        {
+            return value.toList();
         }
 
         value = MychExpression.coerceScalar(value);

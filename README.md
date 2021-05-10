@@ -692,7 +692,8 @@ This works in any place with an expression, of course, not just in **set** – y
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
 | findattr(*name\|id*)                               | Attribute | findattr("Finn") | List available character sheet table names – see below
 | findattr(*name\|id*, *table*)                      | Attribute | findattr("Finn", "attack") | List available columns in a character sheet table – see below
-| findattr(*name\|id*, *table*, *col*, *val*, *col*) | Attribute | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | Find attribute name in a character sheet table – see below
+| findattr(*name\|id*, *table*, *col*)               | Attribute | findattr("Finn", "attack", "weapon") | Find attribute name (or list of attribute names in `for` context) in a character sheet table – see below
+| findattr(*name\|id*, *table*, *col*, *val*, *col*) | Attribute | findattr("Finn", "attack", "weapon", "Slingshot", "damage") | ...where another column matches a given value (multiple conditions allowed) – see below
 | getcharid(*name\|id*)                              | Attribute | getcharid("Finn") | Return the character ID for *name\|id*
 | getattr(*name\|id*, *attr*)                        | Attribute | getattr("Finn", "HP") | Look up attribute *attr* for *name\|id*
 | getattrmax(*name\|id*, *attr*)                     | Attribute | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
