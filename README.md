@@ -835,7 +835,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
-| 1.19.0  | 2021-05-07 | Add `for` loop
+| 1.19.0  | 2021-05-07 | Add `for` loop and improve `findattr()` to return lists
 | 1.18.0  | 2021-05-04 | Improve `highlight()` with `"info"` and `default` types
 | 1.17.0  | 2021-04-18 | Add `spawnfx()` to spawn visual effects
 | 1.16.0  | 2021-03-24 | Support `width` and `height` token attributes
