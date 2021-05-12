@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.18.1";
+const MMM_VERSION = "1.19.0";
 
 on("chat:message", function(msg)
 {
@@ -930,12 +930,17 @@ class MychScriptContext
             }
         }
 
-        for (let [rowId, rowInfo] of Object.entries(rowInfos))
+        let attributeNames = Object.values(rowInfos).filter(rowInfo => rowInfo.lookupAttributeName && rowInfo.conditionCount == conditionCount).map(rowInfo => rowInfo.lookupAttributeName);
+
+        if (attributeNames.length > 0)
         {
-            if (rowInfo.lookupAttributeName && rowInfo.conditionCount == conditionCount)
+            let result =
             {
-                return rowInfo.lookupAttributeName;
-            }
+                toScalar: () => attributeNames[0],
+                toList:   () => attributeNames,
+            };
+
+            return result;
         }
 
         let nameOrIdDescription = "character <strong>" + this.literal(nameOrId) + "</strong>";
@@ -2035,6 +2040,57 @@ class MychScript
                 }
 
                 this.complete = true;
+            },
+        },
+
+        for:
+        {
+            tokens: [ /(?<variable>\w+)/, "in", /(?<expression>.+)/ ],
+
+            parse: function(args)
+            {
+                this.definition.variable = args.variable.value;
+
+                try
+                {
+                    this.definition.expressionOffset = args.expression.offset;
+                    this.definition.expression = new MychExpression(args.expression.value);
+                }
+                catch (exception)
+                {
+                    this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                }
+            },
+
+            execute: function*(variables)
+            {
+                let collection;
+
+                try
+                {
+                    collection = yield* this.definition.expression.evaluate(variables, this.context);
+                }
+                catch (exception)
+                {
+                    this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
+                }
+
+                let items = MychExpression.coerceList(collection);
+
+                for (let item of items)
+                {
+                    variables[this.definition.variable] = item;
+
+                    let nestedScriptExit = yield* this.executeNestedScripts(variables);
+                    
+                    if (nestedScriptExit)
+                    {
+                        // keep current value of loop variable
+                        return this.propagateExitOnReturn(nestedScriptExit);
+                    }
+                }
+
+                delete variables[this.definition.variable];
             },
         },
 
@@ -3262,6 +3318,33 @@ class MychExpression
         }
 
         return MychExpressionArgs.of(value);
+    }
+
+    static coerceList(value)
+    {
+        if (value instanceof MychExpressionArgs)
+        {
+            return Array.of(value);
+        }
+
+        if (Array.isArray(value))
+        {
+            return value;
+        }
+
+        if (value && value.toList instanceof Function)
+        {
+            return value.toList();
+        }
+
+        value = MychExpression.coerceScalar(value);
+
+        if (value == undefined)
+        {
+            return [];
+        }
+
+        return [value];
     }
 
     static literal(value)
