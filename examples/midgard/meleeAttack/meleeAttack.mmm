@@ -1,13 +1,14 @@
 !rem // Midgard Melee Attack Script
-!rem // v1.7.3 2021-04-27 (requires MMM 1.16.0+)
-!rem // - Modifikatoren-Log als Tooltip ergänzt
-!rem // - Anpassbarkeit der Tabellenausgabe entfernt
-!rem // - Unicode-Emojis für Erschöpfung ergänzt
+!rem // v1.7.4 2021-05-13 (requires MMM 1.16.0+)
+!rem // - Ausgabe: Boni/Mali als "info" (grau) statt "default" (gelb) markiert
+!rem // - Ausgabe: Schadenstooltip für magischen Zusatzschaden repariert
+!rem // - Intern: zur Schadensausgabe neue Funktion highlight(roll, default, tooltip) genutzt
+!rem //
 !rem
 !mmm script
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.16
-!mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
+!mmm   if version < 1.18
+!mmm     do whisperback("Abbruch: MMM-Version 1.18.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !rem
@@ -48,6 +49,9 @@
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
 !mmm   set weaponDamageBonus = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
+!mmm   if weaponDamageBonus >= 0
+!mmm     set weaponDamageBonus = "+" & weaponDamageBonus
+!mmm   end if
 !mmm   set magicWeapon = (getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchB")) > 0) or (getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeAngB")) > 0)
 !mmm   if (not effAttack) or (not weaponDamageExpr)
 !rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
@@ -171,7 +175,7 @@
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
 !mmm     set modifierTooltip = " Boni/Mali&nbsp;&nbsp;&nbsp;keine "
 !mmm   end if
-!mmm   set modifiers = highlight(modifiers, "normal", modifierTooltip)
+!mmm   set modifiers = highlight(modifiers, "info", modifierTooltip)
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
 !mmm   if iscritical(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
@@ -182,25 +186,21 @@
 !mmm   end if
 !rem
 !rem   // Damage roll (cannot be lower than 0)
-!mmm   set damageRoll = roll(weaponDamageExpr)
-!mmm   set damageResult = damageRoll + weaponDamageBonus
-!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") + " & weaponDamageBonus
+!mmm   set damageResult = roll(weaponDamageExpr & weaponDamageBonus)
+!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & (damageResult - weaponDamageBonus) & ") " & weaponDamageBonus
+!mmm   if damageResult < 0
+!mmm     set damageResult = highlight(0, "bad")
+!mmm   end if
 !mmm   if magicExtraDamageActive and cMagicExtraDamage ne ""
 !mmm     set magicExtraDamageRoll = roll(cMagicExtraDamage)
-!mmm     set damageResult = damageResult + magicExtraDamageRoll
+!mmm     if magicExtraDamageRoll < 0
+!mmm       set magicExtraDamageRoll = highlight(0, "bad")
+!mmm     end if
+!mmm     set damageResult = highlight(damageResult + magicExtraDamageRoll, "normal")
 !mmm     set damageResultLog = damageResultLog & " + (" & cMagicExtraDamage & " = " & magicExtraDamageRoll & ")"
 !mmm   end if 
-!mmm   if damageResult < 0
-!mmm     set damageResult = 0
-!mmm   end if
 !mmm   set damageResultLog = damageResult & " = " & damageResultLog
-!mmm   if iscritical(damageRoll)
-!mmm     set damageResult = highlight(damageResult, "good", damageResultLog)
-!mmm   else if isfumble(damageRoll) or damageResult == 0
-!mmm     set damageResult = highlight(damageResult, "bad", damageResultLog)
-!mmm   else 
-!mmm     set damageResult = highlight(damageResult, "normal", damageResultLog)
-!mmm   end if
+!mmm   set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm
 !rem   // Break down magic effects for  player and GM
 !mmm   if magicExtraDamageActive and attackResult >= 20 and damageResult > 0
