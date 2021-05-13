@@ -3,6 +3,8 @@
 !rem // - Ausgabe: Boni/Mali als "info" (grau) statt "default" (gelb) markiert
 !rem // - Ausgabe: Schadenstooltip für magischen Zusatzschaden repariert
 !rem // - Intern: zur Schadensausgabe neue Funktion highlight(roll, default, tooltip) genutzt
+!rem // - Ausgabe: Symbol für Erschöpfung grau statt gelb markiert
+!rem // - Ausgabe: Eingeklammerter AP-Wert hinter "Ziel erschöpft" entfernt
 !rem //
 !rem
 !mmm script
@@ -105,7 +107,7 @@
 !mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
 !mmm   else if foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
-!mmm     set modifierLog = modifierLog & " {{Ziel erschöpft ([" & foeName & "].AP:" & foeEndurance & ")=+4}} "
+!mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !rem   // 3. Attack from behind
@@ -220,7 +222,7 @@
 !mmm   if isdenied(foeEndurance)
 !mmm     set foeEnduranceIndicator = highlight(emojiLock, "bad", foeName & ".AP: Zugriff verweigert")
 !mmm   else if foeEndurance <= 0
-!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "normal", foeName & ".AP:0")
+!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "info", foeName & ".AP:0")
 !mmm   else
 !mmm     set foeEnduranceIndicator = ""
 !mmm   end if 
