@@ -1,6 +1,6 @@
 # MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.7.3 vom 2021-03-27,** erfordert MMM 1.16.0+.
+Aktuelle Version: **1.8.0 vom 2021-05-13,** erfordert MMM 1.18.0+.
 
 Aufruf: 
 - Hauptspiel ("Midgard"): ``#melee`` 
@@ -31,13 +31,13 @@ Mindestens muss ein Konfig-Skript eine der vom Charakter geführten Waffen dekla
 
 *Optional* können im Konfig-Skript für **benannte Waffen** (z.B. Erbstücke, magische Waffen) auch ein Name (''cWeaponName'') und eine getrennte Gattungsbezeichnung (''cWeaponType'') definiert werden. Diese werden nur zur Formulierung der Ausgabe benutzt, sie beziehen sich also nicht auf den Charakterbogen.
 
-*Optional* werden als Spezialfall magischer Waffen auch **aktivierbare magische Waffen** unterstützt, die im aktivierten Zustand zusätzlichen und ggf. besonderen Schaden anrichten: 
+Während **magische Waffen** seit v1.6 automatisch anhand des Angriffs- oder Schadensbonus im Charakterbogen erkannt werden, unterstützt das Skript *optional* als Spezialfall magischer Waffen auch **aktivierbare magische Waffen**, die im aktivierten Zustand zusätzlichen und ggf. besonderen Schaden anrichten: 
 ```javascript
 !mmm customize
 (...)
-!mmm set cWeaponMagic = [true|false]
-!mmm set cWeaponMagicMarker = "[MMM-Token-Marker*]" 
-!mmm set cWeaponMagicDamage = "[Würfelwurf, z.B. 1d+1]"
+!mmm set cMagicExtraDamageMarker = "[MMM-Token-Marker*]"
+!mmm set cMagicExtraDamage = "[Würfelwurf, z.B. 1d+1]"
+!mmm set cMagicExtraDamageLabel = "[Ausgabelabel für die Art des magischen Schadens, bei magischem Feuer z.B. ✨🔥]" 
 (...)
 ```
 *) "MMM-Token-Marker" bezieht sich auf einen gültigen Namen für einen Roll20-Token-Marker in der [MMM-Notation](https://github.com/michael-buschbeck/mychs-macro-magic#attributes), wie z.B. ''status_all_for_one''.
@@ -94,7 +94,17 @@ Minimalbeispiel für ein Kurzschwert, ohne die Erzählerei zu verändern (Voraus
 
 ## Changelog
 
+1.8.0 2021-05-13 (requires MMM 1.18.0+)
+
+- Ausgabe: Boni/Mali als "info" (grau) statt "default" (gelb) markiert
+- Ausgabe: Schadenstooltip für magischen Zusatzschaden repariert
+- Ausgabe: Symbol für Erschöpfung grau statt gelb markiert
+- Ausgabe: Eingeklammerter AP-Wert hinter "Ziel erschöpft" entfernt
+- Ausgabe: Schaden von magischer Waffe knapper formuliert
+- Intern: zur Schadensausgabe neue Funktion highlight(roll, default, tooltip) genutzt
+
 1.7.3 2021-04-27 (requires MMM 1.16.0+)
+
 - Modifikatoren-Log als Tooltip ergänzt
 - Anpassbarkeit der Tabellenausgabe entfernt
 - Unicode-Emojis für Erschöpfung ergänzt
