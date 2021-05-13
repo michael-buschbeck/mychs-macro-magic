@@ -5,6 +5,7 @@
 !rem // - Intern: zur Schadensausgabe neue Funktion highlight(roll, default, tooltip) genutzt
 !rem // - Ausgabe: Symbol für Erschöpfung grau statt gelb markiert
 !rem // - Ausgabe: Eingeklammerter AP-Wert hinter "Ziel erschöpft" entfernt
+!rem // - Ausgabe: Schaden von magischer Waffe knapper formuliert
 !rem //
 !rem
 !mmm script
@@ -46,6 +47,8 @@
 !rem   // - Constants
 !mmm   set emojiExhausted = "🥴"
 !mmm   set emojiLock = "🔒"
+!mmm   set emojiMagic = "✨"
+!mmm   set emojiKnife = "🔪"
 !rem   // - Character & NPC data
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
@@ -206,9 +209,9 @@
 !mmm
 !rem   // Break down magic effects for  player and GM
 !mmm   if magicExtraDamageActive and attackResult >= 20 and damageResult > 0
-!mmm     set modifierLog = modifierLog & " {{Magische Waffe=" & (damageResult - magicExtraDamageRoll) & " Schaden von magischer Waffe + " & magicExtraDamageRoll & " " &  cMagicExtraDamageLabel & "}} "
+!mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - magicExtraDamageRoll) & "**&nbsp;" & emojiKnife & emojiMagic & " +&nbsp;**" & magicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "
 !mmm   else if magicWeapon and attackResult >= 20 and damageResult > 0
-!mmm     set modifierLog = modifierLog & " {{Magische Waffe=" & damageResult & " Schaden von magischer Waffe}} "
+!mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & damageResult & "**&nbsp;" & emojiKnife & emojiMagic & " }} "
 !mmm   end if
 !mmm
 !rem   // Pull together a sensible guess at a default way of addressing the weapon for output
@@ -281,7 +284,11 @@
 !mmm     end if
 !mmm     chat:      {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
 !mmm     if attackResult >= 20
-!mmm       chat:    {{Schaden=$[damageResult]{damageResult}}}
+!mmm       set damageType = emojiKnife
+!mmm       if magicWeapon and damageResult > 0
+!mmm         set damageType = damageType & emojiMagic
+!mmm       end if 
+!mmm       chat:    {{Schaden=$[damageResult]{damageResult} **LP/AP** ${damageType}}}
 !mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
