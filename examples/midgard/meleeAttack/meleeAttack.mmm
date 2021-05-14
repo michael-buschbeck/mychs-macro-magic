@@ -1,18 +1,17 @@
 !rem // Midgard Melee Attack Script
-!rem // v1.7.3 2021-04-27 (requires MMM 1.16.0+)
-!rem // - Modifikatoren-Log als Tooltip ergänzt
-!rem // - Anpassbarkeit der Tabellenausgabe entfernt
-!rem // - Unicode-Emojis für Erschöpfung ergänzt
-!rem
+!rem //
 !mmm script
+!mmm   set scriptVersion = "v1.8.0 (2021-05-13)"
+!rem
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.16
-!mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
+!mmm   if version < 1.18
+!mmm     do whisperback("Abbruch: MMM-Version 1.18.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
+!rem   //  cCheckVersion        Toggle version check
 !rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
@@ -22,6 +21,7 @@
 !rem   //  cFoeNameDefault      Output label for targets without names
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //
+!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Kurzschwert"
 !mmm   set customizable cWeaponName = ""
@@ -31,6 +31,11 @@
 !mmm   set customizable cMagicExtraDamageLabel = "" 
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
 !mmm   set customizable cOwnID = getattr(sender, "character_id")
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Melee Attack Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = getattr(cOwnID, "character_id")
@@ -43,11 +48,16 @@
 !rem   // - Constants
 !mmm   set emojiExhausted = "🥴"
 !mmm   set emojiLock = "🔒"
+!mmm   set emojiMagic = "✨"
+!mmm   set emojiKnife = "🔪"
 !rem   // - Character & NPC data
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
 !mmm   set weaponDamageBonus = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
+!mmm   if weaponDamageBonus >= 0
+!mmm     set weaponDamageBonus = "+" & weaponDamageBonus
+!mmm   end if
 !mmm   set magicWeapon = (getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchB")) > 0) or (getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeAngB")) > 0)
 !mmm   if (not effAttack) or (not weaponDamageExpr)
 !rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
@@ -101,7 +111,7 @@
 !mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
 !mmm   else if foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
-!mmm     set modifierLog = modifierLog & " {{Ziel erschöpft ([" & foeName & "].AP:" & foeEndurance & ")=+4}} "
+!mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !rem   // 3. Attack from behind
@@ -171,7 +181,7 @@
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
 !mmm     set modifierTooltip = " Boni/Mali&nbsp;&nbsp;&nbsp;keine "
 !mmm   end if
-!mmm   set modifiers = highlight(modifiers, "normal", modifierTooltip)
+!mmm   set modifiers = highlight(modifiers, "info", modifierTooltip)
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
 !mmm   if iscritical(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
@@ -182,31 +192,27 @@
 !mmm   end if
 !rem
 !rem   // Damage roll (cannot be lower than 0)
-!mmm   set damageRoll = roll(weaponDamageExpr)
-!mmm   set damageResult = damageRoll + weaponDamageBonus
-!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") + " & weaponDamageBonus
+!mmm   set damageResult = roll(weaponDamageExpr & weaponDamageBonus)
+!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & (damageResult - weaponDamageBonus) & ") " & weaponDamageBonus
+!mmm   if damageResult < 0
+!mmm     set damageResult = highlight(0, "bad")
+!mmm   end if
 !mmm   if magicExtraDamageActive and cMagicExtraDamage ne ""
 !mmm     set magicExtraDamageRoll = roll(cMagicExtraDamage)
-!mmm     set damageResult = damageResult + magicExtraDamageRoll
+!mmm     if magicExtraDamageRoll < 0
+!mmm       set magicExtraDamageRoll = highlight(0, "bad")
+!mmm     end if
+!mmm     set damageResult = highlight(damageResult + magicExtraDamageRoll, "normal")
 !mmm     set damageResultLog = damageResultLog & " + (" & cMagicExtraDamage & " = " & magicExtraDamageRoll & ")"
 !mmm   end if 
-!mmm   if damageResult < 0
-!mmm     set damageResult = 0
-!mmm   end if
 !mmm   set damageResultLog = damageResult & " = " & damageResultLog
-!mmm   if iscritical(damageRoll)
-!mmm     set damageResult = highlight(damageResult, "good", damageResultLog)
-!mmm   else if isfumble(damageRoll) or damageResult == 0
-!mmm     set damageResult = highlight(damageResult, "bad", damageResultLog)
-!mmm   else 
-!mmm     set damageResult = highlight(damageResult, "normal", damageResultLog)
-!mmm   end if
+!mmm   set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm
 !rem   // Break down magic effects for  player and GM
 !mmm   if magicExtraDamageActive and attackResult >= 20 and damageResult > 0
-!mmm     set modifierLog = modifierLog & " {{Magische Waffe=" & (damageResult - magicExtraDamageRoll) & " Schaden von magischer Waffe + " & magicExtraDamageRoll & " " &  cMagicExtraDamageLabel & "}} "
+!mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - magicExtraDamageRoll) & "**&nbsp;" & emojiKnife & emojiMagic & " +&nbsp;**" & magicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "
 !mmm   else if magicWeapon and attackResult >= 20 and damageResult > 0
-!mmm     set modifierLog = modifierLog & " {{Magische Waffe=" & damageResult & " Schaden von magischer Waffe}} "
+!mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & damageResult & "**&nbsp;" & emojiKnife & emojiMagic & " }} "
 !mmm   end if
 !mmm
 !rem   // Pull together a sensible guess at a default way of addressing the weapon for output
@@ -220,7 +226,7 @@
 !mmm   if isdenied(foeEndurance)
 !mmm     set foeEnduranceIndicator = highlight(emojiLock, "bad", foeName & ".AP: Zugriff verweigert")
 !mmm   else if foeEndurance <= 0
-!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "normal", foeName & ".AP:0")
+!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "info", foeName & ".AP:0")
 !mmm   else
 !mmm     set foeEnduranceIndicator = ""
 !mmm   end if 
@@ -279,7 +285,11 @@
 !mmm     end if
 !mmm     chat:      {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
 !mmm     if attackResult >= 20
-!mmm       chat:    {{Schaden=$[damageResult]{damageResult}}}
+!mmm       set damageType = emojiKnife
+!mmm       if magicWeapon and damageResult > 0
+!mmm         set damageType = damageType & emojiMagic
+!mmm       end if 
+!mmm       chat:    {{Schaden=$[damageResult]{damageResult} **LP/AP** ${damageType}}}
 !mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
