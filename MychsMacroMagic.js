@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.19.0";
+const MMM_VERSION = "1.19.1";
 
 on("chat:message", function(msg)
 {
@@ -3324,7 +3324,7 @@ class MychExpression
     {
         if (value instanceof MychExpressionArgs)
         {
-            return Array.of(value);
+            return [...value.flat().filter(item => item != undefined)];
         }
 
         if (Array.isArray(value))
@@ -3336,8 +3336,6 @@ class MychExpression
         {
             return value.toList();
         }
-
-        value = MychExpression.coerceScalar(value);
 
         if (value == undefined)
         {
@@ -3762,11 +3760,11 @@ class MychExpression
             throw new MychExpressionError("evaluate", "expected " + expectDescription, this.source, this.source.length);
         }
 
-        let result = MychExpression.coerceScalar(valueStack);
+        let result = valueStack[0];
 
         if (result instanceof MychExpressionArgs)
         {
-            result = Array.of.apply(null, result);
+            return MychExpression.coerceList(result);
         }
 
         return result;
