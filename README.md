@@ -16,7 +16,7 @@ You're here to yell at dice, not at macros, after all – right?
 ### Contents
 
 - [Scripts](#scripts) – [script commands](#mmm-script--end-script)
-- [Expressions](#expressions) – [literals](#literals), [variables](#variables), [attributes](#attributes), [operators](#operators), [functions](#functions)
+- [Expressions](#expressions) – [literals](#literals), [variables](#variables), [lists](#lists), [attributes](#attributes), [operators](#operators), [functions](#functions)
 - [Recipes](#recipes)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [What's new?](#versions)
@@ -558,6 +558,43 @@ You can *shadow* these special context variables by setting a custom variable wi
 All `denied` and `unknown` values that were *returned by a function* carry some useful diagnostics with them: When rendered to chat (where they show up as the words "denied" or "unknown" on a pretty colored background), you can point your mouse at them to get a tooltip that tells you exactly what went wrong – or, in the case of `denied`, at least exactly what the script attempted that got denied. To get programmatic access to the diagnostic reason carried by a `denied` or `unknown` result, use the `getreason()` function.
 
 
+### Lists
+
+Sometimes it's just not enough to put just _one_ of a thing in an expression or a variable – for example, maybe you want a list of the names of _all_ members of your party, or you'd like a list of all of Finn's many exquisite personality traits so you can later refer back to them.
+
+You can make a list simply by separating individual values with commas:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **set** partyNames = "Finn MacRathgar", "Yorrick MacRathgar", "Baigh MacBeorn" | *(several character names)*
+| 2    | _!mmm_ **set** finnsPersonality = "smart", "pretty", "streetwise", "fierce", 42 | *(small sample of Finn's personality traits)*
+| 3    | _!mmm_ **set** nextThreeRolls = [[1d20]], [[1d20]], [[1d20]] | *(three attack rolls)*
+
+Things you can put in lists:
+- Numbers, rolls, strings, `true`, `false`, the result of `highlight()`, and basically everything that renders as anything in chat.
+- Special indicator values: `unknown` and `denied` (including their diagnostics) and `default`.
+
+Things you cannot put in lists:
+- Undefined values – an undefined value (or variable) will be treated as an empty list. If you try to include an undefined value in a list, it will be ignored.
+- Other lists – instead of making a list of lists, the elements of the nested list you're trying to include in an outer list are added to the outer list.
+
+Any single value that _could_ be part of a list will be treated as a single-element list when a list is asked for.
+
+This behavior comes in handy if you want to append or prepend items to a list variable: An undefined variable will be treated as an (initially) empty list, and you can add to it simply by using the comma operator:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script** | *(variable* things *starts out as undefined – list has zero elements initially)*
+| 3    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got
+| 2    | _!mmm_     **set** things = things, "something", 123 | *(append two values to initially empty list – list has two elements now)*
+| 3    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got something, 123
+| 4    | _!mmm_     **set** things = true, 456, things | *(prepend two values to the list – list has four elements now)*
+| 5    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got true, 456, something, 123
+| 6    | _!mmm_ **end script**
+
+Of course, lists are most useful together with the [**for** loop](#mmm-for-variable-in-expression--end-for), which allows you to execute a block of code once for each list element in turn.
+
+
 ### Attributes
 
 Like in macros, you can query *attributes* in MMM expressions – and even create and update them if you like:
@@ -829,7 +866,7 @@ You can check your installed version by running this command from the chat box:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.19.0
+| 1    | _!mmm_ **chat:** Installed MMM version: ${version} | ***Finn:*** Installed MMM version: 1.19.1
 
 If nothing is sent to chat at all after entering this command, MMM isn't installed in your game. Go pester your GM to get it done!
 
