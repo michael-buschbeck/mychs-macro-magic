@@ -378,7 +378,7 @@
                 "!mmm debug chat: undefined is ${undefined}",
                 { whisper: "🔎 undefined is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>undef</span>" },
                 "!mmm debug chat: list is ${1, 2, 3, 'foo', 'bar', 'baz', undefined}",
-                { whisper: "🔎 list is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>1, 2, 3, \"foo\", \"bar\", \"baz\", undef</span>" },
+                { whisper: "🔎 list is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>1, 2, 3, \"foo\", \"bar\", \"baz\"</span>" },
                 "!mmm debug chat: default is ${default}",
                 { whisper: "🔎 default is <span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>" },
                 "!mmm debug chat: denied is ${denied}",
@@ -451,6 +451,200 @@
                 "!mmm    chat: correct[1/1]",
                 "!mmm end if",
                 { chat: "correct[1/1]" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     chat: argnum() = ${argnum()}",
+                "!mmm     chat: argnum(1,2,3,4) = ${argnum(1,2,3,4)}",
+                "!mmm     chat: argnum(1,(2,3,4)) = ${argnum(1,(2,3,4))}",
+                "!mmm     chat: argnum((1,2,3),4) = ${argnum((1,2,3),4)}",
+                "!mmm     chat: argnum((1,2),(3,4)) = ${argnum((1,2),(3,4))}",
+                "!mmm end script",
+                { chat: "argnum() = 0" },
+                { chat: "argnum(1,2,3,4) = 4" },
+                { chat: "argnum(1,(2,3,4)) = 4" },
+                { chat: "argnum((1,2,3),4) = 4" },
+                { chat: "argnum((1,2),(3,4)) = 4" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list567 = 5,6,7",
+                "!mmm     chat: argnum(list567) = ${argnum(list567)}",
+                "!mmm     chat: argnum(1,list567) = ${argnum(1,list567)}",
+                "!mmm     chat: argnum(list567,2) = ${argnum(list567,2)}",
+                "!mmm     chat: argnum(1,list567,2) = ${argnum(1,list567,2)}",
+                "!mmm     chat: listnum(arg1(1,list567,2)) = ${listnum(arg1(1,list567,2))}",
+                "!mmm end script",
+                { chat: "argnum(list567) = 1" },
+                { chat: "argnum(1,list567) = 2" },
+                { chat: "argnum(list567,2) = 2" },
+                { chat: "argnum(1,list567,2) = 3" },
+                { chat: "listnum(arg1(1,list567,2)) = 3" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     chat: argnum(undef) = ${argnum(undef)}",
+                "!mmm     chat: argnum(1,undef) = ${argnum(1,undef)}",
+                "!mmm     chat: argnum(undef,2) = ${argnum(undef,2)}",
+                "!mmm     chat: argnum(1,undef,2) = ${argnum(1,undef,2)}",
+                "!mmm end script",
+                { chat: "argnum(undef) = 1" },
+                { chat: "argnum(1,undef) = 2" },
+                { chat: "argnum(undef,2) = 2" },
+                { chat: "argnum(1,undef,2) = 3" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     chat: argnum(denied) = ${argnum(denied)}",
+                "!mmm     chat: argnum(1,denied) = ${argnum(1,denied)}",
+                "!mmm     chat: argnum(denied,2) = ${argnum(denied,2)}",
+                "!mmm     chat: argnum(1,denied,2) = ${argnum(1,denied,2)}",
+                "!mmm     chat: isdenied(arg1(1,denied,2)) = ${isdenied(arg1(1,denied,2))}",
+                "!mmm end script",
+                { chat: "argnum(denied) = 1" },
+                { chat: "argnum(1,denied) = 2" },
+                { chat: "argnum(denied,2) = 2" },
+                { chat: "argnum(1,denied,2) = 3" },
+                { chat: "isdenied(arg1(1,denied,2)) = true" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     chat: argnum(unknown) = ${argnum(unknown)}",
+                "!mmm     chat: argnum(1,unknown) = ${argnum(1,unknown)}",
+                "!mmm     chat: argnum(unknown,2) = ${argnum(unknown,2)}",
+                "!mmm     chat: argnum(1,unknown,2) = ${argnum(1,unknown,2)}",
+                "!mmm     chat: isunknown(arg1(1,unknown,2)) = ${isunknown(arg1(1,unknown,2))}",
+                "!mmm end script",
+                { chat: "argnum(unknown) = 1" },
+                { chat: "argnum(1,unknown) = 2" },
+                { chat: "argnum(unknown,2) = 2" },
+                { chat: "argnum(1,unknown,2) = 3" },
+                { chat: "isunknown(arg1(1,unknown,2)) = true" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     chat: argnum(default) = ${argnum(default)}",
+                "!mmm     chat: argnum(1,default) = ${argnum(1,default)}",
+                "!mmm     chat: argnum(default,2) = ${argnum(default,2)}",
+                "!mmm     chat: argnum(1,default,2) = ${argnum(1,default,2)}",
+                "!mmm     chat: isdefault(arg1(1,default,2)) = ${isdefault(arg1(1,default,2))}",
+                "!mmm end script",
+                { chat: "argnum(default) = 1" },
+                { chat: "argnum(1,default) = 2" },
+                { chat: "argnum(default,2) = 2" },
+                { chat: "argnum(1,default,2) = 3" },
+                { chat: "isdefault(arg1(1,default,2)) = true" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = list, 1",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm end script",
+                { chat: "listnum(list) = 1" },
+                { chat: "listidx(list,0) = 1" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = 1, list",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm end script",
+                { chat: "listnum(list) = 1" },
+                { chat: "listidx(list,0) = 1" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = 1, 2, list",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm     chat: listidx(list,1) = ${listidx(list,1)}",
+                "!mmm end script",
+                { chat: "listnum(list) = 2" },
+                { chat: "listidx(list,0) = 1" },
+                { chat: "listidx(list,1) = 2" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = 1, 2",
+                "!mmm     set list = list, 3",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm     chat: listidx(list,1) = ${listidx(list,1)}",
+                "!mmm     chat: listidx(list,2) = ${listidx(list,2)}",
+                "!mmm end script",
+                { chat: "listnum(list) = 3" },
+                { chat: "listidx(list,0) = 1" },
+                { chat: "listidx(list,1) = 2" },
+                { chat: "listidx(list,2) = 3" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = 1, 2",
+                "!mmm     set list = 3, list",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm     chat: listidx(list,1) = ${listidx(list,1)}",
+                "!mmm     chat: listidx(list,2) = ${listidx(list,2)}",
+                "!mmm end script",
+                { chat: "listnum(list) = 3" },
+                { chat: "listidx(list,0) = 3" },
+                { chat: "listidx(list,1) = 1" },
+                { chat: "listidx(list,2) = 2" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = 1, 2",
+                "!mmm     set list = list, undef",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm     chat: listidx(list,1) = ${listidx(list,1)}",
+                "!mmm end script",
+                { chat: "listnum(list) = 2" },
+                { chat: "listidx(list,0) = 1" },
+                { chat: "listidx(list,1) = 2" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = 1, 2",
+                "!mmm     set list = list, denied",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm     chat: listidx(list,1) = ${listidx(list,1)}",
+                "!mmm     chat: isdenied(listidx(list,2)) = ${isdenied(listidx(list,2))}",
+                "!mmm end script",
+                { chat: "listnum(list) = 3" },
+                { chat: "listidx(list,0) = 1" },
+                { chat: "listidx(list,1) = 2" },
+                { chat: "isdenied(listidx(list,2)) = true" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = 1, 2",
+                "!mmm     set list = list, unknown",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm     chat: listidx(list,1) = ${listidx(list,1)}",
+                "!mmm     chat: isunknown(listidx(list,2)) = ${isunknown(listidx(list,2))}",
+                "!mmm end script",
+                { chat: "listnum(list) = 3" },
+                { chat: "listidx(list,0) = 1" },
+                { chat: "listidx(list,1) = 2" },
+                { chat: "isunknown(listidx(list,2)) = true" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set list = 1, 2",
+                "!mmm     set list = list, default",
+                "!mmm     chat: listnum(list) = ${listnum(list)}",
+                "!mmm     chat: listidx(list,0) = ${listidx(list,0)}",
+                "!mmm     chat: listidx(list,1) = ${listidx(list,1)}",
+                "!mmm     chat: isdefault(listidx(list,2)) = ${isdefault(listidx(list,2))}",
+                "!mmm end script",
+                { chat: "listnum(list) = 3" },
+                { chat: "listidx(list,0) = 1" },
+                { chat: "listidx(list,1) = 2" },
+                { chat: "isdefault(listidx(list,2)) = true" },
             ],
             [
                 "!mmm script",
@@ -1158,6 +1352,66 @@
         {
             AP: { current: 20, max: 30 },
         };
+
+        MychScriptContext.prototype.argnum = function(...args)
+        {
+            return args.length;
+        }
+
+        MychScriptContext.prototype.arg0 = function(...args)
+        {
+            return args[0];
+        }
+
+        MychScriptContext.prototype.arg1 = function(...args)
+        {
+            return args[1];
+        }
+
+        MychScriptContext.prototype.arg2 = function(...args)
+        {
+            return args[2];
+        }
+
+        MychScriptContext.prototype.listnum = function(list)
+        {
+            if (list instanceof MychExpressionArgs)
+            {
+                console.log("Require list, got", list);
+                return new MychScriptContext.Unknown("Require list, got args");
+            }
+
+            if (Array.isArray(list))
+            {
+                return list.length;
+            }
+            
+            console.log("Require list, got", list);
+            return new MychScriptContext.Unknown("Require list, got " + typeof(list));
+        }
+
+        MychScriptContext.prototype.listidx = function(list, index)
+        {
+            if (list instanceof MychExpressionArgs)
+            {
+                console.log("Require list, got", list);
+                return new MychScriptContext.Unknown("Require list, got args");
+            }
+
+            if (Array.isArray(list))
+            {
+                if (index >= list.length)
+                {
+                    console.log("Require valid index into", list, "got", index);
+                    return new MychScriptContext.Unknown("Require index less or equal " + (list.length - 1) + ", got " + index);
+                }
+
+                return list[index];
+            }
+            
+            console.log("Require list, got", list);
+            return new MychScriptContext.Unknown("Require list, got " + typeof(list));
+        }
 
         MychScriptContext.prototype.whisperback = function(message)
         {
