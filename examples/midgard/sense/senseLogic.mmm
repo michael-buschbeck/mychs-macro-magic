@@ -1,21 +1,21 @@
 !rem // Midgard Multi-Sense Script 
-!rem // v1.1.0-dev 2021-05-13
+!rem // v1.1.0-dev 2021-05-16
 !rem //
 !rem // senseMainLogic -- must be called from a config script
 !rem //
 !rem // ChangeLog
 !rem // - Major rewrite: proper loops allow for unlimited number of characters
 !rem // - Fixed tooltip for roll output
+!rem // - Use token ids, not character ids, to be usable for generic NPCs
 !rem //
 !rem // TODO
-!rem // - Fix problem with MMM-1.19 list handling (avoiding nested lists)
 !rem // - Rework config scripts accordingly
 !rem //
 !mmm script
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.19
-!mmm     do whisperback("Abbruch: MMM-Version 1.19.0 oder höher erforderlich.")
+!mmm     do whisperback("Abbruch: MMM-Version 1.19.1 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !rem
@@ -27,7 +27,7 @@
 !rem   //  cSuccessMessage,         Text to be sent to players in case of success / failure / critical failure, or in case 
 !rem   //  cRegularFailureMessage,  of cSense eq "Sixth Sense", success only (otherwise the player does not receive anything)
 !rem   //  cCriticalFailureMessage     
-!rem   //  cChar1ID...              Valid character_id values for PCs that get the sense rolls. Duplicates are ignored.
+!rem   //  cTokenList               List of valid token_id values for characters that get the sense rolls. Duplicates are ignored.
 !rem   //
 !mmm   set customizable cSense = "Sehen"
 !mmm   set customizable cSenseMode = "single"
@@ -35,19 +35,11 @@
 !mmm   set customizable cSuccessMessage = "Einer deiner Sinne hat etwas wahrgenommen. Herzlichen Glückwunsch!"
 !mmm   set customizable cRegularFailureMessage = "Nichts besonderes hier."
 !mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier. Wirklich nicht!"
-!rem
-!rem   // TODO FOR CLEANUP BEFORE TESTING: remove cCharXID variables, initialize cCharList, fix customization scripts
-!mmm   set customizable cChar1ID = false
-!mmm   set customizable cChar2ID = false
-!mmm   set customizable cChar3ID = false
-!mmm   set customizable cChar4ID = false
-!mmm   set customizable cChar5ID = false
-!mmm   set customizable cChar6ID = false
 !mmm
 !mmm   if selected
-!mmm     set cCharList = selected
+!mmm     set cTokenList = selected
 !mmm   else
-!mmm     set cCharList = ("-MZTluoLDlixU37g3wSQ", "-MZTfQNADBNmv5q5PbSf", "-MZTluoLDlixU37g3wSQ", "-MZTluoLDlixU37g3wSQ")
+!mmm     set cTokenList = ("-MZTluoLDlixU37g3wSQ", "-MZTfQNADBNmv5q5PbSf", "-MZTluoLDlixU37g3wSQ", "-MZTluoLDlixU37g3wSQ")
 !mmm   end if
 !mmm
 !rem   // Initialize for different modes of calling the script
@@ -65,11 +57,10 @@
 !mmm   set cssGMTableItemSuccess = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#60f086;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
 !mmm   set cssGMTableItemCriticalFailure = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#f06560;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
 !rem
-!rem   // Due diligence: weed out duplicates, in case cCharList was populated manually or via {target}
-!rem   // ERROR: With more than two characters in cCharList, this produces nested lists, see https://github.com/michael-buschbeck/mychs-macro-magic/issues/102
-!mmm   for id in cCharList
+!rem   // Due diligence: weed out duplicates, in case cTokenList was populated manually or via {target}
+!mmm   for id in cTokenList
 !mmm     set dupeFound = false
-!mmm     for trimmedId in trimmedCharList
+!mmm     for trimmedId in trimmedTokenList
 !mmm       if trimmedId eq id
 !mmm         set dupeFound = true
 !mmm       end if
@@ -77,16 +68,12 @@
 !mmm     if dupeFound
 !mmm       debug chat: ${id} found again, skipping.
 !mmm     else 
-!mmm       if trimmedCharList
-!mmm         set trimmedCharList = trimmedCharList, id
-!mmm       else
-!mmm         set trimmedCharList = id
-!mmm       end if
-!mmm       debug chat: ${id} found for the first time, stored in trimmedCharList: ${trimmedCharList}
+!mmm       set trimmedTokenList = trimmedTokenList, id
+!mmm       debug chat: ${id} found for the first time, stored in trimmedTokenList: ${trimmedTokenList}
 !mmm     end if
 !mmm   end for
-!mmm   debug chat: Final trimmedCharList: ${trimmedCharList}
-!mmm   for item in trimmedCharList
+!mmm   debug chat: Final trimmedTokenList: ${trimmedTokenList}
+!mmm   for item in trimmedTokenList
 !mmm     debug chat: * ${item}
 !mmm   end for
 !rem
@@ -94,21 +81,19 @@
 !mmm     chat: /w GM [${cSense}](${cssGMTableHead})
 !mmm
 !rem     // Run through selected characters
-!mmm     for id in trimmedCharList
+!mmm     for id in trimmedTokenList
 !mmm
 !rem       // Initialize: refetch character ID and get name and skills
-!mmm       set charId = getattr(id, "character_id")
-!mmm       set charName = getattr(charId, "character_name")
-!mmm       set charEffectiveSkill = getattr(charId, findattr(charId, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(charId, findattr(charId, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
+!mmm       set tokenId = getattr(id, "token_id")
+!mmm       set charName = getattr(tokenId, "character_name")
+!mmm       set charEffectiveSkill = getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
 !mmm       if cSense eq "Nachtsicht" and not charEffectiveSkill
 !rem         // For characters without night vision, substitute Vision without a bonus
-!mmm         set charEffectiveSkill = getattr(charId, findattr(charId, "sinne", "Fertigkeit2", "Sehen", "FW2"))
+!mmm         set charEffectiveSkill = getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", "Sehen", "FW2"))
 !mmm       end if
 !mmm
 !rem       // Error handling
-!rem       // TODO: avoid initial [undef] element in list, add to GM output
-!rem       // ERROR: With more than two characters in cCharList, this produces nested lists, see https://github.com/michael-buschbeck/mychs-macro-magic/issues/102
-!mmm       if isdenied(charId) or isunknown(charId)
+!mmm       if isdenied(tokenId) or isunknown(tokenId)
 !mmm         set skippedList = skippedList, "Token '" & id & "': no/inaccessible character"
 !mmm       else if not charEffectiveSkill
 !mmm         set skippedList = skippedList, "Character '" & charName & "': '" & cSense & "' inaccessible or does not exist") 
@@ -125,23 +110,20 @@
 !mmm         chat: [${charName} ${senseResult}](${cssGMTableSection})
 !mmm         if senseResult >= 20 or iscritical(senseRoll)
 !mmm           set playerMessage = "/w \"" & charName & "\" " & cSuccessMessage
-!mmm           chat: [${playerMsgEmoji} *${message}*](${cssGMTableItemSuccess})
+!mmm           chat: [${playerMsgEmoji} *${cSuccessMessage}*](${cssGMTableItemSuccess})
 !mmm         else if (cSense ne "Sechster Sinn" and isfumble(senseResult))
 !mmm           set playerMessage = "/w \"" & charName & "\" " & cCriticalFailureMessage
-!mmm           chat: [${playerMsgEmoji} *${message}*](${cssGMTableItemCriticalFailure})
+!mmm           chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
 !mmm         else if cSense ne "Sechster Sinn"
 !mmm           set playerMessage = "/w \"" & charName & "\" " & cRegularFailureMessage
-!mmm           chat: [${playerMsgEmoji} *${message}*](${cssGMTableItem})
+!mmm           chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
 !mmm         else
 !mmm           chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
 !mmm         end if
 !mmm
 !rem         // Queue output message for player
-!rem         // ERROR: With more than two characters in cCharList, this produces nested lists, see https://github.com/michael-buschbeck/mychs-macro-magic/issues/102
-!mmm         if playerMessage ne "" and messageQueue
+!mmm         if playerMessage ne ""
 !mmm           set messageQueue = messageQueue, playerMessage
-!mmm         else if playerMessage ne "" 
-!mmm           set messageQueue = playerMessage
 !mmm         end if
 !mmm       end if
 !mmm     end for
