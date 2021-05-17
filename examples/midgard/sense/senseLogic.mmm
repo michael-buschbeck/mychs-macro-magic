@@ -1,10 +1,15 @@
-!rem // Midgard Multi-Sense Script (ugly implementation for a hard-coded number of six PCs)
-!rem // v1.1.0-dev 2021-05-12
+!rem // Midgard Multi-Sense Script 
+!rem // v1.1.0-dev 2021-05-13
 !rem //
 !rem // senseMainLogic -- must be called from a config script
 !rem //
+!rem // ChangeLog
+!rem // - Major rewrite: proper loops allow for unlimited number of characters
+!rem // - Fixed tooltip for roll output
+!rem //
 !rem // TODO
-!rem // - Rebuild using a proper loop construct, prettify some of the looping GM output
+!rem // - Fix problem with MMM-1.19 list handling (avoiding nested lists)
+!rem // - Rework config scripts accordingly
 !rem //
 !mmm script
 !rem
@@ -30,6 +35,8 @@
 !mmm   set customizable cSuccessMessage = "Einer deiner Sinne hat etwas wahrgenommen. Herzlichen Glückwunsch!"
 !mmm   set customizable cRegularFailureMessage = "Nichts besonderes hier."
 !mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier. Wirklich nicht!"
+!rem
+!rem   // TODO FOR CLEANUP BEFORE TESTING: remove cCharXID variables, initialize cCharList, fix customization scripts
 !mmm   set customizable cChar1ID = false
 !mmm   set customizable cChar2ID = false
 !mmm   set customizable cChar3ID = false
@@ -58,7 +65,8 @@
 !mmm   set cssGMTableItemSuccess = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#60f086;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
 !mmm   set cssGMTableItemCriticalFailure = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#f06560;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
 !rem
-!rem   // Due diligence: weed out duplicates
+!rem   // Due diligence: weed out duplicates, in case cCharList was populated manually or via {target}
+!rem   // ERROR: With more than two characters in cCharList, this produces nested lists, see https://github.com/michael-buschbeck/mychs-macro-magic/issues/102
 !mmm   for id in cCharList
 !mmm     set dupeFound = false
 !mmm     for trimmedId in trimmedCharList
@@ -78,6 +86,9 @@
 !mmm     end if
 !mmm   end for
 !mmm   debug chat: Final trimmedCharList: ${trimmedCharList}
+!mmm   for item in trimmedCharList
+!mmm     debug chat: * ${item}
+!mmm   end for
 !rem
 !mmm   combine chat
 !mmm     chat: /w GM [${cSense}](${cssGMTableHead})
@@ -96,45 +107,60 @@
 !mmm
 !rem       // Error handling
 !rem       // TODO: avoid initial [undef] element in list, add to GM output
+!rem       // ERROR: With more than two characters in cCharList, this produces nested lists, see https://github.com/michael-buschbeck/mychs-macro-magic/issues/102
 !mmm       if isdenied(charId) or isunknown(charId)
-!mmm         set skippedList = skippedList, "Token '${charId}' does not belong to an accessible character"
+!mmm         set skippedList = skippedList, "Token '" & id & "': no/inaccessible character"
 !mmm       else if not charEffectiveSkill
-!mmm         set skippedList = skippedList, "Character (" & charName & ") does not allow access to the " & cSense & " skill, or the character might lack that skill completely. Skipping.") 
-!mmm       end if
-!mmm
-!rem       // Execute sense rolls 
-!mmm       set senseResult = roll("1d20+" & (charEffectiveSkill + cSenseModifier))
-!mmm
-!rem       // Compose output table row for GM
-!rem       // TODO: redo the highlight tooltip to log modifiers
-!mmm       set playerMessage = ""
-!mmm       chat: [${charName} ${senseResult}](${cssGMTableSection})
-!mmm       if senseResult >= 20 or iscritical(senseResult)
-!mmm         set playerMessage = "/w \"" & charName & "\" " & cSuccessMessage
-!mmm         chat: [${playerMsgEmoji} *${message}*](${cssGMTableItemSuccess})
-!mmm       else if (cSense ne "Sechster Sinn" and isfumble(senseResult))
-!mmm         set playerMessage = "/w \"" & charName & "\" " & cCriticalFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${message}*](${cssGMTableItemCriticalFailure})
-!mmm       else if cSense ne "Sechster Sinn"
-!mmm         set playerMessage = "/w \"" & charName & "\" " & cRegularFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${message}*](${cssGMTableItem})
+!mmm         set skippedList = skippedList, "Character '" & charName & "': '" & cSense & "' inaccessible or does not exist") 
+!rem       // And if everything is ready...
 !mmm       else
-!mmm         chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
-!mmm       end if
+!rem         // Execute sense rolls 
+!mmm         set senseRoll = roll("1d20+" & (charEffectiveSkill + cSenseModifier))
+!mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - charEffectiveSkill + cSenseModifier) & ") + (EW = " & charEffectiveSkill & ") + " & cSenseModifier
+!rem         // Overwrite tooltip to break down components
+!mmm         set senseResult = highlight(senseRoll, default, senseResultTooltip)
+!mmm         
+!rem         // Compose output table row for GM
+!mmm         set playerMessage = ""
+!mmm         chat: [${charName} ${senseResult}](${cssGMTableSection})
+!mmm         if senseResult >= 20 or iscritical(senseRoll)
+!mmm           set playerMessage = "/w \"" & charName & "\" " & cSuccessMessage
+!mmm           chat: [${playerMsgEmoji} *${message}*](${cssGMTableItemSuccess})
+!mmm         else if (cSense ne "Sechster Sinn" and isfumble(senseResult))
+!mmm           set playerMessage = "/w \"" & charName & "\" " & cCriticalFailureMessage
+!mmm           chat: [${playerMsgEmoji} *${message}*](${cssGMTableItemCriticalFailure})
+!mmm         else if cSense ne "Sechster Sinn"
+!mmm           set playerMessage = "/w \"" & charName & "\" " & cRegularFailureMessage
+!mmm           chat: [${playerMsgEmoji} *${message}*](${cssGMTableItem})
+!mmm         else
+!mmm           chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
+!mmm         end if
 !mmm
-!rem       // Queue output message for player
-!mmm       if playerMessage ne "" and messageQueue
-!mmm         set messageQueue = messageQueue, playerMessage
-!mmm       else if playerMessage ne "" 
-!mmm         set messageQueue = playerMessage
+!rem         // Queue output message for player
+!rem         // ERROR: With more than two characters in cCharList, this produces nested lists, see https://github.com/michael-buschbeck/mychs-macro-magic/issues/102
+!mmm         if playerMessage ne "" and messageQueue
+!mmm           set messageQueue = messageQueue, playerMessage
+!mmm         else if playerMessage ne "" 
+!mmm           set messageQueue = playerMessage
+!mmm         end if
 !mmm       end if
 !mmm     end for
+!mmm
+!rem     // Tell GM which selected characters were skipped
+!mmm     if skippedList
+!mmm       chat: [Skipped Tokens](${cssGMTableSection})
+!mmm       for skippedItem in skippedList
+!mmm         if skippedItem
+!mmm           chat: [${skippedList}](${cssGMTableItem})
+!mmm         end if
+!mmm       end for
+!mmm     end if
 !mmm   end combine
 !mmm
 !rem   // Closing the curtain: Report results to players
 !rem   //
 !mmm   for playerMessage in messageQueue
-!mmm     chat: ${playerMessage}
+!mmm     do chat(playerMessage)
 !mmm   end for
 !mmm
 !mmm end script
