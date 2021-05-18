@@ -1,5 +1,5 @@
 !rem // Midgard Multi-Sense Script 
-!rem // v1.1.0-dev 2021-05-16
+!rem // v1.1.0 2021-05-18
 !rem //
 !rem // senseMainLogic -- must be called from a config script
 !rem //
@@ -22,7 +22,6 @@
 !rem   // Config: set defaults for customizable variables
 !rem   //
 !rem   //  cSense                   Must be one of the sense skills in the character sheet table "sinne", column "Fertigkeit2"
-!rem   //  cSenseMode               ("single", "group") Mode of operation, which defines how some of the other variables are expected
 !rem   //  cSenseModifier           Modifier to the sense roll
 !rem   //  cSuccessMessage,         Text to be sent to players in case of success / failure / critical failure, or in case 
 !rem   //  cRegularFailureMessage,  of cSense eq "Sixth Sense", success only (otherwise the player does not receive anything)
@@ -30,24 +29,24 @@
 !rem   //  cTokenList               List of valid token_id values for characters that get the sense rolls. Duplicates are ignored.
 !rem   //
 !mmm   set customizable cSense = "Sehen"
-!mmm   set customizable cSenseMode = "single"
 !mmm   set customizable cSenseModifier = 0
 !mmm   set customizable cSuccessMessage = "Einer deiner Sinne hat etwas wahrgenommen. Herzlichen Glückwunsch!"
 !mmm   set customizable cRegularFailureMessage = "Nichts besonderes hier."
 !mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier. Wirklich nicht!"
+!mmm   set customizable cTokenList = false
 !mmm
-!mmm   if selected
+!rem   // Initialize 
+!rem   //
+!mmm   if not cTokenList and selected
 !mmm     set cTokenList = selected
-!mmm   else
+!rem   // This part is for testing only (TEST game)
+!mmm   else if not cTokenList
 !mmm     set cTokenList = ("-MZTluoLDlixU37g3wSQ", "-MZTfQNADBNmv5q5PbSf", "-MZTluoLDlixU37g3wSQ", "-MZTluoLDlixU37g3wSQ")
 !mmm   end if
 !mmm
-!rem   // Initialize for different modes of calling the script
-!rem   //
-!rem   // cSenseMode: check for the valid modes of operations, otherwise die.
-!mmm   if (cSenseMode ne "single") and (cSenseMode ne "group")
-!mmm     do whisperback("Invalid configuration: script does not understand cSenseMode=" & cSenseMode)
-!mmm     exit script
+!rem   // cSenseModifier: if positive, add sign for later output
+!mmm   if cSenseModifier > 0
+!mmm     set cSenseModifier = "+" & cSenseModifier
 !mmm   end if
 !rem   // Output formatting constants
 !mmm   set playerMsgEmoji = "💬"
@@ -94,15 +93,19 @@
 !mmm
 !rem       // Error handling
 !mmm       if isdenied(tokenId) or isunknown(tokenId)
-!mmm         set skippedList = skippedList, "Token '" & id & "': no/inaccessible character"
+!mmm         set skippedList = skippedList, ("Token '" & id & "': no/inaccessible character")
 !mmm       else if not charEffectiveSkill
-!mmm         set skippedList = skippedList, "Character '" & charName & "': '" & cSense & "' inaccessible or does not exist") 
+!mmm         set skippedList = skippedList, ("Character '" & charName & "': '" & cSense & "' inaccessible or does not exist") 
 !rem       // And if everything is ready...
 !mmm       else
 !rem         // Execute sense rolls 
-!mmm         set senseRoll = roll("1d20+" & (charEffectiveSkill + cSenseModifier))
-!mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - charEffectiveSkill + cSenseModifier) & ") + (EW = " & charEffectiveSkill & ") + " & cSenseModifier
+!mmm         set effModifier = charEffectiveSkill + cSenseModifier
+!mmm         if effModifier > 0 
+!mmm           set effModifier = "+" & effModifier
+!mmm         end if
+!mmm         set senseRoll = roll("1d20" & effModifier)
 !rem         // Overwrite tooltip to break down components
+!mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - effModifier) & ") + (EW = " & charEffectiveSkill & ") " & cSenseModifier
 !mmm         set senseResult = highlight(senseRoll, default, senseResultTooltip)
 !mmm         
 !rem         // Compose output table row for GM
@@ -133,7 +136,7 @@
 !mmm       chat: [Skipped Tokens](${cssGMTableSection})
 !mmm       for skippedItem in skippedList
 !mmm         if skippedItem
-!mmm           chat: [${skippedList}](${cssGMTableItem})
+!mmm           chat: [${skippedItem}](${cssGMTableItem})
 !mmm         end if
 !mmm       end for
 !mmm     end if
