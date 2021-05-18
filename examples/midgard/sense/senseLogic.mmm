@@ -1,49 +1,41 @@
-!rem // Midgard Multi-Sense Script (ugly implementation for a hard-coded number of six PCs)
-!rem // v1.0.0-beta 2021-05-03
+!rem // Midgard Multi-Sense Script 
+!rem // v1.1.0 2021-05-18
 !rem //
 !rem // senseMainLogic -- must be called from a config script
-!rem //
-!rem // TODO
-!rem // - If "Nachtsicht" skill doesn't exist, use "Sehen" (with some additional modifier?)
-!rem // - Rebuild using a proper loop construct, prettify some of the looping GM output
 !rem //
 !mmm script
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.14
-!mmm     do whisperback("Abbruch: MMM-Version 1.14.0 oder höher erforderlich.")
+!mmm   if version < 1.19
+!mmm     do whisperback("Abbruch: MMM-Version 1.19.1 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
 !rem   //  cSense                   Must be one of the sense skills in the character sheet table "sinne", column "Fertigkeit2"
-!rem   //  cSenseMode               ("single", "group") Mode of operation, which defines how some of the other variables are expected
 !rem   //  cSenseModifier           Modifier to the sense roll
 !rem   //  cSuccessMessage,         Text to be sent to players in case of success / failure / critical failure, or in case 
 !rem   //  cRegularFailureMessage,  of cSense eq "Sixth Sense", success only (otherwise the player does not receive anything)
 !rem   //  cCriticalFailureMessage     
-!rem   //  cChar1ID...              Valid character_id values for PCs that get the sense rolls. Duplicates are ignored.
+!rem   //  cTokenList               List of valid token_id values for characters that get the sense rolls. Duplicates are ignored.
 !rem   //
 !mmm   set customizable cSense = "Sehen"
-!mmm   set customizable cSenseMode = "single"
 !mmm   set customizable cSenseModifier = 0
 !mmm   set customizable cSuccessMessage = "Einer deiner Sinne hat etwas wahrgenommen. Herzlichen Glückwunsch!"
 !mmm   set customizable cRegularFailureMessage = "Nichts besonderes hier."
 !mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier. Wirklich nicht!"
-!mmm   set customizable cChar1ID = false
-!mmm   set customizable cChar2ID = false
-!mmm   set customizable cChar3ID = false
-!mmm   set customizable cChar4ID = false
-!mmm   set customizable cChar5ID = false
-!mmm   set customizable cChar6ID = false
+!mmm   set customizable cTokenList = false
 !mmm
-!rem   // Initialize for different modes of calling the script
+!rem   // Initialize 
 !rem   //
-!rem   // cSenseMode: check for the valid modes of operations, otherwise die.
-!mmm   if (cSenseMode ne "single") and (cSenseMode ne "group")
-!mmm     do whisperback("Invalid configuration: script does not understand cSenseMode=" & cSenseMode)
-!mmm     exit script
+!mmm   if not cTokenList and selected
+!mmm     set cTokenList = selected
+!mmm   end if
+!mmm
+!rem   // cSenseModifier: if positive, add sign for later output
+!mmm   if cSenseModifier > 0
+!mmm     set cSenseModifier = "+" & cSenseModifier
 !mmm   end if
 !rem   // Output formatting constants
 !mmm   set playerMsgEmoji = "💬"
@@ -53,290 +45,89 @@
 !mmm   set cssGMTableItemSuccess = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#60f086;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
 !mmm   set cssGMTableItemCriticalFailure = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#f06560;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
 !rem
-!rem   // Due diligence: Run through selected characters, weed out duplicates and check access to the sense skill we need
-!rem   //
-!rem   // - Loop no. 1, for all values of cSenseMode: cChar1ID must always be set and valid
-!mmm   set loopCharID = cChar1ID
-!mmm   set loopCharID = getattr(loopCharID, "character_id")
-!mmm   if isdenied(loopCharID) or isunknown(loopCharID)
-!mmm     debug chat: Token (${loopCharID}) does not belong to an accessible character.
-!mmm     set loopCharID = false
-!mmm     if cSenseMode eq "single"
-!mmm       debug chat: The only selected token turned out to be inaccessible. Sad.
-!mmm       exit script
+!rem   // Due diligence: weed out duplicates, in case cTokenList was populated manually or via {target}
+!mmm   for id in cTokenList
+!mmm     set dupeFound = false
+!mmm     for trimmedId in trimmedTokenList
+!mmm       if trimmedId eq id
+!mmm         set dupeFound = true
+!mmm       end if
+!mmm     end for
+!mmm     if not dupeFound
+!mmm       set trimmedTokenList = trimmedTokenList, id
 !mmm     end if
-!mmm   else
-!mmm     set loopCharName = getattr(loopCharID, "character_name")
-!mmm     set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
-!mmm     if cSense eq "Nachtsicht" and not loopEffectiveSkill
-!rem       // For characters without night vision, substitute Vision without a bonus
-!mmm       set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
-!mmm     end if
-!mmm     if not loopEffectiveSkill
-!mmm       do whisperback("Character (" & loopCharName & ") does not allow access to the " & cSense & " skill, or the character might lack that skill completely. Skipping.") 
-!mmm     end if
-!mmm   end if
-!mmm   set char1Name = loopCharName
-!mmm   set char1EffectiveSkill = loopEffectiveSkill
+!mmm   end for
 !rem
-!rem   // - Loop nos. 2-6, for cSenseMode "group": loop over the other five cCharXIDs
-!mmm   if cSenseMode eq "group"
-!mmm
-!mmm     if cChar2ID
-!mmm       exit if if (cChar2ID eq cChar1ID)
-!mmm       set loopCharID = cChar2ID
-!mmm       set loopCharID = getattr(loopCharID, "character_id")
-!mmm       if isdenied(loopCharID) or isunknown(loopCharID)
-!mmm         debug chat: Token (${loopCharID}) does not belong to an accessible character.
-!mmm         set loopCharID = false
-!mmm       else
-!mmm         set loopCharName = getattr(loopCharID, "character_name")
-!mmm         set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
-!mmm         if cSense eq "Nachtsicht" and not loopEffectiveSkill
-!rem           // For characters without night vision, substitute Vision without a bonus
-!mmm           set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
-!mmm         end if
-!mmm         if not loopEffectiveSkill
-!mmm           do whisperback("Character (" & loopCharName & ") does not allow access to the " & cSense & " skill, or the character might lack that skill completely. Skipping.") 
-!mmm         end if
-!mmm       end if
-!mmm       set char2Name = loopCharName
-!mmm       set char2EffectiveSkill = loopEffectiveSkill
-!mmm     end if
-!mmm
-!mmm     if cChar3ID
-!mmm       exit if if (cChar3ID eq cChar2ID) or (cChar3ID eq cChar1ID)
-!mmm       set loopCharID = cChar3ID
-!mmm       set loopCharID = getattr(loopCharID, "character_id")
-!mmm       if isdenied(loopCharID) or isunknown(loopCharID)
-!mmm         debug chat: Token (${loopCharID}) does not belong to an accessible character.
-!mmm         set loopCharID = false
-!mmm       else
-!mmm         set loopCharName = getattr(loopCharID, "character_name")
-!mmm         set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
-!mmm         if cSense eq "Nachtsicht" and not loopEffectiveSkill
-!rem           // For characters without night vision, substitute Vision without a bonus
-!mmm           set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
-!mmm         end if
-!mmm         if not loopEffectiveSkill
-!mmm           do whisperback("Character (" & loopCharName & ") does not allow access to the " & cSense & " skill, or the character might lack that skill completely. Skipping.") 
-!mmm         end if
-!mmm       end if
-!mmm       set char3Name = loopCharName
-!mmm       set char3EffectiveSkill = loopEffectiveSkill
-!mmm     end if
-!mmm
-!mmm     if cChar4ID
-!mmm       exit if if (cChar4ID eq cChar3ID) or (cChar4ID eq cChar2ID) or (cChar4ID eq cChar1ID)
-!mmm       set loopCharID = cChar4ID
-!mmm       set loopCharID = getattr(loopCharID, "character_id")
-!mmm       if isdenied(loopCharID) or isunknown(loopCharID)
-!mmm         debug chat: Token (${loopCharID}) does not belong to an accessible character.
-!mmm         set loopCharID = false
-!mmm       else
-!mmm         set loopCharName = getattr(loopCharID, "character_name")
-!mmm         set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
-!mmm         if cSense eq "Nachtsicht" and not loopEffectiveSkill
-!rem           // For characters without night vision, substitute Vision without a bonus
-!mmm           set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
-!mmm         end if
-!mmm         if not loopEffectiveSkill
-!mmm           do whisperback("Character (" & loopCharName & ") does not allow access to the " & cSense & " skill, or the character might lack that skill completely. Skipping.") 
-!mmm         end if
-!mmm       end if
-!mmm       set char4Name = loopCharName
-!mmm       set char4EffectiveSkill = loopEffectiveSkill
-!mmm     end if
-!mmm
-!mmm     if cChar5ID
-!mmm       exit if if (cChar5ID eq cChar4ID) or (cChar5ID eq cChar3ID) or (cChar5ID eq cChar2ID) or (cChar5ID eq cChar1ID)
-!mmm       set loopCharID = cChar5ID
-!mmm       set loopCharID = getattr(loopCharID, "character_id")
-!mmm       if isdenied(loopCharID) or isunknown(loopCharID)
-!mmm         debug chat: Token (${loopCharID}) does not belong to an accessible character.
-!mmm         set loopCharID = false
-!mmm       else
-!mmm         set loopCharName = getattr(loopCharID, "character_name")
-!mmm         set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
-!mmm         if cSense eq "Nachtsicht" and not loopEffectiveSkill
-!rem           // For characters without night vision, substitute Vision without a bonus
-!mmm           set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
-!mmm         end if
-!mmm         if not loopEffectiveSkill
-!mmm           do whisperback("Character (" & loopCharName & ") does not allow access to the " & cSense & " skill, or the character might lack that skill completely. Skipping.") 
-!mmm         end if
-!mmm       end if
-!mmm       set char5Name = loopCharName
-!mmm       set char5EffectiveSkill = loopEffectiveSkill
-!mmm     end if
-!mmm
-!mmm     if cChar6ID
-!mmm       exit if if (cChar6ID eq cChar5ID) or (cChar6ID eq cChar4ID) or (cChar6ID eq cChar3ID) or (cChar6ID eq cChar2ID) or (cChar6ID eq cChar1ID)
-!mmm       set loopCharID = cChar6ID
-!mmm       set loopCharID = getattr(loopCharID, "character_id")
-!mmm       if isdenied(loopCharID) or isunknown(loopCharID)
-!mmm         debug chat: Token (${loopCharID}) does not belong to an accessible character.
-!mmm         set loopCharID = false
-!mmm       else
-!mmm         set loopCharName = getattr(loopCharID, "character_name")
-!mmm         set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
-!mmm         if cSense eq "Nachtsicht" and not loopEffectiveSkill
-!rem           // For characters without night vision, substitute Vision without a bonus
-!mmm           set loopEffectiveSkill = getattr(loopCharID, findattr(loopCharID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
-!mmm         end if
-!mmm         if not loopEffectiveSkill
-!mmm           do whisperback("Character (" & loopCharName & ") does not allow access to the " & cSense & " skill, or the character might lack that skill completely. Skipping.") 
-!mmm         end if
-!mmm       end if
-!mmm       set char6Name = loopCharName
-!mmm       set char6EffectiveSkill = loopEffectiveSkill
-!mmm     end if
-!mmm   end if
-!mmm
-!rem   // The main event, which starts with initializing the GM's reporting table
-!rem   //
 !mmm   combine chat
 !mmm     chat: /w GM [${cSense}](${cssGMTableHead})
 !mmm
-!rem     // Execute sense rolls, again in a poor man's loop over six character slots
-!rem     // TODO once reimplementing this as a proper loop: 
-!rem     // - redo the highlight tooltip to log modifiers
-!rem     // 
-!mmm     if char1EffectiveSkill
-!mmm       set loopCharName = char1Name
-!mmm       set loopSenseResult = false
-!mmm       set loopSenseResult = roll("1d20+" & (char1EffectiveSkill + cSenseModifier))
-!mmm       chat: [${loopCharName} ${loopSenseResult}](${cssGMTableSection})
-!mmm       if loopSenseResult >= 20 or iscritical(loopSenseResult)
-!mmm         set loopSenseMessage = cSuccessMessage
-!mmm         chat: [${playerMsgEmoji} *${loopSenseMessage}*](${cssGMTableItemSuccess})
-!mmm       else if (cSense ne "Sechster Sinn" and isfumble(loopSenseResult))
-!mmm         set loopSenseMessage = cCriticalFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
-!mmm       else if cSense ne "Sechster Sinn"
-!mmm         set loopSenseMessage = cRegularFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
-!mmm       else
-!mmm         chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
+!rem     // Run through selected characters
+!mmm     for id in trimmedTokenList
+!mmm
+!rem       // Initialize: refetch character ID and get name and skills
+!mmm       set tokenId = getattr(id, "token_id")
+!mmm       set charName = getattr(tokenId, "character_name")
+!mmm       set charEffectiveSkill = getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
+!mmm       if cSense eq "Nachtsicht" and not charEffectiveSkill
+!rem         // For characters without night vision, substitute Vision without a bonus
+!mmm         set charEffectiveSkill = getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", "Sehen", "FW2"))
 !mmm       end if
-!mmm       set char1ResultMessage = loopSenseMessage
-!mmm     end if
-!mmm     if char2EffectiveSkill
-!mmm       set loopCharName = char2Name
-!mmm       set loopSenseResult = false
-!mmm       set loopSenseResult = roll("1d20+" & (char2EffectiveSkill + cSenseModifier))
-!mmm       chat: [${loopCharName} ${loopSenseResult}](${cssGMTableSection})
-!mmm       if loopSenseResult >= 20 or iscritical(loopSenseResult)
-!mmm         set loopSenseMessage = cSuccessMessage
-!mmm         chat: [${playerMsgEmoji} *${loopSenseMessage}*](${cssGMTableItemSuccess})
-!mmm       else if (cSense ne "Sechster Sinn" and isfumble(loopSenseResult))
-!mmm         set loopSenseMessage = cCriticalFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
-!mmm       else if cSense ne "Sechster Sinn"
-!mmm         set loopSenseMessage = cRegularFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
+!mmm
+!rem       // Error handling
+!mmm       if isdenied(tokenId) or isunknown(tokenId)
+!mmm         set skippedList = skippedList, ("Token '" & id & "': no/inaccessible character")
+!mmm       else if not charEffectiveSkill
+!mmm         set skippedList = skippedList, ("Character '" & charName & "': '" & cSense & "' inaccessible or does not exist") 
+!rem       // And if everything is ready...
 !mmm       else
-!mmm         chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
+!rem         // Execute sense rolls 
+!mmm         set effModifier = charEffectiveSkill + cSenseModifier
+!mmm         if effModifier > 0 
+!mmm           set effModifier = "+" & effModifier
+!mmm         end if
+!mmm         set senseRoll = roll("1d20" & effModifier)
+!rem         // Overwrite tooltip to break down components
+!mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - effModifier) & ") + (EW = " & charEffectiveSkill & ") " & cSenseModifier
+!mmm         set senseResult = highlight(senseRoll, default, senseResultTooltip)
+!mmm         
+!rem         // Compose output table row for GM
+!mmm         set playerMessage = ""
+!mmm         chat: [${charName} ${senseResult}](${cssGMTableSection})
+!mmm         if senseResult >= 20 or iscritical(senseRoll)
+!mmm           set playerMessage = "/w \"" & charName & "\" " & cSuccessMessage
+!mmm           chat: [${playerMsgEmoji} *${cSuccessMessage}*](${cssGMTableItemSuccess})
+!mmm         else if (cSense ne "Sechster Sinn" and isfumble(senseResult))
+!mmm           set playerMessage = "/w \"" & charName & "\" " & cCriticalFailureMessage
+!mmm           chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
+!mmm         else if cSense ne "Sechster Sinn"
+!mmm           set playerMessage = "/w \"" & charName & "\" " & cRegularFailureMessage
+!mmm           chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
+!mmm         else
+!mmm           chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
+!mmm         end if
+!mmm
+!rem         // Queue output message for player
+!mmm         if playerMessage ne ""
+!mmm           set messageQueue = messageQueue, playerMessage
+!mmm         end if
 !mmm       end if
-!mmm       set char2ResultMessage = loopSenseMessage
-!mmm     end if
-!mmm     if char3EffectiveSkill
-!mmm       set loopCharName = char3Name
-!mmm       set loopSenseResult = false
-!mmm       set loopSenseResult = roll("1d20+" & (char3EffectiveSkill + cSenseModifier))
-!mmm       chat: [${loopCharName} ${loopSenseResult}](${cssGMTableSection})
-!mmm       if loopSenseResult >= 20 or iscritical(loopSenseResult)
-!mmm         set loopSenseMessage = cSuccessMessage
-!mmm         chat: [${playerMsgEmoji} *${loopSenseMessage}*](${cssGMTableItemSuccess})
-!mmm       else if (cSense ne "Sechster Sinn" and isfumble(loopSenseResult))
-!mmm         set loopSenseMessage = cCriticalFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
-!mmm       else if cSense ne "Sechster Sinn"
-!mmm         set loopSenseMessage = cRegularFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
-!mmm       else
-!mmm         chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
-!mmm       end if
-!mmm       set char3ResultMessage = loopSenseMessage
-!mmm     end if
-!mmm     if char4EffectiveSkill
-!mmm       set loopCharName = char4Name
-!mmm       set loopSenseResult = false
-!mmm       set loopSenseResult = roll("1d20+" & (char4EffectiveSkill + cSenseModifier))
-!mmm       chat: [${loopCharName} ${loopSenseResult}](${cssGMTableSection})
-!mmm       if loopSenseResult >= 20 or iscritical(loopSenseResult)
-!mmm         set loopSenseMessage = cSuccessMessage
-!mmm         chat: [${playerMsgEmoji} *${loopSenseMessage}*](${cssGMTableItemSuccess})
-!mmm       else if (cSense ne "Sechster Sinn" and isfumble(loopSenseResult))
-!mmm         set loopSenseMessage = cCriticalFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
-!mmm       else if cSense ne "Sechster Sinn"
-!mmm         set loopSenseMessage = cRegularFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
-!mmm       else
-!mmm         chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
-!mmm       end if
-!mmm       set char4ResultMessage = loopSenseMessage
-!mmm     end if
-!mmm     if char5EffectiveSkill
-!mmm       set loopCharName = char5Name
-!mmm       set loopSenseResult = false
-!mmm       set loopSenseResult = roll("1d20+" & (char5EffectiveSkill + cSenseModifier))
-!mmm       chat: [${loopCharName} ${loopSenseResult}](${cssGMTableSection})
-!mmm       if loopSenseResult >= 20 or iscritical(loopSenseResult)
-!mmm         set loopSenseMessage = cSuccessMessage
-!mmm         chat: [${playerMsgEmoji} *${loopSenseMessage}*](${cssGMTableItemSuccess})
-!mmm       else if (cSense ne "Sechster Sinn" and isfumble(loopSenseResult))
-!mmm         set loopSenseMessage = cCriticalFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
-!mmm       else if cSense ne "Sechster Sinn"
-!mmm         set loopSenseMessage = cRegularFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
-!mmm       else
-!mmm         chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
-!mmm       end if
-!mmm       set char5ResultMessage = loopSenseMessage
-!mmm     end if
-!mmm     if char6EffectiveSkill
-!mmm       set loopCharName = char6Name
-!mmm       set loopSenseResult = false
-!mmm       set loopSenseResult = roll("1d20+" & (char6EffectiveSkill + cSenseModifier))
-!mmm       chat: [${loopCharName} ${loopSenseResult}](${cssGMTableSection})
-!mmm       if loopSenseResult >= 20 or iscritical(loopSenseResult)
-!mmm         set loopSenseMessage = cSuccessMessage
-!mmm         chat: [${playerMsgEmoji} *${loopSenseMessage}*](${cssGMTableItemSuccess})
-!mmm       else if (cSense ne "Sechster Sinn" and isfumble(loopSenseResult))
-!mmm         set loopSenseMessage = cCriticalFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
-!mmm       else if cSense ne "Sechster Sinn"
-!mmm         set loopSenseMessage = cRegularFailureMessage
-!mmm         chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
-!mmm       else
-!mmm         chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})
-!mmm       end if
-!mmm       set char6ResultMessage = loopSenseMessage
+!mmm     end for
+!mmm
+!rem     // Tell GM which selected characters were skipped
+!mmm     if skippedList
+!mmm       chat: [Skipped Tokens](${cssGMTableSection})
+!mmm       for skippedItem in skippedList
+!mmm         if skippedItem
+!mmm           chat: [${skippedItem}](${cssGMTableItem})
+!mmm         end if
+!mmm       end for
 !mmm     end if
 !mmm   end combine
 !mmm
-!rem   // Closing the curtain: Report results to players (another poor man's loop)
+!rem   // Closing the curtain: Report results to players
 !rem   //
-!mmm   if cChar1ID and char1ResultMessage ne ""
-!mmm     chat: /w "${char1Name}" ${char1ResultMessage}
-!mmm   end if
-!mmm   if cChar2ID and char2ResultMessage ne ""
-!mmm     chat: /w "${char2Name}" ${char2ResultMessage}
-!mmm   end if
-!mmm   if cChar3ID and char3ResultMessage ne ""
-!mmm     chat: /w "${char3Name}" ${char3ResultMessage}
-!mmm   end if
-!mmm   if cChar4ID and char4ResultMessage ne ""
-!mmm     chat: /w "${char4Name}" ${char4ResultMessage}
-!mmm   end if
-!mmm   if cChar5ID and char5ResultMessage ne ""
-!mmm     chat: /w "${char5Name}" ${char5ResultMessage}
-!mmm   end if
-!mmm   if cChar6ID and char6ResultMessage ne ""
-!mmm     chat: /w "${char6Name}" ${char6ResultMessage}
-!mmm   end if
+!mmm   for playerMessage in messageQueue
+!mmm     do chat(playerMessage)
+!mmm   end for
 !mmm
 !mmm end script
