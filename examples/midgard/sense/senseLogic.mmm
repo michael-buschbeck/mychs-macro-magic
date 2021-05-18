@@ -3,14 +3,6 @@
 !rem //
 !rem // senseMainLogic -- must be called from a config script
 !rem //
-!rem // ChangeLog
-!rem // - Major rewrite: proper loops allow for unlimited number of characters
-!rem // - Fixed tooltip for roll output
-!rem // - Use token ids, not character ids, to be usable for generic NPCs
-!rem //
-!rem // TODO
-!rem // - Rework config scripts accordingly
-!rem //
 !mmm script
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
@@ -39,9 +31,6 @@
 !rem   //
 !mmm   if not cTokenList and selected
 !mmm     set cTokenList = selected
-!rem   // This part is for testing only (TEST game)
-!mmm   else if not cTokenList
-!mmm     set cTokenList = ("-MZTluoLDlixU37g3wSQ", "-MZTfQNADBNmv5q5PbSf", "-MZTluoLDlixU37g3wSQ", "-MZTluoLDlixU37g3wSQ")
 !mmm   end if
 !mmm
 !rem   // cSenseModifier: if positive, add sign for later output
@@ -64,16 +53,9 @@
 !mmm         set dupeFound = true
 !mmm       end if
 !mmm     end for
-!mmm     if dupeFound
-!mmm       debug chat: ${id} found again, skipping.
-!mmm     else 
+!mmm     if not dupeFound
 !mmm       set trimmedTokenList = trimmedTokenList, id
-!mmm       debug chat: ${id} found for the first time, stored in trimmedTokenList: ${trimmedTokenList}
 !mmm     end if
-!mmm   end for
-!mmm   debug chat: Final trimmedTokenList: ${trimmedTokenList}
-!mmm   for item in trimmedTokenList
-!mmm     debug chat: * ${item}
 !mmm   end for
 !rem
 !mmm   combine chat
