@@ -1,6 +1,6 @@
 # MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.8.0 vom 2021-05-13,** erfordert MMM 1.18.0+.
+Aktuelle Version: **1.8.1 vom 2021-05-19,** erfordert MMM 1.18.0+.
 
 Aufruf: 
 - Hauptspiel ("Midgard"): ``#melee`` 
@@ -93,6 +93,10 @@ Minimalbeispiel für ein Kurzschwert, ohne die Erzählerei zu verändern (Voraus
 ```
 
 ## Changelog
+
+1.8.1 2021-05-19 (requires MMM 1.18.0+)
+
+- Ausgabe: Bugfix #10, Hinweis auf PP entfernt wenn Gegner erschöpft
 
 1.8.0 2021-05-13 (requires MMM 1.18.0+)
 

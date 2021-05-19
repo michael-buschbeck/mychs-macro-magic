@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.8.0 (2021-05-13)"
+!mmm   set scriptVersion = "v1.8.1 (2021-05-19)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.18
@@ -276,9 +276,7 @@
 !mmm   combine chat
 !mmm     chat:      ${"&"}{template:default} {{name=Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
 !mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${foeEnduranceIndicator}}}
-!mmm     if iscritical(attackRoll)
-!mmm       chat:    {{Kritischer Erfolg=$[attackResult]{attackResult}&nbsp;(**Wurf** $[attackRoll]{attackRoll})}}
-!mmm     else if attackResult >= 20
+!mmm     if attackResult >= 20
 !mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{attackRoll})}}
 !mmm     else 
 !mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{attackRoll})}}
@@ -294,8 +292,10 @@
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w "${ownName}" ${"&"}{template:default} ${modifierLog}
-!mmm   if iscritical(attackRoll)
+!mmm   if iscritical(attackRoll) and foeEndurance > 0
 !mmm     chat: /w "${ownName}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM            ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm   else if iscritical(attackRoll)
+!mmm     chat: /w "${ownName}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
 !mmm   end if
 !mmm end script
