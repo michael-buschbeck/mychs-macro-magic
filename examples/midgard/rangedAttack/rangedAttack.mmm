@@ -59,7 +59,7 @@
 !rem   // - Constants
 !mmm   set emojiExhausted = "🥴"
 !mmm   set emojiLock = "🔒"
-!rem   // - Character & NPC data
+!rem   // - Fetch character (attacker) data
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
@@ -69,6 +69,10 @@
 !mmm     do whisperback("Abbruch: " & ownName & " hat keine Waffe namens " & cWeaponLabel & ".")
 !mmm     exit script
 !mmm   end if
+!mmm   if weaponDamageBonus >= 0
+!mmm     set weaponDamageBonus = "+" & weaponDamageBonus
+!mmm   end if
+!rem   // - Fetch NPC (target) data
 !mmm   set foeId = "@{target|Angriffsziel|token_id}"
 !mmm   set foeName = getattr(foeId, "name")
 !mmm   if isdenied(foeName) or isunknown(foeName)
@@ -108,7 +112,7 @@
 !rem   // Deduce ammo spent
 !mmm   set ammoCount = ammoCount - 1
 !mmm   do setattr(cOwnID, ammoLabel, ammoCount)  
-!mmm   set ammoCount = getattr(cOwnID, ammoLabel)
+!mmm   set ammoCount = highlight(getattr(cOwnID, ammoLabel), "info")
 !mmm   set ammoMax = getattrmax(cOwnID, ammoLabel)
 !mmm   if ammoCount < 1
 !mmm     set ammoCount = highlight(ammoCount, "bad")
@@ -179,7 +183,7 @@
 !mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
 !mmm   else if foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
-!mmm     set modifierLog = modifierLog & " {{Ziel erschöpft ([" & foeName & "].AP:" & foeEndurance & ")=+4}} "
+!mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !rem   // 4. Collect additional standard modifiers from user via dropdown menu
@@ -255,8 +259,8 @@
 !mmm   if modifierLog eq ""
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
 !mmm   end if
-!mmm   set modifiers = highlight(modifiers, "normal", modifierTooltip)
-!mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
+!mmm   set modifiers = highlight(modifiers, "info", modifierTooltip)
+!mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") " & modifiers
 !mmm   if iscritical(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
 !mmm   else if isfumble(attackRoll)
@@ -266,29 +270,25 @@
 !mmm   end if
 !rem
 !rem   // Damage roll (and make sure it doesn't get negative)
-!mmm   set damageRoll = roll(weaponDamageExpr)
-!mmm   set damageResult = damageRoll + weaponDamageBonus
-!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") + " & weaponDamageBonus
+!mmm   set damageResult = roll(weaponDamageExpr & weaponDamageBonus)
+!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & (damageResult - weaponDamageBonus) & ") " & weaponDamageBonus
+!mmm   if damageResult < 0
+!mmm     set damageResult = highlight(0, "bad")
+!mmm   end if
 !mmm   if cAmmoMagic and cAmmoMagicDamage ne ""
 !mmm     set magicExtraDamage = roll(cAmmoMagicDamage)
-!mmm     set damageResult = damageResult + magicExtraDamage
+!mmm     if magicExtraDamage < 0
+!mmm       set magicExtraDamage = highlight(0, "bad")
+!mmm     end if
+!mmm     set damageResult = highlight(damageResult + magicExtraDamage, "normal")
 !mmm     set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & magicExtraDamage & ")"
 !mmm   end if 
-!mmm   if damageResult < 0
-!mmm     set damageResult = 0
-!mmm   end if
 !mmm   set damageResultLog = damageResult & " = " & damageResultLog
-!mmm   if iscritical(damageRoll)
-!mmm     set damageResult = highlight(damageResult, "good", damageResultLog)
-!mmm   else if isfumble(damageRoll)
-!mmm     set damageResult = highlight(damageResult, "bad", damageResultLog)
-!mmm   else 
-!mmm     set damageResult = highlight(damageResult, "normal", damageResultLog)
-!mmm   end if
+!mmm   set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm
 !rem   // Break down extra magic damage to player and GM
 !mmm   if cAmmoMagic and attackResult >= 20 and damageResult > 0
-!mmm     set modifierLog = modifierLog & " {{Magischer Schaden=" & damageResult & " }} "
+!mmm     set modifierLog = modifierLog & " {{Zauberschaden=" & damageResult & " }} "
 !mmm   end if
 !mmm
 !rem   // Pull together a sensible guess at a default way of addressing the weapon for output
@@ -339,24 +339,24 @@
 !rem
 !rem   // Add data table for easy reference
 !mmm   combine chat
-!mmm     chat:      ${"&"}{template:default} {{name=Angriff mit $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} *}} 
-!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${foeEnduranceIndicator}}}
+!mmm     chat:      ${"&"}{template:default} {{name=Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
+!mmm     chat:      {{Ziel=**${foeName}** ${foeEnduranceIndicator}}}
 !mmm     if iscritical(attackRoll)
-!mmm       chat:    {{Kritischer Erfolg=$[attackResult]{attackResult}&nbsp;(**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${attackRoll})}}
 !mmm     else if attackResult >= 20
-!mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Erfolg=${attackResult} (**Wurf** ${attackRoll})}}
 !mmm     else 
-!mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult} (**Wurf** $[attackRoll]{attackRoll})}}
+!mmm       chat:    {{Fehlschlag=${attackResult} (**Wurf** ${attackRoll})}}
 !mmm     end if
-!mmm     chat:      {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
-!mmm     chat:      {{Entfernung=$[distance]{distance} $[distanceUnits]{distanceUnits} ($[distanceGridCells]{round(distance/(distsnap()*distscale()))} Planquadrate, $[rangeBracket]{rangeBracket})}}
+!mmm     chat:      {{Boni/Mali=**${modifiers}**}}
+!mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
 !mmm     if attackFromBehind
 !mmm       chat:    {{Angriff von hinten=Kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
 !mmm     end if 
 !mmm     if attackResult >= 20
-!mmm       chat:    {{Schaden=$[damageResult]{damageResult}}}
+!mmm       chat:    {{Schaden=${damageResult}}}
 !mmm     end if
-!mmm     chat:      {{$[ammoLabel]{ammoLabel}=$[ammoCount]{ammoCount}}}
+!mmm     chat:      {{${ammoLabel}=${ammoCount}}}
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w ${ownName} ${"&"}{template:default} ${modifierLog}
