@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.8.4 (2021-05-13)"
+!mmm   set scriptVersion = "1.8.5 (2021-05-19)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.16
@@ -360,8 +360,10 @@
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w ${ownName} ${"&"}{template:default} ${modifierLog}
-!mmm   if iscritical(attackRoll)
+!mmm   if iscritical(attackRoll) and foeEndurance > 0
 !mmm     chat: /w "${ownName}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM            ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm   else if iscritical(attackRoll)
+!mmm     chat: /w "${ownName}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
 !mmm   end if
 !mmm end script
