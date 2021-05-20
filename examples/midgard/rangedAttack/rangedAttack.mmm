@@ -1,10 +1,8 @@
 !rem // Midgard Ranged Attack Script
-!rem // v1.8.3 2021-04-27 (requires MMM 1.16.0 or higher)
-!rem // - Modifikatoren-Log als Tooltip ergänzt
-!rem // - Anpassbarkeit der Tabellenausgabe entfernt
-!rem // - Unicode-Emojis für Erschöpfung ergänzt
 !rem
 !mmm script
+!mmm   set scriptVersion = "1.8.4 (2021-05-13)"
+!mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.16
 !mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
@@ -13,6 +11,7 @@
 !mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
+!rem   //  cCheckVersion        Toggle version check
 !rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
@@ -27,6 +26,7 @@
 !rem   //  cFoeNameDefault      Output label for targets without names
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //
+!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Bogen"
 !mmm   set customizable cWeaponName = ""
@@ -42,6 +42,11 @@
 !mmm   set customizable cAmmoMagicDamage = ""
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
 !mmm   set customizable cOwnID = getattr(sender, "character_id")
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = getattr(cOwnID, "character_id")
