@@ -351,7 +351,7 @@
 !mmm     chat:      {{Boni/Mali=**${modifiers}**}}
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
 !mmm     if attackFromBehind
-!mmm       chat:    {{Angriff von hinten=Kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
+!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
 !mmm     end if 
 !mmm     if attackResult >= 20
 !mmm       chat:    {{Schaden=${damageResult}}}
