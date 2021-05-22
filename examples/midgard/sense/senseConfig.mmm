@@ -186,7 +186,7 @@
 !mmm customize
 !rem
 !mmm   set cSense = "Nachtsicht"
-!mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
+!mmm   set cSenseModifier = ?{Es ist... | stockdunkel (-8/-6),-6 | bewölkt+Neumond (-6/-4),-4 | wolkenlos+Neumond/bewölkt+Halbmond (-5/-3),-3 | wolkenlos+Halbmond/bewölkt+Vollmond (-4/-2),-2 | wolkenlos+Vollmond (-2/-0),0 | Manuelle Eingabe,?{Modifikator&#124;-8&#125; }
 !mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Ein unnatürlicher Schatten?}"
 !mmm   set cRegularFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
 !mmm   set cCriticalFailureMessage = "?{Nachricht bei Patzern|Deinen Augen fällt nichts besonderes auf hier.}"
@@ -199,7 +199,7 @@
 !mmm customize
 !rem
 !mmm   set cSense = "Nachtsicht"
-!mmm   set cSenseModifier = -8
+!mmm   set cSenseModifier = ?{Es ist... | stockdunkel (-8/-6),-6 | bewölkt+Neumond (-6/-4),-4 | wolkenlos+Neumond/bewölkt+Halbmond (-5/-3),-3 | wolkenlos+Halbmond/bewölkt+Vollmond (-4/-2),-2 | wolkenlos+Vollmond (-2/-0),0 | Manuelle Eingabe,?{Modifikator&#124;-8&#125; }
 !mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Da hinten! Ein unnatürlicher Schatten?}"
 !mmm   set cRegularFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
 !mmm   set cCriticalFailureMessage = "Deinen Augen fällt nichts besonderes auf hier."
