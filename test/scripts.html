@@ -188,6 +188,10 @@
                 { error: "During parse, syntax error in script: set incorrectAssignmentOperator ❌:= 123 + 456" },
             ],
             [
+                "!mmm chat: ${syntax error}",
+                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in template in script: chat: ${syntax ❌error}" },
+            ],
+            [
                 "!mmm do chat('correct')",
                 { chat: "correct" },
             ],

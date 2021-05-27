@@ -2964,7 +2964,7 @@ class MychTemplate
             return "(" + (pattern instanceof RegExp ? pattern.source : pattern) + ")";
         }
 
-        return new RegExp(segmentPatterns.map(createSegmentRegExpSource).join("|"), "gd");
+        return new RegExp(segmentPatterns.map(createSegmentRegExpSource).join("|"), "g");
     }
 
     parse(source, context)
@@ -3023,7 +3023,7 @@ class MychTemplate
             else if (segmentMatch.groups.expression)
             {
                 let expressionLabel = segmentMatch.groups.label;
-                let expressionOffset = segmentMatch.indices.groups.expression[0];
+                let expressionOffset = segmentMatch.index + "$".length + (segmentMatch.groups.labelToken ? segmentMatch.groups.labelToken.length : 0) + "{".length;
 
                 try
                 {
@@ -3064,7 +3064,7 @@ class MychTemplate
                 this.segments.push(referenceSegment);
             }
 
-            segmentOffset = segmentMatch.indices[0][1];
+            segmentOffset = segmentMatch.index + segmentMatch[0].length;
         }
 
         if (segmentOffset < source.length)
