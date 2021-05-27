@@ -3016,7 +3016,13 @@ class MychTemplate
             else if (segmentMatch.groups.escape)
             {
                 let string = segmentMatch.groups.escape;
-                let stringSegment = { type: "string", value: string, source: segmentMatch[0] };
+
+                let stringSegment =
+                {
+                    type: "string",
+                    value: string,
+                    source: segmentMatch[0],
+                };
 
                 this.segments.push(stringSegment);
             }
