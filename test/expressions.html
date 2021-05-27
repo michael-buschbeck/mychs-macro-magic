@@ -158,6 +158,13 @@
                 { result: "9" },
             ],
             [
+                "1 + .5",
+                { result: "1.5" },
+            ],
+            [
+                "1 + .prop",
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + ❌.prop" }            ],
+            [
                 "strlen('ookook')",
                 { result: "6" },
             ],

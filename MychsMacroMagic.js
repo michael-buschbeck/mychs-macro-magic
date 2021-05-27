@@ -4096,13 +4096,13 @@ class MychExpression
         {
             unaryOrBinaryOperator:  operatorRegExpSource,
 
-            propertyOperator:       /\./,
-            debugOperator:          /\?{1,3}/,
-
             literalNumber:          /(\.\d+|\d+(\.\d*)?)([eE][-+]?\d+)?/,
             literalBoolean:         /\b(true|false)\b/,
             literalStringDouble:    /"([^"\\]|\\.)*"?/,
             literalStringSingle:    /'([^'\\]|\\.)*'?/,
+
+            propertyOperator:       /\./,
+            debugOperator:          /\?{1,3}/,
 
             identifier:             /\b[A-Za-z_]\w*\b|\$\[\[\w+\]\]/,
 
