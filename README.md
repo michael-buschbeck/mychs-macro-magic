@@ -585,12 +585,12 @@ This behavior comes in handy if you want to append or prepend items to a list va
 | Line | Commands | What happens?
 | ---- | -------- | -------------
 | 1    | _!mmm_ **script** | *(variable* things *starts out as undefined – list has zero elements initially)*
-| 3    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got
-| 2    | _!mmm_     **set** things = things, "something", 123 | *(append two values to initially empty list – list has two elements now)*
-| 3    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got something, 123
-| 4    | _!mmm_     **set** things = true, 456, things | *(prepend two values to the list – list has four elements now)*
-| 5    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got true, 456, something, 123
-| 6    | _!mmm_ **end script**
+| 2    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got
+| 3    | _!mmm_     **set** things = things, "something", 123 | *(append two values to initially empty list – list has two elements now)*
+| 4    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got something, 123
+| 5    | _!mmm_     **set** things = true, 456, things | *(prepend two values to the list – list has four elements now)*
+| 6    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got true, 456, something, 123
+| 7    | _!mmm_ **end script**
 
 Of course, lists are most useful together with the [**for** loop](#mmm-for-variable-in-expression--end-for), which allows you to execute a block of code once for each list element in turn.
 
