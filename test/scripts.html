@@ -188,6 +188,10 @@
                 { error: "During parse, syntax error in script: set incorrectAssignmentOperator ❌:= 123 + 456" },
             ],
             [
+                "!mmm chat: ${syntax error}",
+                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in template in script: chat: ${syntax ❌error}" },
+            ],
+            [
                 "!mmm do chat('correct')",
                 { chat: "correct" },
             ],
@@ -197,35 +201,43 @@
             ],
             [
                 "!mmm do chat 'missing parentheses'",
-                { error: "During execute, any literal not expected here (expected opening parenthesis) in expression in script: !mmm do chat ❌'missing parentheses'" }
+                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: do chat ❌'missing parentheses'" }
             ],
             [
                 "!mmm     unknown command",
                 { error: "During parse, unknown command in script:     ❌unknown command" },
             ],
             [
-                "!mmm chat: Hello World! Meaning of life: ${6*7}, current AP: ${getattr('Dummy', 'AP')}",
-                { chat: "Hello World! Meaning of life: 42, current AP: 20" },
+                "!mmm chat: Hello World! Meaning of life: ${6*7}, current HP: ${getattr('Finn', 'HP')}",
+                { chat: "Hello World! Meaning of life: 42, current HP: 20" },
+            ],
+            [
+                "!mmm chat: Finn's name: ${'Finn'.name}, HP: ${'Finn'.HP}, max: ${'Finn'.HP.max}",
+                { chat: "Finn's name: Finn MacRathgar, HP: 20, max: 30" },
+            ],
+            [
+                "!mmm chat: Finn's brother's name: ${'Finn'.brother.name}, HP: ${'Finn'.brother.HP}, max: ${'Finn'.brother.HP.max}",
+                { chat: "Finn's brother's name: <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Unknown attribute: brother\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold; cursor: help\">unknown</span>, HP: <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Unknown attribute: brother\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold; cursor: help\">unknown</span>, max: <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Unknown attribute: brother\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold; cursor: help\">unknown</span>" },
+            ],
+            [
+                "!mmm chat: Finn's cousin's name: ${'Finn'.cousin.name}, HP: ${'Finn'.cousin.HP}, max: ${'Finn'.cousin.HP.max}",
+                { chat: "Finn's cousin's name: Yorrick MacRathgar, HP: 18, max: 28" },
             ],
             [
                 "!mmm chat: this <${undefinedValue}> should be empty",
                 { chat: "this <> should be empty" },
             ],
             [
-                "!mmm chat:  11 %  8 = ${ 11 %  8}", { chat:  "11 %  8 = 3" },
-                "!mmm chat: -11 %  8 = ${-11 %  8}", { chat: "-11 %  8 = 5" },
-                "!mmm chat:  11 % -8 = ${ 11 % -8}", { chat:  "11 % -8 = -5" },
-                "!mmm chat: -11 % -8 = ${-11 % -8}", { chat: "-11 % -8 = -3" },
+                "!mmm chat: this is \\${escaped} but ${'this is not'}",
+                { chat: "this is \${escaped} but this is not" },
             ],
             [
-                "!mmm chat: floor(.) = (-1.2) = ${floor(-1.2)}, (-1.5) = ${floor(-1.5)}, (-1.7) = ${floor(-1.7)}, (1.2) = ${floor(1.2)}, (1.5) = ${floor(1.5)}, (1.7) = ${floor(1.7)}",
-                { chat: "floor(.) = (-1.2) = -2, (-1.5) = -2, (-1.7) = -2, (1.2) = 1, (1.5) = 1, (1.7) = 1" },
-                "!mmm chat: round(.) = (-1.2) = ${round(-1.2)}, (-1.5) = ${round(-1.5)}, (-1.7) = ${round(-1.7)}, (1.2) = ${round(1.2)}, (1.5) = ${round(1.5)}, (1.7) = ${round(1.7)}",
-                { chat: "round(.) = (-1.2) = -1, (-1.5) = -1, (-1.7) = -2, (1.2) = 1, (1.5) = 2, (1.7) = 2" },
-                "!mmm chat: ceil(.) = (-1.2) = ${ceil(-1.2)}, (-1.5) = ${ceil(-1.5)}, (-1.7) = ${ceil(-1.7)}, (1.2) = ${ceil(1.2)}, (1.5) = ${ceil(1.5)}, (1.7) = ${ceil(1.7)}",
-                { chat: "ceil(.) = (-1.2) = -1, (-1.5) = -1, (-1.7) = -1, (1.2) = 2, (1.5) = 2, (1.7) = 2" },
-                "!mmm chat: abs(.) = (-1.2) = ${abs(-1.2)}, (-1.5) = ${abs(-1.5)}, (-1.7) = ${abs(-1.7)}, (1.2) = ${abs(1.2)}, (1.5) = ${abs(1.5)}, (1.7) = ${abs(1.7)}",
-                { chat: "abs(.) = (-1.2) = 1.2, (-1.5) = 1.5, (-1.7) = 1.7, (1.2) = 1.2, (1.5) = 1.5, (1.7) = 1.7" },
+                "!mmm chat: this is \\\\${'not escaped'}",
+                { chat: "this is \\not escaped" },
+            ],
+            [
+                "!mmm chat: this is \\$[escaped]{escaped} but ${'this is not'}",
+                { chat: "this is \$[escaped]{escaped} but this is not" },
             ],
             [
                 "!mmm if undefinedVariable",
@@ -260,12 +272,6 @@
                 { chat: "correct" },
             ],
             [
-                "!mmm chat: min() = <${min()}>, min(+123, undef) = ${min(+123, undef)}, min(.) = ${min(5, undefined, 'moo', 999, 2, -3.14)}",
-                { chat: "min() = <>, min(+123, undef) = 123, min(.) = -3.14" },
-                "!mmm chat: max() = <${max()}>, min(-456, undef) = ${min(-456, undef)}, max(.) = ${max(5, undefined, 'moo', 999, 2, -3.14)}",
-                { chat: "max() = <>, min(-456, undef) = -456, max(.) = 999" },
-            ],
-            [
                 "!mmm chat: isdefault(default) = ${isdefault(default)}",
                 { chat: "isdefault(default) = true" },
                 "!mmm chat: isdenied(denied) = ${isdenied(denied)}",
@@ -284,69 +290,14 @@
                 { chat: "getreason(unknown) = " },
             ],
             [
-                "!mmm chat: ${1 + ?}",
-                { error: "During execute, expected unary operator, any literal, any identifier, opening parenthesis in expression in template in script: !mmm chat: ${1 + ?❌}" },
-                "!mmm chat: ${1 + ? ? 2}",
-                { error: "During execute, any debug not expected here (expected unary operator, any literal, any identifier, opening parenthesis) in expression in template in script: !mmm chat: ${1 + ? ❌? 2}" },
-                "!mmm chat: ${1 + ???? 2}",
-                { error: "During execute, any debug not expected here (expected unary operator, any literal, any identifier, opening parenthesis) in expression in template in script: !mmm chat: ${1 + ???❌? 2}" },
-                "!mmm chat: ${1 + ? 2 * 3 + 4}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>2</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? 2</span> * 3 + 4" },
-                { chat: "11" },
-                "!mmm chat: ${1 + ?? 2 * 3 + 4}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>6</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?? 2 * 3</span> + 4" },
-                { chat: "11" },
-                "!mmm chat: ${1 + ??? 2 * 3 + 4}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>6</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>??? 2 * 3</span> + 4" },
-                { chat: "11" },
-                "!mmm chat: ${1 + ?(2 * 3) + 4}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>6</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?(2 * 3)</span> + 4" },
-                { chat: "11" },
-                "!mmm chat: ${1 + ?((2 * 3)) + 4}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>6</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?((2 * 3))</span> + 4" },
-                { chat: "11" },
-                "!mmm chat: ${1 + ?(2 * 3 + 4)}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>10</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?(2 * 3 + 4)</span>" },
-                { chat: "11" },
-                "!mmm chat: ${1 + ?((2 * 3 + 4))}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>10</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?((2 * 3 + 4))</span>" },
-                { chat: "11" },
-                "!mmm chat: ${1 + ?(2 * 3 + ? 4)}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>4</span> ◀️ 1 + ?(2 * 3 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? 4</span>)" },
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>10</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?(2 * 3 + ? 4)</span>" },
-                { chat: "11" },
-                "!mmm chat: ${1 + ?getattr('Dummy', 'AP')}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>20</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?getattr('Dummy', 'AP')</span>" },
-                { chat: "21" },
-                "!mmm chat: ${?('foo' & 123 & 'bar')}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>\"foo123bar\"</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?('foo' &amp; 123 &amp; 'bar')</span>" },
-                { chat: "foo123bar" },
-                "!mmm chat: ${1 + ? 2**3 * 4 <= 5}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>2</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? 2</span>**3 * 4 &lt;= 5" },
-                { chat: "false" },
-                "!mmm chat: ${1 + ?? 2**3 * 4 <= 5}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>32</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?? 2**3 * 4</span> &lt;= 5" },
-                { chat: "false" },
-                "!mmm chat: ${1 + ??? 2**3 * 4 <= 5}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>32</span> ◀️ 1 + <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>??? 2**3 * 4</span> &lt;= 5" },
-                { chat: "false" },
-                "!mmm chat: ${? 2**3 * 4 <= 5}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>2</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? 2</span>**3 * 4 &lt;= 5" },
-                { chat: "false" },
-                "!mmm chat: ${?? 2**3 * 4 <= 5}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>32</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>?? 2**3 * 4</span> &lt;= 5" },
-                { chat: "false" },
-                "!mmm chat: ${??? 2**3 * 4 <= 5}",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>false</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>??? 2**3 * 4 &lt;= 5</span>" },
-                { chat: "false" },
                 "!mmm chat: ${? default + 123}",
-                { whisper: "🔎 <span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? default</span> + 123" },
+                { whisper: "🔎 <span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span> ◀️ ? <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>default</span> + 123" },
                 { chat: "123" },
                 "!mmm chat: ${? denied + 123}",
-                { whisper: "🔎 <span class=\"mmm-denied\" style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? denied</span> + 123" },
+                { whisper: "🔎 <span class=\"mmm-denied\" style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span> ◀️ ? <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>denied</span> + 123" },
                 { chat: "123" },
                 "!mmm chat: ${? unknown + 123}",
-                { whisper: "🔎 <span class=\"mmm-unknown\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>? unknown</span> + 123" },
+                { whisper: "🔎 <span class=\"mmm-unknown\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span> ◀️ ? <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>unknown</span> + 123" },
                 { chat: "123" },
             ],
             [
@@ -363,10 +314,10 @@
                 { whisper: "🔎 <span class=\"mmm-denied\" style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>denied</span>" },
                 "!mmm debug do unknown",
                 { whisper: "🔎 <span class=\"mmm-unknown\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>unknown</span>" },
-                "!mmm debug do getattr('Dummy', 'AP')",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>20</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>getattr('Dummy', 'AP')</span>" },
-                "!mmm debug do setattr('Dummy', 'AP', getattr('Dummy', 'AP') - 1)",
-                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>19</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>setattr('Dummy', 'AP', getattr('Dummy', 'AP') - 1)</span>" },
+                "!mmm debug do getattr('Finn', 'HP')",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>\"20\"</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>getattr('Finn', 'HP')</span>" },
+                "!mmm debug do setattr('Finn', 'HP', getattr('Finn', 'HP') - 1)",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>\"19\"</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>setattr('Finn', 'HP', getattr('Finn', 'HP') - 1)</span>" },
             ],
             [
                 "!mmm debug chat: number is ${3.141}",
@@ -409,8 +360,8 @@
             [
                 "!mmm if false",
                 "!mmm else if broken syntax in expression",
+                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: else if broken ❌syntax in expression" },
                 "!mmm end if",
-                { error: "During execute, any identifier not expected here (expected binary operator) in expression in script: !mmm else if broken ❌syntax in expression" },
             ],
             [
                 "!mmm if true",
@@ -451,89 +402,6 @@
                 "!mmm    chat: correct[1/1]",
                 "!mmm end if",
                 { chat: "correct[1/1]" },
-            ],
-            [
-                "!mmm script",
-                "!mmm     chat: argnum() = ${argnum()}",
-                "!mmm     chat: argnum(1,2,3,4) = ${argnum(1,2,3,4)}",
-                "!mmm     chat: argnum(1,(2,3,4)) = ${argnum(1,(2,3,4))}",
-                "!mmm     chat: argnum((1,2,3),4) = ${argnum((1,2,3),4)}",
-                "!mmm     chat: argnum((1,2),(3,4)) = ${argnum((1,2),(3,4))}",
-                "!mmm end script",
-                { chat: "argnum() = 0" },
-                { chat: "argnum(1,2,3,4) = 4" },
-                { chat: "argnum(1,(2,3,4)) = 4" },
-                { chat: "argnum((1,2,3),4) = 4" },
-                { chat: "argnum((1,2),(3,4)) = 4" },
-            ],
-            [
-                "!mmm script",
-                "!mmm     set list567 = 5,6,7",
-                "!mmm     chat: argnum(list567) = ${argnum(list567)}",
-                "!mmm     chat: argnum(1,list567) = ${argnum(1,list567)}",
-                "!mmm     chat: argnum(list567,2) = ${argnum(list567,2)}",
-                "!mmm     chat: argnum(1,list567,2) = ${argnum(1,list567,2)}",
-                "!mmm     chat: listnum(arg1(1,list567,2)) = ${listnum(arg1(1,list567,2))}",
-                "!mmm end script",
-                { chat: "argnum(list567) = 1" },
-                { chat: "argnum(1,list567) = 2" },
-                { chat: "argnum(list567,2) = 2" },
-                { chat: "argnum(1,list567,2) = 3" },
-                { chat: "listnum(arg1(1,list567,2)) = 3" },
-            ],
-            [
-                "!mmm script",
-                "!mmm     chat: argnum(undef) = ${argnum(undef)}",
-                "!mmm     chat: argnum(1,undef) = ${argnum(1,undef)}",
-                "!mmm     chat: argnum(undef,2) = ${argnum(undef,2)}",
-                "!mmm     chat: argnum(1,undef,2) = ${argnum(1,undef,2)}",
-                "!mmm end script",
-                { chat: "argnum(undef) = 1" },
-                { chat: "argnum(1,undef) = 2" },
-                { chat: "argnum(undef,2) = 2" },
-                { chat: "argnum(1,undef,2) = 3" },
-            ],
-            [
-                "!mmm script",
-                "!mmm     chat: argnum(denied) = ${argnum(denied)}",
-                "!mmm     chat: argnum(1,denied) = ${argnum(1,denied)}",
-                "!mmm     chat: argnum(denied,2) = ${argnum(denied,2)}",
-                "!mmm     chat: argnum(1,denied,2) = ${argnum(1,denied,2)}",
-                "!mmm     chat: isdenied(arg1(1,denied,2)) = ${isdenied(arg1(1,denied,2))}",
-                "!mmm end script",
-                { chat: "argnum(denied) = 1" },
-                { chat: "argnum(1,denied) = 2" },
-                { chat: "argnum(denied,2) = 2" },
-                { chat: "argnum(1,denied,2) = 3" },
-                { chat: "isdenied(arg1(1,denied,2)) = true" },
-            ],
-            [
-                "!mmm script",
-                "!mmm     chat: argnum(unknown) = ${argnum(unknown)}",
-                "!mmm     chat: argnum(1,unknown) = ${argnum(1,unknown)}",
-                "!mmm     chat: argnum(unknown,2) = ${argnum(unknown,2)}",
-                "!mmm     chat: argnum(1,unknown,2) = ${argnum(1,unknown,2)}",
-                "!mmm     chat: isunknown(arg1(1,unknown,2)) = ${isunknown(arg1(1,unknown,2))}",
-                "!mmm end script",
-                { chat: "argnum(unknown) = 1" },
-                { chat: "argnum(1,unknown) = 2" },
-                { chat: "argnum(unknown,2) = 2" },
-                { chat: "argnum(1,unknown,2) = 3" },
-                { chat: "isunknown(arg1(1,unknown,2)) = true" },
-            ],
-            [
-                "!mmm script",
-                "!mmm     chat: argnum(default) = ${argnum(default)}",
-                "!mmm     chat: argnum(1,default) = ${argnum(1,default)}",
-                "!mmm     chat: argnum(default,2) = ${argnum(default,2)}",
-                "!mmm     chat: argnum(1,default,2) = ${argnum(1,default,2)}",
-                "!mmm     chat: isdefault(arg1(1,default,2)) = ${isdefault(arg1(1,default,2))}",
-                "!mmm end script",
-                { chat: "argnum(default) = 1" },
-                { chat: "argnum(1,default) = 2" },
-                { chat: "argnum(default,2) = 2" },
-                { chat: "argnum(1,default,2) = 3" },
-                { chat: "isdefault(arg1(1,default,2)) = true" },
             ],
             [
                 "!mmm script",
@@ -881,10 +749,10 @@
                 "!mmm combine chat",
                 "!mmm     chat: Hello World!",
                 "!mmm     chat: Meaning of life: ${6*7},",
-                "!mmm     chat: current AP: ${getattr('Dummy', 'AP')}",
+                "!mmm     chat: current HP: ${getattr('Finn', 'HP')}",
                 "!mmm     do chat('and even from expressions')",
                 "!mmm end combine",
-                { chat: "Hello World! Meaning of life: 42, current AP: 19 and even from expressions" },
+                { chat: "Hello World! Meaning of life: 42, current HP: 19 and even from expressions" },
             ],
             [
                 "!mmm combine chat using '//'",
@@ -1029,10 +897,10 @@
             [
                 "!mmm script",
                 "!mmm     do roll('1d20')",
-                "!mmm     do syntax error",
+                "!mmm     do runtimeError()",
                 "!mmm end script",
                 { process: "/roll 1d20" },
-                { error: "During execute, any identifier not expected here (expected binary operator) in expression in script: !mmm     do syntax ❌error" },
+                { error: "During execute, unknown function in expression in script: !mmm     do runtimeError❌()" },
             ],
             [
                 "!mmm script",
@@ -1213,13 +1081,13 @@
                 "!mmm end customize",
                 "!mmm customize",
                 "!mmm     set foo = 'broken'",
-                "!mmm     do syntax error",
+                "!mmm     do runtimeError()",
                 "!mmm end customize",
                 "!mmm script",
                 "!mmm     set customizable foo",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
-                { whisper: "During customize, any identifier not expected here (expected binary operator) in expression in script:     do syntax ❌error" },
+                { whisper: "During customize, unknown function in expression in script:     do runtimeError❌()" },
                 { chat: "correct, foo=correct" },
             ],
             [
@@ -1283,19 +1151,19 @@
                 "!mmm end customize",
                 "!mmm script",
                 "!mmm     set meaning = 42",
-                "!mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{syntax error meaning*2}, thrice is ${meaning*3}",
+                "!mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{runtimeError()*2}, thrice is ${meaning*3}",
                 "!mmm end script",
-                { error: "During execute, any identifier not expected here (expected binary operator) in expression in template in script: !mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{syntax ❌error meaning*2}, thrice is ${meaning*3}" },
+                { error: "During execute, unknown function in expression in template in script: !mmm     chat [foo]: meaning is $[once]{meaning}, twice the meaning is $[twice]{runtimeError❌()*2}, thrice is ${meaning*3}" },
             ],
             [
                 "!mmm customize",
-                "!mmm     set customizedSetting = 'correct \"customized\" setting'",
+                "!mmm     set customizedSetting = 'correct ' & '\"customized\"' & ' setting'",
                 "!mmm     translate [translatedChat]: correct translated chat message with $[correct_placeholder]",
                 "!mmm end customize",
                 "!mmm script",
                 "!mmm     set customizable customizedSetting = 'broken'",
-                "!mmm     set customizable settingWithSimpleDefault = 'correct \"default\" setting'",
-                "!mmm     set customizable settingWithExpressionDefault = 'correct ' & '\"default\"' & ' setting'",
+                "!mmm     set customizable settingWithConstantDefault = 'correct ' & '\"default\"' & ' setting'",
+                "!mmm     set customizable settingWithVariableDefault = 'correct ' & '\"default\"' & ' setting' & variable",
                 "!mmm     chat [translatedChat]: broken translated chat with $[correct_placeholder]{'correct labeled expression'}",
                 "!mmm     chat [defaultChat]: correct default chat with $[broken_placeholder]{'correct labeled expression'} and ${'correct expression without label'} and $[correct_misplaced_label]",
                 "!mmm     chat [defaultChat]: correct redundant default chat with $[broken_placeholder]{'correct labeled expression'} and ${'correct expression without label'} and $[correct_misplaced_label]",
@@ -1307,25 +1175,25 @@
             [
                 "!mmm customize export to chat",
                 "!mmm customize",
-                "!mmm     set customizedSetting = 'correct \"customized\" setting'",
-                "!mmm     translate [translatedChat]: correct translated chat message with $[placeholder]",
+                "!mmm     set customizedSetting = 'correct ' & '\"customized\"' & ' setting'",
+                "!mmm     translate [translatedChat]: correct translated chat message with $[correct_placeholder]",
                 "!mmm end customize",
                 "!mmm script",
                 "!mmm     set customizable customizedSetting = 'broken'",
                 "!mmm     set customizable settingWithoutDefault",
-                "!mmm     set customizable settingWithSimpleDefault = 'correct \"default\" setting'",
-                "!mmm     set customizable settingWithExpressionDefault = 'correct ' & '\"default\"' & ' setting'",
+                "!mmm     set customizable settingWithConstantDefault = 'correct ' & '\"default\"' & ' setting'",
+                "!mmm     set customizable settingWithVariableDefault = 'correct ' & '\"default\"' & ' setting' & variable",
                 "!mmm     chat [translatedChat]: broken translated chat with $[correct_placeholder]{'labeled expression'}",
-                "!mmm     chat [defaultChat]: correct default chat with $[correct_placeholder]{'broken labeled expression'} and ${'broken expression without label'} and $[broken_misplaced_label]",
+                "!mmm     chat [defaultChat]: correct default chat with $[correct_placeholder]{'broken labeled expression'} and ${'broken expression without label'} and $[correct_misplaced_label]",
                 "!mmm     chat [defaultChat]: broken redundant default chat with $[broken_placeholder]{'broken labeled expression'} and ${'broken expression without label'} and $[broken_misplaced_label]",
                 "!mmm end script",
                 { whisper: "<span style='white-space: pre'>!mmm customize<br/>" +
                            "!mmm    set customizedSetting = \"correct \\\"customized\\\" setting\"<br/>" +
                            "!mmm    set settingWithoutDefault = 🤔<br/>" +
-                           "!mmm    set settingWithSimpleDefault = \"correct \\\"default\\\" setting\"<br/>" +
-                           "!mmm    set settingWithExpressionDefault = default<br/>" +
-                           "!mmm    translate [translatedChat]: correct translated chat message with ...<br/>" +
-                           "!mmm    translate [defaultChat]: correct default chat with $[correct_placeholder] and ... and ...<br/>" +
+                           "!mmm    set settingWithConstantDefault = \"correct \\\"default\\\" setting\"<br/>" +
+                           "!mmm    set settingWithVariableDefault = default<br/>" +
+                           "!mmm    translate [translatedChat]: correct translated chat message with $[correct_placeholder]<br/>" +
+                           "!mmm    translate [defaultChat]: correct default chat with $[correct_placeholder] and ... and $[correct_misplaced_label]<br/>" +
                            "!mmm end customize</span>" },
             ],
             [
@@ -1350,28 +1218,21 @@
 
         let attributes =
         {
-            AP: { current: 20, max: 30 },
+            Finn:
+            {
+                name: { current: "Finn MacRathgar" },
+                HP: { current: 20, max: 30 },
+                LP: { current: 15, max: 25 },
+                cousin: { current: "Yorrick" },
+            },
+            Yorrick:
+            {
+                name: { current: "Yorrick MacRathgar" },
+                HP: { current: 18, max: 28 },
+                LP: { current: 13, max: 23 },
+                cousin: { current: "Finn" },
+            },
         };
-
-        MychScriptContext.prototype.argnum = function(...args)
-        {
-            return args.length;
-        }
-
-        MychScriptContext.prototype.arg0 = function(...args)
-        {
-            return args[0];
-        }
-
-        MychScriptContext.prototype.arg1 = function(...args)
-        {
-            return args[1];
-        }
-
-        MychScriptContext.prototype.arg2 = function(...args)
-        {
-            return args[2];
-        }
 
         MychScriptContext.prototype.listnum = function(list)
         {
@@ -1433,36 +1294,94 @@
             });
         };
 
+        MychScriptContext.prototype.$getAttribute = function(characterNameOrId, attributeName, max = false)
+        {
+            if (characterNameOrId instanceof MychScriptContext.DiagnosticUndef)
+            {
+                return characterNameOrId;
+            }
+
+            if (attributeName instanceof MychScriptContext.DiagnosticUndef)
+            {
+                return attributeName;
+            }
+
+            characterNameOrId = MychExpression.coerceString(characterNameOrId);
+
+            let attributesForCharacter = attributes[characterNameOrId];
+
+            if (!attributesForCharacter)
+            {
+                return new MychScriptContext.Unknown("Unknown character: " + characterNameOrId);
+            }
+
+            attributeName = MychExpression.coerceString(attributeName);
+            
+            let attribute = attributesForCharacter[attributeName];
+
+            if (!attribute)
+            {
+                return new MychScriptContext.Unknown("Unknown attribute: " + attributeName);
+            }
+
+            return MychExpression.coerceString(max ? attribute.max : attribute.current);
+        }
+
         MychScriptContext.prototype.getattr = function(characterNameOrId, attributeName)
         {
-            return attributes[attributeName].current;
+            return this.$getAttribute(characterNameOrId, attributeName, false);
         }
 
         MychScriptContext.prototype.getattrmax = function(characterNameOrId, attributeName)
         {
-            return attributes[attributeName].max;
+            return this.$getAttribute(characterNameOrId, attributeName, true);
+        }
+
+        MychScriptContext.prototype.$setAttribute = function(characterNameOrId, attributeName, attributeValue, max = false)
+        {
+            if (characterNameOrId instanceof MychScriptContext.DiagnosticUndef)
+            {
+                return characterNameOrId;
+            }
+
+            if (attributeName instanceof MychScriptContext.DiagnosticUndef)
+            {
+                return attributeName;
+            }
+
+            characterNameOrId = MychExpression.coerceString(characterNameOrId);
+
+            let attributesForCharacter = attributes[characterNameOrId];
+
+            if (!attributesForCharacter)
+            {
+                return new MychScriptContext.Unknown("Unknown character: " + characterNameOrId);
+            }
+
+            attributeName = MychExpression.coerceString(attributeName);
+            attributeValue = MychExpression.coerceString(attributeValue);
+
+            let attribute = attributesForCharacter[attributeName];
+
+            if (!attribute)
+            {
+                attribute = { current: undefined, max: undefined };
+                attributesForCharacter[attributeName] = attribute;
+            }
+
+            attribute[max ? "max" : "current"] = MychExpression.coerceString(attributeValue);
+
+            return this.$getAttribute(characterNameOrId, attributeName, max);
         }
 
         MychScriptContext.prototype.setattr = function(characterNameOrId, attributeName, attributeValue)
         {
-            if (attributes[attributeName] == undefined)
-            {
-                attributes[attributeName] = { current: undefined, max: undefined };
-            }
-
-            attributes[attributeName].current = attributeValue;
-            return attributeValue;
+            return this.$setAttribute(characterNameOrId, attributeName, attributeValue, false);
         }
 
         MychScriptContext.prototype.setattrmax = function(characterNameOrId, attributeName, attributeValue)
         {
-            if (attributes[attributeName] == undefined)
-            {
-                attributes[attributeName] = { current: undefined, max: undefined };
-            }
-
-            attributes[attributeName].max = attributeValue;
-            return attributeValue;
+            return this.$setAttribute(characterNameOrId, attributeName, attributeValue, true);
         }
 
         function getObj(type, id)
