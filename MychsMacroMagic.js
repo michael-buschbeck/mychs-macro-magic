@@ -4168,17 +4168,7 @@ class MychExpression
                     break;
                 }
 
-                let numArgEvaluators = operatorEntry.operator.length;
-                let argEvaluators = this.evaluatorStack.splice(-numArgEvaluators);
-
-                operatorEvaluator = operatorEntry.operator(...argEvaluators);
-
-                operatorEvaluator.argEvaluators = argEvaluators;
-                operatorEvaluator.sourceOffset = Math.min(operatorEntry.sourceOffset, ...argEvaluators.filter(evaluator => evaluator).map(evaluator => evaluator.sourceOffset));
-                operatorEvaluator.sourceLength = Math.max(operatorEntry.sourceOffset + operatorEntry.sourceLength, ...argEvaluators.filter(evaluator => evaluator).map(evaluator => evaluator.sourceOffset + evaluator.sourceLength)) - operatorEvaluator.sourceOffset;
-                operatorEvaluator.isConstant = operatorEntry.isIdempotent && argEvaluators.every(evaluator => !evaluator || evaluator.isConstant);
-
-                this.evaluatorStack.push(operatorEvaluator);
+                operatorEvaluator = this.evaluateOperator(operatorEntry);
             }
 
             operatorEvaluator || (operatorEvaluator = this.evaluatorStack[this.evaluatorStack.length - 1]);
@@ -4210,21 +4200,32 @@ class MychExpression
                         break;
                     }
 
-                    let numArgEvaluators = operatorEntry.operator.length;
-                    let argEvaluators = this.evaluatorStack.splice(-numArgEvaluators);
-
-                    operatorEvaluator = operatorEntry.operator(...argEvaluators);
-
-                    operatorEvaluator.argEvaluators = argEvaluators;
-                    operatorEvaluator.sourceOffset = Math.min(operatorEntry.sourceOffset, ...argEvaluators.filter(evaluator => evaluator).map(evaluator => evaluator.sourceOffset));
-                    operatorEvaluator.sourceLength = Math.max(operatorEntry.sourceOffset + operatorEntry.sourceLength, ...argEvaluators.filter(evaluator => evaluator).map(evaluator => evaluator.sourceOffset + evaluator.sourceLength)) - operatorEvaluator.sourceOffset;
-                    operatorEvaluator.isConstant = operatorEntry.isIdempotent && argEvaluators.every(evaluator => !evaluator || evaluator.isConstant);
-            
-                    this.evaluatorStack.push(operatorEvaluator);
+                    operatorEvaluator = this.evaluateOperator(operatorEntry);
                 }
             }
 
             this.operatorStack.push({ precedence: precedence, operator: operator, sourceOffset: token.offset, sourceLength: token.length, ...attributes });
+        }
+
+        evaluateOperator(operatorEntry)
+        {
+            let numArgEvaluators = operatorEntry.operator.length;
+            let argEvaluators = this.evaluatorStack.splice(-numArgEvaluators);
+
+            let operatorEvaluator = operatorEntry.operator(...argEvaluators);
+
+            operatorEvaluator.argEvaluators = argEvaluators;
+
+            let definedArgEvaluators = argEvaluators.filter(evaluator => evaluator);
+
+            operatorEvaluator.sourceOffset = Math.min(operatorEntry.sourceOffset, ...definedArgEvaluators.map(evaluator => evaluator.sourceOffset));
+            operatorEvaluator.sourceLength = Math.max(operatorEntry.sourceOffset + operatorEntry.sourceLength, ...definedArgEvaluators.map(evaluator => evaluator.sourceOffset + evaluator.sourceLength)) - operatorEvaluator.sourceOffset;
+
+            operatorEvaluator.isConstant = operatorEntry.isIdempotent && definedArgEvaluators.every(evaluator => evaluator.isConstant);
+
+            this.evaluatorStack.push(operatorEvaluator);
+
+            return operatorEvaluator;
         }
     }
 
