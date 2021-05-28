@@ -4389,7 +4389,7 @@ class MychExpression
 
         if (!this.evaluator.isConstant)
         {
-            throw new MychExpressionError("evaluate", "no expression parsed prior to evaluation", "", 0);
+            throw new MychExpressionError("evaluate", "expression is not parse-time constant", this.source, 0);
         }
 
         let resultContainer = this.evaluator(undefined).next();
