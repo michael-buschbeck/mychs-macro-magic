@@ -229,7 +229,7 @@ After the last iteration, the *variable* is deleted again. However, if you use *
 | 3    | _!mmm_         **exit for if** getattr(token, "HP") > 10 | *(exit loop early if token is healthy enough)*
 | 4    | _!mmm_     **end for**
 | 5    | _!mmm_     **if** token | *(did the loop exit early?)*
-| 6    | _!mmm_         **chat:** ${getattr(token, "name")} seems healthy enough! | ***Finn:*** Yorrick seems healthy enough!
+| 6    | _!mmm_         **chat:** ${getattr(token, "name")} seems healthy enough! | ***Finn:*** Yorric seems healthy enough!
 | 7    | _!mmm_     **else**
 | 8    | _!mmm_         **chat:** Everyone seems pretty banged up.
 | 9    | _!mmm_     **end if**
@@ -566,7 +566,7 @@ You can make a list simply by separating individual values with commas:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **set** partyNames = "Finn MacRathgar", "Yorrick MacRathgar", "Baigh MacBeorn" | *(several character names)*
+| 1    | _!mmm_ **set** partyNames = "Finn MacRathgar", "Yorric MacRathgar", "Baigh MacBeorn" | *(several character names)*
 | 2    | _!mmm_ **set** finnsPersonality = "smart", "pretty", "streetwise", "fierce", 42 | *(small sample of Finn's personality traits)*
 | 3    | _!mmm_ **set** nextThreeRolls = [[1d20]], [[1d20]], [[1d20]] | *(three attack rolls)*
 
