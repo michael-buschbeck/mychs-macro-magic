@@ -642,6 +642,8 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 
 **Status markers:** The `status_`... attributes show or hide token status markers. Most markers – with the notable exception of the "dead" marker, that big red cross covering the entire token – also support displaying a single digit as an overlay, which can be useful for counters and the like.
 
+If a status marker is displayed *without* a numeric overlay, its status will be returned as the string `"shown"` rather than `true`. That seems odd, but it makes using the return value more convenient: In boolean context (for example, in an `if` statement), the string `"shown"` is interpreted as `true` (like any non-empty string) – but in numeric context (like when you want to calculate something with it), `"shown"` is interpreted as zero (whereas `true` would be interpreted as the number 1).
+
 You can find a full list of available token status marker names in the [official API docs](https://help.roll20.net/hc/en-us/articles/360037772793-API-Objects#API:Objects-ImportantNotesAboutStatusMarkers) (search for "full list of status markers"). Here in MMM, the corresponding attribute names use underscores (_) in place of any dashes (-), so you'd use the `status_all_for_one` attribute to get to the "all-for-one" marker, for example.
 
 **Permissions:** Keep in mind that just because an attribute *can be accessed* per this table, that doesn't mean *you* can access it.
