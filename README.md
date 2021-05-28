@@ -592,6 +592,19 @@ This behavior comes in handy if you want to append or prepend items to a list va
 | 6    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got true, 456, something, 123
 | 7    | _!mmm_ **end script**
 
+You can access any specific item in a list by its index:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set** things = "hat", "rope", "slingshot", "pie"
+| 3    | _!mmm_     **chat:** My first thing is a ${things[0]}. | ***Finn:*** My first thing is a hat.
+| 4    | _!mmm_     **chat:** Next, a ${things[1]}. | ***Finn:*** Next, a rope.
+| 5    | _!mmm_     **set** lastThing = things[-1] | *(use negative index to count from the back)*
+| 6    | _!mmm_     **chat:** Last but not least, a ${lastThing}. | ***Finn:*** Last but not least, a pie.
+| 7    | _!mmm_     **set** noThing = things[99] | *(index out of bounds simply returns nothing)*
+| 8    | _!mmm_ **end script**
+
 Of course, lists are most useful together with the [**for** loop](#mmm-for-variable-in-expression--end-for), which allows you to execute a block of code once for each list element in turn.
 
 
