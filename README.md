@@ -40,8 +40,8 @@ You can also put a whole sequence of commands together, one after another in sep
 | Line | Commands | What happens?
 | ---- | -------- | -------------
 | 1    | _!mmm_ **chat:** Oh dear, I'm pretty banged up. | ***Finn:*** Oh dear, I'm pretty banged up.
-| 2    | _!mmm_ **do** setattr(sender, "HP", getattrmax(sender, "HP")) | *(set HP attribute to its maximum)*
-| 3    | _!mmm_ **chat:** /me is back at ${getattr(sender, "HP")} points. | ***Finn is back at 25 points.***
+| 2    | _!mmm_ **do** setattr(sender, "HP", sender.HP.max) | *(set HP attribute to its maximum)*
+| 3    | _!mmm_ **chat:** /me is back at ${sender.HP} points. | ***Finn is back at 25 points.***
 
 Each of these commands would be executed as soon as the MMM scripting engine receives it. That's possible because each of the commands above is *self-contained:* It has everything it needs to execute in the same line.
 
@@ -49,7 +49,7 @@ However, some commands enclose a *block* of other commands – for example, if y
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **if** getattr(sender, "HP") < 5 | *(check HP attribute)*
+| 1    | _!mmm_ **if** sender.HP < 5 | *(check HP attribute)*
 | 2    | _!mmm_     **chat:** /me is nearly dead! | ***Finn is nearly dead!***
 | 3    | _!mmm_ **end if**
 
@@ -115,7 +115,7 @@ You can use /me, /whisper, and any other Roll20 chat directives in a **chat** co
 | ---- | -------- | -------------
 | 1    | _!mmm_ **chat:** /me is bored. | ***Finn is bored.***
 | 2    | _!mmm_ **chat:** Attacking with [[1d20+12]] | ***Finn:*** Attacking with `14`
-| 3    | _!mmm_ **chat:** My half-life is ${getattr(sender, "HP") / 2}. | ***Finn:*** My half-life is 11.5.
+| 3    | _!mmm_ **chat:** My half-life is ${sender.HP / 2}. | ***Finn:*** My half-life is 11.5.
 
 If the template is completely absent, the **chat** command sends a line break instead of just nothing. Together with **combine chat** (described below) you can use this to add some visual structure to your chat messages without going to the extreme of just sending several separate messages (oh my!):
 
@@ -226,10 +226,10 @@ After the last iteration, the *variable* is deleted again. However, if you use *
 | ---- | -------- | -------------
 | 1    | _!mmm_ **script**
 | 2    | _!mmm_     **for** token **in** selected | *(loop over all selected tokens)*
-| 3    | _!mmm_         **exit for if** getattr(token, "HP") > 10 | *(exit loop early if token is healthy enough)*
+| 3    | _!mmm_         **exit for if** token.HP > 10 | *(exit loop early if token is healthy enough)*
 | 4    | _!mmm_     **end for**
 | 5    | _!mmm_     **if** token | *(did the loop exit early?)*
-| 6    | _!mmm_         **chat:** ${getattr(token, "name")} seems healthy enough! | ***Finn:*** Yorric seems healthy enough!
+| 6    | _!mmm_         **chat:** ${token.name} seems healthy enough! | ***Finn:*** Yorric seems healthy enough!
 | 7    | _!mmm_     **else**
 | 8    | _!mmm_         **chat:** Everyone seems pretty banged up.
 | 9    | _!mmm_     **end if**
@@ -255,8 +255,8 @@ Evaluates an expression and assigns its results to a variable. If the variable d
 | Line | Commands | What happens?
 | ---- | -------- | -------------
 | 1    | _!mmm_ **script**
-| 2    | _!mmm_     **set** CurCount = getattr(sender, "AmmoCount") | *(stores AmmoCount attribute value in CurCount variable)*
-| 3    | _!mmm_     **set** MaxCount = getattrmax(sender, "AmmoCount") | *(stores AmmoCount attribute max value in MaxCount variable)*
+| 2    | _!mmm_     **set** CurCount = sender.AmmoCount | *(stores AmmoCount attribute value in CurCount variable)*
+| 3    | _!mmm_     **set** MaxCount = sender.AmmoCount.max | *(stores AmmoCount attribute max value in MaxCount variable)*
 | 4    | _!mmm_     **set** FindProb = ?{Probability?\|100} / 100 | *(calculates FindProb variable from roll query result)*
 | 5    | _!mmm_     **set** FindCount = round(FindProb * (MaxCount - CurCount)) | *(calculates and assigns FindCount variable)*
 | 6    | _!mmm_     **set** CurCount = CurCount + FindCount | *(updates CurCount variable)*
@@ -288,12 +288,12 @@ If you want to use a default that's more complex than a simple expression, you c
 | 1    | _!mmm_ **script**
 | 2    | _!mmm_     **set customizable** WeaponName = **default** | *(use special default indicator value)*
 | 3    | _!mmm_     **if** isdefault(WeaponName) | *(check if WeaponName was left uncustomized)*
-| 4    | _!mmm_         **set** FirstWeaponSkill = getattr(sender, "repeating_attack_$0_skill") | *(get first weapon skill from character sheet)*
-| 5    | _!mmm_         **set** SecondWeaponSkill = getattr(sender, "repeating_attack_$1_skill") | *(get second weapon skill from character sheet)*
+| 4    | _!mmm_         **set** FirstWeaponSkill = sender.("repeating_attack_$0_skill") | *(get first weapon skill from character sheet)*
+| 5    | _!mmm_         **set** SecondWeaponSkill = sender.("repeating_attack_$1_skill") | *(get second weapon skill from character sheet)*
 | 6    | _!mmm_         **if** FirstWeaponSkill > SecondWeaponSkill | *(compare weapon skills)*
-| 7    | _!mmm_             **set** WeaponName = getattr(sender, "repeating_attack_$0_weapon") | *(default to first weapon if greater skill than second)*
+| 7    | _!mmm_             **set** WeaponName = sender.("repeating_attack_$0_weapon") | *(default to first weapon if greater skill than second)*
 | 8    | _!mmm_         **else**
-| 9    | _!mmm_             **set** WeaponName = getattr(sender, "repeating_attack_$1_weapon") | *(default to second weapon otherwise)*
+| 9    | _!mmm_             **set** WeaponName = sender.("repeating_attack_$1_weapon") | *(default to second weapon otherwise)*
 | 10   | _!mmm_         **end if**
 | 11   | _!mmm_     **end if**
 | 12   | _!mmm_     **chat:** /me attacks with ${WeaponName}! | ***Finn attacks with slingshot!***
@@ -308,8 +308,8 @@ Evaluates an expression. This is useful if the expression has side effects, e.g.
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **do** setattr(sender, "HP", min(getattr(sender, "HP") + [[1d6]], getattrmax(sender, "HP")) | *(add 1d6 HP, up to max HP)*
-| 2    | _!mmm_ **do** setattr(sender, "AmmoCount", getattr(sender, "AmmoCount") - 1) | *(decrement AmmoCount attribute)*
+| 1    | _!mmm_ **do** setattr(sender, "HP", min(sender.HP + [[1d6]], sender.HP.max) | *(add 1d6 HP, up to max HP)*
+| 2    | _!mmm_ **do** setattr(sender, "AmmoCount", sender.AmmoCount - 1) | *(decrement AmmoCount attribute)*
 | 3    | _!mmm_ **do** chat("/me likes chatting the hard way") | ***Finn likes chatting the hard way***
 
 
@@ -382,7 +382,7 @@ Consider this script:
 | ---- | -------- | -------------
 | 1    | _!mmm_ **script**
 | 2    | _!mmm_     **set customizable** AmmoName = "ammo" | *(assign default "ammo" to AmmoName)*
-| 3    | _!mmm_     **set** StartAmmoCount = getattr(sender, AmmoName) | *(get current ammo count from attribute "ammo")*
+| 3    | _!mmm_     **set** StartAmmoCount = sender.(AmmoName) | *(get current ammo count from attribute "ammo")*
 | 4    | _!mmm_     **if** StartAmmoCount == 0 | *(check if there's still ammo left)*
 | 5    | _!mmm_         **chat** **[**<span>OutOfAmmo</span>**]:** Out of ammo | ***MrBore:*** Out of ammo
 | 6    | _!mmm_     **else**
@@ -407,7 +407,7 @@ So if a player wants to customize the script, they just have to place a **custom
 | 5    | _!mmm_ **end customize**
 | 6    | _!mmm_ **script**
 | 7    | _!mmm_     **set customizable** AmmoName = "ammo" | *(assign "arrows" to AmmoName – ignore "ammo")*
-| 8    | _!mmm_     **set** StartAmmoCount = getattr(sender, AmmoName) | *(get current ammo count from attribute "arrows")*
+| 8    | _!mmm_     **set** StartAmmoCount = sender.(AmmoName) | *(get current ammo count from attribute "arrows")*
 | 9    | _!mmm_     **if** StartAmmoCount == 0 | *(check if there are still arrows left)*
 | 10   | _!mmm_         **chat** **[**<span>OutOfAmmo</span>**]:** Out of ammo | ***Finn:*** My quiver is empty! Lucky bastards!
 | 11   | _!mmm_     **else**
@@ -463,10 +463,10 @@ Like **chat** but made for debugging, so it does two things differently:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **debug chat:** Current health: ${getattr("Finn", "HP")} | *(Whisper):*  Current health: `"23"`
-| 2    | _!mmm_ **debug chat:** Half health: ${getattr("Finn", "HP") / 2} | *(Whisper):*  Half health: `11.5`
-| 3    | _!mmm_ **debug chat:** Health not great: ${getattr("Finn", "HP") < 5} | *(Whisper):*  Health not great: `false`
-| 4    | _!mmm_ **debug chat:** Attribute tables: ${findattr("Finn")} | *(Whisper):*  Attribute tables: `"attack", "defense", "armor"`
+| 1    | _!mmm_ **debug chat:** Current health: ${sender.HP} | *(Whisper):*  Current health: `"23"`
+| 2    | _!mmm_ **debug chat:** Half health: ${sender.HP / 2} | *(Whisper):*  Half health: `11.5`
+| 3    | _!mmm_ **debug chat:** Health not great: ${sender.HP < 5} | *(Whisper):*  Health not great: `false`
+| 4    | _!mmm_ **debug chat:** Attribute tables: ${findattr(sender)} | *(Whisper):*  Attribute tables: `"attack", "defense", "armor"`
 
 The way this command is designed, you can just slap the `debug` keyword in front of any old `chat` command in your script to get some extra insight into how it's composed (or why it doesn't work the way you thought). This even works if there's a **[**_label_**]** for translation, which will be ignored.
 
@@ -484,7 +484,7 @@ Using **debug do** is most useful as a way to quickly get insight into the conte
 | Line | Commands | What happens?
 | ---- | -------- | -------------
 | 1    | _!mmm_ **debug do** CurrentHealth | *(Whisper):*  `9` ◄ `CurrentHealth`
-| 2    | _!mmm_ **debug do** getattr("Finn", "EP") | *(Whisper):*  `17` ◄ `getattr("Finn", "EP")`
+| 2    | _!mmm_ **debug do** sender.EP | *(Whisper):*  `17` ◄ `sender.EP`
 | 3    | _!mmm_ **debug do** "initial", CurrentHealth, CurrentEndurance | *(Whisper):*  `"initial", 9, 17` ◄ `"initial", CurrentHealth, CurrentEndurance`
 
 The effect of **debug do** is similar to putting a `???` debug operator (see [operators](#operators) below) in front of the expression of a regular **do** command. The difference between using one or the other is mostly one of convenience: Use `???` if you want to look into an expression that's integral part of your script's operation, and **debug do** if you plan on removing this debug output again once you're done debugging. It's just easier to keep track of what to keep and what to delete after a debugging session that way.
@@ -592,17 +592,17 @@ This behavior comes in handy if you want to append or prepend items to a list va
 | 6    | _!mmm_     **chat:** I've got ${things} | ***Finn:*** I've got true, 456, something, 123
 | 7    | _!mmm_ **end script**
 
-You can access any specific item in a list by its index:
+You can access any specific item in a list by its index using brackets like in `list[idx]` – the index can be any kind of expression, of course, not just a literal number:
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
 | 1    | _!mmm_ **script**
-| 2    | _!mmm_     **set** things = "hat", "rope", "slingshot", "pie"
+| 2    | _!mmm_     **set** things = "hat", "rope", "slingshot", "pie" | *(four list items – index goes from 0 to 3)*
 | 3    | _!mmm_     **chat:** My first thing is a ${things[0]}. | ***Finn:*** My first thing is a hat.
 | 4    | _!mmm_     **chat:** Next, a ${things[1]}. | ***Finn:*** Next, a rope.
 | 5    | _!mmm_     **set** lastThing = things[-1] | *(use negative index to count from the back)*
 | 6    | _!mmm_     **chat:** Last but not least, a ${lastThing}. | ***Finn:*** Last but not least, a pie.
-| 7    | _!mmm_     **set** noThing = things[99] | *(index out of bounds simply returns nothing)*
+| 7    | _!mmm_     **set** noThing = things[99] | *(index out of bounds simply returns an undefined value)*
 | 8    | _!mmm_ **end script**
 
 Of course, lists are most useful together with the [**for** loop](#mmm-for-variable-in-expression--end-for), which allows you to execute a block of code once for each list element in turn.
@@ -612,7 +612,7 @@ Of course, lists are most useful together with the [**for** loop](#mmm-for-varia
 
 Like in macros, you can query *attributes* in MMM expressions – and even create and update them if you like:
 
-- Use the `getattr()` and `getattrmax()` functions to query attribute values and max values.
+- Use `name`|`id.attrname`, `name`|`id.attrname.max`, or the `getattr()` and `getattrmax()` functions to query attribute values and max values.
 - Use the `setattr()` and `setattrmax()` functions to update (or, if necessary, create) attributes and max values.
 
 All of these functions take a *name|id* value as their first argument. You can pass a character ID, token ID, character name, or token name. (If you're passing a name and there's ambiguity, MMM always chooses characters over tokens, and if multiple characters should have the same name, it'll choose one at random. IDs are always unambiguous.)
@@ -785,7 +785,7 @@ With `findattr()` you can do all this without leaving the safe comfort of your c
 | 1    | _!mmm_ **chat:** Tables: ${findattr(sender)} | ***Finn:*** Tables: attack, defense, armor
 | 2    | _!mmm_ **chat:** Columns: ${findattr(sender, "attack")} | ***Finn:*** Columns: weapon, skill, damage
 | 3    | _!mmm_ **chat:** Attribute: ${findattr(sender, "attack", "weapon", "Slingshot", "damage")} | ***Finn:*** Attribute: repeating_attack_-MSxAHDgxtzAHdDAIopE_damage
-| 4    | _!mmm_ **chat:** Value: ${getattr(sender, findattr(sender, "attack", "weapon", "Slingshot", "damage"))} | ***Finn:*** Value: 1d6
+| 4    | _!mmm_ **chat:** Value: ${sender.(findattr(sender, "attack", "weapon", "Slingshot", "damage"))} | ***Finn:*** Value: 1d6
 
 What's happening in the last two lines above is that you're *selecting* one of the rows based on a condition: In this case, you want to get to the `damage` attribute of the `attack` table row that has the value `Slingshot` in its `weapon` column – so, the damage dealt by your slingshot. You can include several pairs of *column*, *value* to narrow down your selection if necessary.
 
@@ -803,8 +803,8 @@ Here is a script that will rotate the *selected* token so that it visually faces
 | 1    | _!mmm_ **script**
 | 2    | _!mmm_     **set** selectedToken = "@{selected\|token_id}" | *(get selected token – will be rotated)*
 | 3    | _!mmm_     **set** targetToken = "@{target\|Target\|token_id}" | *(get target token – selected token will be oriented facing it)*
-| 4    | _!mmm_     **set** targetOffsetRight = getattr(targetToken, "left") - getattr(selectedToken, "left") | *(calculate horizontal offset of target from selected)*
-| 5    | _!mmm_     **set** targetOffsetDown = getattr(targetToken, "top") - getattr(selectedToken, "top") | *(calculate vertical offset of target from selected)*
+| 4    | _!mmm_     **set** targetOffsetRight = targetToken.left - selectedToken.left | *(calculate horizontal offset of target from selected)*
+| 5    | _!mmm_     **set** targetOffsetDown = targetToken.top - selectedToken.top | *(calculate vertical offset of target from selected)*
 | 6    | _!mmm_     **set** rotation = atan(targetOffsetDown, targetOffsetRight) | *(calculate rotation from selected towards target)*
 | 7    | _!mmm_     **do** setattr(selectedToken, "rotation", -90 + rotation) | *(apply rotation to selected – assume token visually faces down, not right)*
 | 8    | _!mmm_ **end script**
@@ -885,6 +885,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.20.0  | 2021-05-28 | Introduce `list[idx]` and `obj.prop` expression syntax
 | 1.19.0  | 2021-05-07 | Add `for` loop and improve `findattr()` to return lists
 | 1.18.0  | 2021-05-04 | Improve `highlight()` with `"info"` and `default` types
 | 1.17.0  | 2021-04-18 | Add `spawnfx()` to spawn visual effects
