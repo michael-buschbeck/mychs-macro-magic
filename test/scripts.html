@@ -192,18 +192,42 @@
                 { error: "During parse, syntax error in script: set ❌123 = 456" },
             ],
             [
+                "!mmm script",
+                "!mmm     set äöü = 456",
+                "!mmm     chat: ${äöü + 123}",
+                "!mmm end script",
+                { chat: "579" },
+            ],
+            [
                 "!mmm set customizable 123",
                 { error: "During parse, syntax error in script: set customizable ❌123" },
+            ],
+            [
+                "!mmm set customizable äöü",
+                { whisper: "⚠️ Value of <strong>äöü</strong> won't survive being <strong>set</strong> outside of a <strong>script</strong> block" },
+                { error: "During execute, require customization or default in script: !mmm set customizable äöü❌" },
             ],
             [
                 "!mmm set customizable 123 = 456",
                 { error: "During parse, syntax error in script: set customizable ❌123 = 456" },
             ],
             [
+                "!mmm set customizable äöü = 456",
+                { whisper: "⚠️ Value of <strong>äöü</strong> won't survive being <strong>set</strong> outside of a <strong>script</strong> block" },
+            ],
+            [
                 "!mmm for 123 in 1, 2, 3",
                 { error: "During parse, syntax error in script: for ❌123 in 1, 2, 3" },
                 "!mmm end for",
                 { error: "During parse, unknown command in script: ❌end for" },
+            ],
+            [
+                "!mmm for äöü in 1, 2, 3",
+                "!mmm     chat: ${äöü}",
+                "!mmm end for",
+                { chat: "1" },
+                { chat: "2" },
+                { chat: "3" },
             ],
             [
                 "!mmm chat: ${syntax error}",
