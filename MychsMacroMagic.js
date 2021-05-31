@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.20.0";
+const MMM_VERSION = "1.20.1";
 
 on("chat:message", function(msg)
 {
@@ -77,7 +77,7 @@ on("chat:message", function(msg)
 
     let statusSource = msg.content;
 
-    let statusRegExp = /^(?<command>!mmm\s+status\s*)(?<arguments>.+)?$/;
+    let statusRegExp = /^(?<command>!mmm\s+status\s*)(?<arguments>.+)?$/u;
     let statusMatch = statusRegExp.exec(statusSource);
 
     if (statusMatch)
@@ -114,11 +114,11 @@ on("chat:message", function(msg)
         }
     }
 
-    let msgContentLines = msg.content.split(/<br\/>\s+/);
+    let msgContentLines = msg.content.split(/<br\/>\s+/u);
 
     for (let msgContentLine of msgContentLines)
     {
-        let scriptMatch = /^!mmm\b(\s*|\s(?<command>.+))$/.exec(msgContentLine);
+        let scriptMatch = /^!mmm(?![\p{L}\p{N}_])(\s*|\s(?<command>.+))$/u.exec(msgContentLine);
 
         if (!scriptMatch || !scriptMatch.groups.command)
         {
@@ -263,7 +263,7 @@ class MychScriptContext
                 return "<span class=\"mmm-" + this.label + "\" style=\"" + style + "\">" + this.label + "</span>";
             }
         
-            let tooltip = this.reason.replace(/"/g, "&quot;");
+            let tooltip = this.reason.replace(/"/ug, "&quot;");
             return "<span class=\"mmm-" + this.label + " showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "; cursor: help\">" + this.label + "</span>";
         }
     }
@@ -490,7 +490,7 @@ class MychScriptContext
             rollExpression = MychExpression.coerceString(rollExpressionIfNameOrId);
         }
 
-        if (rollExpression.match(/^\s*$/))
+        if (rollExpression.match(/^\s*$/u))
         {
             return new MychScriptContext.Unknown("Roll expression empty");
         }
@@ -499,7 +499,7 @@ class MychScriptContext
 
         let characterContext = (character ? character.get("name") : this.sender);
 
-        rollExpression = rollExpression.replace(/@\{([^}]+)\}/g, function(attributeCall, attributeExpression)
+        rollExpression = rollExpression.replace(/@\{([^}]+)\}/ug, function(attributeCall, attributeExpression)
         {
             let attrExpressionParts = attributeExpression.split("|");
             let hasCharacterContext = (attrExpressionParts.length >= 3 || (attrExpressionParts.length == 2 && attrExpressionParts[1] == "max"));
@@ -704,10 +704,10 @@ class MychScriptContext
         let recipient = getObj("player", this.playerid).get("displayname");
 
         // remove all tokens from first double-quote on (since we can't escape double-quotes)
-        recipient = recipient.replace(/\s*".*/, "");
+        recipient = recipient.replace(/\s*".*/u, "");
 
         // enclose in double quotes, but only if there are actually spaces
-        if (recipient.match(/\s/))
+        if (recipient.match(/\s/u))
         {
             recipient = "\"" + recipient + "\"";
         }
@@ -844,7 +844,7 @@ class MychScriptContext
         {
             let tableNames = {};
 
-            let attributeNameRegExp = /^repeating_(?<tableName>[^_]+)_/;
+            let attributeNameRegExp = /^repeating_(?<tableName>[^_]+)_/u;
             let attributes = findObjs({ type: "attribute", characterid: character.id });
 
             for (let attribute of attributes)
@@ -865,10 +865,10 @@ class MychScriptContext
             return Object.values(tableNames);
         }
 
-        let tableRegExpSource = MychExpression.coerceString(table).replace(/(\W)/g, "\\$1");
+        let tableRegExpSource = MychExpression.createLiteralRegExpSource(MychExpression.coerceString(table));
 
-        let attributeNameRegExpSource = /^repeating_/.source + tableRegExpSource + /_(?<rowId>[-A-Za-z0-9]+)_(?<colName>\S+)$/.source;
-        let attributeNameRegExp = new RegExp(attributeNameRegExpSource, "i");
+        let attributeNameRegExpSource = /^repeating_/u.source + tableRegExpSource + /_(?<rowId>[-A-Za-z0-9]+)_(?<colName>\S+)$/u.source;
+        let attributeNameRegExp = new RegExp(attributeNameRegExpSource, "ui");
 
         if (arguments.length == 2)
         {
@@ -1130,7 +1130,7 @@ class MychScriptContext
             }
         }
 
-        let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+        let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/u;
         let statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
 
         if (statusAttributeNameMatch)
@@ -1360,7 +1360,7 @@ class MychScriptContext
 
             default:
             {
-                let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+                let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/u;
                 let statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
         
                 if (statusAttributeNameMatch)
@@ -1370,13 +1370,13 @@ class MychScriptContext
                         let statusIdentifier = statusAttributeNameMatch.groups.identifier;
 
                         lookupObj = token;
-                        lookupKey = "status_" + statusIdentifier.replace(/_/g, "-");
+                        lookupKey = "status_" + statusIdentifier.replace(/_/ug, "-");
                         
                         // modify value to make both boolean and numeric interpretation simple:
                         // - false (hidden): false (as number: 0)
                         // - digit (shown with digit): string digit (as bool: true, number: digit)
                         // - other (shown undecorated): string "shown" (as bool: true, number: 0)
-                        lookupMod = val => (val === false ? false : (str => str.match(/^[0-9]$/) ? str : "shown")(MychExpression.coerceString(val)));
+                        lookupMod = val => (val === false ? false : (str => str.match(/^[0-9]$/u) ? str : "shown")(MychExpression.coerceString(val)));
                     }
                     break;
                 }
@@ -1524,7 +1524,7 @@ class MychScriptContext
 
             default:
             {
-                let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/;
+                let statusAttributeNameRegExp = /^status_(?<identifier>\w+)$/u;
                 let statusAttributeNameMatch = statusAttributeNameRegExp.exec(attributeName);
         
                 if (statusAttributeNameMatch)
@@ -1534,7 +1534,7 @@ class MychScriptContext
                         let statusIdentifier = statusAttributeNameMatch.groups.identifier;
                         
                         updateObj = token;
-                        updateKey = "status_" + statusIdentifier.replace(/_/g, "-");
+                        updateKey = "status_" + statusIdentifier.replace(/_/ug, "-");
 
                         if (statusIdentifier == "dead")
                         {
@@ -1546,7 +1546,7 @@ class MychScriptContext
                         {
                             // revert conversion done when reading status marker state
                             updateVal = MychExpression.coerceString(attributeValue);
-                            updateVal = (updateVal == "false" || updateVal == "" ? false : updateVal.match(/^[0-9]$/) ? updateVal : true);
+                            updateVal = (updateVal == "false" || updateVal == "" ? false : updateVal.match(/^[0-9]$/u) ? updateVal : true);
                         }
                     }
                     break;
@@ -1669,7 +1669,7 @@ class MychScriptContext
             }
 
             statusTableRows.push([ this.literal(playerDescription || playerId) ]);
-            statusTableRows.push([ "Seen", player.lastseen.toISOString().replace(/T/, " ").replace(/Z$/, " UTC") ]);
+            statusTableRows.push([ "Seen", player.lastseen.toISOString().replace(/T/u, " ").replace(/Z$/u, " UTC") ]);
 
             let contextDescription = "";
 
@@ -1733,7 +1733,7 @@ class MychScriptContext
 
     $exportScript(destination, source, backup = true)
     {
-        let sourceLines = source.split("\n").filter(line => !line.match(/^\s*$/)).map(line => "!mmm " + line);
+        let sourceLines = source.split("\n").filter(line => !line.match(/^\s*$/u)).map(line => "!mmm " + line);
         
         this.whisperback("<span style='white-space: pre'>" + sourceLines.map(line => this.literal(line)).join("<br/>") + "</span>");
 
@@ -1749,11 +1749,11 @@ class MychScriptContext
         if (destinationMacro)
         {
             let destinationMacroSource = destinationMacro.get("action");
-            let destinationMacroSourceLines = destinationMacroSource.split("\n").filter(line => !line.match(/^\s*$/));
+            let destinationMacroSourceLines = destinationMacroSource.split("\n").filter(line => !line.match(/^\s*$/u));
     
             let destinationMacroSourcePrefixLines = [];
             let destinationMacroSourceSuffixLines = [];
-            let destinationMacroSourceLinesAreScript = destinationMacroSourceLines.map(line => !!line.match(/^!mmm\b/));
+            let destinationMacroSourceLinesAreScript = destinationMacroSourceLines.map(line => !!line.match(/^!mmm(?![\p{L}\p{N}_])/u));
             let destinationMacroSourceFirstScriptLineIndex = destinationMacroSourceLinesAreScript.indexOf(true);
 
             if (destinationMacroSourceFirstScriptLineIndex < 0)
@@ -1770,8 +1770,8 @@ class MychScriptContext
             {
                 let existingMacroNames = findObjs({ type: "macro", playerid: this.playerid }).map(macro => macro.get("name"));
 
-                let backupMacroSuffixRegExpSource = /^/.source + destination.replace(/(\W)/g, "\\$1") + /_backup_(?<suffix>\d+)$/.source;
-                let backupMacroSuffixRegExp = new RegExp(backupMacroSuffixRegExpSource, "i");
+                let backupMacroSuffixRegExpSource = /^/u.source + MychExpression.createLiteralRegExpSource(destination) + /_backup_(?<suffix>\d+)$/u.source;
+                let backupMacroSuffixRegExp = new RegExp(backupMacroSuffixRegExpSource, "ui");
                 
                 let existingBackupMacroMaxSuffix = Math.max(0, ...existingMacroNames.map(name => backupMacroSuffixRegExp.exec(name)).filter(match => match).map(match => parseInt(match.groups.suffix)));
 
@@ -1811,7 +1811,7 @@ class MychScriptVariables
     {
         for (let [key, value] of Object.entries(customizations))
         {
-            if (key.match(/^\w+$/) || !(value instanceof Object))
+            if (key.match(/^\w+$/u) || !(value instanceof Object))
             {
                 this.$customizations[key] = value;
             }
@@ -1896,8 +1896,8 @@ class MychScript
         {
             tokens:
             {
-                exit:   [ /(?<type>\w+)/ ],
-                exitif: [ /(?<type>\w+)/, "if", /(?<expression>.+)/ ],
+                exit:   [ /(?<type>\w+)/u ],
+                exitif: [ /(?<type>\w+)/u, "if", /(?<expression>.+)/u ],
             },
 
             parse: function(args, parentScripts)
@@ -1952,7 +1952,7 @@ class MychScript
 
         if:
         {
-            tokens: [ /(?<expression>.+)/ ],
+            tokens: [ /(?<expression>.+)/u ],
 
             parse: function(args)
             {
@@ -2014,7 +2014,7 @@ class MychScript
             tokens:
             {
                 else:   [],
-                elseif: [ "if", /(?<expression>.+)/ ],
+                elseif: [ "if", /(?<expression>.+)/u ],
             },
 
             parse: function(args, parentScripts)
@@ -2058,7 +2058,7 @@ class MychScript
 
         for:
         {
-            tokens: [ /(?<variable>\w+)/, "in", /(?<expression>.+)/ ],
+            tokens: [ /(?<variable>[\p{L}_][\p{L}\p{N}_]*)/u, "in", /(?<expression>.+)/u ],
 
             parse: function(args)
             {
@@ -2111,9 +2111,9 @@ class MychScript
         {
             tokens:
             {
-                assign:         [ /(?<variable>\w+)/, "=", /(?<expression>.+)/ ],
-                customrequired: [ "customizable", /(?<customizable>)(?<variable>\w+)/ ],
-                customdefault:  [ "customizable", /(?<customizable>)(?<variable>\w+)/, "=", /(?<expression>.+)/ ],
+                assign:         [ /(?<variable>[\p{L}_][\p{L}\p{N}_]*)/u, "=", /(?<expression>.+)/u ],
+                customrequired: [ "customizable", /(?<customizable>)(?<variable>[\p{L}_][\p{L}\p{N}_]*)/u ],
+                customdefault:  [ "customizable", /(?<customizable>)(?<variable>[\p{L}_][\p{L}\p{N}_]*)/u, "=", /(?<expression>.+)/u ],
             },
             
             parse: function(args)
@@ -2208,7 +2208,7 @@ class MychScript
 
         do:
         {
-            tokens: [ /(?<expression>.+)/ ],
+            tokens: [ /(?<expression>.+)/u ],
 
             parse: function(args)
             {
@@ -2243,8 +2243,8 @@ class MychScript
             tokens:
             {
                 newline:  [ ":" ],
-                template: [ ":", /(?<template>.+)/ ],
-                custom:   [ "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/ ]
+                template: [ ":", /(?<template>.+)/u ],
+                custom:   [ "[", /(?<label>\w+)/u, "]", ":", /(?<template>.+)/u ]
             },
 
             parse: function(args)
@@ -2319,7 +2319,7 @@ class MychScript
             tokens:
             {
                 chat:    [ "chat" ],
-                chatsep: [ "chat", "using", /(?<expression>.+)/ ],
+                chatsep: [ "chat", "using", /(?<expression>.+)/u ],
             },
 
             parse: function(args)
@@ -2476,8 +2476,8 @@ class MychScript
             tokens:
             {
                 block:         [],
-                exportbackup:  [ "export", "to", /(?<destination>\w+)(?<backup>)/ ],
-                exportreplace: [ "export", "to", /(?<destination>\w+)/, "without", "backup" ],
+                exportbackup:  [ "export", "to", /(?<destination>\w+)(?<backup>)/u ],
+                exportreplace: [ "export", "to", /(?<destination>\w+)/u, "without", "backup" ],
             },
 
             parse: function(args)
@@ -2512,7 +2512,7 @@ class MychScript
 
         translate:
         {
-            tokens: [ "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/ ],
+            tokens: [ "[", /(?<label>\w+)/u, "]", ":", /(?<template>.+)/u ],
 
             parse: function(args)
             {
@@ -2553,9 +2553,9 @@ class MychScript
         {
             tokens:
             {
-                chat:      [ "chat", ":", /(?<template>.+)/ ],
-                chatlabel: [ "chat", "[", /(?<label>\w+)/, "]", ":", /(?<template>.+)/],
-                do:        [ "do", /(?<expression>.+)/ ],
+                chat:      [ "chat", ":", /(?<template>.+)/u ],
+                chatlabel: [ "chat", "[", /(?<label>\w+)/u, "]", ":", /(?<template>.+)/u],
+                do:        [ "do", /(?<expression>.+)/u ],
             },
 
             parse: function(args)
@@ -2635,7 +2635,7 @@ class MychScript
     {
         let args = {};
 
-        let whitespaceRegExp = /\s*/g;
+        let whitespaceRegExp = /\s*/ug;
 
         for (let tokenPattern of tokenPatterns)
         {
@@ -2649,20 +2649,8 @@ class MychScript
 
             sourceOffset = whitespaceMatch.index + whitespaceMatch[0].length;
 
-            let tokenRegExpSource;
-
-            if (tokenPattern instanceof RegExp)
-            {
-                tokenRegExpSource = tokenPattern.source;
-            }
-            else
-            {
-                tokenRegExpSource = tokenPattern;
-                tokenRegExpSource = tokenRegExpSource.replace(/(\W)/g, "\\$1");
-                tokenRegExpSource = tokenRegExpSource.replace(/^\b|\b$/g, "\\b");
-            }
-            
-            let tokenRegExp = new RegExp(tokenRegExpSource, "ig");
+            let tokenRegExpSource = (tokenPattern instanceof RegExp) ? tokenPattern.source : MychExpression.createTokenRegExpSource(tokenPattern);
+            let tokenRegExp = new RegExp(tokenRegExpSource, "uig");
 
             tokenRegExp.lastIndex = sourceOffset;
             let tokenMatch = tokenRegExp.exec(source);
@@ -2786,7 +2774,7 @@ class MychScript
                 return nestedScript.addCommand(source, context, parentScripts.concat(this));
             }
 
-            let [endSourceOffset, endCommandArgs] = MychScript.parseTokens([ "end", /(?<type>\w+)/ ], source, 0);
+            let [endSourceOffset, endCommandArgs] = MychScript.parseTokens([ "end", /(?<type>\w+)/u ], source, 0);
 
             if (endCommandArgs)
             {
@@ -2941,21 +2929,15 @@ class MychTemplate
     {
         let segmentPatterns =
         [   
-            /\\(?<escape>.)/,
-            /\$(?=(?<labelToken>\[(?<label>\w+)\])?(?<expressionToken>\{(?<expression>([^"'}]|"([^\\"]|\\.)*"|'([^\\']|\\.)*')*)\})?)(\k<labelToken>\k<expressionToken>|\k<labelToken>|\k<expressionToken>)/,
+            /\\(?<escape>.)/u,
+            /\$(?=(?<labelToken>\[(?<label>\w+)\])?(?<expressionToken>\{(?<expression>([^"'}]|"([^\\"]|\\.)*"|'([^\\']|\\.)*')*)\})?)(\k<labelToken>\k<expressionToken>|\k<labelToken>|\k<expressionToken>)/u,
         ];
 
-        let contextKeys = Object.keys(context).filter(key => /^(\W|\W.*\W)$/.test(key));
+        let contextKeys = Object.keys(context).filter(key => /^([^\p{L}\p{N}_]|[^\p{L}\p{N}_].*[^\p{L}\p{N}_])$/u.test(key));
 
         if (contextKeys.length > 0)
         {
-            function createContextKeyRegExpSource(key)
-            {
-                // escape all characters that might have special meaning and add boundary assertions
-                return key.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/g, "\\b");
-            }
-    
-            let contextKeysRegExpSources = contextKeys.map(createContextKeyRegExpSource);
+            let contextKeysRegExpSources = contextKeys.map(MychExpression.createTokenRegExpSource);
             segmentPatterns.unshift("(?<context>" + contextKeysRegExpSources.join("|") + ")");
         }
 
@@ -2964,7 +2946,7 @@ class MychTemplate
             return "(" + (pattern instanceof RegExp ? pattern.source : pattern) + ")";
         }
 
-        return new RegExp(segmentPatterns.map(createSegmentRegExpSource).join("|"), "g");
+        return new RegExp(segmentPatterns.map(createSegmentRegExpSource).join("|"), "ug");
     }
 
     parse(source, context)
@@ -3279,6 +3261,37 @@ class MychExpression
         }
     }
 
+    static createLiteralRegExpSource(literal, addWordBoundaryAssertions = false)
+    {
+        let requireWordBoundaryAssertionBegin = false;
+        let requireWordBoundaryAssertionEnd = false;
+
+        if (addWordBoundaryAssertions)
+        {
+            requireWordBoundaryAssertionBegin = /^[\p{L}\p{N}_]/u.test(literal);
+            requireWordBoundaryAssertionEnd = /[\p{L}\p{N}_]$/u.test(literal);
+        }
+
+        let literalRegExpSource = literal.replace(/([\\.^$()\[\]{}|*+?])/ug, "\\$1");
+
+        if (requireWordBoundaryAssertionBegin)
+        {
+            literalRegExpSource = /(?<![\p{L}\p{N}_])/u.source + literalRegExpSource;
+        }
+
+        if (requireWordBoundaryAssertionEnd)
+        {
+            literalRegExpSource = literalRegExpSource + /(?![\p{L}\p{N}_])/u.source;
+        }
+
+        return literalRegExpSource;
+    }
+
+    static createTokenRegExpSource(token)
+    {
+        return MychExpression.createLiteralRegExpSource(token, true);
+    }
+
     static coerceScalar(value)
     {
         if (Array.isArray(value))
@@ -3425,7 +3438,7 @@ class MychExpression
         {
             case "string":
             {
-                let stringLiteral = "\"" + value.replace(/(["\\])/g, "\\$1") + "\"";
+                let stringLiteral = "\"" + value.replace(/(["\\])/ug, "\\$1") + "\"";
                 return stringLiteral;
             }
 
@@ -4086,39 +4099,34 @@ class MychExpression
 
     static createTokenRegExp()
     {
-        function createOperatorRegExpSource(operator)
-        {
-            // escape all characters that might have special meaning and add boundary assertions
-            return operator.replace(/(\W)/g, "\\$1").replace(/^\b|\b$/g, "\\b");
-        }
-
         let operatorTokens = new Set([
             ...Object.keys(MychExpression.unaryOperatorDefs),
             ...Object.keys(MychExpression.binaryOperatorDefs)]);
 
-        let operatorRegExpSource = [...operatorTokens].sort((tokenA, tokenB) => tokenB.length - tokenA.length).map(createOperatorRegExpSource).join("|")
+        let operatorRegExpSource = [...operatorTokens].sort((tokenA, tokenB) => tokenB.length - tokenA.length).map(MychExpression.createTokenRegExpSource).join("|")
 
         let tokenPatterns =
         {
             unaryOrBinaryOperator:  operatorRegExpSource,
 
-            literalNumber:          /(\.\d+|\d+(\.\d*)?)([eE][-+]?\d+)?/,
-            literalBoolean:         /\b(true|false)\b/,
-            literalStringDouble:    /"([^"\\]|\\.)*"?/,
-            literalStringSingle:    /'([^'\\]|\\.)*'?/,
+            literalNumber:          /(\.\d+|\d+(\.\d*)?)([eE][-+]?\d+)?/u,
+            literalBooleanTrue:     MychExpression.createTokenRegExpSource("true"),
+            literalBooleanFalse:    MychExpression.createTokenRegExpSource("false"),
+            literalStringDouble:    /"([^"\\]|\\.)*"?/u,
+            literalStringSingle:    /'([^'\\]|\\.)*'?/u,
 
-            propertyOperator:       /\./,
-            debugOperator:          /\?{1,3}/,
+            propertyOperator:       /\./u,
+            debugOperator:          /\?{1,3}/u,
 
-            identifier:             /\b[A-Za-z_]\w*\b|\$\[\[\w+\]\]/,
+            identifier:             /(?<![\p{L}\p{N}_])[\p{L}_][\p{L}\p{N}_]*(?![\p{L}\p{N}_])|\$\[\[\w+\]\]/u,
 
-            openingParenthesis:     /\(/,
-            closingParenthesis:     /\)/,
-            openingBracket:         /\[/,
-            closingBracket:         /\]/,
+            openingParenthesis:     /\(/u,
+            closingParenthesis:     /\)/u,
+            openingBracket:         /\[/u,
+            closingBracket:         /\]/u,
 
-            whitespace:             /\s+/,
-            unsupported:            /.+/,
+            whitespace:             /\s+/u,
+            unsupported:            /.+/u,
         }
 
         function createTokenRegExpSource([type, pattern])
@@ -4126,7 +4134,7 @@ class MychExpression
             return "(?<" + type + ">" + (pattern instanceof RegExp ? pattern.source : pattern) + ")";
         }
 
-        return new RegExp(Object.entries(tokenPatterns).map(createTokenRegExpSource).join("|"), "g");
+        return new RegExp(Object.entries(tokenPatterns).map(createTokenRegExpSource).join("|"), "ug");
     }
 
     static tokenRegExp = MychExpression.createTokenRegExp();
@@ -4276,24 +4284,31 @@ class MychExpression
                 }
                 break;
 
-                case "literalBoolean":
+                case "literalBooleanTrue":
                 {
                     tokenType = "literal";
-                    tokenValue = (tokenValue == "true");
+                    tokenValue = true;
+                }
+                break;
+
+                case "literalBooleanFalse":
+                {
+                    tokenType = "literal";
+                    tokenValue = false;
                 }
                 break;
 
                 case "literalStringDouble":
                 {
                     tokenType = "literal";
-                    tokenValue = tokenValue.replace(/^"|"$/g, "").replace(/\\(.)/g, "$1");
+                    tokenValue = tokenValue.replace(/^"|"$/ug, "").replace(/\\(.)/ug, "$1");
                 }
                 break;
 
                 case "literalStringSingle":
                 {
                     tokenType = "literal";
-                    tokenValue = tokenValue.replace(/^'|'$/g, "").replace(/\\(.)/g, "$1");
+                    tokenValue = tokenValue.replace(/^'|'$/ug, "").replace(/\\(.)/ug, "$1");
                 }
                 break;
             }
