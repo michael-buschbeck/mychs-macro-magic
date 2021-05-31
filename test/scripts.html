@@ -188,6 +188,24 @@
                 { error: "During parse, syntax error in script: set incorrectAssignmentOperator ❌:= 123 + 456" },
             ],
             [
+                "!mmm set 123 = 456",
+                { error: "During parse, syntax error in script: set ❌123 = 456" },
+            ],
+            [
+                "!mmm set customizable 123",
+                { error: "During parse, syntax error in script: set customizable ❌123" },
+            ],
+            [
+                "!mmm set customizable 123 = 456",
+                { error: "During parse, syntax error in script: set customizable ❌123 = 456" },
+            ],
+            [
+                "!mmm for 123 in 1, 2, 3",
+                { error: "During parse, syntax error in script: for ❌123 in 1, 2, 3" },
+                "!mmm end for",
+                { error: "During parse, unknown command in script: ❌end for" },
+            ],
+            [
                 "!mmm chat: ${syntax error}",
                 { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in template in script: chat: ${syntax ❌error}" },
             ],
