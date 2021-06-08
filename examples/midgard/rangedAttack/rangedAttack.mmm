@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.8.5 (2021-05-19)"
+!mmm   set scriptVersion = "1.8.6 (2021-06-08)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.16
@@ -64,6 +64,7 @@
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
 !mmm   set weaponDamageBonus = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
+!mmm   set sharpshootingSkill = getattr(cOwnID, findattr(cOwnID, "Fertigkeiten", "Fertigkeit", "Scharfschießen", "FW"))
 !mmm   if (not effAttack) or (not weaponDamageExpr)
 !rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
 !mmm     do whisperback("Abbruch: " & ownName & " hat keine Waffe namens " & cWeaponLabel & ".")
@@ -187,7 +188,17 @@
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !rem   // 4. Collect additional standard modifiers from user via dropdown menu
-!mmm   set semiAutoModCode = ?{Weitere Angriffsmodifikatoren (außer Entfernung)|   Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;      NORMAL HALT +/-0                              &#44; 1     &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 2     &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 3     &#124;      Großes Ziel (2xMensch) +2                     &#44; 5     &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 7     &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 17      &#125; |   Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ...&#124;      SONST NIX +/-0                                &#44; 11    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 22    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 33    &#124;      Großes Ziel (2xMensch) +2                     &#44; 55    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 77    &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 143   &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 187      &#125; |   Schnelles Ziel (30m+/Runde) -2, ?{Schnelles Ziel -2 +/- ...&#124;      SONST NIX +/-0                                &#44; 13    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 26    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 39    &#124;      Großes Ziel (2xMensch) +2                     &#44; 65    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 91    &#124;      Spontaner Angriff -4                          &#44; 143   &#124;      Sorgfältig gezielt +4                         &#44; 247      &#125; |   Sorgfältig gezielt +4, ?{Sorgfältig gezielt +4 +/- ...&#124;      SONST NIX +/-0                                &#44; 19    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 38    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 57    &#124;      Großes Ziel (2xMensch) +2                     &#44; 95    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 133   &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 247      &#125;}
+!mmm   set semiAutoModCode = ?{Weitere Angriffsmodifikatoren|   Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;      NORMAL HALT +/-0                              &#44; 0     &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 2     &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 3     &#124;      Großes Ziel (2xMensch) +2                     &#44; 5     &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 7     &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 17      &#125; |   Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ...&#124;      SONST NIX +/-0                                &#44; 11    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 22    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 33    &#124;      Großes Ziel (2xMensch) +2                     &#44; 55    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 77    &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 143   &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 187      &#125; |   Schnelles Ziel (30m+/Runde) -2, ?{Schnelles Ziel -2 +/- ...&#124;      SONST NIX +/-0                                &#44; 13    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 26    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 39    &#124;      Großes Ziel (2xMensch) +2                     &#44; 65    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 91    &#124;      Spontaner Angriff -4                          &#44; 143   &#124;      Sorgfältig gezielt +4                         &#44; 247      &#125; |   Sorgfältig gezielt +4, ?{Sorgfältig gezielt +4 +/- ...&#124;      SONST NIX +/-0                                &#44; 19    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 38    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 57    &#124;      Großes Ziel (2xMensch) +2                     &#44; 95    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 133   &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 247      &#125; |   Scharfschießen +4/Spezial, ?{Scharfschießen +4/Spezial +/- ...&#124;      SONST NIX +/-0                                &#44; 23    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 46    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 69    &#124;      Großes Ziel (2xMensch) +2                     &#44; 115   &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 161   &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 299      &#125;}
+!mmm   if semiAutoModCode % 23 == 0
+!rem     // Check if PC has sharpshooting skill
+!mmm     if not sharpshootingSkill
+!mmm       do whisperback("Abbruch: " & ownName & " hat die Fertigkeiten Scharfschießen nicht.")
+!mmm       exit script
+!mmm     end if
+!mmm     set semiAutoModifiers = semiAutoModifiers + 4
+!mmm     set modifierLog = modifierLog & " {{Scharfschießen=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Scharfschießen&nbsp;&nbsp;&nbsp;+4 "
+!mmm   end if
 !mmm   if semiAutoModCode % 19 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Sorgfältig gezielt=+4}} "
@@ -269,22 +280,33 @@
 !mmm     set attackResult = highlight(attackResult, "normal", attackResultLog)
 !mmm   end if
 !rem
-!rem   // Damage roll (and make sure it doesn't get negative)
-!mmm   set damageResult = roll(weaponDamageExpr & weaponDamageBonus)
-!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & (damageResult - weaponDamageBonus) & ") " & weaponDamageBonus
-!mmm   if damageResult < 0
-!mmm     set damageResult = highlight(0, "bad")
-!mmm   end if
-!mmm   if cAmmoMagic and cAmmoMagicDamage ne ""
-!mmm     set magicExtraDamage = roll(cAmmoMagicDamage)
-!mmm     if magicExtraDamage < 0
-!mmm       set magicExtraDamage = highlight(0, "bad")
+!mmm   if attackResult >= 20
+!rem     // Damage roll (and make sure it doesn't get negative)
+!mmm     set damageResult = roll(weaponDamageExpr & weaponDamageBonus)
+!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & (damageResult - weaponDamageBonus) & ") " & weaponDamageBonus
+!mmm     if damageResult < 0
+!mmm       set damageResult = highlight(0, "bad")
 !mmm     end if
-!mmm     set damageResult = highlight(damageResult + magicExtraDamage, "normal")
-!mmm     set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & magicExtraDamage & ")"
-!mmm   end if 
-!mmm   set damageResultLog = damageResult & " = " & damageResultLog
-!mmm   set damageResult = highlight(damageResult, default, damageResultLog)
+!rem     // Special case: sharpshooting
+!mmm     if semiAutoModCode % 23 == 0
+!mmm       set sharpExtraResult = roll("1d20+" & (effAttack + modifiers - 4 + sharpshootingSkill))
+!mmm       if sharpExtraResult >= 20
+!mmm         set damageResult = damageResult + round(sharpExtraResult * .1)
+!mmm         set damageResultLog = damageResultLog & " + (Scharfschießen = " & round(sharpExtraResult * .1) & ")"
+!mmm       end if
+!mmm     end if
+!rem     // Special case: magic ammunition with extra damage
+!mmm     if cAmmoMagic and cAmmoMagicDamage ne ""
+!mmm       set magicExtraDamage = roll(cAmmoMagicDamage)
+!mmm       if magicExtraDamage < 0
+!mmm         set magicExtraDamage = highlight(0, "bad")
+!mmm       end if
+!mmm       set damageResult = damageResult + magicExtraDamage
+!mmm       set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & magicExtraDamage & ")"
+!mmm     end if 
+!mmm     set damageResultLog = damageResult & " = " & damageResultLog
+!mmm     set damageResult = highlight(damageResult, default, damageResultLog)
+!mmm   end if
 !mmm
 !rem   // Break down extra magic damage to player and GM
 !mmm   if cAmmoMagic and attackResult >= 20 and damageResult > 0
@@ -350,6 +372,9 @@
 !mmm     end if
 !mmm     chat:      {{Boni/Mali=**${modifiers}**}}
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
+!mmm     if semiAutoModCode % 23 == 0
+!mmm       chat:    {{Scharfschießen=${sharpExtraResult}}}
+!mmm     end if 
 !mmm     if attackFromBehind
 !mmm       chat:    {{Angriff von hinten=Bei Hinterhalt kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
 !mmm     end if 
