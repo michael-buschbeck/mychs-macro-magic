@@ -96,6 +96,11 @@ Minimalbeispiel für ein Wurfmesser, ohne die Erzählerei zu verändern (Vorauss
 
 ## Changelog
 
+1.8.7 2021-06-11 (requires MMM 1.16.0 or higher)
+
+- Scharfschießen-Funktion ergänzt
+- Ausgabe: einige nicht genutzte Variablen aus der ausführlichen Ausgabe entfernt
+
 1.8.5 2021-05-19 (requires MMM 1.16.0 or higher)
 
 - Ausgabe-Bugfix für #10, Hinweis auf PP entfernt, wenn Gegner erschöpft ist
