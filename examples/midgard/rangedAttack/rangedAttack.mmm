@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.8.6 (2021-06-08)"
+!mmm   set scriptVersion = "1.8.7-dev (2021-06-11)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.16
@@ -287,12 +287,18 @@
 !mmm     if damageResult < 0
 !mmm       set damageResult = highlight(0, "bad")
 !mmm     end if
+!mmm     set damageResultBasic = highlight(damageResult, damageResult, damageResultLog)
 !rem     // Special case: sharpshooting
+!mmm     set sharpExtraDamage = 0
 !mmm     if semiAutoModCode % 23 == 0
-!mmm       set sharpExtraResult = roll("1d20+" & (effAttack + modifiers - 4 + sharpshootingSkill))
+!mmm       set sharpExtraRoll = roll("1d20")
+!mmm       set sharpExtraResult = sharpExtraRoll + effAttack + modifiers - 4 + sharpshootingSkill
+!mmm       set sharpExtraTooltip = sharpExtraResult & " = (1d20 = " & sharpExtraRoll & ") + (EW = " & effAttack & ") + " & modifiers - 4 & " + (FW:Scharfschießen = " & sharpshootingSkill & ")"
+!mmm       set sharpExtraResult = highlight(sharpExtraResult, "normal", sharpExtraTooltip)
 !mmm       if sharpExtraResult >= 20
-!mmm         set damageResult = damageResult + round(sharpExtraResult * .1)
-!mmm         set damageResultLog = damageResultLog & " + (Scharfschießen = " & round(sharpExtraResult * .1) & ")"
+!mmm         set sharpExtraDamage = round(sharpExtraResult * .1)
+!mmm         set damageResult = damageResult + sharpExtraDamage
+!mmm         set damageResultLog = damageResultLog & " + (Scharfschuss-Bonus = " & sharpExtraDamage & ")"
 !mmm       end if
 !mmm     end if
 !rem     // Special case: magic ammunition with extra damage
@@ -304,6 +310,7 @@
 !mmm       set damageResult = damageResult + magicExtraDamage
 !mmm       set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & magicExtraDamage & ")"
 !mmm     end if 
+!rem     // Complete damage variables
 !mmm     set damageResultLog = damageResult & " = " & damageResultLog
 !mmm     set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm   end if
@@ -349,12 +356,15 @@
 !mmm       else
 !mmm         chat [AttackFailsClearly]:         verfehlt weit ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht einmal ausweichen.
 !mmm       end if
-!mmm       if attackResult >= 20 and (not cAmmoMagic)
-!mmm         chat [AttackSuccessClosing]:       $[targetName]{foeName} kann nun abwehren (gegen $[attackResult]{attackResult+0}, $[damageResult]{damageResult+0} Schadenspunkte).
-!mmm       else if attackResult >= 20 and cAmmoMagic
-!mmm         chat [AttackSuccessClosingMagic]:  $[targetName]{foeName} kann nun abwehren (gegen $[attackResult]{attackResult+0}, $[damageResult]{damageResult+0} magischen Schaden).
+!mmm       if attackResult >= 20 and sharpExtraDamage
+!mmm         chat [AttackSuccessSharpshooting]: Der wird wehtun: das Scharfschützentraining hat sich mal wieder ausgezahlt.
+!mmm       end if
+!mmm       if attackResult >= 20 and cAmmoMagic
+!mmm         chat [AttackSuccessClosingMagic]:  Au weia, da trifft $[targetName]{foeName} auch Zauberschaden, wenn die Abwehr nicht gelingt.
+!mmm       else if attackResult >= 20 and (not cAmmoMagic)
+!mmm         chat [AttackSuccessClosing]:       $[targetName]{foeName} kann nun abwehren.
 !mmm       else
-!mmm         chat [AttackFailureClosing]:       $[targetName]{foeName} war zu keinem Zeitpunkt in Gefahr (Angriff: $[attackResult]{attackResult+0}).
+!mmm         chat [AttackFailureClosing]:       $[targetName]{foeName} war zu keinem Zeitpunkt in Gefahr.
 !mmm       end if
 !mmm     end combine
 !mmm   end if
@@ -372,13 +382,14 @@
 !mmm     end if
 !mmm     chat:      {{Boni/Mali=**${modifiers}**}}
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
-!mmm     if semiAutoModCode % 23 == 0
-!mmm       chat:    {{Scharfschießen=${sharpExtraResult}}}
-!mmm     end if 
 !mmm     if attackFromBehind
 !mmm       chat:    {{Angriff von hinten=Bei Hinterhalt kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
 !mmm     end if 
-!mmm     if attackResult >= 20
+!mmm     if attackResult >= 20 and semiAutoModCode % 23 == 0
+!mmm       chat:    {{Basisschaden=${damageResultBasic}}}
+!mmm       chat:    {{Scharfschießen=${sharpExtraResult}}}
+!mmm       chat:    {{Vollschaden=${damageResult}}}
+!mmm     else if attackResult >= 20
 !mmm       chat:    {{Schaden=${damageResult}}}
 !mmm     end if
 !mmm     chat:      {{${ammoLabel}=${ammoCount}}}
