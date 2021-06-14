@@ -262,6 +262,20 @@
                 { whisper: "whisper" },
             ],
             [
+                "!mmm script",
+                "!mmm     set chat = undef",
+                "!mmm     do chat('broken')",
+                "!mmm end script",
+                { error: "During execute, unknown function in expression in script: !mmm     do chat❌('broken')" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set chat = undef",
+                "!mmm     chat: correct",
+                "!mmm end script",
+                { chat: "correct" },
+            ],
+            [
                 "!mmm do chat 'unknown operator'!",
                 { error: "During parse, syntax error in expression in script: do chat 'unknown operator'❌!" },
             ],
