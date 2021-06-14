@@ -238,6 +238,16 @@
                 { chat: "correct" },
             ],
             [
+                "!mmm script",
+                "!mmm     combine chat",
+                "!mmm         do chat('correct[1/2]')",
+                "!mmm     end combine",
+                "!mmm     do chat('correct[2/2]')",
+                "!mmm end script",
+                { chat: "correct[1/2]" },
+                { chat: "correct[2/2]" },
+            ],
+            [
                 "!mmm do chat 'unknown operator'!",
                 { error: "During parse, syntax error in expression in script: do chat 'unknown operator'❌!" },
             ],
