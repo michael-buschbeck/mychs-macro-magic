@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.20.1";
+const MMM_VERSION = "1.20.2";
 
 on("chat:message", function(msg)
 {
@@ -2357,7 +2357,7 @@ class MychScript
                 let combineNestedScriptExit;
 
                 let messages = [];
-                let prevChat = variables.chat;
+                let variablesToRestore = ("chat" in variables) ? { chat: variables.chat } : {};
 
                 try
                 {
@@ -2370,7 +2370,7 @@ class MychScript
                 }
                 finally
                 {
-                    variables.chat = prevChat;
+                    ("chat" in variablesToRestore) ? variables.chat = variablesToRestore.chat : delete variables.chat;
                 }
 
                 let combinedMessages =
