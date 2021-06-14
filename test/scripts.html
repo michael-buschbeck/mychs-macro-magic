@@ -248,6 +248,20 @@
                 { chat: "correct[2/2]" },
             ],
             [
+                "!mmm script",
+                "!mmm     set chat = whisperback",
+                "!mmm     do chat('whisper')",
+                "!mmm end script",
+                { whisper: "whisper" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     set chat = whisperback",
+                "!mmm     chat: whisper",
+                "!mmm end script",
+                { whisper: "whisper" },
+            ],
+            [
                 "!mmm do chat 'unknown operator'!",
                 { error: "During parse, syntax error in expression in script: do chat 'unknown operator'❌!" },
             ],
