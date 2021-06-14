@@ -2293,7 +2293,7 @@ class MychScript
                     message = "<br/>";
                 }
 
-                let chatContext = (variables.chat ? variables : this.context);
+                let chatContext = (variables.chat instanceof Function) ? variables : this.context;
                 chatContext.chat(message);
             },
 
