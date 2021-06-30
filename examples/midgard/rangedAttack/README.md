@@ -96,6 +96,10 @@ Minimalbeispiel für ein Wurfmesser, ohne die Erzählerei zu verändern (Vorauss
 
 ## Changelog
 
+1.8.8 2021-06-30 (requires MMM 1.16.0 or higher)
+
+- Bugfix: Normale Angriffe war im Drop-Down falsch kodiert
+
 1.8.7 2021-06-11 (requires MMM 1.16.0 or higher)
 
 - Scharfschießen-Funktion ergänzt
