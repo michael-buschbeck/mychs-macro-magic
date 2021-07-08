@@ -1,6 +1,6 @@
 ?{Weitere Angriffsmodifikatoren|
    Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;
-      NORMAL HALT +/-0                              &#44; 0     &#124;
+      NORMAL HALT +/-0                              &#44; 1     &#124;
       Mini-Ziel (1/4xMensch) -4                     &#44; 2     &#124;
       Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 3     &#124;
       Großes Ziel (2xMensch) +2                     &#44; 5     &#124;
