@@ -1,0 +1,329 @@
+!rem // Midgard Ranged Attack Script, special version for magic beam attack (rune blade "Water Walker")
+!rem
+!mmm script
+!mmm   set scriptVersion = "1.0.0-dev (2021-07-13, built on rangeAttack 1.8.8)"
+!mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.20
+!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Config: set defaults for customizable variables
+!rem   //
+!rem   //  cCheckVersion        Toggle version check
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
+!rem   //  cWeaponType          The type of weapon for narration, the "sword" in "I'm swinging my sword Glamdring"
+!rem   //  cRange               Attack range
+!rem   //  cAmmoLabel           Ammunition descriptor (plural, for attribute and output)
+!rem   //  cAmmoMagicDamage     Damage roll expression ("1d6+x") for optional additional magic damage
+!rem   //  cFoeNameDefault      Output label for targets without names
+!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
+!rem   //
+!mmm   set customizable cCheckVersion = false
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cWeaponLabel = "Wasserläufer (Langschwert)"
+!mmm   set customizable cWeaponName = "Wasserläufer"
+!mmm   set customizable cWeaponType = "Langschwert"
+!mmm   set customizable cRange = 5
+!mmm   set customizable cWeaponMagicSkillBonus = "+10"
+!mmm   set customizable cAmmoLabel = "Wasserstrahl"
+!mmm   set customizable cAmmoMagicDamage = "1d6+1"
+!mmm   set customizable cMagicEnduranceCost = 1
+!mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
+!mmm   set customizable cOwnID = sender.character_id
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Ranged Attack Script for Water Walker " & scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Refetch character_id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = cOwnID.character_id
+!mmm   if isdenied(cOwnID)
+!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
+!mmm     exit script
+!mmm   end if
+!rem
+!rem   // Init
+!rem   // - Constants
+!mmm   set emojiExhausted = "🥴"
+!mmm   set emojiLock = "🔒"
+!mmm   set m3mgdAttrBlastBearing = "m3mgd_waterWalkerBlastEffect_bearing"
+!mmm   set m3mgdAttrTargetID = "m3mgd_waterWalkerBlastEffect_targetID"
+!rem   // - Fetch character (attacker) data
+!mmm   set effAttackAttr = findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW")
+!mmm   if isdenied(cOwnID.(effAttackAttr)) or isunknown(cOwnID.(effAttackAttr))
+!rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
+!mmm     do whisperback("Abbruch: " & cOwnID.name & " hat keine Waffe namens " & cWeaponLabel & " (" & cOwnID.(effAttackAttr) & ").")
+!mmm     exit script
+!mmm   end if
+!rem   // - Fetch NPC (target) data
+!mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm   set foeName = foe.name
+!mmm   if isdenied(foeName) or isunknown(foeName)
+!mmm     set foeName = cFoeNameDefault
+!mmm   end if
+!mmm   set ownRotation = round(cOwnID.rotation) % 360
+!mmm   set foeRotation = round(foe.rotation) % 360
+!mmm   set foeEndurance = foe.bar2
+!rem
+!rem   // Calculate direction, exit if direction to target is outside arc of view 
+!mmm   set offsetYfromFoe = round((cOwnID.top  - foe.top)  * distscale())
+!mmm   set offsetXfromFoe = round((cOwnID.left - foe.left) * distscale())
+!mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
+!mmm   set foeDirectionFromMe = round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
+!mmm   set myViewAngle = ((foeDirectionFromMe - ownRotation) + 180) % 360 - 180
+!mmm   set foeViewAngle = ((ownDirectionFromFoe - foeRotation) + 180) % 360 - 180
+!mmm   if (myViewAngle < -45) or (myViewAngle > 45)
+!mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
+!mmm     exit script
+!mmm   end if
+!rem
+!rem   // Calculate distance, exit if distance exceeds range
+!mmm   set absTokenDistY = round((abs(cOwnID.top  - foe.top)  - .5 * cOwnID.height - .5 * foe.height) * distscale())
+!mmm   set absTokenDistX = round((abs(cOwnID.left - foe.left) - .5 * cOwnID.width  - .5 * foe.width)  * distscale())
+!mmm   set distance = max(absTokenDistY, absTokenDistX)
+!mmm   set distanceUnits = distunits() 
+!mmm   if distance > cRange
+!mmm     combine chat
+!mmm       chat [OutsideStrikeDistance]: $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRange}). Schade.
+!mmm       chat: Mein ${cAmmoLabel} fliegt grob in Richtung ${foeName}, der aber viel zu weit weg ist.
+!mmm       chat: ${"&"}{template:default} {{name=Angriff mit * ${cWeaponName}*: Außer Reichweite}} 
+!mmm       chat: {{Ziel=**${foeName}**}}
+!mmm       chat: {{Entfernung=${distance} ${distanceUnits} 
+!mmm       chat: (${round(distance/(distsnap()*distscale()))} Planquadrate, **außerhalb der Reichweite: >${cRange}m**)}}
+!mmm     end combine
+!mmm     exit script
+!mmm   end if
+!rem
+!rem   // Collect attack modifiers
+!mmm   set modifiers = 0
+!mmm   set autoModifiers = 0
+!mmm   set modifierLog = ""
+!mmm   set modifierTooltip = ""
+!rem   // Before we get to the specifics of this attack: if we have magic ammunition with a skill bonus, add that
+!mmm   if cWeaponMagicSkillBonus
+!mmm     set autoModifiers = autoModifiers + cWeaponMagicSkillBonus
+!mmm     if cWeaponMagicSkillBonus > 0
+!mmm       set cWeaponMagicSkillBonus = "+" & abs(cWeaponMagicSkillBonus)
+!mmm     end if 
+!mmm     set modifierLog = modifierLog & " {{" & cAmmoLabel & "=" & cWeaponMagicSkillBonus & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & cAmmoLabel & "&nbsp;&nbsp;&nbsp;" & cWeaponMagicSkillBonus & "<br/> "
+!mmm   end if
+!rem   // 1. Distance (n/a)
+!rem   // 2. Attacker exhausted
+!mmm   if cOwnID.AP <= 0
+!mmm     set autoModifiers = autoModifiers - 4
+!mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & cOwnID.name & "].AP:0)=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
+!mmm   end if
+!rem   // 3. Target exhausted
+!mmm   if isdenied(foeEndurance) 
+!mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP&nbsp;" & emojiLock & "=**ggf. EW+2**}}"
+!mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
+!mmm   else if foeEndurance <= 0
+!mmm     set autoModifiers = autoModifiers + 4
+!mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
+!mmm   end if
+!rem   // 4. Collect additional standard modifiers from user via dropdown menu
+!mmm   set semiAutoModCode = ?{Weitere Angriffsmodifikatoren|   Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;      NORMAL HALT +/-0                              &#44; 1     &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 2     &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 3     &#124;      Großes Ziel (2xMensch) +2                     &#44; 5     &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 7     &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 17      &#125; |   Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ...&#124;      SONST NIX +/-0                                &#44; 11    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 22    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 33    &#124;      Großes Ziel (2xMensch) +2                     &#44; 55    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 77    &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 143   &#124;      Angriff ins Handgemenge (Zufallsopfer) +4     &#44; 187      &#125; |   Schnelles Ziel (30m+/Runde) -2, ?{Schnelles Ziel -2 +/- ...&#124;      SONST NIX +/-0                                &#44; 13    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 26    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 39    &#124;      Großes Ziel (2xMensch) +2                     &#44; 65    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 91    &#124;      Spontaner Angriff -4                          &#44; 143   &#124;      Sorgfältig gezielt +4                         &#44; 247      &#125; |   Sorgfältig gezielt +4, ?{Sorgfältig gezielt +4 +/- ...&#124;      SONST NIX +/-0                                &#44; 19    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 38    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 57    &#124;      Großes Ziel (2xMensch) +2                     &#44; 95    &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 133   &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 247      &#125; |   Scharfschießen +4/Spezial, ?{Scharfschießen +4/Spezial +/- ...&#124;      SONST NIX +/-0                                &#44; 23    &#124;      Mini-Ziel (1/4xMensch) -4                     &#44; 46    &#124;      Kleines Ziel/halb gedeckt (1/2xMensch) -2     &#44; 69    &#124;      Großes Ziel (2xMensch) +2                     &#44; 115   &#124;      Riesiges Ziel (4xMensch) +4                   &#44; 161   &#124;      Schnelles Ziel (30m+/Runde) -2                &#44; 299      &#125;}
+!mmm   if semiAutoModCode % 23 == 0
+!rem     // Check if PC has sharpshooting skill
+!mmm     if not sharpshootingSkill
+!mmm       do whisperback("Abbruch: " & cOwnID.name & " hat die Fertigkeiten Scharfschießen nicht.")
+!mmm       exit script
+!mmm     end if
+!mmm     set semiAutoModifiers = semiAutoModifiers + 4
+!mmm     set modifierLog = modifierLog & " {{Scharfschießen=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Scharfschießen&nbsp;&nbsp;&nbsp;+4 "
+!mmm   end if
+!mmm   if semiAutoModCode % 19 == 0
+!mmm     set semiAutoModifiers = semiAutoModifiers + 4
+!mmm     set modifierLog = modifierLog & " {{Sorgfältig gezielt=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Sorgfältig&nbsp;gezielt&nbsp;&nbsp;&nbsp;+4 "
+!mmm   end if
+!mmm   if semiAutoModCode % 17 == 0
+!mmm     set semiAutoModifiers = semiAutoModifiers + 4
+!mmm     set modifierLog = modifierLog & " {{Angriff ins Handgemenge=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;ins&nbsp;Handgemenge&nbsp;&nbsp;&nbsp;+4 "
+!rem     // TODO: Remind user to throw dice to identify actual target!
+!mmm   end if
+!mmm   if semiAutoModCode % 13 == 0
+!mmm     set semiAutoModifiers = semiAutoModifiers - 2
+!mmm     set modifierLog = modifierLog & " {{Schnelles Ziel=-2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Schnelles&nbsp;Ziel&nbsp;&nbsp;&nbsp;-2 "
+!mmm   end if
+!mmm   if semiAutoModCode % 11 == 0
+!mmm     set semiAutoModifiers = semiAutoModifiers - 4
+!mmm     set modifierLog = modifierLog & " {{Spontaner Angriff=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Spontaner&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
+!mmm   end if
+!mmm   if semiAutoModCode % 7 == 0
+!mmm     set semiAutoModifiers = semiAutoModifiers + 4
+!mmm     set modifierLog = modifierLog & " {{Riesiges Ziel=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Riesiges&nbsp;Ziel&nbsp;&nbsp;&nbsp;+4 "
+!mmm   end if
+!mmm   if semiAutoModCode % 5 == 0
+!mmm     set semiAutoModifiers = semiAutoModifiers + 2
+!mmm     set modifierLog = modifierLog & " {{Großes Ziel=+2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Großes&nbsp;Ziel&nbsp;&nbsp;&nbsp;+2 "
+!mmm   end if
+!mmm   if semiAutoModCode % 3 == 0
+!mmm     set semiAutoModifiers = semiAutoModifiers - 2
+!mmm     set modifierLog = modifierLog & " {{Kleines/halb verdecktes Ziel=-2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Kleines/halb&nbsp;verdecktes&nbsp;Ziel&nbsp;&nbsp;&nbsp;-2 "
+!mmm   end if
+!mmm   if semiAutoModCode % 2 == 0
+!mmm     set semiAutoModifiers = semiAutoModifiers -4
+!mmm     set modifierLog = modifierLog & " {{Sehr kleines Ziel=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Sehr&nbsp;kleines&nbsp;Ziel&nbsp;&nbsp;&nbsp;-4 "
+!mmm   end if
+!rem   // Ask for individual modifiers and sum up the various modifiers
+!mmm   set manualModifiers = ?{Weitere spezielle Angriffsmodifikatoren|0}
+!mmm   if manualModifiers != 0
+!mmm     if manualModifiers > 0
+!mmm       set manualModifiers = "+" & manualModifiers
+!mmm     end if
+!mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & manualModifiers & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & manualModifiers & " "
+!mmm   end if
+!mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + manualModifiers
+!rem
+!rem   // Check for attack from behind
+!mmm   if (foeViewAngle < -135) or (foeViewAngle > 135)
+!mmm     set attackFromBehind = true
+!mmm   else
+!mmm     set attackFromBehind = false
+!mmm   end if
+!rem
+!rem   // Run & format rolls
+&{template:none} [[1d20]] {{}}
+!mmm   set attackRoll = $[[0]]
+!mmm   set attackResult = attackRoll + cOwnID.(effAttackAttr) + modifiers
+!mmm   if modifiers == 0
+!mmm     set modifiers = "+/-0"
+!mmm   else if modifiers > 0
+!mmm     set modifiers = "+" & modifiers
+!mmm   end if
+!mmm   if modifierLog eq ""
+!mmm     set modifierLog = "{{Boni/Mali=keine}}"
+!mmm   end if
+!mmm   set modifiers = highlight(modifiers, "info", modifierTooltip)
+!mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & cOwnID.(effAttackAttr) & ") " & modifiers
+!mmm   set attackResult = highlight(attackResult, default, attackResultLog)
+!mmm
+!rem   // Process endurance cost
+!mmm   do setattr(cOwnID, "AP", cOwnID.AP - cMagicEnduranceCost)
+!mmm 
+!mmm   if attackResult >= 20
+!rem     // Damage roll (and make sure it doesn't get negative)
+!mmm     set damageResult = roll(cAmmoMagicDamage)
+!mmm     set damageResultLog = "(" & cAmmoMagicDamage & " = " & damageResult & ")"
+!mmm     if damageResult < 0
+!mmm       set damageResult = highlight(0, "bad")
+!mmm     end if
+!mmm     set damageResultBasic = highlight(damageResult, damageResult, damageResultLog)
+!rem     // Special case: sharpshooting
+!mmm     set sharpExtraDamage = 0
+!mmm     if semiAutoModCode % 23 == 0
+!mmm       set sharpExtraRoll = roll("1d20")
+!mmm       set sharpExtraResult = sharpExtraRoll + cOwnID.(effAttackAttr) + modifiers - 4 + sharpshootingSkill
+!mmm       set sharpExtraTooltip = sharpExtraResult & " = (1d20 = " & sharpExtraRoll & ") + (EW = " & cOwnID.(effAttackAttr) & ") + " & modifiers - 4 & " + (FW:Scharfschießen = " & sharpshootingSkill & ")"
+!mmm       set sharpExtraResult = highlight(sharpExtraResult, "normal", sharpExtraTooltip)
+!mmm       if sharpExtraResult >= 20
+!mmm         set sharpExtraDamage = round(sharpExtraResult * .1)
+!mmm         set damageResult = damageResult + sharpExtraDamage
+!mmm         set damageResultLog = damageResultLog & " + (Scharfschuss-Bonus = " & sharpExtraDamage & ")"
+!mmm       end if
+!mmm     end if
+!rem     // Complete damage variables
+!mmm     set damageResultLog = damageResult & " = " & damageResultLog
+!mmm     set damageResult = highlight(damageResult, default, damageResultLog)
+!rem     // Store blast target and direction for use by waterWalkerBlastEffect script
+!mmm     do setattr(cOwnID, m3mgdAttrTargetID, foe.token_id)
+!mmm     do setattr(cOwnID, m3mgdAttrBlastBearing, foeDirectionFromMe)
+!mmm   end if
+!mmm
+!rem   // Pull together a sensible guess at a default way of addressing the weapon for output
+!mmm   if cWeaponName eq ""
+!mmm     set outputWeaponLabel = cWeaponLabel
+!mmm   else
+!mmm     set outputWeaponLabel = cWeaponType & " *" & cWeaponName & "*"
+!mmm   end if
+!mmm
+!rem   // Prepare visual indicator of exhaustion or lack to access to endurance attribute for output
+!mmm   if isdenied(foeEndurance)
+!mmm     set foeEnduranceIndicator = highlight(emojiLock, "bad", foeName & ".AP: Zugriff verweigert")
+!mmm   else if foeEndurance <= 0
+!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "normal", foeName & ".AP:0")
+!mmm   else
+!mmm     set foeEnduranceIndicator = ""
+!mmm   end if 
+!mmm
+!mmm   if cVerbose
+!mmm     combine chat
+!mmm       chat [AttackOpening]:                Fernkampfangriff mit **$[weaponName]{cWeaponName}**: Ein $[ammoLabel]{cAmmoLabel} schießt auf $[targetName]{foeName} zu und 
+!mmm       if iscritical(attackRoll)
+!mmm         chat [AttackIsCriticalSuccess]:    ist ein **kritischer Erfolg**. 
+!mmm       else if isfumble(attackRoll)
+!mmm         chat [AttackIsCriticalFailure]:    ist ein **grausamer Patzer**. 
+!mmm       else if attackResult >= 22
+!mmm         chat [AttackSucceedsWell]:         scheint ein ordentlicher Treffer zu werden, wenn $[targetName]{foeName} die Abwehr nicht gelingt.
+!mmm       else if attackResult >= 20
+!mmm         chat [AttackSucceedsBarely]:       trifft gerade so, wenn $[targetName]{foeName} die Abwehr nicht gelingt.
+!mmm       else if attackResult >= 18
+!mmm         chat [AttackFailsBarely]:          verfehlt knapp. $[targetName]{foeName} muss nicht ausweichen, aber **steht dahinter noch jemand?**
+!mmm       else
+!mmm         chat [AttackFailsClearly]:         verfehlt weit. $[targetName]{foeName} muss nicht einmal ausweichen.
+!mmm       end if
+!mmm       if attackResult >= 20 and sharpExtraDamage
+!mmm         chat [AttackSuccessSharpshooting]: Der wird wehtun: das Scharfschützentraining hat sich mal wieder ausgezahlt.
+!mmm       end if
+!mmm       if attackResult < 20
+!mmm         chat [AttackFailureClosing]:       $[targetName]{foeName} war zu keinem Zeitpunkt in Gefahr.
+!mmm       end if
+!mmm     end combine
+!mmm   end if
+!rem
+!rem   // Add data table for easy reference
+!mmm   combine chat
+!mmm     chat:      ${"&"}{template:default} {{name=Fernkampf-Angriff mit * ${cWeaponName} *}} 
+!mmm     chat:      {{Ziel=**${foeName}** ${foeEnduranceIndicator}}}
+!mmm     if iscritical(attackRoll)
+!mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${attackRoll})}}
+!mmm     else if attackResult >= 20
+!mmm       chat:    {{Erfolg=${attackResult} (**Wurf** ${attackRoll})}}
+!mmm     else 
+!mmm       chat:    {{Fehlschlag=${attackResult} (**Wurf** ${attackRoll})}}
+!mmm     end if
+!mmm     chat:      {{Boni/Mali=**${modifiers}**}}
+!mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate)}}
+!mmm     if attackFromBehind
+!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
+!mmm     end if 
+!mmm     if attackResult >= 20 and not isfumble(attackRoll) and semiAutoModCode % 23 == 0
+!mmm       chat:    {{Basisschaden=${damageResultBasic}}}
+!mmm       chat:    {{Scharfschießen=${sharpExtraResult}}}
+!mmm       chat:    {{Vollschaden=${damageResult}}}
+!mmm     else if attackResult >= 20 and not isfumble(attackRoll)
+!mmm       chat:    {{Schaden=${damageResult}}}
+!mmm     end if
+!mmm   end combine
+!mmm   combine chat
+!mmm     chat: /w GM ${"&"}{template:default} ${modifierLog} {{ AP = (-${cMagicEnduranceCost} =) ${cOwnID.AP} }}
+!mmm     if attackResult >= 20 and not isfumble(attackRoll)
+!mmm       chat: {{Wenn Abwehr fehlschlägt=[**Druckeffekt**](~waterWalkerBlastEffect)}}
+!mmm     end if
+!mmm   end combine
+!mmm   chat: /w ${cOwnID.name} ${"&"}{template:default} ${modifierLog} {{ AP = (-${cMagicEnduranceCost} =) ${cOwnID.AP} }}
+!mmm   if iscritical(attackRoll) and foeEndurance > 0
+!mmm     chat: /w "${cOwnID.name}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm     chat: /w GM            ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm   else if iscritical(attackRoll)
+!mmm     chat: /w "${cOwnID.name}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
+!mmm   end if
+!mmm end script
