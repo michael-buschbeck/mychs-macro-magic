@@ -400,11 +400,11 @@
             ],
             [
                 "noStruct.someProp",
-                { result: "\"(unknown property 'someProp')\"" },
+                { result: "[unknown: Unknown attribute: someProp]" },
             ],
             [
                 "'literal string'.someProp",
-                { result: "\"(unknown property 'someProp')\"" },
+                { result: "[unknown: Unknown attribute: someProp]" },
             ],
             [
                 "6+++++7",
@@ -751,18 +751,19 @@
 
         MychScriptContext.prototype.getattr = function(characterName, attributeName)
         {
-            return "15";
+            switch (attributeName)
+            {
+                case "HP":
+                    return "15";
+            }
+
+            return new MychScriptContext.Unknown("Unknown attribute: " + attributeName);
         }
 
         MychScriptContext.prototype.async = function*(intermediate, result)
         {
             yield intermediate;
             return result;
-        }
-
-        MychScriptContext.prototype.getprop = function(struct, key)
-        {
-            return "(unknown property '" + key + "')";
         }
 
         MychScriptContext.prototype.$debugSendExpression = function(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
@@ -798,6 +799,33 @@
                 propC: "C!",
             },
         };
+
+        function getResultRepresentation(context, result)
+        {
+            if (context.isdefault(result))
+            {
+                return "[default]";
+            }
+
+            if (context.isunknown(result))
+            {
+                let reason = context.getreason(result);
+                return reason ? ("[unknown: " + reason + "]") : "[unknown]";
+            }
+
+            if (context.isdenied(result))
+            {
+                let reason = context.getreason(result);
+                return reason ? ("[denied: " + reason + "]") : "[denied]";
+            }
+
+            if (result && result.toScalar instanceof Function)
+            {
+                return getResultRepresentation(context, result.toScalar());
+            }
+
+            return MychExpression.literal(result);
+        }
 
         let numTestsRun = 0;
         let numTestsSuccessful = 0;
@@ -838,14 +866,14 @@
                     outputs.push(
                     {
                         type: "yield",
-                        text: MychExpression.literal(resultContainer.value),
+                        text: getResultRepresentation(expression.context, resultContainer.value),
                     });
                 }
 
                 outputs.push(
                 {
                     type: "result",
-                    text: MychExpression.literal(resultContainer.value),
+                    text: getResultRepresentation(expression.context, resultContainer.value),
                 });
 
                 if (expression.isConstant())
