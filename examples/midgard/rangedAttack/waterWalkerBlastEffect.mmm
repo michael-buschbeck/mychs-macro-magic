@@ -1,0 +1,46 @@
+!rem // waterWalkerBlastEffect
+!rem // v1.0.0 2021-07-13
+!rem
+!mmm script
+!rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
+!rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
+!rem   //  cActivateGIF         GIF to play as the earth rises up to bind the foe's legs
+!mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
+!mmm   set customizable cWeaponLabel = "Wasserläufer (Langschwert)"
+!mmm   set customizable cActivateGIF = ""
+!mmm
+!rem   // Initialize constants
+!mmm   set m3mgdAttrBlastBearing = "m3mgd_waterWalkerBlastEffect_bearing"
+!mmm   set m3mgdAttrTargetID = "m3mgd_waterWalkerBlastEffect_targetID"
+!mmm 
+!rem   // TODO: add check for foe.St and cWeaponWielder being accessible and foe.top/left writable once bug #123 is fixed
+!rem   // Identify target (user points to token)
+!mmm   set foe = cWeaponWielder.(m3mgdAttrTargetID)
+!mmm
+!rem   // Dazzle players with special effects
+!mmm   do spawnfx("beam-water", cWeaponWielder.left, cWeaponWielder.top, foe.left, foe.top)
+!mmm
+!mmm   set stRoll = roll("1d100")
+!mmm   if stRoll <= 0.5 * foe.St
+!mmm     chat: Der Wasserstrahl mag gezwickt haben, aber ${foe.name} verzieht ansonsten keine Wimper.
+!mmm   else if stRoll <= 0.8 * foe.St
+!mmm     chat: ${foe.name} zuckt überrascht, als der Wasserstrahl trifft, aber wirklich aus der Ruhe bringt ihn/sie der nicht.
+!mmm   else if stRoll <= foe.St
+!mmm     chat: ${foe.name} spannt gerade noch rechtzeitig den Körper an, stellt sich dem Strahl entgegen und schafft es stehen zu bleiben.
+!mmm   else
+!mmm     set blastDistance = roll("1d6-1")
+!mmm     if blastDistance == 0
+!mmm       chat: Der harte Strahl lässt ${foe.name} auf der Stelle stolpern und stürzen.
+!mmm     else 
+!mmm       set blastBearing = cWeaponWielder.(m3mgdAttrBlastBearing)
+!mmm       do setattr(foe, "left", foe.left - (sin(blastBearing) * blastDistance / distscale()))
+!mmm       do setattr(foe, "top", foe.top + (cos(blastBearing) * blastDistance / distscale()))
+!mmm       chat: Der harte Wasserstrahl spült ${foe.name} ${blastDistance} Meter nach hinten und auf den Hosenboden.
+!mmm     end if
+!mmm   end if
+!mmm   
+!mmm   do setattr(cWeaponWielder, m3mgdAttrTargetID, "")
+!mmm   do setattr(cWeaponWielder, m3mgdAttrBlastBearing, "")
+!mmm end script
