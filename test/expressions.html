@@ -369,6 +369,26 @@
                 { result: "\"15\"" },
             ],
             [
+                "'Char1'.HP",
+                { result: "\"15\"" },
+            ],
+            [
+                "getattr('Char1', 'XX')",
+                { result: "[unknown: Unknown attribute: XX]" },
+            ],
+            [
+                "'Char1'.XX",
+                { result: "[unknown: Unknown attribute: XX]" },
+            ],
+            [
+                "isunknown(getattr('Char1', 'XX'))",
+                { result: "true" },
+            ],
+            [
+                "isunknown('Char1'.XX)",
+                { result: "true" },
+            ],
+            [
                 "async('background process', 999)",
                 { yield: "\"background process\"" },
                 { result: "999" },
