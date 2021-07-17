@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.20.2";
+const MMM_VERSION = "1.20.3";
 
 on("chat:message", function(msg)
 {
@@ -237,11 +237,6 @@ class MychScriptContext
         }
     }
 
-    isdefault(value)
-    {
-        return (value instanceof MychScriptContext.Default);
-    }
-
     static DiagnosticUndef = class
     {
         constructor(reason = undefined)
@@ -284,14 +279,49 @@ class MychScriptContext
         textColor = "white";
     }
 
+    isdefault(value)
+    {
+        if (value instanceof MychScriptContext.Default)
+        {
+            return true;
+        }
+
+        if (value && value.toScalar instanceof Function)
+        {
+            return this.isdefault(value.toScalar());
+        }
+
+        return false;
+    }
+
     isunknown(value)
     {
-        return (value instanceof MychScriptContext.Unknown);
+        if (value instanceof MychScriptContext.Unknown)
+        {
+            return true;
+        }
+
+        if (value && value.toScalar instanceof Function)
+        {
+            return this.isunknown(value.toScalar());
+        }
+
+        return false;
     }
 
     isdenied(value)
     {
-        return (value instanceof MychScriptContext.Denied);
+        if (value instanceof MychScriptContext.Denied)
+        {
+            return true;
+        }
+
+        if (value && value.toScalar instanceof Function)
+        {
+            return this.isdenied(value.toScalar());
+        }
+
+        return false;
     }
 
     getreason(value)
@@ -299,6 +329,11 @@ class MychScriptContext
         if (value instanceof MychScriptContext.DiagnosticUndef)
         {
             return value.reason;
+        }
+
+        if (value && value.toScalar instanceof Function)
+        {
+            return this.getreason(value.toScalar());
         }
         
         return new MychScriptContext.Unknown("Only <strong>denied</strong> and <strong>unknown</strong> values can have a reason");
