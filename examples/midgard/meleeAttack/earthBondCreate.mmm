@@ -1,0 +1,62 @@
+!rem // earthBondCreate
+!rem // Player script: Create an earthen bond as a special ability of the magic rune blade "Stoneheart"
+!rem // v1.0.0 2021-07-13 phr
+!mmm script
+!rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
+!rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
+!rem   //  cActivateGIF         GIF to play as the earth rises up to bind the foe's legs
+!mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
+!mmm   set customizable cWeaponMagicMarker = "status_cobweb"
+!mmm   set customizable cWeaponToggleCost = 1
+!mmm   set customizable cCharID = sender.token_id
+!mmm
+!rem   // Identify target (user points to token)
+!mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm 
+!rem   // Process exclusionary conditions and outcomes
+!rem   // - Check for melee range (<=1 grid cell) and orientation
+!mmm   set offsetYfromFoe = round((cCharID.top  - foe.top)  * distscale())
+!mmm   set offsetXfromFoe = round((cCharID.left - foe.left) * distscale())
+!mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
+!mmm   set foeDirectionFromMe = round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
+!mmm   set myViewAngle = (((foeDirectionFromMe - ownRotation) + 180) % 360 + 360) % 360 - 180
+!mmm   set foeViewAngle = (((ownDirectionFromFoe - foeRotation) + 180) % 360 + 360) % 360 - 180
+!mmm   if (myViewAngle < -90) or (myViewAngle > 90)
+!mmm     do whisperback(foe.name & " ist außerhalb meines Blickfeldes (" & myViewAngle & "°). Schade.")
+!mmm     exit script
+!mmm   end if
+!mmm   set absTokenDistY = round(((abs(cCharID.top  - foe.top))  - .5 * cCharID.height - .5 * foe.height) * distscale())
+!mmm   set absTokenDistX = round(((abs(cCharID.left - foe.left)) - .5 * cCharID.width  - .5 * foe.width)  * distscale())
+!mmm   set distance = max(absTokenDistY, absTokenDistX)
+!mmm   set distanceUnits = distunits() 
+!mmm   if (distance/(distsnap()*distscale())) > 0
+!mmm     do whisperback(foe.name & " ist zu weit entfernt, um eine Erdfessel auszulösen (max. 1m). Schade.")
+!mmm     exit script
+!mmm   end if
+!rem   // - Character exhausted => earthbond cannot work
+!mmm   if cWeaponToggleCost > 0 and cCharID.AP <= 0
+!mmm     do whisperback("Nichts passiert, außer dass ein einsamer Schweißtropfen an meinem Haupt hinunterrollt.")
+!rem   // - Character does not wield the magic weapon Stoneheart
+!mmm   else if not findattr(cCharID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW")
+!mmm     do whisperback("WO IST DIE ERDKLINGE?! Ich scheine sie jedenfalls nicht zu führen.")
+!rem   // - Character is maintaining another earthbond => no second earthbond possible
+!mmm   else if cCharID.(cWeaponMagicMarker)
+!mmm     do whisperback("Nichts passiert. Ich hab ja noch eine andere aktive Erdfessel, ich Dussel!")
+!rem   // - No exclusionary conditions: begin creating a new earthbond (to be completed by GM)
+!mmm   else if not cCharID.(cWeaponMagicMarker)
+!mmm     chat: Ich richte *${cWeaponName}* auf den Boden vor ${foe.name}. [x](${cActivateGIF})
+!mmm     if cWeaponToggleCost > 0
+!mmm       do setattr(cCharID, "AP", cCharID.AP - cWeaponToggleCost)
+!mmm       chat: /w "${cCharID.name}" Das hat ${cWeaponToggleCost} AP gekostet.
+!mmm     end if
+!mmm     chat: /w gm ${cCharID.name} hat eine magische Erdfessel gegen **${foe.name}** erzeugt. (Kosten: ${cWeaponToggleCost} AP, schon abgezogen.)
+!mmm     chat: /w gm Die Erdfessel wirkt erst, wenn du [**ANWENDEN**](~earthBondApply) klickst.
+!mmm   end if
+!rem   // If this act exhausted the character, let them and the GM know
+!mmm   if cCharID.AP <= 0
+!mmm     chat: /w "${cCharID.name}" Ich bin erschöpft (**AP=0**).
+!mmm     chat: /w gm ${cCharID.name} ist nun erschöpft (**AP=0**).
+!mmm   end if
+!mmm end script

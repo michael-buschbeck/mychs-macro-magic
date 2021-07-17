@@ -1,0 +1,28 @@
+!rem // earthBondApply
+!rem // GM script: Apply a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
+!rem // v1.0.0 2021-07-13 phr
+!mmm script
+!rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
+!rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
+!rem   //  cActivateGIF         GIF to play as the earth rises up to bind the foe's legs
+!mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
+!mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
+!mmm   set customizable cWeaponMagicMarker = "status_cobweb"
+!mmm   set customizable cActivateGIF = ""
+!mmm
+!rem   // Identify target (user points to token)
+!mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm 
+!mmm   if foe.(cWeaponMagicMarker) eq "shown"
+!mmm     do whisperback("Token " & foe.name & " ist bereits von einer Erdfessel gefangen oder hat den cobweb-Status.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   do setattr(foe.token_id, cWeaponMagicMarker, true)
+!mmm   do setattr(cWeaponWielder.token_id, cWeaponMagicMarker, true)
+!mmm   chat: Der Boden unter ${foe.name} wächst blitzschnell knöchelhoch an: das dürfte es deutlich schwerer machen, sich zu bewegen. [x](${cActivateGIF})
+!mmm
+!mmm   chat: /w GM ${"&"}{template:default} {{name=Erdfessel}} {{ Opfer = ${foeID.name}}} {{ Folge = Abwehr -2 }} {{ Option = [**ENTFERNEN**](~earthBondRemove) }}
+!mmm end script
