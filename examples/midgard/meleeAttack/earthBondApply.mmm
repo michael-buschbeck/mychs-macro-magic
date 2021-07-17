@@ -14,9 +14,13 @@
 !mmm
 !rem   // Identify target (user points to token)
 !mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm   set gmConfirmGroundCondition = ?{Ist der Boden aus Erde, Schlamm, Sand oder Staub?|Nein,0|Ja,1}
 !mmm 
 !mmm   if foe.(cWeaponMagicMarker) eq "shown"
 !mmm     do whisperback("Token " & foe.name & " ist bereits von einer Erdfessel gefangen oder hat den cobweb-Status.")
+!mmm     exit script
+!mmm   else if gmConfirmGroundCondition == 0
+!mmm     do whisperback("Token " & foe.name & " steht nicht auf Erde, Schlamm, Sand oder Staub, d.h. die Erdfessel kann nicht erzeugt werden.")
 !mmm     exit script
 !mmm   end if
 !mmm
