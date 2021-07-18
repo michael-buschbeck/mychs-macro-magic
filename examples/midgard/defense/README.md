@@ -28,12 +28,7 @@ Unterschiedliche Rüstungen werden demgegenüber so behandelt, wie im Charakterb
 
 Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der als Absender im Chatfenster steht, kann für seine Charaktere das Konfigskript jeweils als Ability anlegen und darin `!mmm set cOwnID = "@{character_id}"` setzen. Damit wird der Bezugscharakter jeweils korrekt gesetzt, egal wer gerade im Chat als Absender steht.
 
-Soll das Skript für generische NPCs ("Ork1" bis "Ork17", die alle auf dem gleichen Charakterblatt basieren) benutzt werden, dann kann der Spielleiter im Konfigskript die folgenden Zeilen setzen, damit sich die Treffer jeweils nur auf die Ausdauer- und Lebenspunkte des jeweiligen Tokens ("Ork1") statt auf den Charakterbogen *aller* Orks auswirken:
-
-```javascript
-!mmm   set cHealthAttr = "bar1"
-!mmm   set cEnduranceAttr = "bar3"
-```
+Das Skript kann entweder für ein beliebiges Token im Zugriff des Spielers aufgerufen werden, dann muss das Token ausgewählt sein. Wenn kein Token ausgewählt ist, wird es für den eigenen Charakter ausgeführt.
 
 #### Geschichtenerzählerausgabe
 
@@ -74,7 +69,7 @@ Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzu
 !mmm customize
 !mmm    set cVerbose = true
 !mmm    set cWeaponLabel = "Parierdolch"
-!mmm    set cOwnID = "@{character_id}"
+!mmm    set cOwnID = "@{token_id}"
 !mmm end customize
 #defend
 ```
@@ -83,7 +78,7 @@ Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzu
 
 1.4.0 2021-07-08
 
-- Auch für generische NPCs nutzbar (erfordert MMM 1.18.0)
+- Auch für generische NPCs nutzbar (erfordert MMM 1.20.0)
 
 1.3.1 2021-04-27
 
