@@ -1,9 +1,13 @@
 !rem // Midgard Combat Defense Script
 !rem // 
-!rem // - Für generische NPCs nutzbar gemacht: AP/LP-Attribute konfigurierbar, token_id statt character_id, Workaround für Rüstung
-!rem
 !mmm script
 !mmm   set scriptVersion = "1.4.0-dev (2021-05-13)"
+!mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.18
+!mmm     do whisperback("Abbruch: MMM-Version 1.18.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
