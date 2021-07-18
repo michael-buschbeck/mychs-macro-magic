@@ -1,0 +1,50 @@
+!rem // earthBondRemove
+!rem // GM script: Remove a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
+!rem // v1.0.0 2021-07-13 phr
+!mmm script
+!rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
+!rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
+!rem   //  cDeactivateGIF       GIF to play as the earth releases the foe
+!mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
+!mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
+!mmm   set customizable cWeaponMagicMarker = "status_cobweb"
+!mmm   set customizable cDeactivateGIF = ""
+!mmm
+!mmm   if not cWeaponWielder.name eq cWeaponWielder
+!mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Identify target (GM points to token) & removal option
+!mmm   set foe = "@{target|Wer trägt die Erdfessel?|token_id}"
+!mmm   set releaseMode = "?{Wie wird die Erdfessel entfernt? | Auf Wunsch des Schöpfers,releaseByCreator| Langsam und vorsichtig (5min),escapeByPatience| Mit Gewalt (PW:Gw),escapeByForce}"
+!mmm 
+!mmm   if foe.(cWeaponMagicMarker) ne "shown"
+!mmm     do whisperback("Token " & foe.name & " trägt aber keine Erdfessel oder " & cWeaponMagicMarker & " wurde schon entfernt.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   if releaseMode eq "releaseByCreator"
+!mmm     do setattr(cWeaponWielder, "AP", cWeaponWielder.AP - 1)
+!mmm     chat: Die Erdfessel gibt ${foe.name} frei, und plötzlich sieht der Untergrund wieder aus wie vorher, als wäre nichts gewesen. [x](${cDeactivateGIF})
+!mmm   else if releaseMode eq "escapeByPatience"
+!mmm     chat: Im Laufe von fünf laaaaangen Minuten befreit sich ${foe.name} seeeehr laaaangsaaaam aus ${cWeaponWielder.name}s Erdfessel. Mit großer Geduld gelingt das auch. [x](${cDeactivateGIF})
+!mmm   else if releaseMode eq "escapeByForce"
+!mmm     set dxRoll = roll("1d100")
+!mmm     if isunknown(?(foe.Gw))
+!mmm       chat: /w GM ${foe.name} erlaubt keinen Zugriff auf das Attribut **Gw**. Bitte manuell würfeln (+/-0) und bei Erfolg die beiden Statusmarker entfernen.
+!mmm       exit script
+!mmm     else if dxRoll > foe.Gw
+!mmm       chat: /w GM **Ausbruch aus Erdfessel:** PW:Gw(${foe.Gw}) ist mit ${dxRoll} **fehlgeschlagen.**
+!mmm       chat: ${foe.name} versucht sich ruckartig von ${cWeaponWielder.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter!
+!mmm       exit script
+!mmm     else
+!mmm       chat: /w GM **Ausbruch aus Erdfessel:** PW:Gw(${foe.Gw}) ist mit ${dxRoll} **gelungen.**
+!mmm       chat: ${foe.name} befreit sich elegant von ${cWeaponWielder.name}s Erdfessel. Es kann so einfach sein! [x](${cDeactivateGIF})
+!mmm     end if
+!mmm   end if
+!mmm   do setattr(foe, cWeaponMagicMarker, false)
+!mmm   do setattr(cWeaponWielder, cWeaponMagicMarker, false)
+!mmm end script

@@ -1,0 +1,45 @@
+!rem // Magische Runenklinge "Feuer" (Langschwert)
+!rem // Aktivierungs- und Deaktivierungsskript für Midgard und MMM
+!rem // v1.2 2021-03-16 phr
+!mmm script
+!rem   // Config (overwrite in a customize block called immediately before this script)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
+!rem   //  cWeaponType          The type of weapon for narration, the "sword" in "I'm swinging my sword Glamdring"
+!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
+!rem   //  cWeaponToggleCost    Endurance cost (AP) to activating the weapon's magic
+!mmm   set customizable cWeaponLabel = "Feuermal (Langschwert)"
+!mmm   set customizable cWeaponName = "Feuermal"
+!mmm   set customizable cWeaponType = "Langschwert"
+!mmm   set customizable cWeaponMagicMarker = "status_all_for_one"
+!mmm   set customizable cWeaponToggleCost = 1
+!mmm   set customizable cActivateGIF = "https://media.giphy.com/media/3og0IDCumL5GLx7zag/giphy.gif"
+!mmm   set customizable cDeactivateGIF = "https://media.giphy.com/media/hSvQn8tqv16bkzCGYI/giphy.gif"
+!mmm
+!mmm   set ownName = getattr(sender, "name")
+!mmm   set endurance = getattr(sender, "AP")
+!mmm 
+!mmm   if cWeaponToggleCost > 0 and endurance <= 0
+!mmm     do whisperback("Nichts passiert.")
+!mmm   else if getattr(sender, cWeaponMagicMarker) eq "shown"
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und die Flammen um mein ${cWeaponType} *${cWeaponName}* erlöschen. [x](${cDeactivateGIF})
+!mmm     do setattr(sender, cWeaponMagicMarker, false)
+!mmm     if cWeaponToggleCost > 0
+!mmm       set endurance = setattr(sender, "AP", endurance - cWeaponToggleCost)
+!mmm       chat: /w "${ownName}" Das hat ${cWeaponToggleCost} AP gekostet.
+!mmm       chat: /GM ${ownName} hat die magischen Flammen seiner Runenklinge deaktiviert. Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen).
+!mmm     end if
+!mmm   else
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Flammen um mein ${cWeaponType} *${cWeaponName}* zu züngeln. [x](${cActivateGIF})
+!mmm     do setattr(sender, cWeaponMagicMarker, true)
+!mmm     if cWeaponToggleCost > 0
+!mmm       set endurance = setattr(sender, "AP", endurance - cWeaponToggleCost)
+!mmm       chat: /w "${ownName}" Das hat ${cWeaponToggleCost} AP gekostet.
+!mmm       chat: /GM ${ownName} hat die magischen Flammen seiner Runenklinge aktiviert. Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen). 
+!mmm     end if
+!mmm   end if
+!mmm   if endurance <= 0
+!mmm     chat: /w "${ownName}" Ich bin erschöpft (**AP=0**).
+!mmm     chat: /GM ${ownName} ist nun erschöpft (**AP=0**).
+!mmm   end if
+!mmm end script
