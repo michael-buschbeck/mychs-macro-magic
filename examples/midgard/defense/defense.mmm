@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
-!rem // v1.3.1 2021-04-27
+!rem // v1.4.0-dev 2021-05-13
 !rem // 
-!rem // - Modifikatoren-Log als Tooltip ergänzt
+!rem // - Für generische NPCs nutzbar gemacht: AP/LP-Attribute konfigurierbar, token_id statt character_id, Workaround für Rüstung
 !rem
 !mmm script
 !mmm
@@ -14,11 +14,13 @@
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Abwehr ohne Schild"
 !mmm   set customizable cOwnID = getattr(sender, "character_id")
+!mmm   set customizable cHealthAttr = "LP"
+!mmm   set customizable cEnduranceAttr = "AP"
 !mmm
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = getattr(cOwnID, "character_id")
+!mmm   set cOwnID = getattr(cOwnID, "token_id")
 !mmm   if isdenied(cOwnID) or isunknown(cOwnID)
-!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
+!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
 !rem
@@ -38,9 +40,14 @@
 !mmm   set effDefense = getattr(cOwnID, "Abwehr") + getattr(cOwnID, "BonusAbwehr")
 !mmm   set armorLabel = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
 !mmm   set armorProtection = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "RüsLP"))
-!mmm   set endurance = getattr(cOwnID, "AP")
-!mmm   set health = getattr(cOwnID, "LP")
-!mmm   set maxHealth = getattrmax(cOwnID, "LP")
+!mmm   if isunknown(armorLabel) or isunknown(armorProtection)
+!rem     // For NPC tokens where the search for "RsGetragen==true" doesn't work, just take first armor in sheet
+!mmm     set armorLabel = getattr(cOwnID, findattr(cOwnID, "Ruestung", "Rüstung"))
+!mmm     set armorProtection = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RüsLP"))
+!mmm   end if
+!mmm   set endurance = getattr(cOwnID, cEnduranceAttr)
+!mmm   set health = getattr(cOwnID, cHealthAttr)
+!mmm   set maxHealth = getattrmax(cOwnID, cHealthAttr)
 !mmm   set parryWeapon = false
 !mmm   if parryWeaponUsable
 !mmm     set parryWeapon = (getattr(cOwnID,findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
@@ -63,7 +70,7 @@
 !rem   // 1. Defender exhausted
 !mmm   if endurance <= 0
 !mmm     set autoModifiers = autoModifiers - 4
-!mmm     set modifierLog = modifierLog & " {{Erschöpft (eigene AP: 0)=-4}} "
+!mmm     set modifierLog = modifierLog & " {{Erschöpft=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 2. Dropdown prompt: Focused defense, surprise
@@ -103,14 +110,9 @@
 !mmm     set modifiers = "+" & modifiers
 !mmm   end if
 !mmm   set defenseResultLog = defenseResult & " = (1d20:" & defenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
-!mmm
-!mmm   if iscritical(defenseRoll)
-!mmm     set defenseResult = highlight(defenseResult, "good", defenseResultLog)
-!mmm   else if isfumble(defenseRoll)
-!mmm     set defenseResult = highlight(defenseResult, "bad", defenseResultLog)
-!mmm   else 
-!mmm     set defenseResult = highlight(defenseResult, "normal", defenseResultLog)
-!mmm   end if
+!rem   // ADD TOOLTIP as in meleeAttack, rangedAttack
+!mmm   set modifiers = highlight(modifiers, "info")
+!mmm   set defenseResult = highlight(defenseResult, default, defenseResultLog)
 !mmm
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
@@ -161,7 +163,8 @@
 !mmm     set newEndurance = highlight(0, "bad", "erschöpft")
 !mmm     do setattr(cOwnID, "status_green", true)
 !mmm   end if
-!mmm   do setattr(cOwnID, "AP", newEndurance)
+!mmm   do setattr(cOwnID, cEnduranceAttr, newEndurance)
+!mmm   set effEnduranceLoss = highlight(effEnduranceLoss, "info")
 !mmm
 !rem   // Process loss of health and applicable consequences 
 !mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
@@ -178,10 +181,11 @@
 !mmm     set newHealth = highlight(newHealth, "important", "schwer verletzt")
 !mmm     do setattr(cOwnID, "status_yellow", true)
 !mmm   end if
-!mmm   do setattr(cOwnID, "LP", newHealth)
+!mmm   do setattr(cOwnID, cHealthAttr, newHealth)
 !mmm   if effHealthLoss > 0 and newHealth < 0
 !mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
 !mmm   end if
+!mmm   set effHealthLoss = highlight(effHealthLoss, "info")
 !rem
 !rem   // Verbose output
 !mmm   if cVerbose
