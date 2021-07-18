@@ -1,8 +1,8 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.3.1 vom 2021-04-27,** erfordert MMM 1.17.0+.
+Aktuelle Version: **1.4.0 vom 2021-07-08,** erfordert MMM 1.18.0+.
 
-Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dabei werden die eigene Erschöpfung (-4 bei AP:0) und die eingestellte Rüstung automatisch und weitere Modifikatoren nach Benutzerauswahl und -eingabe berücksichtigt, und die Konsequenzen umgesetzt (Abzüge AP und LP, ggf. Ausgabe der Folgen). Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen.
+Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dabei werden die eigene Erschöpfung (-4 bei AP:0) und die eingestellte Rüstung automatisch und weitere Modifikatoren nach Benutzerauswahl und -eingabe berücksichtigt, und die Konsequenzen umgesetzt (Abzüge AP und LP, ggf. Ausgabe der Folgen). Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden.
 
 ### Inhalt
 
@@ -22,9 +22,18 @@ Das Skript fragt zunächst alle wichtigen Daten über den Angriff vom Benutzer a
 
 Wer nicht nur "Abwehr ohne Schild" kann, muss das Konfigskript benutzen und zumindest die Zeile `!mmm set cWeaponLabel = "Kleiner Schild"` mit dem Namen der benutzten Abwehrwaffe aus dem Abwehrblock des Kampfblatts setzen. Hierdurch erhält das Skript Zugriff auf die nötigen Fähigkeitswerte und Schadensmodifikatoren. Wer unterschiedliche Abwehrwaffen/Schilde nutzt, muss mehrere Konfigskripte anlegen und jeweils das gewünschte aufrufen (z.B. per Chatmenü, wie rechts im Screenshot oben abgebildet).
 
+Unterschiedliche Rüstungen werden demgegenüber so behandelt, wie im Charakterblatt: es zählt die Rüstung, die gerade als "getragen" markiert ist.
+
 #### Unterschiedliche Charaktere/NPCs
 
 Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der als Absender im Chatfenster steht, kann für seine Charaktere das Konfigskript jeweils als Ability anlegen und darin `!mmm set cOwnID = "@{character_id}"` setzen. Damit wird der Bezugscharakter jeweils korrekt gesetzt, egal wer gerade im Chat als Absender steht.
+
+Soll das Skript für generische NPCs ("Ork1" bis "Ork17", die alle auf dem gleichen Charakterblatt basieren) benutzt werden, dann kann der Spielleiter im Konfigskript die folgenden Zeilen setzen, damit sich die Treffer jeweils nur auf die Ausdauer- und Lebenspunkte des jeweiligen Tokens ("Ork1") statt auf den Charakterbogen *aller* Orks auswirken:
+
+```javascript
+!mmm   set cHealthAttr = "bar1"
+!mmm   set cEnduranceAttr = "bar3"
+```
 
 #### Geschichtenerzählerausgabe
 
@@ -71,6 +80,10 @@ Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzu
 ```
 
 ## Changelog
+
+1.4.0 2021-07-08
+
+- Auch für generische NPCs nutzbar (erfordert MMM 1.18.0)
 
 1.3.1 2021-04-27
 

@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.4.0-dev (2021-05-13)"
+!mmm   set scriptVersion = "1.4.0 (2021-07-08)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.18
@@ -120,7 +120,6 @@
 !mmm     set modifiers = "+" & modifiers
 !mmm   end if
 !mmm   set defenseResultLog = defenseResult & " = (1d20:" & defenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
-!rem   // ADD TOOLTIP as in meleeAttack, rangedAttack
 !mmm   set modifiers = highlight(modifiers, "info")
 !mmm   set defenseResult = highlight(defenseResult, default, defenseResultLog)
 !mmm
