@@ -1,24 +1,43 @@
 !rem // Midgard Combat Defense Script
-!rem // v1.3.1 2021-04-27
 !rem // 
-!rem // - Modifikatoren-Log als Tooltip ergänzt
-!rem
 !mmm script
+!mmm   set scriptVersion = "1.4.1 (2021-07-18)"
+!mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.20
+!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cCheckVersion        Toggle version check
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off 
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //
+!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Abwehr ohne Schild"
-!mmm   set customizable cOwnID = getattr(sender, "character_id")
+!mmm   if selected
+!mmm     set customizable cOwnID = selected.token_id
+!mmm     set customizable cHealthAttr = "bar3"
+!mmm     set customizable cEnduranceAttr = "bar2"
+!mmm   else 
+!mmm     set customizable cOwnID = sender.token_id
+!mmm     set customizable cHealthAttr = "LP"
+!mmm     set customizable cEnduranceAttr = "AP"
+!mmm   end if
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = getattr(cOwnID, "character_id")
+!mmm   set cOwnID = getattr(cOwnID, "token_id")
 !mmm   if isdenied(cOwnID) or isunknown(cOwnID)
-!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
+!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
 !rem
@@ -26,7 +45,7 @@
 !mmm   set attackResult = ?{Angriffswert|0}
 !mmm   set criticalAttack = ?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}
 !mmm   set attackDamage = ?{Schaden laut Angreifer|0}
-!mmm   set armorPiercing = ?{Angriff mit schweren, scharfen Geschossen| Nein, 0 | Ja: Lang-/Kompositbogen, 1 | Ja: Schwere Armbrust, 1 }
+!mmm   set armorPiercing = ?{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust| Nein, 0 | Ja, 1 }
 !mmm   set parryWeaponUsable = ?{Angriff mit Schild oder Parierwaffe parierbar| Ja,1| Nein,0}
 !mmm   if attackResult < 20
 !mmm     do whisperback("Abbruch: Angriff mit **" & attackResult & "** war nicht erfolgreich, keine Abwehr nötig.")
@@ -38,9 +57,14 @@
 !mmm   set effDefense = getattr(cOwnID, "Abwehr") + getattr(cOwnID, "BonusAbwehr")
 !mmm   set armorLabel = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
 !mmm   set armorProtection = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "RüsLP"))
-!mmm   set endurance = getattr(cOwnID, "AP")
-!mmm   set health = getattr(cOwnID, "LP")
-!mmm   set maxHealth = getattrmax(cOwnID, "LP")
+!mmm   if isunknown(armorLabel) or isunknown(armorProtection)
+!rem     // For NPC tokens where the search for "RsGetragen==true" doesn't work, just take first armor in sheet
+!mmm     set armorLabel = getattr(cOwnID, findattr(cOwnID, "Ruestung", "Rüstung"))
+!mmm     set armorProtection = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RüsLP"))
+!mmm   end if
+!mmm   set endurance = getattr(cOwnID, cEnduranceAttr)
+!mmm   set health = getattr(cOwnID, cHealthAttr)
+!mmm   set maxHealth = getattrmax(cOwnID, cHealthAttr)
 !mmm   set parryWeapon = false
 !mmm   if parryWeaponUsable
 !mmm     set parryWeapon = (getattr(cOwnID,findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
@@ -63,7 +87,7 @@
 !rem   // 1. Defender exhausted
 !mmm   if endurance <= 0
 !mmm     set autoModifiers = autoModifiers - 4
-!mmm     set modifierLog = modifierLog & " {{Erschöpft (eigene AP: 0)=-4}} "
+!mmm     set modifierLog = modifierLog & " {{Erschöpft=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 2. Dropdown prompt: Focused defense, surprise
@@ -103,14 +127,8 @@
 !mmm     set modifiers = "+" & modifiers
 !mmm   end if
 !mmm   set defenseResultLog = defenseResult & " = (1d20:" & defenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
-!mmm
-!mmm   if iscritical(defenseRoll)
-!mmm     set defenseResult = highlight(defenseResult, "good", defenseResultLog)
-!mmm   else if isfumble(defenseRoll)
-!mmm     set defenseResult = highlight(defenseResult, "bad", defenseResultLog)
-!mmm   else 
-!mmm     set defenseResult = highlight(defenseResult, "normal", defenseResultLog)
-!mmm   end if
+!mmm   set modifiers = highlight(modifiers, "info")
+!mmm   set defenseResult = highlight(defenseResult, default, defenseResultLog)
 !mmm
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
@@ -161,7 +179,8 @@
 !mmm     set newEndurance = highlight(0, "bad", "erschöpft")
 !mmm     do setattr(cOwnID, "status_green", true)
 !mmm   end if
-!mmm   do setattr(cOwnID, "AP", newEndurance)
+!mmm   do setattr(cOwnID, cEnduranceAttr, newEndurance)
+!mmm   set effEnduranceLoss = highlight(effEnduranceLoss, "info")
 !mmm
 !rem   // Process loss of health and applicable consequences 
 !mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
@@ -178,10 +197,11 @@
 !mmm     set newHealth = highlight(newHealth, "important", "schwer verletzt")
 !mmm     do setattr(cOwnID, "status_yellow", true)
 !mmm   end if
-!mmm   do setattr(cOwnID, "LP", newHealth)
+!mmm   do setattr(cOwnID, cHealthAttr, newHealth)
 !mmm   if effHealthLoss > 0 and newHealth < 0
 !mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
 !mmm   end if
+!mmm   set effHealthLoss = highlight(effHealthLoss, "info")
 !rem
 !rem   // Verbose output
 !mmm   if cVerbose

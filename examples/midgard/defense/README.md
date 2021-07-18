@@ -1,8 +1,8 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.3.1 vom 2021-04-27,** erfordert MMM 1.17.0+.
+Aktuelle Version: **1.4.1 vom 2021-07-18,** erfordert MMM 1.20.0+.
 
-Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dabei werden die eigene Erschöpfung (-4 bei AP:0) und die eingestellte Rüstung automatisch und weitere Modifikatoren nach Benutzerauswahl und -eingabe berücksichtigt, und die Konsequenzen umgesetzt (Abzüge AP und LP, ggf. Ausgabe der Folgen). Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen.
+Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dabei werden die eigene Erschöpfung (-4 bei AP:0) und die eingestellte Rüstung automatisch und weitere Modifikatoren nach Benutzerauswahl und -eingabe berücksichtigt, und die Konsequenzen umgesetzt (Abzüge AP und LP, ggf. Ausgabe der Folgen). Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden.
 
 ### Inhalt
 
@@ -14,7 +14,7 @@ Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dab
 
 ## Features & Anwendung
 
-Das Skript fragt zunächst alle wichtigen Daten über den Angriff vom Benutzer ab, berechnet die Ergebnisse des Abwehrversuchs und gibt sie aus. Ein Aufruf muss sich auf genau eine Abwehrtechnik (Standardwaffe/waffenlos/eine bestimmte Abwehrwaffe) beziehen. All diese Optionen können per [Konfigskripts](#konfig-skript-optional) genutzt werden, das Abwehrskript funktioniert aber auch ohne Konfigskript und wendet dann die Standardabwehrtechnik des Charakterbogens an.
+Das Skript fragt zunächst alle wichtigen [Daten über den Angriff](#datenabfragen) vom Benutzer ab, berechnet die Ergebnisse des Abwehrversuchs und gibt sie aus. Ein Aufruf muss sich auf genau eine Abwehrtechnik (Standardwaffe/waffenlos/eine bestimmte Abwehrwaffe) beziehen. All diese Optionen können per [Konfigskripts](#konfig-skript-optional) genutzt werden, das Abwehrskript funktioniert aber auch ohne Konfigskript und wendet dann die Standardabwehrtechnik des Charakterbogens an.
 
 ### Konfig-Skript (optional)
 
@@ -22,9 +22,13 @@ Das Skript fragt zunächst alle wichtigen Daten über den Angriff vom Benutzer a
 
 Wer nicht nur "Abwehr ohne Schild" kann, muss das Konfigskript benutzen und zumindest die Zeile `!mmm set cWeaponLabel = "Kleiner Schild"` mit dem Namen der benutzten Abwehrwaffe aus dem Abwehrblock des Kampfblatts setzen. Hierdurch erhält das Skript Zugriff auf die nötigen Fähigkeitswerte und Schadensmodifikatoren. Wer unterschiedliche Abwehrwaffen/Schilde nutzt, muss mehrere Konfigskripte anlegen und jeweils das gewünschte aufrufen (z.B. per Chatmenü, wie rechts im Screenshot oben abgebildet).
 
+Unterschiedliche Rüstungen werden demgegenüber so behandelt, wie im Charakterblatt: es zählt die Rüstung, die gerade als "getragen" markiert ist.
+
 #### Unterschiedliche Charaktere/NPCs
 
 Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der als Absender im Chatfenster steht, kann für seine Charaktere das Konfigskript jeweils als Ability anlegen und darin `!mmm set cOwnID = "@{character_id}"` setzen. Damit wird der Bezugscharakter jeweils korrekt gesetzt, egal wer gerade im Chat als Absender steht.
+
+Das Skript kann entweder für ein beliebiges Token im Zugriff des Spielers aufgerufen werden, dann muss das Token ausgewählt sein. Wenn kein Token ausgewählt ist, wird es für den eigenen Charakter ausgeführt.
 
 #### Geschichtenerzählerausgabe
 
@@ -41,8 +45,8 @@ Das Skript fragt bei jedem Start eine Reihe von Daten zum Angriff ab, ob relevan
 - *Angriffswert:* `EW:Angriff`, gegen den die Abwehr gelingen soll.
 - *Kritischer Erfolg beim Angriff:* Ja/Nein.
 - *Schaden laut Angreifer:* Ergebnis des Schadenswurfs, der abgewehrt oder durch Rüstungsschutz reduziert werden soll.
-- *Angriff mit schweren, scharfen Geschossen:* Ja/Nein. (Für den Sonderfall, dass Plattenrüstungen gegen solche Geschosse nur bis max. 3 Punkte schützen.)
-- *Angriff mit Schild oder Parierwaffe parierbar:* Ja/Nein. (Wenn nein, können keine Schilde oder Parierwaffen benutzt werden. Waffenspezifische Regeln siehe *Kodex: 70*).
+- *Angriff mit Komposit-/Langbogen oder schwerer Armbrust:* Ja/Nein. (Für Träger von Plattenrüstungen, die gegen solche Geschosse nur bis max. 3 Punkte schützen.)
+- *Angriff mit Schild oder Parierwaffe parierbar:* Ja/Nein. (Wenn nein, wird Schild oder Parierwaffe ignoriert, z.B. bei Fernkampfangriffen. Waffenspezifische Regeln siehe *Kodex: 70*).
 - *Standard-Abwehrmodifikatoren:*
   -  keine: *Normale Abwehr +/-0*
   - *Konzentrierte Abwehr +4*
@@ -65,12 +69,16 @@ Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzu
 !mmm customize
 !mmm    set cVerbose = true
 !mmm    set cWeaponLabel = "Parierdolch"
-!mmm    set cOwnID = "@{character_id}"
+!mmm    set cOwnID = "@{token_id}"
 !mmm end customize
 #defend
 ```
 
 ## Changelog
+
+1.4.0 2021-07-08
+
+- Auch für generische NPCs nutzbar (erfordert MMM 1.20.0)
 
 1.3.1 2021-04-27
 
