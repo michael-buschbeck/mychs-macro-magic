@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.4.0 (2021-07-08)"
+!mmm   set scriptVersion = "1.4.1 (2021-07-18)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -22,7 +22,7 @@
 !mmm   if selected
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
-!mmm     set customizable cEnduranceAttr = "bar1"
+!mmm     set customizable cEnduranceAttr = "bar2"
 !mmm   else 
 !mmm     set customizable cOwnID = sender.token_id
 !mmm     set customizable cHealthAttr = "LP"
@@ -31,6 +31,7 @@
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
+!mmm     exit script
 !mmm   end if
 !mmm
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
@@ -44,7 +45,7 @@
 !mmm   set attackResult = ?{Angriffswert|0}
 !mmm   set criticalAttack = ?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}
 !mmm   set attackDamage = ?{Schaden laut Angreifer|0}
-!mmm   set armorPiercing = ?{Angriff mit schweren, scharfen Geschossen| Nein, 0 | Ja: Lang-/Kompositbogen, 1 | Ja: Schwere Armbrust, 1 }
+!mmm   set armorPiercing = ?{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust| Nein, 0 | Ja, 1 }
 !mmm   set parryWeaponUsable = ?{Angriff mit Schild oder Parierwaffe parierbar| Ja,1| Nein,0}
 !mmm   if attackResult < 20
 !mmm     do whisperback("Abbruch: Angriff mit **" & attackResult & "** war nicht erfolgreich, keine Abwehr nötig.")

@@ -1,6 +1,6 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.4.0 vom 2021-07-08,** erfordert MMM 1.18.0+.
+Aktuelle Version: **1.4.1 vom 2021-07-18,** erfordert MMM 1.20.0+.
 
 Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dabei werden die eigene Erschöpfung (-4 bei AP:0) und die eingestellte Rüstung automatisch und weitere Modifikatoren nach Benutzerauswahl und -eingabe berücksichtigt, und die Konsequenzen umgesetzt (Abzüge AP und LP, ggf. Ausgabe der Folgen). Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden.
 
@@ -14,7 +14,7 @@ Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dab
 
 ## Features & Anwendung
 
-Das Skript fragt zunächst alle wichtigen Daten über den Angriff vom Benutzer ab, berechnet die Ergebnisse des Abwehrversuchs und gibt sie aus. Ein Aufruf muss sich auf genau eine Abwehrtechnik (Standardwaffe/waffenlos/eine bestimmte Abwehrwaffe) beziehen. All diese Optionen können per [Konfigskripts](#konfig-skript-optional) genutzt werden, das Abwehrskript funktioniert aber auch ohne Konfigskript und wendet dann die Standardabwehrtechnik des Charakterbogens an.
+Das Skript fragt zunächst alle wichtigen [Daten über den Angriff](#datenabfragen) vom Benutzer ab, berechnet die Ergebnisse des Abwehrversuchs und gibt sie aus. Ein Aufruf muss sich auf genau eine Abwehrtechnik (Standardwaffe/waffenlos/eine bestimmte Abwehrwaffe) beziehen. All diese Optionen können per [Konfigskripts](#konfig-skript-optional) genutzt werden, das Abwehrskript funktioniert aber auch ohne Konfigskript und wendet dann die Standardabwehrtechnik des Charakterbogens an.
 
 ### Konfig-Skript (optional)
 
@@ -45,8 +45,8 @@ Das Skript fragt bei jedem Start eine Reihe von Daten zum Angriff ab, ob relevan
 - *Angriffswert:* `EW:Angriff`, gegen den die Abwehr gelingen soll.
 - *Kritischer Erfolg beim Angriff:* Ja/Nein.
 - *Schaden laut Angreifer:* Ergebnis des Schadenswurfs, der abgewehrt oder durch Rüstungsschutz reduziert werden soll.
-- *Angriff mit schweren, scharfen Geschossen:* Ja/Nein. (Für den Sonderfall, dass Plattenrüstungen gegen solche Geschosse nur bis max. 3 Punkte schützen.)
-- *Angriff mit Schild oder Parierwaffe parierbar:* Ja/Nein. (Wenn nein, können keine Schilde oder Parierwaffen benutzt werden. Waffenspezifische Regeln siehe *Kodex: 70*).
+- *Angriff mit Komposit-/Langbogen oder schwerer Armbrust:* Ja/Nein. (Für Träger von Plattenrüstungen, die gegen solche Geschosse nur bis max. 3 Punkte schützen.)
+- *Angriff mit Schild oder Parierwaffe parierbar:* Ja/Nein. (Wenn nein, wird Schild oder Parierwaffe ignoriert, z.B. bei Fernkampfangriffen. Waffenspezifische Regeln siehe *Kodex: 70*).
 - *Standard-Abwehrmodifikatoren:*
   -  keine: *Normale Abwehr +/-0*
   - *Konzentrierte Abwehr +4*
