@@ -1,21 +1,27 @@
 !rem // Midgard Combat Defense Script
-!rem // v1.4.0-dev 2021-05-13
 !rem // 
 !rem // - Für generische NPCs nutzbar gemacht: AP/LP-Attribute konfigurierbar, token_id statt character_id, Workaround für Rüstung
 !rem
 !mmm script
+!mmm   set scriptVersion = "1.4.0-dev (2021-05-13)"
 !mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cCheckVersion        Toggle version check
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off 
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //
+!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Abwehr ohne Schild"
 !mmm   set customizable cOwnID = getattr(sender, "character_id")
 !mmm   set customizable cHealthAttr = "LP"
 !mmm   set customizable cEnduranceAttr = "AP"
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
+!mmm   end if
 !mmm
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = getattr(cOwnID, "token_id")
