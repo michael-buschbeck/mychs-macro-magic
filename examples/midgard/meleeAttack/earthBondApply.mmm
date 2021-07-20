@@ -1,7 +1,8 @@
 !rem // earthBondApply
 !rem // GM script: Apply a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
-!rem // v1.0.0 2021-07-13 phr
 !mmm script
+!mmm   set scriptVersion = "1.0.1-dev (2021-07-20)"
+!mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
@@ -11,6 +12,17 @@
 !mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
 !mmm   set customizable cWeaponMagicMarker = "status_cobweb"
 !mmm   set customizable cActivateGIF = ""
+!mmm
+!mmm   set customizable cCheckVersion = false
+!mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
+!mmm   set customizable cWeaponMagicMarker = "status_cobweb"
+!mmm   set customizable cWeaponToggleCost = 1
+!mmm   set customizable cOwnID = sender.token_id
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("earthBondApply v" & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Identify target (user points to token)
 !mmm   set foe = "@{target|Angriffsziel|token_id}"
