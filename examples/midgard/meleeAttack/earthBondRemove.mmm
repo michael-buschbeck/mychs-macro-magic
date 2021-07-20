@@ -19,14 +19,23 @@
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem   // Init
+!mmm   set m3mgdAttrEarthBondTargetID = "m3mgd_earthBond_targetID"
+!mmm   
 !mmm   if not cWeaponWielder.name eq cWeaponWielder
 !mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Identify target (GM points to token) & removal option
-!mmm   set foe = "@{target|Wer trägt die Erdfessel?|token_id}"
+!rem   // Retrieve release mode from GM
 !mmm   set releaseMode = "?{Wie wird die Erdfessel entfernt? | Auf Wunsch des Schöpfers,releaseByCreator| Langsam und vorsichtig (5min),escapeByPatience| Mit Gewalt (PW:Gw),escapeByForce}"
+!mmm 
+!rem   // Retrieve target ID
+!mmm   set foe = cWeaponWielder.(m3mgdAttrEarthBondTargetID)
+!mmm   if not foe or isdenied(foe.token_id) or isunknown(foe.token_id) or isdenied(foe.(cWeaponMagicMarker))
+!mmm     do whisperback("Target given as token ID '" & foe & "' may not be a correct token ID, or does not allow access to attributes")
+!mmm     exit script
+!mmm   end if
 !mmm 
 !mmm   if foe.(cWeaponMagicMarker) ne "shown"
 !mmm     do whisperback("Token " & foe.name & " trägt aber keine Erdfessel oder " & cWeaponMagicMarker & " wurde schon entfernt.")
@@ -40,8 +49,8 @@
 !mmm     chat: Im Laufe von fünf laaaaangen Minuten befreit sich ${foe.name} seeeehr laaaangsaaaam aus ${cWeaponWielder.name}s Erdfessel. Mit großer Geduld gelingt das auch. [x](${cDeactivateGIF})
 !mmm   else if releaseMode eq "escapeByForce"
 !mmm     set dxRoll = roll("1d100")
-!mmm     if isunknown(?(foe.Gw))
-!mmm       chat: /w GM ${foe.name} erlaubt keinen Zugriff auf das Attribut **Gw**. Bitte manuell würfeln (+/-0) und bei Erfolg die beiden Statusmarker entfernen.
+!mmm     if isunknown(foe.Gw)
+!mmm       chat: /w GM ${foe.name} erlaubt keinen Zugriff auf das Attribut **Gw**. **Bitte manuell würfeln (+/-0) und bei Erfolg die beiden Statusmarker entfernen.**
 !mmm       exit script
 !mmm     else if dxRoll > foe.Gw
 !mmm       chat: /w GM **Ausbruch aus Erdfessel:** PW:Gw(${foe.Gw}) ist mit ${dxRoll} **fehlgeschlagen.**

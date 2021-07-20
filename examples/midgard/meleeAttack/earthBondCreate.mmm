@@ -10,6 +10,7 @@
 !rem   //  cActivateGIF         GIF to play as the earth rises up to bind the foe's legs
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
+!mmm   set customizable cWeaponName = "Steinherz"
 !mmm   set customizable cWeaponMagicMarker = "status_cobweb"
 !mmm   set customizable cWeaponToggleCost = 1
 !mmm   set customizable cOwnID = sender.token_id
@@ -26,6 +27,9 @@
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem   // Init
+!mmm   set m3mgdAttrEarthBondTargetID = "m3mgd_earthBond_targetID"
+!mmm   
 !rem   // Identify target (user points to token)
 !mmm   set foe = "@{target|Angriffsziel|token_id}"
 !mmm 
@@ -65,8 +69,12 @@
 !mmm       do setattr(cOwnID, "AP", cOwnID.AP - cWeaponToggleCost)
 !mmm       chat: /w "${cOwnID.name}" Das hat ${cWeaponToggleCost} AP gekostet.
 !mmm     end if
+!rem     // Store blast target and direction for use by waterWalkerBlastEffect script
+!mmm     do setattr(cOwnID, m3mgdAttrEarthBondTargetID, foe.token_id)
+!rem     // Confirm creation to GM and player
 !mmm     chat: /w gm ${cOwnID.name} hat eine magische Erdfessel gegen **${foe.name}** erzeugt. (Kosten: ${cWeaponToggleCost} AP, schon abgezogen.)
 !mmm     chat: /w gm Die Erdfessel wirkt erst, wenn du [**ANWENDEN**](~earthBondApply) klickst.
+!mmm     chat: /w "${cOwnID.name}" Du hast die Erdfessel gegen **${foe.name}** erzeugt (${cWeaponToggleCost} AP abgezogen), jetzt muss sie der Spielleiter noch bestätigen...
 !mmm   end if
 !rem   // If this act exhausted the character, let them and the GM know
 !mmm   if cOwnID.AP <= 0

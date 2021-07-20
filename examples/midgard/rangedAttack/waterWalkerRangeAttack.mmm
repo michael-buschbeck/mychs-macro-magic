@@ -134,7 +134,7 @@
 !mmm   if semiAutoModCode % 23 == 0
 !rem     // Check if PC has sharpshooting skill
 !mmm     if not sharpshootingSkill
-!mmm       do whisperback("Abbruch: " & cOwnID.name & " hat die Fertigkeiten Scharfschießen nicht.")
+!mmm       do whisperback("Abbruch: " & cOwnID.name & " hat die Fertigkeit Scharfschießen nicht.")
 !mmm       exit script
 !mmm     end if
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
