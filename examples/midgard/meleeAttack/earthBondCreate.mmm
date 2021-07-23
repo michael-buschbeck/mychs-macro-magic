@@ -20,10 +20,9 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = cOwnID.character_id
-!mmm   if isdenied(cOwnID)
-!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
+!rem   // Check if cOwnID points to a character I control
+!mmm   if isdenied(cOwnID.character_id) or cOwnID.permission ne "control"
+!mmm     do whisperback("Abbruch: " & getreason(cOwnID)) 
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -32,6 +31,10 @@
 !mmm   
 !rem   // Identify target (user points to token)
 !mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm   if isunknown(foe.token_id) or not (foe.permission eq "view" or foe.permission eq "control")
+!mmm     do whisperback("Abbruch: " & foe.name & " " & foe.permission & " " & getreason(foe.token_id)) 
+!mmm     exit script
+!mmm   end if
 !mmm 
 !rem   // Process exclusionary conditions and outcomes
 !rem   // - Check for melee range (<=1 grid cell) and orientation
