@@ -61,6 +61,10 @@
 !mmm   end if
 !rem   // - Fetch NPC (target) data
 !mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm   if isunknown(foe.token_id) or not (foe.permission eq "view" or foe.permission eq "control")
+!mmm     do whisperback("Abbruch: " & foe.name & " " & foe.permission & " " & getreason(foe.token_id)) 
+!mmm     exit script
+!mmm   end if
 !mmm   set foeName = foe.name
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
