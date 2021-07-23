@@ -1,24 +1,45 @@
 !rem // earthBondCreate
 !rem // Player script: Create an earthen bond as a special ability of the magic rune blade "Stoneheart"
-!rem // v1.0.0 2021-07-13 phr
 !mmm script
+!mmm   set scriptVersion = "1.0.1-dev (2021-07-20)"
+!mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
 !rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
 !rem   //  cActivateGIF         GIF to play as the earth rises up to bind the foe's legs
+!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
+!mmm   set customizable cWeaponName = "Steinherz"
 !mmm   set customizable cWeaponMagicMarker = "status_cobweb"
 !mmm   set customizable cWeaponToggleCost = 1
-!mmm   set customizable cCharID = sender.token_id
+!mmm   set customizable cOwnID = sender.token_id
 !mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("earthBondCreate v" & scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Check if cOwnID points to a character I control
+!mmm   if isdenied(cOwnID.character_id) or cOwnID.permission ne "control"
+!mmm     do whisperback("Abbruch: " & getreason(cOwnID)) 
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Init
+!mmm   set m3mgdAttrEarthBondTargetID = "m3mgd_earthBond_targetID"
+!mmm   
 !rem   // Identify target (user points to token)
 !mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm   if isunknown(foe.token_id) or not (foe.permission eq "view" or foe.permission eq "control")
+!mmm     do whisperback("Abbruch: " & foe.name & " " & foe.permission & " " & getreason(foe.token_id)) 
+!mmm     exit script
+!mmm   end if
 !mmm 
 !rem   // Process exclusionary conditions and outcomes
 !rem   // - Check for melee range (<=1 grid cell) and orientation
-!mmm   set offsetYfromFoe = round((cCharID.top  - foe.top)  * distscale())
-!mmm   set offsetXfromFoe = round((cCharID.left - foe.left) * distscale())
+!mmm   set offsetYfromFoe = round((cOwnID.top  - foe.top)  * distscale())
+!mmm   set offsetXfromFoe = round((cOwnID.left - foe.left) * distscale())
 !mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
 !mmm   set foeDirectionFromMe = round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
 !mmm   set myViewAngle = (((foeDirectionFromMe - ownRotation) + 180) % 360 + 360) % 360 - 180
@@ -27,8 +48,8 @@
 !mmm     do whisperback(foe.name & " ist außerhalb meines Blickfeldes (" & myViewAngle & "°). Schade.")
 !mmm     exit script
 !mmm   end if
-!mmm   set absTokenDistY = round(((abs(cCharID.top  - foe.top))  - .5 * cCharID.height - .5 * foe.height) * distscale())
-!mmm   set absTokenDistX = round(((abs(cCharID.left - foe.left)) - .5 * cCharID.width  - .5 * foe.width)  * distscale())
+!mmm   set absTokenDistY = round(((abs(cOwnID.top  - foe.top))  - .5 * cOwnID.height - .5 * foe.height) * distscale())
+!mmm   set absTokenDistX = round(((abs(cOwnID.left - foe.left)) - .5 * cOwnID.width  - .5 * foe.width)  * distscale())
 !mmm   set distance = max(absTokenDistY, absTokenDistX)
 !mmm   set distanceUnits = distunits() 
 !mmm   if (distance/(distsnap()*distscale())) > 0
@@ -36,27 +57,31 @@
 !mmm     exit script
 !mmm   end if
 !rem   // - Character exhausted => earthbond cannot work
-!mmm   if cWeaponToggleCost > 0 and cCharID.AP <= 0
+!mmm   if cWeaponToggleCost > 0 and cOwnID.AP <= 0
 !mmm     do whisperback("Nichts passiert, außer dass ein einsamer Schweißtropfen an meinem Haupt hinunterrollt.")
 !rem   // - Character does not wield the magic weapon Stoneheart
-!mmm   else if not findattr(cCharID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW")
+!mmm   else if not findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW")
 !mmm     do whisperback("WO IST DIE ERDKLINGE?! Ich scheine sie jedenfalls nicht zu führen.")
 !rem   // - Character is maintaining another earthbond => no second earthbond possible
-!mmm   else if cCharID.(cWeaponMagicMarker)
+!mmm   else if cOwnID.(cWeaponMagicMarker)
 !mmm     do whisperback("Nichts passiert. Ich hab ja noch eine andere aktive Erdfessel, ich Dussel!")
 !rem   // - No exclusionary conditions: begin creating a new earthbond (to be completed by GM)
-!mmm   else if not cCharID.(cWeaponMagicMarker)
+!mmm   else if not cOwnID.(cWeaponMagicMarker)
 !mmm     chat: Ich richte *${cWeaponName}* auf den Boden vor ${foe.name}. [x](${cActivateGIF})
 !mmm     if cWeaponToggleCost > 0
-!mmm       do setattr(cCharID, "AP", cCharID.AP - cWeaponToggleCost)
-!mmm       chat: /w "${cCharID.name}" Das hat ${cWeaponToggleCost} AP gekostet.
+!mmm       do setattr(cOwnID, "AP", cOwnID.AP - cWeaponToggleCost)
+!mmm       chat: /w "${cOwnID.name}" Das hat ${cWeaponToggleCost} AP gekostet.
 !mmm     end if
-!mmm     chat: /w gm ${cCharID.name} hat eine magische Erdfessel gegen **${foe.name}** erzeugt. (Kosten: ${cWeaponToggleCost} AP, schon abgezogen.)
+!rem     // Store blast target and direction for use by waterWalkerBlastEffect script
+!mmm     do setattr(cOwnID, m3mgdAttrEarthBondTargetID, foe.token_id)
+!rem     // Confirm creation to GM and player
+!mmm     chat: /w gm ${cOwnID.name} hat eine magische Erdfessel gegen **${foe.name}** erzeugt. (Kosten: ${cWeaponToggleCost} AP, schon abgezogen.)
 !mmm     chat: /w gm Die Erdfessel wirkt erst, wenn du [**ANWENDEN**](~earthBondApply) klickst.
+!mmm     chat: /w "${cOwnID.name}" Du hast die Erdfessel gegen **${foe.name}** erzeugt (${cWeaponToggleCost} AP abgezogen), jetzt muss sie der Spielleiter noch bestätigen...
 !mmm   end if
 !rem   // If this act exhausted the character, let them and the GM know
-!mmm   if cCharID.AP <= 0
-!mmm     chat: /w "${cCharID.name}" Ich bin erschöpft (**AP=0**).
-!mmm     chat: /w gm ${cCharID.name} ist nun erschöpft (**AP=0**).
+!mmm   if cOwnID.AP <= 0
+!mmm     chat: /w "${cOwnID.name}" Ich bin erschöpft (**AP=0**).
+!mmm     chat: /w gm ${cOwnID.name} ist nun erschöpft (**AP=0**).
 !mmm   end if
 !mmm end script

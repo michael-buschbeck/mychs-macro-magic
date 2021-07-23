@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script, special version for magic beam attack (rune blade "Water Walker")
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.0.0-dev (2021-07-13, built on rangeAttack 1.8.8)"
+!mmm   set scriptVersion = "1.0.1-dev (2021-07-23, built on rangeAttack 1.8.8)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -36,14 +36,13 @@
 !mmm   set customizable cOwnID = sender.character_id
 !mmm
 !mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Ranged Attack Script for Water Walker " & scriptVersion)
+!mmm     do whisperback("waterWalkerBlastAttack v" & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = cOwnID.character_id
-!mmm   if isdenied(cOwnID)
-!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
+!rem   // Check if cOwnID points to a character I control
+!mmm   if isdenied(cOwnID.character_id) or cOwnID.permission ne "control"
+!mmm     do whisperback("Abbruch: " & getreason(cOwnID)) 
 !mmm     exit script
 !mmm   end if
 !rem
@@ -62,6 +61,10 @@
 !mmm   end if
 !rem   // - Fetch NPC (target) data
 !mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm   if isunknown(foe.token_id) or not (foe.permission eq "view" or foe.permission eq "control")
+!mmm     do whisperback("Abbruch: " & foe.name & " " & foe.permission & " " & getreason(foe.token_id)) 
+!mmm     exit script
+!mmm   end if
 !mmm   set foeName = foe.name
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
@@ -134,7 +137,7 @@
 !mmm   if semiAutoModCode % 23 == 0
 !rem     // Check if PC has sharpshooting skill
 !mmm     if not sharpshootingSkill
-!mmm       do whisperback("Abbruch: " & cOwnID.name & " hat die Fertigkeiten Scharfschießen nicht.")
+!mmm       do whisperback("Abbruch: " & cOwnID.name & " hat die Fertigkeit Scharfschießen nicht.")
 !mmm       exit script
 !mmm     end if
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4

@@ -1,7 +1,8 @@
 !rem // earthBondApply
 !rem // GM script: Apply a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
-!rem // v1.0.0 2021-07-13 phr
 !mmm script
+!mmm   set scriptVersion = "1.0.1-dev (2021-07-20)"
+!mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
@@ -12,9 +13,29 @@
 !mmm   set customizable cWeaponMagicMarker = "status_cobweb"
 !mmm   set customizable cActivateGIF = ""
 !mmm
-!rem   // Identify target (user points to token)
-!mmm   set foe = "@{target|Angriffsziel|token_id}"
+!mmm   set customizable cCheckVersion = false
+!mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
+!mmm   set customizable cWeaponMagicMarker = "status_cobweb"
+!mmm   set customizable cWeaponToggleCost = 1
+!mmm   set customizable cOwnID = sender.token_id
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("earthBondApply v" & scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Init
+!mmm   set m3mgdAttrEarthBondTargetID = "m3mgd_earthBond_targetID"
+!mmm   
+!rem   // Check with GM if ground conditions are present for the earthbond to work
 !mmm   set gmConfirmGroundCondition = ?{Ist der Boden aus Erde, Schlamm, Sand oder Staub?|Nein,0|Ja,1}
+!mmm   
+!rem   // Retrieve target ID
+!mmm   set foe = cWeaponWielder.(m3mgdAttrEarthBondTargetID)
+!mmm   if not foe or isdenied(foe.token_id) or isunknown(foe.token_id) or isdenied(foe.(cWeaponMagicMarker))
+!mmm     do whisperback("Target given as token ID '" & foe & "' may not be a correct token ID, or does not allow access to attributes")
+!mmm     exit script
+!mmm   end if
 !mmm 
 !mmm   if foe.(cWeaponMagicMarker) eq "shown"
 !mmm     do whisperback("Token " & foe.name & " ist bereits von einer Erdfessel gefangen oder hat den cobweb-Status.")
@@ -28,5 +49,5 @@
 !mmm   do setattr(cWeaponWielder.token_id, cWeaponMagicMarker, true)
 !mmm   chat: Der Boden unter ${foe.name} wächst blitzschnell knöchelhoch an: das dürfte es deutlich schwerer machen, sich zu bewegen. [x](${cActivateGIF})
 !mmm
-!mmm   chat: /w GM ${"&"}{template:default} {{name=Erdfessel}} {{ Opfer = ${foeID.name}}} {{ Folge = Abwehr -2 }} {{ Option = [**ENTFERNEN**](~earthBondRemove) }}
+!mmm   chat: /w GM ${"&"}{template:default} {{name=Erdfessel}} {{ Opfer = ${foe.name}}} {{ Folge = Abwehr -2 }} {{ Option = [**ENTFERNEN**](~earthBondRemove) }}
 !mmm end script
