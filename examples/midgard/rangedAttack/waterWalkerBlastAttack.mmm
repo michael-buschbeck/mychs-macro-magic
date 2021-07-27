@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script, special version for magic beam attack (rune blade "Water Walker")
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.0.1-dev (2021-07-23, built on rangeAttack 1.8.8)"
+!mmm   set scriptVersion = "1.0.2 (2021-07-28, built on rangeAttack 1.8.8)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -206,7 +206,7 @@
 !rem   // Run & format rolls
 &{template:none} [[1d20]] {{}}
 !mmm   set attackRoll = $[[0]]
-!mmm   set attackResult = attackRoll + cOwnID.(effAttackAttr) + modifiers
+!mmm   set attackResult = attackRoll + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
 !mmm   else if modifiers > 0
@@ -216,7 +216,7 @@
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
 !mmm   end if
 !mmm   set modifiers = highlight(modifiers, "info", modifierTooltip)
-!mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & cOwnID.(effAttackAttr) & ") " & modifiers
+!mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + " & modifiers
 !mmm   set attackResult = highlight(attackResult, default, attackResultLog)
 !mmm
 !rem   // Process endurance cost

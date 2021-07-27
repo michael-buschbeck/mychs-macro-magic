@@ -1,7 +1,7 @@
 !rem // earthBondCreate
 !rem // Player script: Create an earthen bond as a special ability of the magic rune blade "Stoneheart"
 !mmm script
-!mmm   set scriptVersion = "1.0.1-dev (2021-07-20)"
+!mmm   set scriptVersion = "1.0.2 (2021-07-27)"
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
@@ -38,6 +38,8 @@
 !mmm 
 !rem   // Process exclusionary conditions and outcomes
 !rem   // - Check for melee range (<=1 grid cell) and orientation
+!mmm   set ownRotation = round(cOwnID.rotation) % 360
+!mmm   set foeRotation = round(foe.rotation) % 360
 !mmm   set offsetYfromFoe = round((cOwnID.top  - foe.top)  * distscale())
 !mmm   set offsetXfromFoe = round((cOwnID.left - foe.left) * distscale())
 !mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
