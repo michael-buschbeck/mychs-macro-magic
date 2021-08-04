@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.4.1 (2021-07-18)"
+!mmm   set scriptVersion = "1.4.2 (2021-08-04)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -239,6 +239,9 @@
 !rem
 !rem   // Data table
 !mmm   combine chat
+!mmm     if selected 
+!mmm       chat: /w GM
+!mmm     end if
 !mmm     chat: ${"&"}{template:default} 
 !mmm     if (not parryWeapon) or (parryWeapon and endurance > 0)
 !mmm       chat: {{name=Abwehr: ${cWeaponLabel}}} 
