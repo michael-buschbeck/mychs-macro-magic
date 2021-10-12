@@ -1,5 +1,5 @@
 !rem // Midgard Multi-Sense Script 
-!rem // v1.1.1 2021-05-22
+!rem // v1.1.2 2021-10-12
 !rem //
 !rem // senseMainLogic -- must be called from a config script
 !rem //
@@ -100,7 +100,7 @@
 !mmm         else if (cSense ne "Sechster Sinn" and isfumble(senseResult))
 !mmm           set playerMessage = "/w \"" & charName & "\" " & cCriticalFailureMessage
 !mmm           chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
-!mmm         else if cSense ne "Sechster Sinn"
+!mmm         else if (cSense ne "Sechster Sinn") and (cRegularFailureMessage ne "")
 !mmm           set playerMessage = "/w \"" & charName & "\" " & cRegularFailureMessage
 !mmm           chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
 !mmm         else
