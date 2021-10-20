@@ -42,11 +42,11 @@
 !mmm   end if
 !rem
 !rem   // Collect attack data and exit if no defense necessary
-!mmm   set attackResult = ?{Angriffswert|0}
-!mmm   set criticalAttack = ?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}
-!mmm   set attackDamage = ?{Schaden laut Angreifer|0}
-!mmm   set armorPiercing = ?{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust| Nein, 0 | Ja, 1 }
-!mmm   set parryWeaponUsable = ?{Angriff mit Schild oder Parierwaffe parierbar| Ja,1| Nein,0}
+!mmm   set attackResult = "?{Angriffswert|0}"
+!mmm   set criticalAttack = "?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}"
+!mmm   set attackDamage = "?{Schaden laut Angreifer|0}"
+!mmm   set armorPiercing = "?{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust| Nein, 0 | Ja, 1 }"
+!mmm   set parryWeaponUsable = "?{Angriff mit Schild oder Parierwaffe parierbar| Ja,1| Nein,0}"
 !mmm   if attackResult < 20
 !mmm     do whisperback("Abbruch: Angriff mit **" & attackResult & "** war nicht erfolgreich, keine Abwehr nötig.")
 !mmm     exit script
@@ -91,7 +91,7 @@
 !mmm     set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 2. Dropdown prompt: Focused defense, surprise
-!mmm   set semiManualModifiers = ?{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0 | Konzentrierte Abwehr +4,+4 | Ich greife überstürzt an -2,-2 | Ich bin überrascht -4,-4 } 
+!mmm   set semiManualModifiers = "?{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0 | Konzentrierte Abwehr +4,+4 | Ich greife überstürzt an -2,-2 | Ich bin überrascht -4,-4 }"
 !mmm   if semiManualModifiers == 4
 !mmm     set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Konzentrierte&nbsp;Abwehr&nbsp;&nbsp;&nbsp;+4 "
@@ -103,7 +103,7 @@
 !mmm     set modifierTooltip = modifierTooltip & " Überraschender&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // Add manual modifiers from user input
-!mmm   set manualModifiers = ?{Weitere spezielle Abwehrmodifikatoren|0}
+!mmm   set manualModifiers = "?{Weitere spezielle Abwehrmodifikatoren|0}"
 !mmm   set modifiers = modifiers + autoModifiers + semiManualModifiers + manualModifiers
 !mmm   if manualModifiers != 0
 !mmm     if manualModifiers > 0
