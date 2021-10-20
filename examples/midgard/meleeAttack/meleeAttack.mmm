@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.8.1 (2021-05-19)"
+!mmm   set scriptVersion = "v1.8.2 (2021-10-20)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.18
