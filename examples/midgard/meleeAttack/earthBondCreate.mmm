@@ -1,7 +1,7 @@
 !rem // earthBondCreate
 !rem // Player script: Create an earthen bond as a special ability of the magic rune blade "Stoneheart"
 !mmm script
-!mmm   set scriptVersion = "1.0.2 (2021-07-27)"
+!mmm   set scriptVersion = "1.0.3 (2021-11-17)"
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
@@ -74,7 +74,7 @@
 !mmm       do setattr(cOwnID, "AP", cOwnID.AP - cWeaponToggleCost)
 !mmm       chat: /w "${cOwnID.name}" Das hat ${cWeaponToggleCost} AP gekostet.
 !mmm     end if
-!rem     // Store blast target and direction for use by waterWalkerBlastEffect script
+!rem     // Store target for use by earthBondCreate and earthBondRemove scripts
 !mmm     do setattr(cOwnID, m3mgdAttrEarthBondTargetID, foe.token_id)
 !rem     // Confirm creation to GM and player
 !mmm     chat: /w gm ${cOwnID.name} hat eine magische Erdfessel gegen **${foe.name}** erzeugt. (Kosten: ${cWeaponToggleCost} AP, schon abgezogen.)
