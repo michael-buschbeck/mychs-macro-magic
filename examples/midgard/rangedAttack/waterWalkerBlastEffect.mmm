@@ -1,24 +1,36 @@
 !rem // waterWalkerBlastEffect
-!rem // v1.0.0 2021-07-13
+!rem // v1.0.1 2021-11-17
 !rem
 !mmm script
+!mmm   set scriptVersion = "1.0.1 (2021-11-17)"
+!mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
-!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
-!rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
-!rem   //  cActivateGIF         GIF to play as the earth rises up to bind the foe's legs
+!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
 !mmm   set customizable cWeaponLabel = "Wasserläufer (Langschwert)"
-!mmm   set customizable cActivateGIF = ""
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("waterWalkerBlastEffect v" & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Initialize constants
 !mmm   set m3mgdAttrBlastBearing = "m3mgd_waterWalkerBlastEffect_bearing"
 !mmm   set m3mgdAttrTargetID = "m3mgd_waterWalkerBlastEffect_targetID"
 !mmm 
-!rem   // TODO: add check for foe.St and cWeaponWielder being accessible and foe.top/left writable once bug #123 is fixed
+!mmm   if not cWeaponWielder.name eq cWeaponWielder
+!mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")
+!mmm     exit script
+!mmm   end if
+!mmm
 !rem   // Identify target (user points to token)
 !mmm   set foe = cWeaponWielder.(m3mgdAttrTargetID)
-!mmm
+!mmm   if not foe or foe.permission ne "control"
+!mmm     do whisperback("Target given as token ID '" & foe & "' may not be a correct token ID, or does not allow control of attributes")
+!mmm     exit script
+!mmm   end if
+!rem
 !rem   // Dazzle players with special effects
 !mmm   do spawnfx("beam-water", cWeaponWielder.left, cWeaponWielder.top, foe.left, foe.top)
 !mmm
