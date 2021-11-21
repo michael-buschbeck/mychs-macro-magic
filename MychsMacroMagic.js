@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.20.3";
+const MMM_VERSION = "1.20.4";
 
 on("chat:message", function(msg)
 {
@@ -1326,10 +1326,10 @@ class MychScriptContext
                 lookupKey = (max ? undefined : "name");
             }
             break;
-                
+
             case "character_name":
             {
-                lookupObj = character ? (token || character) : undefined;
+                lookupObj = character;
                 lookupKey = (max ? undefined : "name");
             }
             break;
