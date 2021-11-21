@@ -1,9 +1,8 @@
 !rem // earthBondRemove
 !rem // GM script: Remove a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
 !rem //
-!rem // 1.0.3 (2021-11-17) fixed ugly and incomplete workaround for Act of Strength and made the GIF optional
 !mmm script
-!mmm   set scriptVersion = "1.0.3 (2021-11-17)"
+!mmm   set scriptVersion = "1.0.4 (2021-11-17)"
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
@@ -30,8 +29,8 @@
 !mmm   end if
 !mmm
 !rem   // Retrieve release mode from GM
-!mmm   set releaseMode = "?{Wie wird die Erdfessel entfernt? | Auf Wunsch des Schöpfers,releaseByCreator| Langsam und vorsichtig (5min,PW:Gw),escapeByPatience| Mit Gewalt (einmalig),escapeByForce}"
-!mmm 
+!mmm   set releaseMode = "?{Wie wird die Erdfessel entfernt? | Auf Wunsch des Schöpfers,releaseByCreator| Langsam und vorsichtig (5min/PW:Gw),escapeByPatience| Mit Gewalt (einmalig),escapeByForce}"
+!mmm
 !rem   // Retrieve target ID
 !mmm   set foe = cWeaponWielder.(m3mgdAttrEarthBondTargetID)
 !mmm   if not foe or isdenied(foe.token_id) or isunknown(foe.token_id) or isdenied(foe.(cWeaponMagicMarker))
@@ -46,7 +45,10 @@
 !mmm
 !mmm   if releaseMode eq "releaseByCreator"
 !mmm     do setattr(cWeaponWielder, "AP", cWeaponWielder.AP - 1)
-!mmm     chat: Die Erdfessel gibt ${foe.name} frei, und plötzlich sieht der Untergrund wieder aus wie vorher, als wäre nichts gewesen. [x](${cDeactivateGIF})
+!mmm     chat: Die Erdfessel gibt ${foe.name} frei, und plötzlich sieht der Untergrund wieder aus wie vorher, als wäre nichts gewesen.
+!mmm     if cDeactivateGIF ne ""
+!mmm       chat: [x](${cDeactivateGIF})
+!mmm     end if
 !mmm
 !mmm   else if releaseMode eq "escapeByPatience"
 !mmm     set dxRoll = roll("1d100")
@@ -59,7 +61,10 @@
 !mmm       exit script
 !mmm     else
 !mmm       chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${foe.Gw}) ist mit ${dxRoll} **gelungen.**
-!mmm       chat: ${foe.name} befreit sich laaaaangsam, aber immerhin elegant von ${cWeaponWielder.name}s Erdfessel. Es kann so einfach sein -- das waren 5 gut investierte Minuten! [x](${cDeactivateGIF})
+!mmm       chat: ${foe.name} befreit sich laaaaangsam, aber immerhin elegant von ${cWeaponWielder.name}s Erdfessel. Es kann so einfach sein -- das waren 5 gut investierte Minuten!
+!mmm       if cDeactivateGIF ne ""
+!mmm         chat: [x](${cDeactivateGIF})
+!mmm       end if
 !mmm     end if
 !mmm
 !mmm   else if releaseMode eq "escapeByForce"
@@ -82,4 +87,5 @@
 !mmm   end if
 !mmm   do setattr(foe, cWeaponMagicMarker, false)
 !mmm   do setattr(cWeaponWielder, cWeaponMagicMarker, false)
+!mmm   do setattr(cWeaponWielder, m3mgdAttrEarthBondTargetID, "")
 !mmm end script
