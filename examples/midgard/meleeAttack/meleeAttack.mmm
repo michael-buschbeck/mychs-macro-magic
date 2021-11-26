@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.8.3 (2021-11-10)"
+!mmm   set scriptVersion = "v1.9.0 (2021-11-18)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.18
@@ -192,11 +192,12 @@
 !mmm   end if
 !rem
 !rem   // Damage roll (cannot be lower than 0)
-!mmm   set damageResult = roll(weaponDamageExpr & weaponDamageBonus)
-!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & (damageResult - weaponDamageBonus) & ") " & weaponDamageBonus
+!mmm   set damageRoll = roll(weaponDamageExpr)
+!mmm   set damageResult = damageRoll + weaponDamageBonus
 !mmm   if damageResult < 0
 !mmm     set damageResult = highlight(0, "bad")
 !mmm   end if
+!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") " & weaponDamageBonus
 !mmm   if magicExtraDamageActive and cMagicExtraDamage ne ""
 !mmm     set magicExtraDamageRoll = roll(cMagicExtraDamage)
 !mmm     if magicExtraDamageRoll < 0
@@ -208,7 +209,7 @@
 !mmm   set damageResultLog = damageResult & " = " & damageResultLog
 !mmm   set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm
-!rem   // Break down magic effects for  player and GM
+!rem   // Break down magic effects for player and GM
 !mmm   if magicExtraDamageActive and attackResult >= 20 and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - magicExtraDamageRoll) & "**&nbsp;" & emojiKnife & emojiMagic & " +&nbsp;**" & magicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "
 !mmm   else if magicWeapon and attackResult >= 20 and damageResult > 0
@@ -261,6 +262,9 @@
 !mmm         else 
 !mmm           set damageDescription = "bestenfalls kosmetischer"
 !mmm         end if
+!mmm         if damageRoll >= 8 and not isdenied(foeEndurance) and foeEndurance >= 8
+!mmm           set damageDescription = damageDescription & ", verheerender"
+!mmm         end if
 !mmm         if not magicExtraDamageActive
 !mmm           chat [AttackSuccessClosing]:                 $[targetName]{foeName} erwischt ein $[damageDescription]{damageDescription} Treffer, wenn die Abwehr nicht gelingt.
 !mmm         else
@@ -288,6 +292,12 @@
 !mmm         set damageType = damageType & emojiMagic
 !mmm       end if 
 !mmm       chat:    {{Schaden=$[damageResult]{damageResult} **LP/AP** ${damageType}}}
+!rem       // Devastating hits => double experience
+!mmm       if damageRoll >= 8 and not isdenied(foeEndurance) and foeEndurance >= 8
+!mmm         chat:  {{EP=**x2** (verheerender Treffer)}}
+!mmm       else if isdenied(foeEndurance)
+!mmm         chat:  {{EP=**???** (AP=${foeEnduranceIndicator})}}
+!mmm       end if
 !mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
