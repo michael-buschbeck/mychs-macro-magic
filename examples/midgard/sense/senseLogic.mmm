@@ -1,9 +1,9 @@
 !rem // Midgard Multi-Sense Script 
-!rem // v1.1.2 2021-10-12
 !rem //
 !rem // senseMainLogic -- must be called from a config script
 !rem //
 !mmm script
+!mmm   set scriptVersion = "1.1.3 (2021-12-03)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.19
@@ -13,6 +13,7 @@
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
+!rem   //  cCheckVersion            Toggle version check
 !rem   //  cSense                   Must be one of the sense skills in the character sheet table "sinne", column "Fertigkeit2"
 !rem   //  cSenseModifier           Modifier to the sense roll
 !rem   //  cSuccessMessage,         Text to be sent to players in case of success / failure / critical failure, or in case 
@@ -20,12 +21,18 @@
 !rem   //  cCriticalFailureMessage     
 !rem   //  cTokenList               List of valid token_id values for characters that get the sense rolls. Duplicates are ignored.
 !rem   //
+!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cSense = "Sehen"
 !mmm   set customizable cSenseModifier = 0
 !mmm   set customizable cSuccessMessage = "Einer deiner Sinne hat etwas wahrgenommen. Herzlichen Glückwunsch!"
 !mmm   set customizable cRegularFailureMessage = "Nichts besonderes hier."
 !mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier. Wirklich nicht!"
 !mmm   set customizable cTokenList = false
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Multi Sense Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Initialize 
 !rem   //
@@ -86,7 +93,7 @@
 !mmm         set senseRoll = roll("1d20" & effModifier)
 !rem         // Overwrite tooltip to break down components
 !mmm         if charSenseModifier >= 0
-!mmm           set charSenseModifier = "+" & charSenseModifier
+!mmm           set charSenseModifier = "+" & (charSenseModifier * 1)
 !mmm         end if
 !mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - effModifier) & ") + (EW = " & charEffectiveSkill & ") " & charSenseModifier
 !mmm         set senseResult = highlight(senseRoll, default, senseResultTooltip)

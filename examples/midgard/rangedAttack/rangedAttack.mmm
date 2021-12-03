@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.9.0 (2021-11-18)"
+!mmm   set scriptVersion = "1.9.1 (2021-12-03)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.16
@@ -244,7 +244,7 @@
 !mmm   set manualModifiers = "?{Weitere spezielle Angriffsmodifikatoren|0}"
 !mmm   if manualModifiers != 0
 !mmm     if manualModifiers > 0
-!mmm       set manualModifiers = "+" & manualModifiers
+!mmm       set manualModifiers = "+" & (manualModifiers * 1)
 !mmm     end if
 !mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & manualModifiers & "}} "
 !mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & manualModifiers & " "
