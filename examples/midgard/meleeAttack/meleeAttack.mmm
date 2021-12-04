@@ -71,18 +71,18 @@
 !mmm     exit script
 !mmm   end if
 !mmm   set magicExtraDamageActive = (magicWeapon and getattr(cOwnID, cMagicExtraDamageMarker) eq "shown")
-!mmm   set foeId = "@{target|Angriffsziel|token_id}"
-!mmm   set foeName = getattr(foeId, "name")
+!mmm   set foeID = "@{target|Angriffsziel|token_id}"
+!mmm   set foeName = getattr(foeID, "name")
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
 !mmm   end if
 !mmm   set ownRotation = round(getattr(cOwnID, "rotation")) % 360
-!mmm   set foeRotation = round(getattr(foeId, "rotation")) % 360
-!mmm   set foeEndurance = getattr(foeId, "bar2")
+!mmm   set foeRotation = round(getattr(foeID, "rotation")) % 360
+!mmm   set foeEndurance = getattr(foeID, "bar2")
 !mmm
 !rem   // Check for melee range (<=1 grid cell) and orientation, prepare calculations for attack from behind
-!mmm   set offsetYfromFoe = round((getattr(cOwnID, "top")  - getattr(foeId, "top"))  * distscale())
-!mmm   set offsetXfromFoe = round((getattr(cOwnID, "left") - getattr(foeId, "left")) * distscale())
+!mmm   set offsetYfromFoe = round((getattr(cOwnID, "top")  - getattr(foeID, "top"))  * distscale())
+!mmm   set offsetXfromFoe = round((getattr(cOwnID, "left") - getattr(foeID, "left")) * distscale())
 !mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
 !mmm   set foeDirectionFromMe = round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
 !mmm   set myViewAngle = (((foeDirectionFromMe - ownRotation) + 180) % 360 + 360) % 360 - 180
@@ -91,8 +91,8 @@
 !mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes ($[viewAngle]{myViewAngle}°). Schade.
 !mmm     exit script
 !mmm   end if
-!mmm   set absTokenDistY = round(((abs(getattr(cOwnID, "top")  - getattr(foeId, "top")))  - .5 * getattr(cOwnID, "height") - .5 * getattr(foeId, "height")) * distscale())
-!mmm   set absTokenDistX = round(((abs(getattr(cOwnID, "left") - getattr(foeId, "left"))) - .5 * getattr(cOwnID, "width")  - .5 * getattr(foeId, "width"))  * distscale())
+!mmm   set absTokenDistY = round(((abs(getattr(cOwnID, "top")  - getattr(foeID, "top")))  - .5 * getattr(cOwnID, "height") - .5 * getattr(foeID, "height")) * distscale())
+!mmm   set absTokenDistX = round(((abs(getattr(cOwnID, "left") - getattr(foeID, "left"))) - .5 * getattr(cOwnID, "width")  - .5 * getattr(foeID, "width"))  * distscale())
 !mmm   set distance = max(absTokenDistY, absTokenDistX)
 !mmm   set distanceUnits = distunits() 
 !mmm   if (distance/(distsnap()*distscale())) > 0
@@ -216,10 +216,16 @@
 !mmm   set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm
 !rem   // Save key attack data for defense script
-!mmm   if ? attackResult >= 20 and ? damageResult > 0
+!mmm   if attackResult >= 20 and damageResult > 0
+!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackType}
+!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackerID}
+!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackTargetID}
+!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackResult}
+!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackDamage}
+!mmm debug chat: ${cOwnID} ${foeID} ${attackResult} ${damageResult}
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "melee")
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnId)
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeId)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnID)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeID)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
 !mmm   end if
