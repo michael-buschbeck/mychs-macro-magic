@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.4.3 (2021-10-20)"
+!mmm   set scriptVersion = "1.4.4 (2021-12-03)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -107,7 +107,7 @@
 !mmm   set modifiers = modifiers + autoModifiers + semiManualModifiers + manualModifiers
 !mmm   if manualModifiers != 0
 !mmm     if manualModifiers > 0
-!mmm       set manualModifiers = "+" & manualModifiers
+!mmm       set manualModifiers = "+" & (manualModifiers * 1)
 !mmm     end if
 !mmm     set modifierLog = modifierLog & " {{Manuelle Modifikatoren=" & manualModifiers & "}} "
 !mmm     set modifierTooltip = modifierTooltip & " Manuelle&nbsp;Modifikatoren&nbsp;&nbsp;&nbsp;" & manualModifiers & " "

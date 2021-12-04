@@ -16,7 +16,7 @@
 !mmm   set customizable cDeactivateGIF = ""
 !mmm
 !mmm   if cCheckVersion
-!mmm     do whisperback("earthBondCreate v" & scriptVersion)
+!mmm     do whisperback("earthBondRemove v" & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
