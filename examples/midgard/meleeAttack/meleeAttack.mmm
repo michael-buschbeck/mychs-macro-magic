@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.9.1 (2021-12-03)"
+!mmm   set scriptVersion = "v1.10.0 (2021-12-04)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.18
@@ -50,6 +50,12 @@
 !mmm   set emojiLock = "🔒"
 !mmm   set emojiMagic = "✨"
 !mmm   set emojiKnife = "🔪"
+!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
+!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
 !rem   // - Character & NPC data
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
@@ -175,7 +181,7 @@
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
 !mmm   else if modifiers > 0
-!mmm     set modifiers = "+" & modifiers
+!mmm     set modifiers = "+" & (modifiers * 1)
 !mmm   end if
 !mmm   if modifierLog eq ""
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
@@ -209,6 +215,15 @@
 !mmm   set damageResultLog = damageResult & " = " & damageResultLog
 !mmm   set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm
+!rem   // Save key attack data for defense script
+!mmm   if ? attackResult >= 20 and ? damageResult > 0
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "melee")
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnId)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeId)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
+!mmm   end if
+!rem
 !rem   // Break down magic effects for player and GM
 !mmm   if magicExtraDamageActive and attackResult >= 20 and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - magicExtraDamageRoll) & "**&nbsp;" & emojiKnife & emojiMagic & " +&nbsp;**" & magicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "

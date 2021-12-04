@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.4.4 (2021-12-03)"
+!mmm   set scriptVersion = "1.5.0 (2021-12-04)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -34,6 +34,15 @@
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem   // Constants
+!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
+!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrXP = "Erfahrungsschatz"
+!rem
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = getattr(cOwnID, "token_id")
 !mmm   if isdenied(cOwnID) or isunknown(cOwnID)
@@ -202,6 +211,19 @@
 !mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
 !mmm   end if
 !mmm   set effHealthLoss = highlight(effHealthLoss, "info")
+!rem
+!rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
+!mmm   set attacker = m3mgdExchange.m3mgdAttrAttackerID
+!mmm   if attacker.permission eq "control"
+!mmm     if (cOwnID.AP.max == 999 and not defenseSuccess and effEnduranceLoss > 0) or (cOwnID.AP.max != 999 and endurance > 0 and effEnduranceLoss > 0)
+!mmm       set attackerXPGain = cOwnID.Grad + 3
+!mmm       if m3mgdExchange.m3mgdAttrAttackType eq "ranged"
+!mmm         set attackerXPGain = attackerXPGain / 2
+!mmm       end if
+!mmm       debug chat: ${attacker.name} erhält ${attackerXPGain} EP für diesen Treffer.
+!mmm       do setattr(attacker, m3mgdAttrXP, attacker.m3mgdAttrXP + attackerXPGain)
+!mmm     end if
+!mmm   end if
 !rem
 !rem   // Verbose output
 !mmm   if cVerbose
