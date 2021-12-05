@@ -42,6 +42,8 @@
 !mmm   set customizable cAmmoMagicDamage = ""
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
 !mmm   set customizable cOwnID = sender.token_id
+!mmm   set customizable cHealthAttr = "LP"
+!mmm   set customizable cEnduranceAttr = "AP"
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
@@ -184,7 +186,7 @@
 !mmm     set modifierTooltip = modifierTooltip & " " & rangeBracket & "&nbsp;&nbsp;&nbsp;+/-0 "
 !mmm   end if
 !rem   // 2. Attacker exhausted
-!mmm   if getattr(cOwnID, "AP") <= 0
+!mmm   if cOwnID.(cEnduranceAttr) <= 0
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & ownName & "].AP:0)=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
