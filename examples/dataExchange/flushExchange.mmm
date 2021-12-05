@@ -1,0 +1,34 @@
+!rem // flushExchange: MMM-Midgard auxiliary tool to quickly delete current info from the exchange data structure
+!rem // 
+!mmm script
+!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
+!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
+!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
+!mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
+!mmm 
+!mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
+!mmm     do whisperback("No permission to access exchange sheet.")
+!mmm     exit script
+!mmm   end if
+!rem
+!mmm   set counter = 0
+!mmm   for attribute in m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackCriticalSuccess, m3mgdAttrAttackDamage, m3mgdAttrAttackWeaponType, m3mgdAttrAttackArmorPiercing
+!mmm     do setattr(m3mgdExchange, attribute, "")
+!mmm     set counter = counter + 1
+!mmm   end for
+!mmm
+!mmm   if isdenied(sender.name)
+!mmm     set user = "GM"
+!mmm   else
+!mmm     set user = sender.name
+!mmm   end if 
+!mmm   combine chat
+!mmm     chat: /w "${user}" ${"&"}{template:default} {{name=m3mgdflushExchange}}
+!mmm     chat: {{Result=Flushed ${counter} attributes}}
+!mmm   end combine
+!mmm end script
