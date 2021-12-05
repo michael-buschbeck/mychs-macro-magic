@@ -1,11 +1,14 @@
 !rem // Midgard Melee Attack Script
 !rem //
+!rem // - bugfix: made more easily usable for NPCs by referencing token_id not character_id
+!rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
+!rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
-!mmm   set scriptVersion = "v1.10.0 (2021-12-04)"
+!mmm   set scriptVersion = "v1.10.0 (2021-12-05)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.18
-!mmm     do whisperback("Abbruch: MMM-Version 1.18.0 oder höher erforderlich.")
+!mmm   if version < 1.20
+!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !rem
@@ -30,7 +33,7 @@
 !mmm   set customizable cMagicExtraDamage = ""
 !mmm   set customizable cMagicExtraDamageLabel = "" 
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
-!mmm   set customizable cOwnID = getattr(sender, "character_id")
+!mmm   set customizable cOwnID = sender.token_id
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Melee Attack Script " & scriptVersion)
@@ -38,7 +41,7 @@
 !mmm   end if
 !mmm
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = getattr(cOwnID, "character_id")
+!mmm   set cOwnID = cOwnID.token_id
 !mmm   if isdenied(cOwnID)
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
@@ -55,7 +58,10 @@
 !mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
 !mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
+!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !rem   // - Character & NPC data
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
@@ -191,10 +197,13 @@
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
 !mmm   if iscritical(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
+!mmm     set criticalAttack = 1
 !mmm   else if isfumble(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "bad", attackResultLog)
+!mmm     set criticalAttack = 0
 !mmm   else 
 !mmm     set attackResult = highlight(attackResult, "normal", attackResultLog)
+!mmm     set criticalAttack = 0
 !mmm   end if
 !rem
 !rem   // Damage roll (cannot be lower than 0)
@@ -217,17 +226,16 @@
 !mmm
 !rem   // Save key attack data for defense script
 !mmm   if attackResult >= 20 and damageResult > 0
-!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackType}
-!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackerID}
-!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackTargetID}
-!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackResult}
-!mmm debug chat: ${m3mgdExchange.m3mgdAttrAttackDamage}
-!mmm debug chat: ${cOwnID} ${foeID} ${attackResult} ${damageResult}
+!mmm     debug chat: ${cOwnID} ${foeID} ${attackResult} ${damageResult}
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "melee")
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnID)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeID)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
+!rem     // only some ranged weapons can pierce armor (Kodex,72) -- not relevant for melee attacks
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 0)
 !mmm   end if
 !rem
 !rem   // Break down magic effects for player and GM
@@ -260,7 +268,7 @@
 !mmm       else
 !mmm         chat [AttackOpeningExtraMagicDamage]:          Mein Angriff mit $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}", magischer Zusatzschaden aktiviert) auf $[targetName]{foeName} 
 !mmm       end if
-!mmm       if iscritical(attackRoll)
+!mmm       if criticalAttack == 1
 !mmm         chat [AttackIsCriticalSuccess]:                ist ein kritischer Erfolg ($[attackResult]{attackResult+0}). **Kritischer Erfolg: PP prüfen!**
 !mmm       else if isfumble(attackRoll)
 !mmm         chat [AttackIsCriticalFailure]:                ist ein **peinlicher Patzer**. 
