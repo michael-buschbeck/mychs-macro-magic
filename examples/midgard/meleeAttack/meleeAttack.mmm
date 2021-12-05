@@ -1,5 +1,6 @@
 !rem // Midgard Melee Attack Script
 !rem //
+!rem // - new feature: stores attack data in new MMM Midgard exchange structure, for defense script to pick up
 !rem // - bugfix: made more easily usable for NPCs by referencing token_id not character_id
 !rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
 !rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
@@ -40,7 +41,7 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Refetch character_id to ensure access in case of erroneous override in customize block
+!rem   // Refetch token_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = cOwnID.token_id
 !mmm   if isdenied(cOwnID)
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
@@ -322,6 +323,7 @@
 !mmm       end if 
 !mmm       chat:    {{Schaden=$[damageResult]{damageResult} **LP/AP** ${damageType}}}
 !rem       // Devastating hits => double experience
+!rem       // TODO: move this logic to defense script and automate accrual there
 !mmm       if damageRoll >= 8 and not isdenied(foeEndurance) and foeEndurance >= 8
 !mmm         chat:  {{EP=**x2** (verheerender Treffer)}}
 !mmm       else if isdenied(foeEndurance)

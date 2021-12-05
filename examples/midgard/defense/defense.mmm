@@ -1,5 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
+!rem // - new & modified behavior: pulls attack data from new MMM Midgard exchange structure or asks for manual entry
+!rem // - new feature: calculates experience gained by attack and stores it in attacker's sheet
 !rem // - Bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
 !mmm script
 !mmm   set scriptVersion = "1.5.0 (2021-12-05)"

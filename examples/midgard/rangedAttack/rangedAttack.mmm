@@ -1,11 +1,11 @@
 !rem // Midgard Ranged Attack Script
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.9.1 (2021-12-03)"
+!mmm   set scriptVersion = "1.10.0 (2021-12-05)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.16
-!mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
+!mmm   if version < 1.20
+!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -41,15 +41,15 @@
 !mmm   set customizable cAmmoMagicSkillBonus = 0
 !mmm   set customizable cAmmoMagicDamage = ""
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
-!mmm   set customizable cOwnID = getattr(sender, "character_id")
+!mmm   set customizable cOwnID = sender.token_id
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = getattr(cOwnID, "character_id")
+!rem   // Refetch token_id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = cOwnID.token_id
 !mmm   if isdenied(cOwnID)
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
@@ -59,28 +59,39 @@
 !rem   // - Constants
 !mmm   set emojiExhausted = "🥴"
 !mmm   set emojiLock = "🔒"
+!mmm   set emojiMagic = "✨"
+!mmm   set emojiKnife = "🔪"
+!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
+!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
+!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
+!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !rem   // - Fetch character (attacker) data
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
 !mmm   set weaponDamageBonus = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
+!mmm   if weaponDamageBonus >= 0
+!mmm     set weaponDamageBonus = "+" & weaponDamageBonus
+!mmm   end if
 !mmm   set sharpshootingSkill = getattr(cOwnID, findattr(cOwnID, "Fertigkeiten", "Fertigkeit", "Scharfschießen", "FW"))
 !mmm   if (not effAttack) or (not weaponDamageExpr)
 !rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
 !mmm     do whisperback("Abbruch: " & ownName & " hat keine Waffe namens " & cWeaponLabel & ".")
 !mmm     exit script
 !mmm   end if
-!mmm   if weaponDamageBonus >= 0
-!mmm     set weaponDamageBonus = "+" & weaponDamageBonus
-!mmm   end if
 !rem   // - Fetch NPC (target) data
-!mmm   set foeId = "@{target|Angriffsziel|token_id}"
-!mmm   set foeName = getattr(foeId, "name")
+!mmm   set foeID = "@{target|Angriffsziel|token_id}"
+!mmm   set foeName = getattr(foeID, "name")
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
 !mmm   end if
 !mmm   set ownRotation = round(getattr(cOwnID, "rotation")) % 360
-!mmm   set foeRotation = round(getattr(foeId, "rotation")) % 360
+!mmm   set foeRotation = round(getattr(foeID, "rotation")) % 360
 !mmm   set ammoCount = getattr(cOwnID, cAmmoLabel)
 !mmm   set ammoLabel = cAmmoLabel
 !mmm   if cAmmoMagic
@@ -96,11 +107,11 @@
 !mmm     chat [OutOfAmmo]: Ich greife nach meinen ${ammoLabel}n, um auf ${foeName} zu schießen, doch **OH SCHRECK -- keine ${ammoLabel} mehr drin!** Schade. Da hat ${foeName} nochmal Glück gehabt.
 !mmm     exit script
 !mmm   end if
-!mmm   set foeEndurance = getattr(foeId, "bar2")
+!mmm   set foeEndurance = getattr(foeID, "bar2")
 !rem
 !rem   // Calculate direction, exit if direction to target is outside arc of view 
-!mmm   set offsetYfromFoe = round((getattr(cOwnID, "top")  - getattr(foeId, "top"))  * distscale())
-!mmm   set offsetXfromFoe = round((getattr(cOwnID, "left") - getattr(foeId, "left")) * distscale())
+!mmm   set offsetYfromFoe = round((getattr(cOwnID, "top")  - getattr(foeID, "top"))  * distscale())
+!mmm   set offsetXfromFoe = round((getattr(cOwnID, "left") - getattr(foeID, "left")) * distscale())
 !mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
 !mmm   set foeDirectionFromMe = round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
 !mmm   set myViewAngle = ((foeDirectionFromMe - ownRotation) + 180) % 360 - 180
@@ -122,8 +133,8 @@
 !mmm   end if
 !rem
 !rem   // Calculate distance, exit if distance exceeds range
-!mmm   set absTokenDistY = round(((abs(getattr(cOwnID, "top")  - getattr(foeId, "top")))  - .5 * getattr(cOwnID, "height") - .5 * getattr(foeId, "height")) * distscale())
-!mmm   set absTokenDistX = round(((abs(getattr(cOwnID, "left") - getattr(foeId, "left"))) - .5 * getattr(cOwnID, "width")  - .5 * getattr(foeId, "width"))  * distscale())
+!mmm   set absTokenDistY = round(((abs(getattr(cOwnID, "top")  - getattr(foeID, "top")))  - .5 * getattr(cOwnID, "height") - .5 * getattr(foeID, "height")) * distscale())
+!mmm   set absTokenDistX = round(((abs(getattr(cOwnID, "left") - getattr(foeID, "left"))) - .5 * getattr(cOwnID, "width")  - .5 * getattr(foeID, "width"))  * distscale())
 !mmm   set distance = max(absTokenDistY, absTokenDistX)
 !mmm   set distanceUnits = distunits() 
 !mmm   if distance > cRangeUpperBoundFar
@@ -274,10 +285,13 @@
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") " & modifiers
 !mmm   if iscritical(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
+!mmm     set criticalAttack = 1
 !mmm   else if isfumble(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "bad", attackResultLog)
+!mmm     set criticalAttack = 0
 !mmm   else 
 !mmm     set attackResult = highlight(attackResult, "normal", attackResultLog)
+!mmm     set criticalAttack = 0
 !mmm   end if
 !rem
 !mmm   if attackResult >= 20
@@ -316,6 +330,20 @@
 !mmm     set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm   end if
 !mmm
+!rem   // Save key attack data for defense script
+!mmm   if attackResult >= 20 and damageResult > 0
+!mmm     debug chat: ${cOwnID} ${foeID} ${attackResult} ${damageResult}
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "ranged")
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnID)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeID)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
+!rem     // TODO: implement armor piercing determination (Kodex,72) 
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 0)
+!mmm   end if
+!rem
 !rem   // Break down extra magic damage to player and GM
 !mmm   if cAmmoMagic and attackResult >= 20 and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberschaden=" & damageResult & " }} "
@@ -344,7 +372,7 @@
 !mmm       else
 !mmm         chat [AttackOpeningMagicDamage]:   Mein Angriff mit $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}", magischer Zusatzschaden aktiviert) auf $[targetName]{foeName} 
 !mmm       end if
-!mmm       if iscritical(attackRoll)
+!mmm       if criticalAttack == 1
 !mmm         chat [AttackIsCriticalSuccess]:    ist ein **kritischer Erfolg** ($[attackResult]{attackResult+0}). 
 !mmm       else if isfumble(attackRoll)
 !mmm         chat [AttackIsCriticalFailure]:    ist ein **grausamer Patzer**. 
@@ -384,7 +412,7 @@
 !mmm     chat:      {{Boni/Mali=**${modifiers}**}}
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
 !mmm     if attackFromBehind
-!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
+!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** ($[targetViewAngle]{foeViewAngle}°)}}
 !mmm     end if 
 !mmm     if attackResult >= 20 and semiAutoModCode % 23 == 0
 !mmm       chat:    {{Basisschaden=${damageResultBasic}}}
@@ -394,6 +422,7 @@
 !mmm       chat:    {{Schaden=${damageResult}}}
 !mmm     end if
 !rem     // Devastating hits => double experience
+!rem     // TODO: move this logic to defense script and automate accrual there
 !mmm     if attackResult >= 20 and damageRoll >= 8 and not isdenied(foeEndurance) and foeEndurance >= 8
 !mmm       chat:  {{EP=**x2** (verheerender Treffer)}}
 !mmm     else if isdenied(foeEndurance)

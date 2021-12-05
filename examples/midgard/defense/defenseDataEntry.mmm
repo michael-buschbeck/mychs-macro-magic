@@ -37,3 +37,4 @@
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)
 !mmm   
 !mmm end script
+%{MacroSheet|defense}
