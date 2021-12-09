@@ -1,7 +1,12 @@
 !rem // Midgard Ranged Attack Script
-!rem
+!rem //
+!rem // - new feature: stores attack data in new MMM Midgard exchange structure, for defense script to pick up
+!rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
+!rem // - bugfix: made more easily usable for NPCs by referencing token_id not character_id
+!rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
+!rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
-!mmm   set scriptVersion = "1.10.0 (2021-12-05)"
+!mmm   set scriptVersion = "1.10.0 (2021-12-09)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -56,6 +61,7 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
+!mmm   set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
 !rem
 !rem   // Init
 !rem   // - Constants
@@ -119,7 +125,7 @@
 !mmm   set myViewAngle = ((foeDirectionFromMe - ownRotation) + 180) % 360 - 180
 !mmm   set foeViewAngle = ((ownDirectionFromFoe - foeRotation) + 180) % 360 - 180
 !mmm   if (myViewAngle < -45) or (myViewAngle > 45)
-!mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
+!mmm     chat [OutsideFieldOfVision]: ${chatPrefix} $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
 !mmm     exit script
 !mmm   end if
 !rem
@@ -141,7 +147,7 @@
 !mmm   set distanceUnits = distunits() 
 !mmm   if distance > cRangeUpperBoundFar
 !mmm     combine chat
-!mmm       chat [OutsideStrikeDistance]: $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
+!mmm       chat [OutsideStrikeDistance]: ${chatPrefix} $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
 !mmm       chat: Mein ${cWeaponLabel} fliegt grob in Richtung ${foeName}, der aber viel zu weit weg ist.
 !mmm       chat: ${"&"}{template:default} {{name=${cWeaponLabel}angriff: Außer Reichweite}} 
 !mmm       chat: {{Ziel=**${foeName}**}}
@@ -369,6 +375,7 @@
 !mmm
 !mmm   if cVerbose
 !mmm     combine chat
+!mmm       chat: ${chatPrefix} 
 !mmm       if not cAmmoMagic
 !mmm         chat [AttackOpening]:              Angriff mit dem $[weaponType]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}"): Einer/s meiner/s $[ammoLabel]{ammoLabel} fliegt in Richtung $[targetName]{foeName} in $[range]{rangeDescription} und
 !mmm       else
@@ -402,7 +409,7 @@
 !rem
 !rem   // Add data table for easy reference
 !mmm   combine chat
-!mmm     chat:      ${"&"}{template:default} {{name=Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
+!mmm     chat:      ${"&"}{template:default} {{name=${ownName}: Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
 !mmm     chat:      {{Ziel=**${foeName}** ${foeEnduranceIndicator}}}
 !mmm     if iscritical(attackRoll)
 !mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${attackRoll})}}

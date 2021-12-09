@@ -2,9 +2,10 @@
 !rem // 
 !rem // - new & modified behavior: pulls attack data from new MMM Midgard exchange structure or asks for manual entry
 !rem // - new feature: calculates experience gained by attack and stores it in attacker's sheet
+!rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
 !rem // - Bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
 !mmm script
-!mmm   set scriptVersion = "1.5.0 (2021-12-05)"
+!mmm   set scriptVersion = "1.5.0 (2021-12-09)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -59,6 +60,7 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
+!mmm   set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
 !rem
 !rem   // Collect attack data and exit if no defense necessary
 !mmm   set validInputs = 0
@@ -284,6 +286,7 @@
 !rem   // Verbose output
 !mmm   if cVerbose
 !mmm     combine chat
+!mmm       chat: ${chatPrefix}
 !mmm       if defenseSuccess
 !mmm         chat       [DefenseSuccess]:           Ich winde mich, strecke mich, wehre mich, und erleide nur einen **leichten Treffer**.
 !mmm         if newHealth < 0
@@ -322,9 +325,9 @@
 !mmm     end if
 !mmm     chat: ${"&"}{template:default} 
 !mmm     if (not parryWeapon) or (parryWeapon and endurance > 0)
-!mmm       chat: {{name=Abwehr: ${cWeaponLabel}}} 
+!mmm       chat: {{name=${ownName}: Abwehr mit ${cWeaponLabel}}} 
 !mmm     else 
-!mmm       chat: {{name=Abwehr (erschöpft)}} 
+!mmm       chat: {{name=${ownName}: Abwehr (erschöpft)}} 
 !mmm     end if 
 !mmm     if armorPiercing == 1 and attackDamage > 3
 !mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (mit schwerem, scharfem Geschoss => Rüstungsschutz auf 3 begrenzt)}}
