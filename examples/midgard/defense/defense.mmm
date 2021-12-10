@@ -285,16 +285,25 @@
 !mmm   if attacker.permission eq "control"
 !mmm     if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
 !mmm       set attackerXPGain = getattr(cOwnID, "Grad") + 3
+!mmm       set XPGainLog = "3+" & cOwnID.Grad
 !mmm       if m3mgdExchange.(m3mgdAttrAttackType) eq "ranged"
 !mmm         set attackerXPGain = attackerXPGain / 2
+!mmm         set XPGainLog = "(" & XPGainLog & ") / 2[FK]"
 !mmm       end if
 !rem       // Devastating hits
 !mmm       if attackDamageRoll >= 8 and endurance >= 8
 !mmm         set attackerXPGain = attackerXPGain * 2
+!mmm         set XPGainLog = "(" & XPGainLog & ") x 2[verheerend]"
 !mmm       end if
 !mmm       debug chat: ${attacker.name} erhält ${attackerXPGain} EP für diesen Treffer.
 !mmm       do setattr(attacker, m3mgdAttrXP, attacker.(m3mgdAttrXP) + attackerXPGain)
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=+" & highlight(attackerXPGain, "normal", "Grad: " & cOwnID.Grad & ", attackType: " & m3mgdExchange.(m3mgdAttrAttackType)) & " EP}} "
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=+" & attackerXPGain & " EP (= " & XPGainLog & ")}} "
+!mmm     else if cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(keine: ∞ AP, abgewehrt) }} "
+!mmm     else if cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(keine: Ziel erschöpft) }} "
+!mmm     else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(keine: kein AP-Verlust) }} "
 !mmm     end if
 !mmm   else
 !mmm     debug chat: Some problem with access to the attacking character's data prevents automatic accrual of experience for this attack. AttackerID: ${attacker} ${getreason(attacker)}
