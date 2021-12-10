@@ -8,6 +8,7 @@
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
 !mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !rem
@@ -16,6 +17,7 @@
 !mmm   set attackResult = "?{Angriffswert|0}"
 !mmm   set criticalAttack = "?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}"
 !mmm   set attackDamage = "?{Schaden laut Angreifer|0}"
+!mmm   set attackDamageRoll = "?{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}"
 !mmm   set armorPiercing = "?{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust| Nein,0| Ja,1}"
 !mmm   set weaponType = "?{Waffentyp|Einhandschwert|Beidhänder|Fechtwaffe|Stichwaffe|Stockwaffe|Spießwaffe|Langbogen|Kompositbogen|schwere Armbrust|leichte Armbrust|Schleuder|Blasrohr}"
 !mmm   if attackResult < 20
@@ -33,6 +35,7 @@
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamage, attackDamage)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, attackDamageRoll)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, armorPiercing)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)
 !mmm   
