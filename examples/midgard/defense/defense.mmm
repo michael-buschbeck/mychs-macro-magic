@@ -4,6 +4,7 @@
 !rem // - feature: calculates experience gained by attack and stores it in attacker's sheet
 !rem // - feature: mark output with acting token's name (to better distinguish NPCs)
 !rem // - feature: ghosts (max health == 0) & undead (max endurance == 0) cannot lose health/endurance, respectively
+!rem // - tweak: token markers for exhaustion, (severe) injury and death added to chat output
 !rem // - bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
 !mmm script
 !mmm   set scriptVersion = "1.5.0 (2021-12-10)"
@@ -253,7 +254,7 @@
 !mmm   set newEndurance = highlight(endurance - effEnduranceLoss, "normal", "bin fit!")
 !mmm   if newEndurance <= 0 
 !rem     // AP=0: Green token marker
-!mmm     set newEndurance = highlight(0, "bad", "erschöpft")
+!mmm     set newEndurance = highlight(0, "bad", "🟢 erschöpft")
 !mmm     do setattr(cOwnID, "status_green", true)
 !mmm   end if
 !mmm   do setattr(cOwnID, cEnduranceAttr, newEndurance)
@@ -262,16 +263,16 @@
 !rem   // Process loss of health and applicable consequences 
 !mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
 !mmm   if newHealth <= 0
-!rem     // LP<=0: Death zone marker
-!mmm     set newHealth = highlight(newHealth, "bad", "(fast) tot")
+!rem     // LP <=0 : Death zone marker
+!mmm     set newHealth = highlight(newHealth, "bad", "💀 (fast) tot")
 !mmm     do setattr(cOwnID, "status_death_zone", true)
 !mmm   else if newHealth <= 3 
-!rem     // LP<=3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
-!mmm     set newHealth = highlight(newHealth, "bad", "sehr schwer verletzt")
+!rem     // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
+!mmm     set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt")
 !mmm     do setattr(cOwnID, "status_red", true)
 !mmm   else if newHealth <= .5 * maxHealth
-!rem     // LP<=50%: Yellow token marker => endurance and movement to be limited to 50%
-!mmm     set newHealth = highlight(newHealth, "important", "schwer verletzt")
+!rem     // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
+!mmm     set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt")
 !mmm     do setattr(cOwnID, "status_yellow", true)
 !mmm   end if
 !mmm   do setattr(cOwnID, cHealthAttr, newHealth)
@@ -390,18 +391,18 @@
 !mmm     else 
 !mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
 !mmm       if newHealth > 3 and newHealth <= 0.5 * maxHealth
-!mmm         chat: {{Schwer verletzt=max. halbe AP, halbe Bewegung}}
+!mmm         chat: {{Schwer verletzt=🟡 max. halbe AP, halbe Bewegung}}
 !mmm       else if newHealth > 0 and newHealth <= 3
-!mmm         chat: {{Dem Tode nah=handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
+!mmm         chat: {{Dem Tode nah=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
 !mmm       else if newHealth == 0
-!mmm         chat: {{Apathisch=handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
+!mmm         chat: {{Apathisch=🔴 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
 !mmm       else if newHealth < 0 and defenseSuccess
-!mmm         chat: {{Tödlich verwundet=**Countdown läuft**}}
+!mmm         chat: {{Tödlich verwundet=💀 **Countdown läuft**}}
 !mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
-!mmm         chat: {{Tödlich verwundet=**${timeToDie} Minuten bis zum Tod**}}
+!mmm         chat: {{Tödlich verwundet=💀 **${timeToDie} Minuten bis zum Tod**}}
 !mmm       end if
 !mmm       if newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
-!mmm         chat: {{Erschöpft=(-4 auf alles, max. Last reduziert)}}
+!mmm         chat: {{Erschöpft=🟢 (-4 auf alles, max. Last reduziert)}}
 !mmm       end if
 !mmm     end if
 !mmm   end combine
