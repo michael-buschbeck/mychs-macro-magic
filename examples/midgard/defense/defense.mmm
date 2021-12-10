@@ -391,11 +391,11 @@
 !mmm     else 
 !mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
 !mmm       if newHealth > 3 and newHealth <= 0.5 * maxHealth
-!mmm         chat: {{Schwer verletzt=🟡 max. halbe AP, halbe Bewegung}}
+!mmm         chat: {{Schwer verwundet=🟡 max. halbe AP, halbe Bewegung}}
 !mmm       else if newHealth > 0 and newHealth <= 3
-!mmm         chat: {{Dem Tode nah=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
+!mmm         chat: {{Extrem schwer verwundet=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
 !mmm       else if newHealth == 0
-!mmm         chat: {{Apathisch=🔴 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
+!mmm         chat: {{Dem Tode nah=💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
 !mmm       else if newHealth < 0 and defenseSuccess
 !mmm         chat: {{Tödlich verwundet=💀 **Countdown läuft**}}
 !mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
