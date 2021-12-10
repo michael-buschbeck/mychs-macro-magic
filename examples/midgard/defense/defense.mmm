@@ -1,9 +1,10 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !rem // - new & modified behavior: pulls attack data from new MMM Midgard exchange structure or asks for manual entry
-!rem // - new feature: calculates experience gained by attack and stores it in attacker's sheet
-!rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
-!rem // - Bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
+!rem // - feature: calculates experience gained by attack and stores it in attacker's sheet
+!rem // - feature: mark output with acting token's name (to better distinguish NPCs)
+!rem // - feature: ghosts (max health == 0) & undead (max endurance == 0) cannot lose health/endurance, respectively
+!rem // - bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
 !mmm script
 !mmm   set scriptVersion = "1.5.0 (2021-12-10)"
 !mmm
@@ -209,14 +210,14 @@
 !rem     // Defense successful
 !mmm     set defenseSuccess = true
 !mmm
-!rem     // Calculate endurance damage (may be reduced due to parry weapon or shield properties, which are stored as negative values)
-!mmm     if parryWeaponEnduranceProtection
+!rem     // Calculate endurance damage (only for max endurance > 0; may be reduced due to parry weapon or shield properties, which are stored as negative values)
+!mmm     if not cOwnID.(cEnduranceAttr).max == 0 and parryWeaponEnduranceProtection
 !mmm       set effEnduranceLoss = attackDamage + parryWeaponEnduranceProtection
 !mmm       if effEnduranceLoss < 0
 !mmm         set effEnduranceLoss = 0
 !mmm       end if
 !mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "=AP-Verlust " & parryWeaponEnduranceProtection & "}} "
-!mmm     else
+!mmm     else if not cOwnID.(cEnduranceAttr).max == 0
 !mmm       set effEnduranceLoss = attackDamage
 !mmm     end if
 !mmm
@@ -224,11 +225,15 @@
 !rem     // Defense failed
 !mmm     set defenseSuccess = false
 !mmm
-!rem     // Defender loses full hit points worth of endurance regardless of armor
-!mmm     set effEnduranceLoss = attackDamage
+!rem     // Defender loses full hit points worth of endurance regardless of armor, if not an undead creature with unlimited endurance
+!mmm     if not cOwnID.(cEnduranceAttr).max == 0
+!mmm       set effEnduranceLoss = attackDamage
+!mmm     else 
+!mmm       set effEnduranceLoss = 0
+!mmm     end if
 !mmm
-!rem     // Calculate damage to health depending on armor
-!mmm     if armorProtection > 0
+!rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health)
+!mmm     if not cOwnID.(cHealthAttr).max == 0 and armorProtection > 0
 !mmm       if armorProtection > 3 and armorPiercing == 1
 !mmm         set armorProtection = 3
 !mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & " (reduziert wg. scharfen, schweren Geschossen)}} "
@@ -239,7 +244,7 @@
 !mmm       if effHealthLoss < 0
 !mmm         set effHealthLoss = 0
 !mmm       end if
-!mmm     else
+!mmm     else if not cOwnID.(cHealthAttr).max == 0
 !mmm       set effHealthLoss = attackDamage
 !mmm     end if
 !mmm   end if
@@ -278,7 +283,7 @@
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
 !mmm   set attacker = m3mgdExchange.(m3mgdAttrAttackerID)
 !mmm   if attacker.permission eq "control"
-!mmm     if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess and effEnduranceLoss > 0) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
+!mmm     if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
 !mmm       set attackerXPGain = getattr(cOwnID, "Grad") + 3
 !mmm       if m3mgdExchange.(m3mgdAttrAttackType) eq "ranged"
 !mmm         set attackerXPGain = attackerXPGain / 2
