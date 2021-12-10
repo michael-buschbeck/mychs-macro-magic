@@ -6,7 +6,7 @@
 !rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
 !rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
-!mmm   set scriptVersion = "1.10.0 (2021-12-09)"
+!mmm   set scriptVersion = "1.10.0 (2021-12-10)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -76,6 +76,7 @@
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
 !mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !rem   // - Fetch character (attacker) data
@@ -347,6 +348,7 @@
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, damageRoll)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
 !rem     // TODO: implement armor piercing determination (Kodex,72) 
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 0)
@@ -429,13 +431,6 @@
 !mmm       chat:    {{Vollschaden=${damageResult}}}
 !mmm     else if attackResult >= 20
 !mmm       chat:    {{Schaden=${damageResult}}}
-!mmm     end if
-!rem     // Devastating hits => double experience
-!rem     // TODO: move this logic to defense script and automate accrual there
-!mmm     if attackResult >= 20 and damageRoll >= 8 and not isdenied(foeEndurance) and foeEndurance >= 8
-!mmm       chat:  {{EP=**x2** (verheerender Treffer)}}
-!mmm     else if isdenied(foeEndurance)
-!mmm       chat:  {{EP=**???** (AP=${foeEnduranceIndicator})}}
 !mmm     end if
 !mmm     chat:      {{${ammoLabel}=${ammoCount}}}
 !mmm   end combine

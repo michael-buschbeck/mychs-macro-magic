@@ -5,7 +5,7 @@
 !rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
 !rem // - Bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
 !mmm script
-!mmm   set scriptVersion = "1.5.0 (2021-12-09)"
+!mmm   set scriptVersion = "1.5.0 (2021-12-10)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -48,6 +48,7 @@
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
 !mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
@@ -95,6 +96,13 @@
 !mmm     else 
 !mmm       debug chat: Invalid attack damage (not >= 0): ${getreason(m3mgdExchange.(m3mgdAttrAttackDamage))}
 !mmm     end if
+!mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackDamageRoll)) and m3mgdExchange.(m3mgdAttrAttackDamageRoll) >= 0
+!mmm       debug chat: Valid attack damage roll (>= 0): ${m3mgdExchange.(m3mgdAttrAttackDamageRoll)}
+!mmm       set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
+!mmm       set validInputs = validInputs + 1
+!mmm     else 
+!mmm       debug chat: Invalid attack damage roll (not >= 0): ${getreason(m3mgdExchange.(m3mgdAttrAttackDamageRoll))}
+!mmm     end if
 !mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackArmorPiercing)) and m3mgdExchange.(m3mgdAttrAttackArmorPiercing) == 0 or m3mgdExchange.(m3mgdAttrAttackArmorPiercing) == 1
 !mmm       debug chat: Valid armor piercing flag (0/1): ${m3mgdExchange.(m3mgdAttrAttackArmorPiercing)}
 !mmm       set armorPiercing = m3mgdExchange.(m3mgdAttrAttackArmorPiercing)
@@ -111,7 +119,7 @@
 !mmm     end if 
 !mmm   end if
 !mmm   
-!mmm   if validInputs < 7
+!mmm   if validInputs < 8
 !mmm     do whisperback("**Abwehrskript: Daten fehlen** [**Angriffsdaten eingeben**](~defenseDataEntry)")
 !mmm     exit script
 !mmm   end if
@@ -271,9 +279,13 @@
 !mmm   set attacker = m3mgdExchange.(m3mgdAttrAttackerID)
 !mmm   if attacker.permission eq "control"
 !mmm     if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess and effEnduranceLoss > 0) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
-!mmm       set attackerXPGain = cOwnID.Grad + 3
+!mmm       set attackerXPGain = getattr(cOwnID, "Grad") + 3
 !mmm       if m3mgdExchange.(m3mgdAttrAttackType) eq "ranged"
 !mmm         set attackerXPGain = attackerXPGain / 2
+!mmm       end if
+!rem       // Devastating hits
+!mmm       if attackDamageRoll >= 8 and endurance >= 8
+!mmm         set attackerXPGain = attackerXPGain * 2
 !mmm       end if
 !mmm       debug chat: ${attacker.name} erhält ${attackerXPGain} EP für diesen Treffer.
 !mmm       do setattr(attacker, m3mgdAttrXP, attacker.(m3mgdAttrXP) + attackerXPGain)
