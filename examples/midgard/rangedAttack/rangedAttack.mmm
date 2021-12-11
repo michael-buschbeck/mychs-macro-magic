@@ -353,8 +353,11 @@
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, damageRoll)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
-!rem     // TODO: implement armor piercing determination (Kodex,72) 
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 0)
+!mmm     if cWeaponType eq "Langbogen" or cWeaponType eq "Kompositbogen" or cWeaponType eq "schwere Armbrust" or cWeaponType eq "Schwere Armbrust"
+!mmm       do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 1)
+!mmm     else
+!mmm       do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 0)
+!mmm     end if
 !mmm   end if
 !rem
 !rem   // Break down extra magic damage to player and GM

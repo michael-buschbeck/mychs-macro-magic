@@ -240,7 +240,7 @@
 !mmm     if not cOwnID.(cHealthAttr).max == 0 and armorProtection > 0
 !mmm       if armorProtection > 3 and armorPiercing == 1
 !mmm         set armorProtection = 3
-!mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & " (reduziert wg. scharfen, schweren Geschossen)}} "
+!mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & ", reduziert wg. Geschosstyp (" & m3mgdExchange.(m3mgdAttrAttackWeaponType) & ")}} "
 !mmm       else
 !mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & "}} "
 !mmm       end if
@@ -361,7 +361,7 @@
 !mmm       chat: {{name=${ownName}: Abwehr (erschöpft)}} 
 !mmm     end if 
 !mmm     if armorPiercing == 1 and attackDamage > 3
-!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (mit schwerem, scharfem Geschoss => Rüstungsschutz auf 3 begrenzt)}}
+!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (Rüstungsschutz wg. Geschosstyp auf 3 begrenzt)}}
 !mmm     else if attackDamage == 0
 !mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;Sonderschaden**}}
 !mmm     else
