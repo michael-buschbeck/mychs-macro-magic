@@ -4,9 +4,10 @@
 !rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
 !rem // - bugfix: made more easily usable for NPCs by referencing token_id not character_id
 !rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
+!rem // - bugfix: if run for NPCs, data table is whispered to the GM only
 !rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
-!mmm   set scriptVersion = "1.10.0 (2021-12-10)"
+!mmm   set scriptVersion = "1.10.0 (2021-12-11)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -61,7 +62,9 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
-!mmm   set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!mmm   if isdenied(sender.name)
+!mmm     set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!mmm   end if
 !rem
 !rem   // Init
 !rem   // - Constants
@@ -392,15 +395,15 @@
 !mmm       else if attackResult >= 20
 !mmm         chat [AttackSucceedsBarely]:       trifft gerade so ($[attackResult]{attackResult+0}), wenn $[targetName]{foeName} die Abwehr nicht gelingt.
 !mmm       else if attackResult >= 18
-!mmm         chat [AttackFailsBarely]:          verfehlt knapp ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht ausweichen, aber **steht dahinter noch jemand?**
+!mmm         chat [AttackFailsBarely]:          verfehlt sein Ziel knapp ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht ausweichen, aber **steht dahinter noch jemand?**
 !mmm       else
-!mmm         chat [AttackFailsClearly]:         verfehlt weit ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht einmal ausweichen.
+!mmm         chat [AttackFailsClearly]:         verfehlt sein Ziel ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht einmal ausweichen.
 !mmm       end if
 !mmm       if attackResult >= 20 and sharpExtraDamage
-!mmm         chat [AttackSuccessSharpshooting]: Der wird wehtun: das Scharfschützentraining hat sich mal wieder ausgezahlt.
+!mmm         chat [AttackSuccessSharpshooting]: Der wird wehtun: die vielen, vielen Stunden mit der Zielscheibe haben sich mal wieder ausgezahlt.
 !mmm       end if
 !mmm       if attackResult >= 20 and cAmmoMagic
-!mmm         chat [AttackSuccessClosingMagic]:  Au weia, da trifft $[targetName]{foeName} auch Zauberschaden, wenn die Abwehr nicht gelingt.
+!mmm         chat [AttackSuccessClosingMagic]:  Au weia, da erwischt $[targetName]{foeName} auch Zauberschaden, wenn die Abwehr nicht gelingt.
 !mmm       else if attackResult >= 20 and (not cAmmoMagic)
 !mmm         chat [AttackSuccessClosing]:       $[targetName]{foeName} kann nun abwehren.
 !mmm       else
@@ -411,6 +414,10 @@
 !rem
 !rem   // Add data table for easy reference
 !mmm   combine chat
+!rem     // Check if script is run for an NPC (whisper data to GM only) -- determination by health attribute is an ugly workaround
+!mmm     if cHealthAttr ne "LP"
+!mmm       chat: /w GM 
+!mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${ownName}: Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
 !mmm     chat:      {{Ziel=**${foeName}** ${foeEnduranceIndicator}}}
 !mmm     if iscritical(attackRoll)

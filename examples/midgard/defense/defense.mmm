@@ -6,8 +6,9 @@
 !rem // - feature: ghosts (max health == 0) & undead (max endurance == 0) cannot lose health/endurance, respectively
 !rem // - tweak: token markers for exhaustion, (severe) injury and death added to chat output
 !rem // - bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
+!rem // - bugfix: Whispering data tables to GM only, not to players who accidentally selected their token
 !mmm script
-!mmm   set scriptVersion = "1.5.0 (2021-12-10)"
+!mmm   set scriptVersion = "1.5.0 (2021-12-11)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -63,7 +64,9 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
-!mmm   set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!mmm   if isdenied(sender.name)
+!mmm     set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!mmm   end if
 !rem
 !rem   // Collect attack data and exit if no defense necessary
 !mmm   set validInputs = 0
@@ -347,7 +350,8 @@
 !rem
 !rem   // Data table
 !mmm   combine chat
-!mmm     if selected 
+!rem     // Check if script is run for an NPC (whisper data to GM only) -- determination by health attribute is an ugly workaround
+!mmm     if cHealthAttr ne "LP"
 !mmm       chat: /w GM
 !mmm     end if
 !mmm     chat: ${"&"}{template:default} 

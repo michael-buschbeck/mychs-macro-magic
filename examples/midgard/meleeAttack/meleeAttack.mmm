@@ -4,9 +4,10 @@
 !rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
 !rem // - bugfix: made more easily usable for NPCs by referencing token_id not character_id
 !rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
+!rem // - bugfix: if run for NPCs, data table is whispered to the GM only
 !rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
-!mmm   set scriptVersion = "v1.10.0 (2021-12-10)"
+!mmm   set scriptVersion = "v1.10.0 (2021-12-11)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -50,7 +51,9 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
-!mmm   set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!mmm   if isdenied(sender.name)
+!mmm     set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!mmm   end if
 !rem
 !rem   // Init
 !rem   // - Constants
@@ -232,7 +235,6 @@
 !mmm
 !rem   // Save key attack data for defense script
 !mmm   if attackResult >= 20 and damageResult > 0
-!mmm     debug chat: ${chatPrefix} ${cOwnID} ${foeID} ${attackResult} ${damageResult}
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "melee")
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnID)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeID)
@@ -277,7 +279,7 @@
 !mmm         chat [AttackOpeningExtraMagicDamage]:          Mein Angriff mit $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}", magischer Zusatzschaden aktiviert) auf $[targetName]{foeName} 
 !mmm       end if
 !mmm       if criticalAttack == 1
-!mmm         chat [AttackIsCriticalSuccess]:                ist ein kritischer Erfolg ($[attackResult]{attackResult+0}). **Kritischer Erfolg: PP prüfen!**
+!mmm         chat [AttackIsCriticalSuccess]:                ist ein **kritischer Erfolg** ($[attackResult]{attackResult+0}).
 !mmm       else if isfumble(attackRoll)
 !mmm         chat [AttackIsCriticalFailure]:                ist ein **peinlicher Patzer**. 
 !mmm       else if attackResult >= 22 and damageResult > 3
@@ -287,7 +289,7 @@
 !mmm       else if attackResult >= 18
 !mmm         chat [AttackFailsBarely]:                      verfehlt knapp ($[attackResult]{attackResult+0}). 
 !mmm       else
-!mmm         chat [AttackFailsClearly]:                     verfehlt erheblich ($[attackResult]{attackResult+0}). 
+!mmm         chat [AttackFailsClearly]:                     verfehlt ($[attackResult]{attackResult+0}). 
 !mmm       end if
 !mmm       if attackResult >= 20
 !mmm         if damageResult > 10
@@ -297,7 +299,7 @@
 !mmm         else if damageResult > 0
 !mmm           set damageDescription = "leichter"
 !mmm         else 
-!mmm           set damageDescription = "bestenfalls kosmetischer"
+!mmm           set damageDescription = "höchstens kosmetischer"
 !mmm         end if
 !mmm         if damageRoll >= 8 and not isdenied(foeEndurance) and foeEndurance >= 8
 !mmm           set damageDescription = damageDescription & ", verheerender"
@@ -315,6 +317,10 @@
 !rem
 !rem   // Add data table for easy reference
 !mmm   combine chat
+!rem     // Check if script is run for an NPC (whisper data to GM only) -- determination by health attribute is an ugly workaround
+!mmm     if cHealthAttr ne "LP"
+!mmm       chat: /w GM 
+!mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${ownName}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
 !mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${foeEnduranceIndicator}}}
 !mmm     if attackResult >= 20
