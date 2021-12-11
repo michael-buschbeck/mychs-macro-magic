@@ -8,6 +8,7 @@
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
 !mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
 !mmm 
@@ -29,6 +30,7 @@
 !mmm     chat: {{${m3mgdAttrAttackResult}=${m3mgdExchange.(m3mgdAttrAttackResult)}}}
 !mmm     chat: {{${m3mgdAttrAttackCriticalSuccess}=${m3mgdExchange.(m3mgdAttrAttackCriticalSuccess)}}}
 !mmm     chat: {{${m3mgdAttrAttackDamage}=${m3mgdExchange.(m3mgdAttrAttackDamage)}}}
+!mmm     chat: {{${m3mgdAttrAttackDamageRoll}=${m3mgdExchange.(m3mgdAttrAttackDamageRoll)}}}
 !mmm     chat: {{${m3mgdAttrAttackWeaponType}=${m3mgdExchange.(m3mgdAttrAttackWeaponType)}}}
 !mmm     chat: {{${m3mgdAttrAttackArmorPiercing}=${m3mgdExchange.(m3mgdAttrAttackArmorPiercing)}}}
 !mmm   end combine

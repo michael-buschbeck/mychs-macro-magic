@@ -8,6 +8,7 @@
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
 !mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
 !mmm 
@@ -17,7 +18,7 @@
 !mmm   end if
 !rem
 !mmm   set counter = 0
-!mmm   for attribute in m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackCriticalSuccess, m3mgdAttrAttackDamage, m3mgdAttrAttackWeaponType, m3mgdAttrAttackArmorPiercing
+!mmm   for attribute in m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackCriticalSuccess, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType, m3mgdAttrAttackArmorPiercing
 !mmm     do setattr(m3mgdExchange, attribute, "")
 !mmm     set counter = counter + 1
 !mmm   end for
