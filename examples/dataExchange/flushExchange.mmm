@@ -28,7 +28,7 @@
 !mmm     set user = sender.name
 !mmm   end if 
 !mmm   combine chat
-!mmm     chat: /w "${user}" ${"&"}{template:default} {{name=m3mgdflushExchange}}
+!mmm     chat: /w "${user}" ${"&"}{template:default} {{name=m3mgdFlushExchange}}
 !mmm     chat: {{Result=Flushed ${counter} attributes}}
 !mmm   end combine
 !mmm end script

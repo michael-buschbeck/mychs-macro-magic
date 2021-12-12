@@ -31,12 +31,14 @@
 !rem   //  cAmmoMagicDamage     Damage roll expression ("1d6+x") for optional additional magic damage
 !rem   //  cFoeNameDefault      Output label for targets without names
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
+!rem   //  cHealthAttr          Override if the script operates on a token for a generic NPC
+!rem   //  cEnduranceAttr       Override if the script operates on a token for a generic NPC
 !rem   //
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Bogen"
 !mmm   set customizable cWeaponName = ""
-!mmm   set customizable cWeaponType = "Langbogen"
+!mmm   set customizable cWeaponType = "Bogen"
 !mmm   set customizable cRangeUpperBoundClose = 30
 !mmm   set customizable cRangeUpperBoundMid = 100
 !mmm   set customizable cRangeUpperBoundFar = 180
@@ -62,6 +64,7 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
+!rem   // Workaround for identifying NPCs operated by the GM until we can manipulate the sender
 !mmm   if isdenied(sender.name)
 !mmm     set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
 !mmm   end if
