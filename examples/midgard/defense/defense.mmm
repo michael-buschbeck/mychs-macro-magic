@@ -8,7 +8,7 @@
 !rem // - bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
 !rem // - bugfix: Whispering data tables to GM only, not to players who accidentally selected their token
 !mmm script
-!mmm   set scriptVersion = "1.5.0 (2021-12-11)"
+!mmm   set scriptVersion = "1.5.0 (2021-12-12)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -53,7 +53,6 @@
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
 !mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
-!mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !rem
 !rem   // Initialize & collect data
@@ -108,13 +107,6 @@
 !mmm     else 
 !mmm       debug chat: Invalid attack damage roll (not >= 0): ${getreason(m3mgdExchange.(m3mgdAttrAttackDamageRoll))}
 !mmm     end if
-!mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackArmorPiercing)) and m3mgdExchange.(m3mgdAttrAttackArmorPiercing) == 0 or m3mgdExchange.(m3mgdAttrAttackArmorPiercing) == 1
-!mmm       debug chat: Valid armor piercing flag (0/1): ${m3mgdExchange.(m3mgdAttrAttackArmorPiercing)}
-!mmm       set armorPiercing = m3mgdExchange.(m3mgdAttrAttackArmorPiercing)
-!mmm       set validInputs = validInputs + 1
-!mmm     else
-!mmm       debug chat: Invalid armor piercing flag (0/1): ${getreason(m3mgdExchange.(m3mgdAttrAttackArmorPiercing))}
-!mmm     end if
 !mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackWeaponType)) and not m3mgdExchange.(m3mgdAttrAttackWeaponType) eq ""
 !mmm       debug chat: Potentially valid attack weapon type (text): ${m3mgdExchange.(m3mgdAttrAttackWeaponType)}
 !mmm       set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
@@ -124,7 +116,7 @@
 !mmm     end if 
 !mmm   end if
 !mmm   
-!mmm   if validInputs < 8
+!mmm   if validInputs < 7
 !mmm     do whisperback("**Abwehrskript: Daten fehlen** [**Angriffsdaten eingeben**](~defenseDataEntry)")
 !mmm     exit script
 !mmm   end if
@@ -154,6 +146,13 @@
 !mmm     set effDefense = effDefense + effParryWeaponSkill
 !mmm   else if parryWeapon
 !mmm     do whisperback("Parierwaffe " & cWeaponLabel & " wegen Erschöpfung (AP=0) nicht berücksichtigt.")
+!mmm   end if
+!rem
+!rem   // Check for armor piercing projectiles
+!mmm   if attackWeaponType eq "Langbogen" or attackWeaponType eq "Kompositbogen" or attackWeaponType eq "schwere Armbrust" or attackWeaponType eq "Schwere Armbrust"
+!mmm     set armorPiercing = 1
+!mmm   else
+!mmm     set armorPiercing = 0
 !mmm   end if
 !mmm
 !rem   // Collect defense modifiers

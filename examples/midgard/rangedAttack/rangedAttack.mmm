@@ -7,7 +7,7 @@
 !rem // - bugfix: if run for NPCs, data table is whispered to the GM only
 !rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
-!mmm   set scriptVersion = "1.10.0 (2021-12-11)"
+!mmm   set scriptVersion = "1.10.0 (2021-12-12)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -80,7 +80,6 @@
 !mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
 !mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !rem   // - Fetch character (attacker) data
 !mmm   set ownName = getattr(cOwnID, "name")
@@ -353,11 +352,6 @@
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, damageRoll)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
-!mmm     if cWeaponType eq "Langbogen" or cWeaponType eq "Kompositbogen" or cWeaponType eq "schwere Armbrust" or cWeaponType eq "Schwere Armbrust"
-!mmm       do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 1)
-!mmm     else
-!mmm       do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 0)
-!mmm     end if
 !mmm   end if
 !rem
 !rem   // Break down extra magic damage to player and GM

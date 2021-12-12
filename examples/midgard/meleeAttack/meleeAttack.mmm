@@ -7,7 +7,7 @@
 !rem // - bugfix: if run for NPCs, data table is whispered to the GM only
 !rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
-!mmm   set scriptVersion = "v1.10.0 (2021-12-11)"
+!mmm   set scriptVersion = "v1.10.0 (2021-12-12)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -69,7 +69,6 @@
 !mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
 !mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !rem   // - Character & NPC data
 !mmm   set ownName = getattr(cOwnID, "name")
@@ -243,8 +242,6 @@
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, damageRoll)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
-!rem     // only some ranged weapons can pierce armor (Kodex,72) -- not relevant for melee attacks
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, 0)
 !mmm   end if
 !rem
 !rem   // Break down magic effects for player and GM
