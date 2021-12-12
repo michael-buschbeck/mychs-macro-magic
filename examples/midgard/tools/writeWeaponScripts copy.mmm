@@ -1,0 +1,98 @@
+!rem // writeWeaponScripts
+!rem // Automates writing of config scripts for common weapons
+!mmm script
+!rem
+!mmm   set weaponTypeList = "Einhandschwerter", "Zweihandschwerter", "Stichwaffen", "Stoßwaffen", "Stockwaffen", "Langbogen", "Kompositbogen", "Schwere Armbrust", "Leichte Armbrust", "Schleuderwaffen", "Unbewaffnet"
+!mmm   set weaponTypeListSelector = ""
+!mmm   for weaponType in weaponTypeList
+!mmm     if weaponTypeListSelector ne ""
+!mmm       set weaponTypeListSelector = weaponTypeListSelector & "|" & weaponType & "," & weaponType
+!mmm     else
+!mmm       set weaponTypeListSelector = weaponType & "," & weaponType
+!mmm     end if
+!mmm   end for
+!rem
+!rem   // Build list of all selected tokens' characters
+!mmm   
+!mmm   set tokenList = selected
+!mmm   if not tokenList
+!mmm     do whisperback("No tokens selected. Aborting.")
+!mmm     exit script
+!mmm   end if
+!mmm   
+!mmm   for token in tokenList
+!mmm     if isdenied(token.character_id)
+!mmm       do whisperback("No character id available for token " & token & ": " & getreason(token.character_id))
+!mmm       exit script
+!mmm     end if
+!mmm     
+!mmm     set dupe = false
+!mmm     for char in charList
+!mmm       if token.character_id eq char
+!mmm         set dupe = true
+!mmm       end if
+!mmm     end for
+!mmm     
+!mmm     if not dupe
+!mmm       set charList = charList, token.character_id
+!mmm     end if
+!mmm     
+!mmm   end for
+!mmm   
+!rem   // Build list of *unique* weapons used by those characters
+!mmm   
+!mmm   for char in charList
+!mmm     
+!mmm     for weaponLabelAttr in findattr(char, "Angriff", "Waffe")
+!mmm       
+!mmm       set dupe = false
+!mmm       for weaponLabel in weaponLabelList
+!mmm         if weaponLabel eq char.(weaponLabelAttr)
+!mmm           set dupe = true
+!mmm         end if
+!mmm       end for
+!mmm       
+!mmm       if not dupe
+!mmm         set weaponLabelList = weaponLabelList, char.(weaponLabelAttr)
+!mmm       end if
+!mmm       
+!mmm     end for
+!mmm     
+!mmm     debug chat: ${char.character_name}: ${weaponLabelList}
+!mmm     
+!mmm   end for
+!mmm   
+!rem   // For each unique weapon, determine weapon type and build config script
+!mmm   
+!mmm   for weaponLabel in weaponLabelList
+!mmm     
+!rem     // set scriptCall = "{MacroSheet|meleeAttack}"
+!mmm     set scriptCall = "(callAttackScriptPlaceholder)"
+!mmm     
+!mmm     set labelChooserCode = "!" & "mmm script" & "<" & "br>"
+!mmm     set labelChooserCode = labelChooserCode & "!mmm   set weaponType = \"?" & "{" & weaponLabel & " ist Waffentyp:|" & weaponTypeListSelector & "}\"<" & "br>"
+!mmm     set labelChooserCode = labelChooserCode & "!mmm   set code = '!' & 'mmm customize<' & 'br>'<" & "br>"
+!mmm     set labelChooserCode = labelChooserCode & "!mmm   set code = code & '!' & 'mmm   set cWeaponLabel = \\'" & weaponLabel & "\\'<' & 'br>'<" & "br>"
+!mmm     set labelChooserCode = labelChooserCode & "!mmm   set code = code & '!' & 'mmm   set cWeaponType = \\'' & weaponType & '\\'<' & 'br>'<" & "br>"
+!mmm     set labelChooserCode = labelChooserCode & "!mmm   set code = code & '!' & 'mmm end customize<' & 'br>'<" & "br>"
+!mmm     set labelChooserCode = labelChooserCode & "!mmm   set code = code & '%' & '" & scriptCall & "<' & 'br>'<" & "br>"
+!mmm     set labelChooserCode = labelChooserCode & "!mmm   do whisperback(code)<" & "br>"
+!mmm     set labelChooserCode = labelChooserCode & "!mmm end script"
+!mmm     
+!mmm     do whisperback(labelChooserCode)
+!mmm     
+!mmm   end for
+!mmm   
+!mmm   
+!mmm   
+!mmm   
+!mmm   
+!mmm   
+!mmm   
+!mmm   
+!mmm   
+!rem   // Dump config script into chat, for lack of a better way
+!mmm   
+!mmm   
+!mmm   
+!mmm end script
