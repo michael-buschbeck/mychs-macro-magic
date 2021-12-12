@@ -2,6 +2,7 @@
 !rem //
 !rem // - new feature: stores attack data in new MMM Midgard exchange structure, for defense script to pick up
 !rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
+!rem // - new feature: Finn's magic sword Whirlwind makes attacks against him quite difficult
 !rem // - bugfix: made more easily usable for NPCs by referencing token_id not character_id
 !rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
 !rem // - bugfix: if run for NPCs, data table is whispered to the GM only
@@ -56,7 +57,9 @@
 !mmm   end if
 !rem
 !rem   // Init
+!rem
 !rem   // - Constants
+!rem
 !mmm   set emojiExhausted = "🥴"
 !mmm   set emojiLock = "🔒"
 !mmm   set emojiMagic = "✨"
@@ -70,7 +73,11 @@
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
 !mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
+!mmm
+!mmm   set whirlWindMagicMarker = "status_half_haze"
+!mmm
 !rem   // - Character & NPC data
+!rem
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
@@ -95,6 +102,7 @@
 !mmm   set foeEndurance = getattr(foeID, "bar2")
 !mmm
 !rem   // Check for melee range (<=1 grid cell) and orientation, prepare calculations for attack from behind
+!rem
 !mmm   set offsetYfromFoe = round((getattr(cOwnID, "top")  - getattr(foeID, "top"))  * distscale())
 !mmm   set offsetXfromFoe = round((getattr(cOwnID, "left") - getattr(foeID, "left")) * distscale())
 !mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
@@ -115,6 +123,7 @@
 !mmm   end if
 !mmm      
 !rem   // Collect attack modifiers
+!rem
 !mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
 !mmm   set modifierLog = ""
@@ -140,7 +149,13 @@
 !mmm     set modifierLog = modifierLog & " {{Angriff von hinten=+2}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;von&nbsp;hinten&nbsp;&nbsp;&nbsp;+2 "
 !mmm   end if
-!rem   // 4. Collect additional standard modifiers from user via dropdown menu
+!rem   // 4. Finn's magic sword Whirlwind
+!mmm   if (foeName eq "Finn" or foeName eq "Finn MacRathgar") and foeID.(whirlWindMagicMarker) eq "shown"
+!mmm     set autoModifiers = autoModifiers - 4
+!mmm     set modifierLog = modifierLog & " {{Wirbelwinds Wirbel-Winde=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Wirbelwinde&nbsp;&nbsp;&nbsp;-4 "
+!mmm   end if
+!rem   // 5. Collect additional standard modifiers from user via dropdown menu
 !mmm   set semiAutoModCode = "?{Standard-Angriffsmodifikatoren|   Normaler Angriff +/-0, ?{Normaler Angriff +/- ... &#124;      NORMAL HALT +/-0              &#44; 1 &#124;      Angriff von oben (70cm+) +2   &#44; 2 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 3 &#124;      Wehrloses Ziel +4             &#44; 5 &#124;      Panisch fliehendes Ziel +4    &#44; 7   &#125; |   Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ... &#124;      Nix weiter +/-0               &#44; 11 &#124;      Angriff von oben (70cm+) +2   &#44; 22 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 33 &#124;      Wehrloses Ziel +4             &#44; 55 &#124;      Panisch fliehendes Ziel +4    &#44; 77   &#125; |   Überstürzter Angriff -6, ?{Überstürzter Angriff -6 +/- ... &#124;      Nix weiter +/-0               &#44; 13 &#124;      Angriff von oben (70cm+) +2   &#44; 26 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 39 &#124;      Wehrloses Ziel +4             &#44; 65 &#124;      Panisch fliehendes Ziel +4    &#44; 91   &#125; |   Völlige Dunkelheit/Blendung -6, ?{Völlige Dunkelheit/Blendung -6 +/- ... &#124;      Nix weiter +/-0               &#44; 17 &#124;      Angriff von oben (70cm+) +2   &#44; 34 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 51 &#124;      Wehrloses Ziel +4             &#44; 85 &#124;      Panisch fliehendes Ziel +4    &#44; 119 &#124;       Spontaner Angriff -4 &#44; ?{Völlige Dunkelheit/Blendung -6 Spontaner Angriff -4 +/- ... &amp;#124;         Das war alles               &amp;#44; 187 &amp;#124;         Angriff von oben (70cm+) +2 &amp;#44; 374 &amp;#124;         Liegendes Ziel (ich stehe) +4 &amp;#44; 561 &amp;#124;         Wehrloses Ziel +4           &amp;#44; 935 &amp;#124;         Panisch fliehendes Ziel +4  &amp;#44; 1309       &amp;#125; &#124;       Überstürzter Angriff -6 &#44; ?{Völlige Dunkelheit/Blendung -6 Überstürzter Angriff -6 +/- ... &amp;#124;        Das war alles               &amp;#44; 221 &amp;#124;        Angriff von oben (70cm+) +2 &amp;#44; 442 &amp;#124;        Liegendes Ziel (ich stehe) +4 &amp;#44; 663 &amp;#124;        Wehrloses Ziel +4           &amp;#44; 1105 &amp;#124;        Panisch fliehendes Ziel +4  &amp;#44; 1547       &amp;#125;    &#125; }"
 !mmm   if semiAutoModCode % 17 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 6
@@ -189,6 +204,7 @@
 !mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + manualModifiers
 !rem
 !rem   // Run & format rolls
+!rem
 &{template:none} [[1d20]] {{}}
 !mmm   set attackRoll = $[[0]]
 !mmm   set attackResult = attackRoll + effAttack + modifiers
@@ -233,6 +249,7 @@
 !mmm   set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm
 !rem   // Save key attack data for defense script
+!rem
 !mmm   if attackResult >= 20 and damageResult > 0
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "melee")
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnID)
@@ -245,6 +262,7 @@
 !mmm   end if
 !rem
 !rem   // Break down magic effects for player and GM
+!rem
 !mmm   if magicExtraDamageActive and attackResult >= 20 and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - magicExtraDamageRoll) & "**&nbsp;" & emojiKnife & emojiMagic & " +&nbsp;**" & magicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "
 !mmm   else if magicWeapon and attackResult >= 20 and damageResult > 0

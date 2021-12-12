@@ -2,6 +2,7 @@
 !rem //
 !rem // - new feature: stores attack data in new MMM Midgard exchange structure, for defense script to pick up
 !rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
+!rem // - new feature: Finn's magic sword Whirlwind makes attacks against him quite difficult
 !rem // - bugfix: made more easily usable for NPCs by referencing token_id not character_id
 !rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
 !rem // - bugfix: if run for NPCs, data table is whispered to the GM only
@@ -70,7 +71,9 @@
 !mmm   end if
 !rem
 !rem   // Init
+!rem
 !rem   // - Constants
+!rem
 !mmm   set emojiExhausted = "🥴"
 !mmm   set emojiLock = "🔒"
 !mmm   set emojiMagic = "✨"
@@ -84,7 +87,11 @@
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
 !mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
+!mmm
+!mmm   set whirlWindMagicMarker = "status_half_haze"
+!mmm
 !rem   // - Fetch character (attacker) data
+!rem
 !mmm   set ownName = getattr(cOwnID, "name")
 !mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
@@ -98,7 +105,9 @@
 !mmm     do whisperback("Abbruch: " & ownName & " hat keine Waffe namens " & cWeaponLabel & ".")
 !mmm     exit script
 !mmm   end if
+!rem
 !rem   // - Fetch NPC (target) data
+!rem
 !mmm   set foeID = "@{target|Angriffsziel|token_id}"
 !mmm   set foeName = getattr(foeID, "name")
 !mmm   if isdenied(foeName) or isunknown(foeName)
@@ -212,7 +221,13 @@
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
-!rem   // 4. Collect additional standard modifiers from user via dropdown menu
+!rem   // 4. Finn's magic sword Whirlwind
+!mmm   if (foeName eq "Finn" or foeName eq "Finn MacRathgar") and foeID.(whirlWindMagicMarker) eq "shown"
+!mmm     set autoModifiers = autoModifiers - 4
+!mmm     set modifierLog = modifierLog & " {{Wirbelwinds Wirbel-Winde=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Wirbelwinde&nbsp;&nbsp;&nbsp;-4 "
+!mmm   end if
+!rem   // 5. Collect additional standard modifiers from user via dropdown menu
 !mmm   set semiAutoModCode = "?{Weitere Angriffsmodifikatoren| Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;  NORMAL HALT +/-0  &#44; 1 &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 2 &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 3 &#124;  Großes Ziel (2xMensch) +2 &#44; 5 &#124;  Riesiges Ziel (4xMensch) +4 &#44; 7 &#124;  Angriff ins Handgemenge (Zufallsopfer) +4 &#44; 17  &#125; | Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ...&#124;  SONST NIX +/-0  &#44; 11  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 22  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 33  &#124;  Großes Ziel (2xMensch) +2 &#44; 55  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 77  &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 143 &#124;  Angriff ins Handgemenge (Zufallsopfer) +4 &#44; 187  &#125; | Schnelles Ziel (30m+/Runde) -2, ?{Schnelles Ziel -2 +/- ...&#124;  SONST NIX +/-0  &#44; 13  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 26  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 39  &#124;  Großes Ziel (2xMensch) +2 &#44; 65  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 91  &#124;  Spontaner Angriff -4  &#44; 143 &#124;  Sorgfältig gezielt +4 &#44; 247  &#125; | Sorgfältig gezielt +4, ?{Sorgfältig gezielt +4 +/- ...&#124;  SONST NIX +/-0  &#44; 19  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 38  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 57  &#124;  Großes Ziel (2xMensch) +2 &#44; 95  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 133 &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 247  &#125; | Scharfschießen +4/Spezial, ?{Scharfschießen +4/Spezial +/- ...&#124;  SONST NIX +/-0  &#44; 23  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 46  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 69  &#124;  Großes Ziel (2xMensch) +2 &#44; 115 &#124;  Riesiges Ziel (4xMensch) +4 &#44; 161 &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 299  &#125;}"
 !mmm   if semiAutoModCode % 23 == 0
 !rem     // Check if PC has sharpshooting skill
