@@ -8,7 +8,7 @@
 !rem // - bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
 !rem // - bugfix: Whispering data tables to GM only, not to players who accidentally selected their token
 !mmm script
-!mmm   set scriptVersion = "1.5.0 (2021-12-12)"
+!mmm   set scriptVersion = "1.5.0 (2021-12-13)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -140,7 +140,7 @@
 !mmm   set parryWeaponUsable = true
 !mmm   set parryWeapon = (getattr(cOwnID,findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
 !rem   // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
-!mmm   if parryWeapon and parryWeaponUsable and endurance > 0
+!mmm   if (cOwnID.(cEnduranceAttr).max > 0 and endurance > 0 and parryWeapon and parryWeaponUsable) or (cOwnID.(cEnduranceAttr).max == 0 and parryWeapon and parryWeaponUsable)
 !mmm     set effParryWeaponSkill = getattr(cOwnID, findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) + getattr(cOwnID, findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "WaffeAbwB"))
 !mmm     set parryWeaponEnduranceProtection = getattr(cOwnID,findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
 !mmm     set effDefense = effDefense + effParryWeaponSkill
@@ -161,7 +161,7 @@
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !rem   // 1. Defender exhausted
-!mmm   if endurance <= 0
+!mmm   if cOwnID.(cEnduranceAttr).max > 0 and endurance <= 0
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Erschöpft=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "

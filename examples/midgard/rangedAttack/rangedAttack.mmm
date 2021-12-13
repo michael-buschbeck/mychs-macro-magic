@@ -8,7 +8,7 @@
 !rem // - bugfix: if run for NPCs, data table is whispered to the GM only
 !rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
-!mmm   set scriptVersion = "1.10.0 (2021-12-12)"
+!mmm   set scriptVersion = "1.10.0 (2021-12-13)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.20
@@ -207,7 +207,7 @@
 !mmm     set modifierTooltip = modifierTooltip & " " & rangeBracket & "&nbsp;&nbsp;&nbsp;+/-0 "
 !mmm   end if
 !rem   // 2. Attacker exhausted
-!mmm   if cOwnID.(cEnduranceAttr) <= 0
+!mmm   if cOwnID.(cEnduranceAttr).max > 0 and cOwnID.(cEnduranceAttr) <= 0
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & ownName & "].AP:0)=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
@@ -216,7 +216,7 @@
 !mmm   if isdenied(foeEndurance) 
 !mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP&nbsp;" & emojiLock & "=**ggf. EW+2**}}"
 !mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
-!mmm   else if foeEndurance <= 0
+!mmm   else if foeID.(cEnduranceAttr).max > 0 and foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
