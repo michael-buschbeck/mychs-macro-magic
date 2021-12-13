@@ -1,8 +1,8 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.4.1 vom 2021-07-18,** erfordert MMM 1.20.0+.
+Aktuelle Version: **1.5.0 vom 2021-12-13,** erfordert MMM 1.20.0+.
 
-Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dabei werden die eigene Erschöpfung (-4 bei AP:0) und die eingestellte Rüstung automatisch und weitere Modifikatoren nach Benutzerauswahl und -eingabe berücksichtigt, und die Konsequenzen umgesetzt (Abzüge AP und LP, ggf. Ausgabe der Folgen). Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden.
+Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch, deren Daten automatisch von den Angriffsskripten übernommen werden oder, falls nicht auffindbar, manuell eingegeben werden müssen. Die üblichen Regeln werden automatisch angewendet. Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden.
 
 ### Inhalt
 
@@ -14,7 +14,7 @@ Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch. Dab
 
 ## Features & Anwendung
 
-Das Skript fragt zunächst alle wichtigen [Daten über den Angriff](#datenabfragen) vom Benutzer ab, berechnet die Ergebnisse des Abwehrversuchs und gibt sie aus. Ein Aufruf muss sich auf genau eine Abwehrtechnik (Standardwaffe/waffenlos/eine bestimmte Abwehrwaffe) beziehen. All diese Optionen können per [Konfigskripts](#konfig-skript-optional) genutzt werden, das Abwehrskript funktioniert aber auch ohne Konfigskript und wendet dann die Standardabwehrtechnik des Charakterbogens an.
+Das Skript liest entweder die Daten eines aktuellen Angriffs auf den Bezugstoken automatisch ein oder gibt einen Prompt aus, der den Benutzer zum Skript `defenseDataEntry` schickt, um alle wichtigen [Daten über den Angriff](#datenabfragen) zu erhalten. Daraus berechnet und erwürfelt das Skript die Ergebnisse des Abwehrversuchs und gibt sie aus. Ein Aufruf muss sich auf genau eine Abwehrtechnik (Standardwaffe/waffenlos/eine bestimmte Abwehrwaffe) beziehen. All diese Optionen können per [Konfigskripts](#konfig-skript-optional) gesetzt werden, das Abwehrskript funktioniert aber auch ohne Konfigskript und wendet dann die Standardabwehrtechnik des Charakterbogens an.
 
 ### Konfig-Skript (optional)
 
@@ -26,9 +26,7 @@ Unterschiedliche Rüstungen werden demgegenüber so behandelt, wie im Charakterb
 
 #### Unterschiedliche Charaktere/NPCs
 
-Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der als Absender im Chatfenster steht, kann für seine Charaktere das Konfigskript jeweils als Ability anlegen und darin `!mmm set cOwnID = "@{character_id}"` setzen. Damit wird der Bezugscharakter jeweils korrekt gesetzt, egal wer gerade im Chat als Absender steht.
-
-Das Skript kann entweder für ein beliebiges Token im Zugriff des Spielers aufgerufen werden, dann muss das Token ausgewählt sein. Wenn kein Token ausgewählt ist, wird es für den eigenen Charakter ausgeführt.
+Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der als Absender im Chatfenster steht, kann das jeweilige Bezugstoken anklicken; erkennt das Skript ein ausgewähltes Token, dann nutzt es dieses als Bezug. Für Spieler bietet sich demgegenüber an, pro Charakter das Konfigskript jeweils als Ability anzulegen und darin `!mmm set cOwnID = "@{character_id}"` zu setzen. Damit wird der Bezugscharakter jeweils fest gesetzt, egal wer gerade im Chat als Absender steht und welches Token angeklickt ist.
 
 #### Geschichtenerzählerausgabe
 
@@ -71,10 +69,20 @@ Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzu
 !mmm    set cWeaponLabel = "Parierdolch"
 !mmm    set cOwnID = "@{token_id}"
 !mmm end customize
-#defend
+#defense
 ```
 
 ## Changelog
+
+1.5.0 2021-12-13
+
+- Automatische Datenübernahme aus den `m3mgd_*`-Attributen eines Dummy-Charakterblattes, das als Datenverschiebebahnhof genutzt wird
+- Erfahrungspunkte aus jedem Angriff werden automatisch berechnet und gutgeschrieben
+- (Workaround) Wird das Skript von einem Benutzer aufgerufen, dem kein Charakter zugeordnet ist, gibt es den Namen des handelnden Tokens eingangs aus.
+- Geisterwesen (unendliche LP) und Untote (unendliche AP) werden nun korrekt behandelt
+- Ausgabe: Tokenmarker für Erschöpfung, (schwere) Verletzungen und Tod in der Chat-Ausgabe ergänzt (als eine Art Legende für den Token)
+- Bugfix: normale schwere Treffer werden nicht mehr fälschlich als schwere kritische Treffer ausgegeben
+- Bugfix: Datenübersichten für NPCs werden nur noch dem Spielleiter geflüstert
 
 1.4.0 2021-07-08
 

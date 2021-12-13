@@ -1,12 +1,5 @@
 !rem // Midgard Combat Defense Script
 !rem // 
-!rem // - new & modified behavior: pulls attack data from new MMM Midgard exchange structure or asks for manual entry
-!rem // - feature: calculates experience gained by attack and stores it in attacker's sheet
-!rem // - feature: mark output with acting token's name (to better distinguish NPCs)
-!rem // - feature: ghosts (max health == 0) & undead (max endurance == 0) cannot lose health/endurance, respectively
-!rem // - tweak: token markers for exhaustion, (severe) injury and death added to chat output
-!rem // - bugfix: Regular severe hits are no longer erroneously displayed as severe critical hits
-!rem // - bugfix: Whispering data tables to GM only, not to players who accidentally selected their token
 !mmm script
 !mmm   set scriptVersion = "1.5.0 (2021-12-13)"
 !mmm
@@ -70,49 +63,30 @@
 !rem   // Collect attack data and exit if no defense necessary
 !mmm   set validInputs = 0
 !mmm   if m3mgdExchange.permission eq "control" and m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
-!mmm     debug chat: Found attack data in exchange sheet, validating ...
 !mmm     set validInputs = validInputs + 1
 !mmm     if m3mgdExchange.(m3mgdAttrAttackType) eq "melee" or m3mgdExchange.(m3mgdAttrAttackType) eq "ranged"
-!mmm       debug chat: Valid attack type ${m3mgdExchange.(m3mgdAttrAttackType)}
 !mmm       set attackType = m3mgdExchange.(m3mgdAttrAttackType)
 !mmm       set validInputs = validInputs + 1
-!mmm     else 
-!mmm       debug chat: Invalid attack type ${m3mgdExchange.(m3mgdAttrAttackType)}
 !mmm     end if
 !mmm     if m3mgdExchange.(m3mgdAttrAttackResult) >= 20
-!mmm       debug chat: Valid attack result (>= 20): ${m3mgdExchange.(m3mgdAttrAttackResult)}
 !mmm       set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
 !mmm       set validInputs = validInputs + 1
-!mmm     else 
-!mmm       debug chat: Invalid attack result (not >= 20): ${m3mgdExchange.(m3mgdAttrAttackResult)}
 !mmm     end if
 !mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackCriticalSuccess)) and m3mgdExchange.(m3mgdAttrAttackCriticalSuccess) == 0 or m3mgdExchange.(m3mgdAttrAttackCriticalSuccess) == 1
-!mmm       debug chat: Valid critical success flag (0/1): ${m3mgdExchange.(m3mgdAttrAttackCriticalSuccess)}
 !mmm       set criticalAttack = m3mgdExchange.(m3mgdAttrAttackCriticalSuccess)
 !mmm       set validInputs = validInputs + 1
-!mmm     else 
-!mmm       debug chat: Invalid critical success flag (0/1): ${getreason(m3mgdExchange.(m3mgdAttrAttackCriticalSuccess))}
 !mmm     end if
 !mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackDamage)) and m3mgdExchange.(m3mgdAttrAttackDamage) >= 0
-!mmm       debug chat: Valid attack damage (>= 0): ${m3mgdExchange.(m3mgdAttrAttackDamage)}
 !mmm       set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
 !mmm       set validInputs = validInputs + 1
-!mmm     else 
-!mmm       debug chat: Invalid attack damage (not >= 0): ${getreason(m3mgdExchange.(m3mgdAttrAttackDamage))}
 !mmm     end if
 !mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackDamageRoll)) and m3mgdExchange.(m3mgdAttrAttackDamageRoll) >= 0
-!mmm       debug chat: Valid attack damage roll (>= 0): ${m3mgdExchange.(m3mgdAttrAttackDamageRoll)}
 !mmm       set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
 !mmm       set validInputs = validInputs + 1
-!mmm     else 
-!mmm       debug chat: Invalid attack damage roll (not >= 0): ${getreason(m3mgdExchange.(m3mgdAttrAttackDamageRoll))}
 !mmm     end if
 !mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackWeaponType)) and not m3mgdExchange.(m3mgdAttrAttackWeaponType) eq ""
-!mmm       debug chat: Potentially valid attack weapon type (text): ${m3mgdExchange.(m3mgdAttrAttackWeaponType)}
 !mmm       set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
 !mmm       set validInputs = validInputs + 1
-!mmm     else
-!mmm       debug chat: Invalid attack weapon type: ${getreason(m3mgdExchange.(m3mgdAttrAttackWeaponType))}
 !mmm     end if 
 !mmm   end if
 !mmm   
@@ -122,7 +96,6 @@
 !mmm   end if
 !mmm
 !rem   // Initialize defender 
-!mmm   set ownName = cOwnID.name
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
 !mmm   set armorLabel = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
 !mmm   set armorProtection = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "RüsLP"))
@@ -298,7 +271,6 @@
 !mmm         set attackerXPGain = attackerXPGain * 2
 !mmm         set XPGainLog = "(" & XPGainLog & ") x 2[verheerend]"
 !mmm       end if
-!mmm       debug chat: ${attacker.name} erhält ${attackerXPGain} EP für diesen Treffer.
 !mmm       do setattr(attacker, m3mgdAttrXP, attacker.(m3mgdAttrXP) + attackerXPGain)
 !mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=+" & attackerXPGain & " EP (= " & XPGainLog & ")}} "
 !mmm     else if cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
@@ -309,7 +281,7 @@
 !mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(keine: kein AP-Verlust) }} "
 !mmm     end if
 !mmm   else
-!mmm     debug chat: Some problem with access to the attacking character's data prevents automatic accrual of experience for this attack. AttackerID: ${attacker} ${getreason(attacker)}
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(**kein Zugriff**: " & getreason(attacker) & ") }} "
 !mmm   end if
 !rem
 !rem   // Verbose output
@@ -339,7 +311,7 @@
 !mmm           chat     [DefenseFailureNoDamage]:   Doch kein Problem für meine $[armorLabel]{armorLabel}, außer Schweiß verliere ich nichts.
 !mmm         end if
 !mmm         if newHealth < 0 and timeToDie < 0
-!mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{ownName}, out. [x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
+!mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{cOwnID.name}, out. [x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
 !mmm         else if newHealth < 0 and timeToDie >= 0
 !mmm           chat     [EffectsCriticalInjury]:    ***Ich bin lebensgefährlich verletzt.*** Ich habe noch **$[timeToDie]{timeToDie+0} Minuten** zu leben. [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Jetzt könnte ich eine heilende Hand gebrauchen...***
 !mmm         end if
@@ -355,9 +327,9 @@
 !mmm     end if
 !mmm     chat: ${"&"}{template:default} 
 !mmm     if (not parryWeapon) or (parryWeapon and endurance > 0)
-!mmm       chat: {{name=${ownName}: Abwehr mit ${cWeaponLabel}}} 
+!mmm       chat: {{name=${cOwnID.name}: Abwehr mit ${cWeaponLabel}}} 
 !mmm     else 
-!mmm       chat: {{name=${ownName}: Abwehr (erschöpft)}} 
+!mmm       chat: {{name=${cOwnID.name}: Abwehr (erschöpft)}} 
 !mmm     end if 
 !mmm     if armorPiercing == 1 and attackDamage > 3
 !mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (Rüstungsschutz wg. Geschosstyp auf 3 begrenzt)}}
@@ -410,9 +382,9 @@
 !mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm   chat: /w ${ownName} ${"&"}{template:default} ${modifierLog}
+!mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   if parryWeapon and iscritical(defenseRoll)
-!mmm     chat: /w "${ownName}"  ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
-!mmm     chat: /w GM            ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm     chat: /w "${cOwnID.name}" ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm     chat: /w GM               ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   end if
 !mmm end script

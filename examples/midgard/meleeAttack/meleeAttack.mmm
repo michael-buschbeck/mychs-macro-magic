@@ -1,12 +1,5 @@
 !rem // Midgard Melee Attack Script
 !rem //
-!rem // - new feature: stores attack data in new MMM Midgard exchange structure, for defense script to pick up
-!rem // - new feature: mark output with acting token's name (to better distinguish NPCs)
-!rem // - new feature: Finn's magic sword Whirlwind makes attacks against him quite difficult
-!rem // - bugfix: made more easily usable for NPCs by referencing token_id not character_id
-!rem // - bugfix: severe but not critical attacks were mistakenly displayed as criticals
-!rem // - bugfix: if run for NPCs, data table is whispered to the GM only
-!rem // - internal: using obj.prop syntax in various places now, requiring MMM 1.20.0+
 !mmm script
 !mmm   set scriptVersion = "v1.10.0 (2021-12-13)"
 !rem
@@ -78,28 +71,27 @@
 !mmm
 !rem   // - Character & NPC data
 !rem
-!mmm   set ownName = getattr(cOwnID, "name")
-!mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
-!mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
-!mmm   set weaponDamageBonus = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
+!mmm   set effAttack = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
+!mmm   set weaponDamageExpr = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
+!mmm   set weaponDamageBonus = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
 !mmm   if weaponDamageBonus >= 0
 !mmm     set weaponDamageBonus = "+" & weaponDamageBonus
 !mmm   end if
-!mmm   set magicWeapon = (getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchB")) > 0) or (getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeAngB")) > 0)
+!mmm   set magicWeapon = (cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchB")) > 0) or (cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeAngB")) > 0)
 !mmm   if (not effAttack) or (not weaponDamageExpr)
 !rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
-!mmm     do whisperback("Abbruch: " & ownName & " hat keine Waffe namens " & cWeaponLabel & ".")
+!mmm     do whisperback("Abbruch: " & cOwnID.name & " hat keine Waffe namens " & cWeaponLabel & ".")
 !mmm     exit script
 !mmm   end if
 !mmm   set magicExtraDamageActive = (magicWeapon and getattr(cOwnID, cMagicExtraDamageMarker) eq "shown")
 !mmm   set foeID = "@{target|Angriffsziel|token_id}"
-!mmm   set foeName = getattr(foeID, "name")
+!mmm   set foeName = foeID.name
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
 !mmm   end if
-!mmm   set ownRotation = round(getattr(cOwnID, "rotation")) % 360
-!mmm   set foeRotation = round(getattr(foeID, "rotation")) % 360
-!mmm   set foeEndurance = getattr(foeID, "bar2")
+!mmm   set ownRotation = round(cOwnID.rotation) % 360
+!mmm   set foeRotation = round(foeID.rotation) % 360
+!mmm   set foeEndurance = foeID.bar2
 !mmm
 !rem   // Check for melee range (<=1 grid cell) and orientation, prepare calculations for attack from behind
 !rem
@@ -131,14 +123,14 @@
 !rem   // 1. Attacker exhausted
 !mmm   if cOwnID.(cEnduranceAttr).max > 0 and cOwnID.(cEnduranceAttr) <= 0
 !mmm     set autoModifiers = autoModifiers - 4
-!mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & ownName & "].AP:0)=-4}} "
+!mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & cOwnID.name & "].AP:0)=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 2. Target exhausted
 !mmm   if isdenied(foeEndurance) 
 !mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP&nbsp;" & emojiLock & "=**ggf. EW+2**}}"
 !mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
-!mmm   else if foeID.(cEnduranceAttr).max > 0 and foeEndurance <= 0
+!mmm   else if foeID.bar2.max > 0 and foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
@@ -336,7 +328,7 @@
 !mmm     if cHealthAttr ne "LP"
 !mmm       chat: /w GM 
 !mmm     end if
-!mmm     chat:      ${"&"}{template:default} {{name=${ownName}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
+!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
 !mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${foeEnduranceIndicator}}}
 !mmm     if attackResult >= 20
 !mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{attackRoll})}}
@@ -353,11 +345,11 @@
 !mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm   chat: /w "${ownName}" ${"&"}{template:default} ${modifierLog}
+!mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   if iscritical(attackRoll) and foeEndurance > 0
-!mmm     chat: /w "${ownName}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm     chat: /w "${cOwnID.name}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM            ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   else if iscritical(attackRoll)
-!mmm     chat: /w "${ownName}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
+!mmm     chat: /w "${cOwnID.name}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
 !mmm   end if
 !mmm end script
