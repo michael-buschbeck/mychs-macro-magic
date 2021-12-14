@@ -1,10 +1,10 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.5.0 (2021-12-13)"
+!mmm   set scriptVersion = "1.5.1 (2021-12-14)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.20
+!mmm   if version < 1.21
 !mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
@@ -56,8 +56,9 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
-!mmm   if isdenied(sender.name)
-!mmm     set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!rem   // Override chat sender for characters unconnected to the player (usually NPCs)
+!mmm   if cOwnID ne sender
+!mmm     set sender = cOwnID
 !mmm   end if
 !rem
 !rem   // Collect attack data and exit if no defense necessary
@@ -287,7 +288,6 @@
 !rem   // Verbose output
 !mmm   if cVerbose
 !mmm     combine chat
-!mmm       chat: ${chatPrefix}
 !mmm       if defenseSuccess
 !mmm         chat       [DefenseSuccess]:           Ich winde mich, strecke mich, wehre mich, und erleide nur einen **leichten Treffer**.
 !mmm         if newHealth < 0

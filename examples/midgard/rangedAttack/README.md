@@ -1,6 +1,6 @@
 # MMM-Angriffsskript (Fernkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.10.0 vom 2021-12-13,** erfordert MMM 1.20.0+.
+Aktuelle Version: **1.10.1 vom 2021-12-14,** erfordert MMM 1.21.0+.
 
 Das MMM-basierte Midgard-Fernkampfskript wickelt Fernkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben, im Detail an Spieler und GM geflüstert sowie in einer Datenstruktur für das Abwehrskript gespeichert.
 
