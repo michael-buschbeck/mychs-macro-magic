@@ -674,11 +674,29 @@ class MychScriptContext
         return result;
     }
 
-    $getChatSender()
+    $getChatSender(nameOrId = undefined)
     {
-        let [character, token] = this.$getCharacterAndTokenObjs(this.sender);
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId || this.sender);
 
-        if (character)
+        let characterName;
+        let tokenName;
+
+        if (character && this.$canControlAttribute(character, "name"))
+        {
+            characterName = character.get("name");
+        }
+
+        if (token && this.$canControlAttribute(token, "name"))
+        {
+            tokenName = token.get("name");
+        }
+
+        if (tokenName && tokenName != characterName)
+        {
+            return tokenName;
+        }
+
+        if (characterName)
         {
             return "character|" + character.id;
         }
@@ -696,9 +714,23 @@ class MychScriptContext
         return "Mych's Macro Magic";
     }
 
-    chat(message)
+    chat(nameOrId_or_message, message_if_nameOrId = undefined)
     {
-        let sender = this.$getChatSender();
+        let nameOrId;
+        let message;
+
+        if (arguments.length == 1)
+        {
+            nameOrId = undefined;
+            message = nameOrId_or_message;
+        }
+        else
+        {
+            nameOrId = MychExpression.coerceString(nameOrId_or_message);
+            message = message_if_nameOrId;
+        }
+        
+        let sender = this.$getChatSender(nameOrId);
         let messageString = MychExpression.coerceString(message);
 
         if (messageString.startsWith("!"))
