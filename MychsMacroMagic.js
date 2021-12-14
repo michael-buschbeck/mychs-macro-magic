@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.20.4";
+const MMM_VERSION = "1.21.0";
 
 on("chat:message", function(msg)
 {
@@ -2361,7 +2361,7 @@ class MychScript
                 }
 
                 let chatContext = (variables.chat instanceof Function) ? variables : this.context;
-                chatContext.chat(message);
+                chatContext.chat(variables.sender || this.context.sender, message);
             },
 
             getCustomization: function(variables)
@@ -2423,14 +2423,24 @@ class MychScript
 
                 let combineNestedScriptExit;
 
-                let messages = [];
+                let collectedNameOrId;
+                let collectedMessages = [];
+                
                 let variablesToRestore = ("chat" in variables) ? { chat: variables.chat } : {};
 
                 try
                 {
-                    variables.chat = function(message)
+                    variables.chat = function(nameOrId_or_message, message_if_nameOrId = undefined)
                     {
-                        messages.push(message);
+                        if (arguments.length == 1)
+                        {
+                            collectedMessages.push(nameOrId_or_message);
+                        }
+                        else
+                        {
+                            collectedNameOrId = nameOrId_or_message;
+                            collectedMessages.push(message_if_nameOrId);
+                        }
                     };
 
                     combineNestedScriptExit = yield* this.executeNestedScripts(variables);
@@ -2442,12 +2452,12 @@ class MychScript
 
                 let combinedMessages =
                 {
-                    toScalar: () => messages.map(MychExpression.coerceString).join(MychExpression.coerceString(separator)),
-                    toMarkup: () => messages.map(MychExpression.coerceMarkup).join(MychExpression.coerceMarkup(separator)),
+                    toScalar: () => collectedMessages.map(MychExpression.coerceString).join(MychExpression.coerceString(separator)),
+                    toMarkup: () => collectedMessages.map(MychExpression.coerceMarkup).join(MychExpression.coerceMarkup(separator)),
                 };
 
                 let chatContext = (variables.chat ? variables : this.context);
-                chatContext.chat(combinedMessages);
+                chatContext.chat(collectedNameOrId || this.context.sender, combinedMessages);
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
             },
