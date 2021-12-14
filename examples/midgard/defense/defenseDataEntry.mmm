@@ -1,0 +1,43 @@
+!rem // defenseDataEntry
+!mmm script
+!rem
+!rem   // Constants
+!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
+!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
+!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
+!mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
+!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
+!rem
+!mmm   set attackType = "?{Art des Angriffs| Nahkampf,melee| Fernkampf,ranged}"
+!mmm   set targetID = "@{target|Ziel des Angriffs|token_id}"
+!mmm   set attackResult = "?{Angriffswert|0}"
+!mmm   set criticalAttack = "?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}"
+!mmm   set attackDamage = "?{Schaden laut Angreifer|0}"
+!mmm   set attackDamageRoll = "?{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}"
+!mmm   set armorPiercing = "?{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust| Nein,0| Ja,1}"
+!mmm   set weaponType = "?{Waffentyp|Einhandschwert|Beidhänder|Fechtwaffe|Stichwaffe|Stockwaffe|Spießwaffe|Langbogen|Kompositbogen|schwere Armbrust|leichte Armbrust|Schleuder|Blasrohr}"
+!mmm   if attackResult < 20
+!mmm     do whisperback("Abbruch: Angriff mit **" & attackResult & "** war nicht erfolgreich, keine Abwehr nötig.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   if m3mgdExchange.permission ne "control"
+!mmm     do whisperback("Abbruch: Kein Zugriff auf Charakterblatt " & m3mgdExchange.name & " (" & m3mgdExchange & ")")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackType, attackType)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, targetID)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamage, attackDamage)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, attackDamageRoll)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, armorPiercing)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)
+!mmm   
+!mmm end script
+%{MacroSheet|defense}

@@ -1,0 +1,108 @@
+!rem // whirlWindMagic executes magic features of Finn's longsword "Whirlwind"
+!rem // 
+!mmm script
+!mmm   
+!rem   // Commands are set by config script, valid commands are "toggle-defense" and "wind-gust"
+!mmm   set customizable command = ""
+!mmm   set customizable command = "wind-gust"
+!mmm   set customizable cOwnID = "Yorric MacRathgar".token_id
+!mmm   
+!mmm   if command ne "toggle-defense" and command ne "wind-gust"
+!mmm     
+!mmm     do whisperback("Unknown command: " & command)
+!mmm     exit script
+!mmm     
+!mmm   end if 
+!mmm   
+!rem   // Config (overwrite in a customize block called immediately before this script)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
+!rem   //  cWeaponType          The type of weapon for narration, the "sword" in "I'm swinging my sword Glamdring"
+!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
+!rem   //  cWeaponToggleCost    Endurance cost (AP) to activating the weapon's magic
+!mmm   set customizable cWeaponLabel = "Wirbelwind (Langschwert)"
+!mmm   set customizable cWeaponName = "Wirbelwind"
+!mmm   set customizable cWeaponType = "Langschwert"
+!mmm   set customizable cWeaponMagicMarker = "status_half_haze"
+!mmm   set customizable cWeaponToggleCost = 1
+!mmm   set customizable cActivateGIF = "https://media.giphy.com/media/EeofceO0vyYKvqJKHH/giphy.gif"
+!mmm   set customizable cDeactivateGIF = "https://media.giphy.com/media/kiCXF8mL3j6Oe0vAm9/giphy.gif"
+!mmm
+!mmm   set ownName = cOwnID.name
+!mmm   set endurance = cOwnID.AP
+!mmm   
+!mmm   if command eq "toggle-defense"
+!mmm   
+!mmm     if cWeaponToggleCost > 0 and endurance <= 0
+!mmm   
+!mmm       do whisperback("Nichts passiert. Puh, ich bin übrigens total erschöpft.")
+!mmm       exit script
+!mmm
+!mmm     else if cOwnID.(cWeaponMagicMarker) eq "shown"
+!mmm   
+!mmm       chat: Ich konzentriere mich für 10 Sekunden, und die Windböen um mich herum kommen zum erliegen. [x](${cDeactivateGIF})
+!mmm   
+!mmm       do setattr(cOwnID, cWeaponMagicMarker, false)
+!mmm   
+!mmm       if cWeaponToggleCost > 0
+!mmm         set endurance = setattr(cOwnID, "AP", endurance - cWeaponToggleCost)
+!mmm         chat: /w "${ownName}" Das hat ${cWeaponToggleCost} AP gekostet.
+!mmm         chat: /GM ${ownName} hat die magischen Windböen seiner Runenklinge deaktiviert. Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen).
+!mmm       end if
+!mmm   
+!mmm     else
+!mmm   
+!mmm       chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Windböen um mich zu wehen. [x](${cActivateGIF})
+!mmm   
+!mmm       do setattr(cOwnID, cWeaponMagicMarker, true)
+!mmm   
+!mmm       if cWeaponToggleCost > 0
+!mmm         set endurance = setattr(cOwnID, "AP", endurance - cWeaponToggleCost)
+!mmm         chat: /w "${ownName}" Das hat ${cWeaponToggleCost} AP gekostet.
+!mmm         chat: /GM ${ownName} hat die magischen Windböen seiner Runenklinge aktiviert. Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen). Alle Gegner haben nun -4 auf Angriff.
+!mmm       end if
+!mmm   
+!mmm     end if
+!mmm   
+!mmm     if endurance <= 0
+!mmm       chat: /w "${ownName}" Ich bin erschöpft (**AP=0**).
+!mmm       chat: /GM ${ownName} ist nun erschöpft (**AP=0**).
+!mmm     end if
+!mmm   
+!mmm   else if command eq "wind-gust"
+!mmm     
+!mmm     set ownRotation = round(cOwnID.rotation) % 360
+!mmm     
+!mmm     if ownRotation > 270
+!mmm       set angle = ownRotation - 270
+!mmm       set xOffset = 1
+!mmm       set yOffset = 1
+!mmm     else if ownRotation > 180
+!mmm       set angle = ownRotation - 180
+!mmm       set xOffset = 1
+!mmm       set yOffset = -1
+!mmm     else if ownRotation > 90
+!mmm       set angle = ownRotation - 90
+!mmm       set xOffset = -1
+!mmm       set yOffset = -1
+!mmm     else 
+!mmm       set angle = ownRotation
+!mmm       set xOffset = -1
+!mmm       set yOffset = 1
+!mmm     end if
+!mmm     set reach = 30 * distsnap()
+!mmm     set xOffset = xOffset * (reach * sin(angle))
+!mmm     set yOffset = yOffset * ((reach**2 - xOffset**2) ** 0.5)
+!mmm     
+!mmm     do spawnfx("beam-smoke", cOwnID.left, cOwnID.top, cOwnID.left + xOffset, cOwnID.top + yOffset)
+!mmm     
+!mmm     if roll("1d6") >= 4
+!mmm       set torches = "und Fackeln"
+!mmm     else
+!mmm       set torches = ""
+!mmm     end if
+!mmm     chat: /w GM ${cOwnID.name}s Windstoß löscht alle Kerzen ${torches} auf 30m Entfernung; Nebel, Rauch oder Gas werden weggeweht.
+!mmm     
+!mmm   end if
+!mmm   
+!mmm end script

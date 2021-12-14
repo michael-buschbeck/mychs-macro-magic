@@ -1,8 +1,14 @@
 !rem // waterWalkerBlastEffect
-!rem // v1.0.1 2021-11-17
+!rem // v1.0.2 2021-12-05
 !rem
 !mmm script
 !mmm   set scriptVersion = "1.0.1 (2021-11-17)"
+!rem
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.20
+!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet

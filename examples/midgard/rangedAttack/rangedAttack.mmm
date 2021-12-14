@@ -1,11 +1,11 @@
 !rem // Midgard Ranged Attack Script
-!rem
+!rem //
 !mmm script
-!mmm   set scriptVersion = "1.9.1 (2021-12-03)"
+!mmm   set scriptVersion = "1.10.0 (2021-12-13)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.16
-!mmm     do whisperback("Abbruch: MMM-Version 1.16.0 oder höher erforderlich.")
+!mmm   if version < 1.20
+!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -25,12 +25,14 @@
 !rem   //  cAmmoMagicDamage     Damage roll expression ("1d6+x") for optional additional magic damage
 !rem   //  cFoeNameDefault      Output label for targets without names
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
+!rem   //  cHealthAttr          Override if the script operates on a token for a generic NPC
+!rem   //  cEnduranceAttr       Override if the script operates on a token for a generic NPC
 !rem   //
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Bogen"
 !mmm   set customizable cWeaponName = ""
-!mmm   set customizable cWeaponType = "Langbogen"
+!mmm   set customizable cWeaponType = "Bogen"
 !mmm   set customizable cRangeUpperBoundClose = 30
 !mmm   set customizable cRangeUpperBoundMid = 100
 !mmm   set customizable cRangeUpperBoundFar = 180
@@ -41,52 +43,76 @@
 !mmm   set customizable cAmmoMagicSkillBonus = 0
 !mmm   set customizable cAmmoMagicDamage = ""
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
-!mmm   set customizable cOwnID = getattr(sender, "character_id")
+!mmm   set customizable cOwnID = sender.token_id
+!mmm   set customizable cHealthAttr = "LP"
+!mmm   set customizable cEnduranceAttr = "AP"
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = getattr(cOwnID, "character_id")
+!rem   // Refetch token_id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = cOwnID.token_id
 !mmm   if isdenied(cOwnID)
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
+!rem   // Workaround for identifying NPCs operated by the GM until we can manipulate the sender
+!mmm   if isdenied(sender.name)
+!mmm     set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!mmm   end if
 !rem
 !rem   // Init
+!rem
 !rem   // - Constants
+!rem
 !mmm   set emojiExhausted = "🥴"
 !mmm   set emojiLock = "🔒"
+!mmm   set emojiMagic = "✨"
+!mmm   set emojiKnife = "🔪"
+!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
+!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
+!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
+!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
+!mmm
+!mmm   set whirlWindMagicMarker = "status_half_haze"
+!mmm
 !rem   // - Fetch character (attacker) data
-!mmm   set ownName = getattr(cOwnID, "name")
-!mmm   set effAttack = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
-!mmm   set weaponDamageExpr = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
-!mmm   set weaponDamageBonus = getattr(cOwnID, findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
-!mmm   set sharpshootingSkill = getattr(cOwnID, findattr(cOwnID, "Fertigkeiten", "Fertigkeit", "Scharfschießen", "FW"))
-!mmm   if (not effAttack) or (not weaponDamageExpr)
-!rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
-!mmm     do whisperback("Abbruch: " & ownName & " hat keine Waffe namens " & cWeaponLabel & ".")
-!mmm     exit script
-!mmm   end if
+!rem
+!mmm   set effAttack = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
+!mmm   set weaponDamageExpr = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
+!mmm   set weaponDamageBonus = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
 !mmm   if weaponDamageBonus >= 0
 !mmm     set weaponDamageBonus = "+" & weaponDamageBonus
 !mmm   end if
+!mmm   set sharpshootingSkill = cOwnID.(findattr(cOwnID, "Fertigkeiten", "Fertigkeit", "Scharfschießen", "FW"))
+!mmm   if (not effAttack) or (not weaponDamageExpr)
+!rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
+!mmm     do whisperback("Abbruch: " & cOwnID.name & " hat keine Waffe namens " & cWeaponLabel & ".")
+!mmm     exit script
+!mmm   end if
+!rem
 !rem   // - Fetch NPC (target) data
-!mmm   set foeId = "@{target|Angriffsziel|token_id}"
-!mmm   set foeName = getattr(foeId, "name")
+!rem
+!mmm   set foeID = "@{target|Angriffsziel|token_id}"
+!mmm   set foeName = foeID.name
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
 !mmm   end if
-!mmm   set ownRotation = round(getattr(cOwnID, "rotation")) % 360
-!mmm   set foeRotation = round(getattr(foeId, "rotation")) % 360
-!mmm   set ammoCount = getattr(cOwnID, cAmmoLabel)
+!mmm   set ownRotation = round(cOwnID.rotation) % 360
+!mmm   set foeRotation = round(cOwnID.rotation) % 360
+!mmm   set ammoCount = cOwnID.(cAmmoLabel)
 !mmm   set ammoLabel = cAmmoLabel
 !mmm   if cAmmoMagic
-!mmm     set magicAmmoCount = getattr(cOwnID, cAmmoMagicLabel)
+!mmm     set magicAmmoCount = cOwnID.(cAmmoMagicLabel)
 !mmm     if isunknown(magicAmmoCount)
-!mmm       do whisperback("Abbruch: " & ownName & " fehlt ein Attribut für die magische Munition " & cAmmoMagicLabel & ".")
+!mmm       do whisperback("Abbruch: " & cOwnID.name & " fehlt ein Attribut für die magische Munition " & cAmmoMagicLabel & ".")
 !mmm       exit script
 !mmm     end if
 !mmm     set ammoCount = magicAmmoCount
@@ -96,17 +122,17 @@
 !mmm     chat [OutOfAmmo]: Ich greife nach meinen ${ammoLabel}n, um auf ${foeName} zu schießen, doch **OH SCHRECK -- keine ${ammoLabel} mehr drin!** Schade. Da hat ${foeName} nochmal Glück gehabt.
 !mmm     exit script
 !mmm   end if
-!mmm   set foeEndurance = getattr(foeId, "bar2")
+!mmm   set foeEndurance = foeID.bar2
 !rem
 !rem   // Calculate direction, exit if direction to target is outside arc of view 
-!mmm   set offsetYfromFoe = round((getattr(cOwnID, "top")  - getattr(foeId, "top"))  * distscale())
-!mmm   set offsetXfromFoe = round((getattr(cOwnID, "left") - getattr(foeId, "left")) * distscale())
+!mmm   set offsetYfromFoe = round((getattr(cOwnID, "top")  - getattr(foeID, "top"))  * distscale())
+!mmm   set offsetXfromFoe = round((getattr(cOwnID, "left") - getattr(foeID, "left")) * distscale())
 !mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
 !mmm   set foeDirectionFromMe = round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
 !mmm   set myViewAngle = ((foeDirectionFromMe - ownRotation) + 180) % 360 - 180
 !mmm   set foeViewAngle = ((ownDirectionFromFoe - foeRotation) + 180) % 360 - 180
 !mmm   if (myViewAngle < -45) or (myViewAngle > 45)
-!mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
+!mmm     chat [OutsideFieldOfVision]: ${chatPrefix} $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
 !mmm     exit script
 !mmm   end if
 !rem
@@ -122,13 +148,13 @@
 !mmm   end if
 !rem
 !rem   // Calculate distance, exit if distance exceeds range
-!mmm   set absTokenDistY = round(((abs(getattr(cOwnID, "top")  - getattr(foeId, "top")))  - .5 * getattr(cOwnID, "height") - .5 * getattr(foeId, "height")) * distscale())
-!mmm   set absTokenDistX = round(((abs(getattr(cOwnID, "left") - getattr(foeId, "left"))) - .5 * getattr(cOwnID, "width")  - .5 * getattr(foeId, "width"))  * distscale())
+!mmm   set absTokenDistY = round(((abs(getattr(cOwnID, "top")  - getattr(foeID, "top")))  - .5 * getattr(cOwnID, "height") - .5 * getattr(foeID, "height")) * distscale())
+!mmm   set absTokenDistX = round(((abs(getattr(cOwnID, "left") - getattr(foeID, "left"))) - .5 * getattr(cOwnID, "width")  - .5 * getattr(foeID, "width"))  * distscale())
 !mmm   set distance = max(absTokenDistY, absTokenDistX)
 !mmm   set distanceUnits = distunits() 
 !mmm   if distance > cRangeUpperBoundFar
 !mmm     combine chat
-!mmm       chat [OutsideStrikeDistance]: $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
+!mmm       chat [OutsideStrikeDistance]: ${chatPrefix} $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
 !mmm       chat: Mein ${cWeaponLabel} fliegt grob in Richtung ${foeName}, der aber viel zu weit weg ist.
 !mmm       chat: ${"&"}{template:default} {{name=${cWeaponLabel}angriff: Außer Reichweite}} 
 !mmm       chat: {{Ziel=**${foeName}**}}
@@ -173,26 +199,32 @@
 !mmm     set modifierTooltip = modifierTooltip & " " & rangeBracket & "&nbsp;&nbsp;&nbsp;+/-0 "
 !mmm   end if
 !rem   // 2. Attacker exhausted
-!mmm   if getattr(cOwnID, "AP") <= 0
+!mmm   if cOwnID.(cEnduranceAttr).max > 0 and cOwnID.(cEnduranceAttr) <= 0
 !mmm     set autoModifiers = autoModifiers - 4
-!mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & ownName & "].AP:0)=-4}} "
+!mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & cOwnID.name & "].AP:0)=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 3. Target exhausted
 !mmm   if isdenied(foeEndurance) 
 !mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP&nbsp;" & emojiLock & "=**ggf. EW+2**}}"
 !mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
-!mmm   else if foeEndurance <= 0
+!mmm   else if foeID.bar2.max > 0 and foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
-!rem   // 4. Collect additional standard modifiers from user via dropdown menu
+!rem   // 4. Finn's magic sword Whirlwind
+!mmm   if (foeName eq "Finn" or foeName eq "Finn MacRathgar") and foeID.(whirlWindMagicMarker) eq "shown"
+!mmm     set autoModifiers = autoModifiers - 4
+!mmm     set modifierLog = modifierLog & " {{Wirbelwinds Wirbel-Winde=-4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Wirbelwinde&nbsp;&nbsp;&nbsp;-4 "
+!mmm   end if
+!rem   // 5. Collect additional standard modifiers from user via dropdown menu
 !mmm   set semiAutoModCode = "?{Weitere Angriffsmodifikatoren| Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;  NORMAL HALT +/-0  &#44; 1 &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 2 &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 3 &#124;  Großes Ziel (2xMensch) +2 &#44; 5 &#124;  Riesiges Ziel (4xMensch) +4 &#44; 7 &#124;  Angriff ins Handgemenge (Zufallsopfer) +4 &#44; 17  &#125; | Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ...&#124;  SONST NIX +/-0  &#44; 11  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 22  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 33  &#124;  Großes Ziel (2xMensch) +2 &#44; 55  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 77  &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 143 &#124;  Angriff ins Handgemenge (Zufallsopfer) +4 &#44; 187  &#125; | Schnelles Ziel (30m+/Runde) -2, ?{Schnelles Ziel -2 +/- ...&#124;  SONST NIX +/-0  &#44; 13  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 26  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 39  &#124;  Großes Ziel (2xMensch) +2 &#44; 65  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 91  &#124;  Spontaner Angriff -4  &#44; 143 &#124;  Sorgfältig gezielt +4 &#44; 247  &#125; | Sorgfältig gezielt +4, ?{Sorgfältig gezielt +4 +/- ...&#124;  SONST NIX +/-0  &#44; 19  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 38  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 57  &#124;  Großes Ziel (2xMensch) +2 &#44; 95  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 133 &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 247  &#125; | Scharfschießen +4/Spezial, ?{Scharfschießen +4/Spezial +/- ...&#124;  SONST NIX +/-0  &#44; 23  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 46  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 69  &#124;  Großes Ziel (2xMensch) +2 &#44; 115 &#124;  Riesiges Ziel (4xMensch) +4 &#44; 161 &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 299  &#125;}"
 !mmm   if semiAutoModCode % 23 == 0
 !rem     // Check if PC has sharpshooting skill
 !mmm     if not sharpshootingSkill
-!mmm       do whisperback("Abbruch: " & ownName & " hat die Fertigkeit Scharfschießen nicht.")
+!mmm       do whisperback("Abbruch: " & cOwnID.name & " hat die Fertigkeit Scharfschießen nicht.")
 !mmm       exit script
 !mmm     end if
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
@@ -274,10 +306,13 @@
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & attackRoll & ") + (EW = " & effAttack & ") " & modifiers
 !mmm   if iscritical(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
+!mmm     set criticalAttack = 1
 !mmm   else if isfumble(attackRoll)
 !mmm     set attackResult = highlight(attackResult, "bad", attackResultLog)
+!mmm     set criticalAttack = 0
 !mmm   else 
 !mmm     set attackResult = highlight(attackResult, "normal", attackResultLog)
+!mmm     set criticalAttack = 0
 !mmm   end if
 !rem
 !mmm   if attackResult >= 20
@@ -316,6 +351,18 @@
 !mmm     set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm   end if
 !mmm
+!rem   // Save key attack data for defense script
+!mmm   if attackResult >= 20 and damageResult > 0
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "ranged")
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnID)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeID)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, damageRoll)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
+!mmm   end if
+!rem
 !rem   // Break down extra magic damage to player and GM
 !mmm   if cAmmoMagic and attackResult >= 20 and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberschaden=" & damageResult & " }} "
@@ -339,12 +386,13 @@
 !mmm
 !mmm   if cVerbose
 !mmm     combine chat
+!mmm       chat: ${chatPrefix} 
 !mmm       if not cAmmoMagic
 !mmm         chat [AttackOpening]:              Angriff mit dem $[weaponType]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}"): Einer/s meiner/s $[ammoLabel]{ammoLabel} fliegt in Richtung $[targetName]{foeName} in $[range]{rangeDescription} und
 !mmm       else
 !mmm         chat [AttackOpeningMagicDamage]:   Mein Angriff mit $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}", magischer Zusatzschaden aktiviert) auf $[targetName]{foeName} 
 !mmm       end if
-!mmm       if iscritical(attackRoll)
+!mmm       if criticalAttack == 1
 !mmm         chat [AttackIsCriticalSuccess]:    ist ein **kritischer Erfolg** ($[attackResult]{attackResult+0}). 
 !mmm       else if isfumble(attackRoll)
 !mmm         chat [AttackIsCriticalFailure]:    ist ein **grausamer Patzer**. 
@@ -353,15 +401,15 @@
 !mmm       else if attackResult >= 20
 !mmm         chat [AttackSucceedsBarely]:       trifft gerade so ($[attackResult]{attackResult+0}), wenn $[targetName]{foeName} die Abwehr nicht gelingt.
 !mmm       else if attackResult >= 18
-!mmm         chat [AttackFailsBarely]:          verfehlt knapp ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht ausweichen, aber **steht dahinter noch jemand?**
+!mmm         chat [AttackFailsBarely]:          verfehlt sein Ziel knapp ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht ausweichen, aber **steht dahinter noch jemand?**
 !mmm       else
-!mmm         chat [AttackFailsClearly]:         verfehlt weit ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht einmal ausweichen.
+!mmm         chat [AttackFailsClearly]:         verfehlt sein Ziel ($[attackResult]{attackResult+0}). $[targetName]{foeName} muss nicht einmal ausweichen.
 !mmm       end if
 !mmm       if attackResult >= 20 and sharpExtraDamage
-!mmm         chat [AttackSuccessSharpshooting]: Der wird wehtun: das Scharfschützentraining hat sich mal wieder ausgezahlt.
+!mmm         chat [AttackSuccessSharpshooting]: Der wird wehtun: die vielen, vielen Stunden mit der Zielscheibe haben sich mal wieder ausgezahlt.
 !mmm       end if
 !mmm       if attackResult >= 20 and cAmmoMagic
-!mmm         chat [AttackSuccessClosingMagic]:  Au weia, da trifft $[targetName]{foeName} auch Zauberschaden, wenn die Abwehr nicht gelingt.
+!mmm         chat [AttackSuccessClosingMagic]:  Au weia, da erwischt $[targetName]{foeName} auch Zauberschaden, wenn die Abwehr nicht gelingt.
 !mmm       else if attackResult >= 20 and (not cAmmoMagic)
 !mmm         chat [AttackSuccessClosing]:       $[targetName]{foeName} kann nun abwehren.
 !mmm       else
@@ -372,7 +420,11 @@
 !rem
 !rem   // Add data table for easy reference
 !mmm   combine chat
-!mmm     chat:      ${"&"}{template:default} {{name=Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
+!rem     // Check if script is run for an NPC (whisper data to GM only) -- determination by health attribute is an ugly workaround
+!mmm     if cHealthAttr ne "LP"
+!mmm       chat: /w GM 
+!mmm     end if
+!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
 !mmm     chat:      {{Ziel=**${foeName}** ${foeEnduranceIndicator}}}
 !mmm     if iscritical(attackRoll)
 !mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${attackRoll})}}
@@ -384,7 +436,7 @@
 !mmm     chat:      {{Boni/Mali=**${modifiers}**}}
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
 !mmm     if attackFromBehind
-!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt kein Abwehrwurf möglich ($[targetViewAngle]{foeViewAngle}°)}}
+!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** ($[targetViewAngle]{foeViewAngle}°)}}
 !mmm     end if 
 !mmm     if attackResult >= 20 and semiAutoModCode % 23 == 0
 !mmm       chat:    {{Basisschaden=${damageResultBasic}}}
@@ -393,20 +445,14 @@
 !mmm     else if attackResult >= 20
 !mmm       chat:    {{Schaden=${damageResult}}}
 !mmm     end if
-!rem     // Devastating hits => double experience
-!mmm     if attackResult >= 20 and damageRoll >= 8 and not isdenied(foeEndurance) and foeEndurance >= 8
-!mmm       chat:  {{EP=**x2** (verheerender Treffer)}}
-!mmm     else if isdenied(foeEndurance)
-!mmm       chat:  {{EP=**???** (AP=${foeEnduranceIndicator})}}
-!mmm     end if
 !mmm     chat:      {{${ammoLabel}=${ammoCount}}}
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm   chat: /w ${ownName} ${"&"}{template:default} ${modifierLog}
+!mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   if iscritical(attackRoll) and foeEndurance > 0
-!mmm     chat: /w "${ownName}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
-!mmm     chat: /w GM            ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm     chat: /w "${cOwnID.name}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
+!mmm     chat: /w GM                ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   else if iscritical(attackRoll)
-!mmm     chat: /w "${ownName}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
+!mmm     chat: /w "${cOwnID.name}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
 !mmm   end if
 !mmm end script

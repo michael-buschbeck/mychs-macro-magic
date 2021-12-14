@@ -1,12 +1,8 @@
 # MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.9.0 vom 2021-11-18,** erfordert MMM 1.18.0+.
+Aktuelle Version: **1.10.0 vom 2021-12-13,** erfordert MMM 1.20.0+.
 
-Aufruf: 
-- Hauptspiel ("Midgard"): ``#melee`` 
-- Testspiel ("TEST"): ``#mmmMeleeAttack``
-
-Das MMM-basierte Midgard-Nahkampfskript wickelt Nahkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben sowie im Detail an Spieler und GM geflüstert.
+Das MMM-basierte Midgard-Nahkampfskript wickelt Nahkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben sowie im Detail an Spieler und GM geflüstert sowie in einer gemeinsamen Datenstruktur für das Abwehrskript gespeichert.
 
 ### Inhalt
 
@@ -44,7 +40,7 @@ Während **magische Waffen** seit v1.6 automatisch anhand des Angriffs- oder Sch
 
 #### Unterschiedliche Charaktere/NPCs
 
-Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der als Absender im Chatfenster steht, kann für seine Charaktere das Konfigskript jeweils als Ability anlegen und darin `!mmm set cOwnID = "@{character_id}"` setzen. Damit wird der Bezugscharakter jeweils korrekt gesetzt, egal wer gerade im Chat als Absender steht.
+Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der als Absender im Chatfenster steht, kann für seine Charaktere das Konfigskript jeweils als Ability anlegen und darin `!mmm set cOwnID = "@{character_id}"` setzen oder einen Token mit der Maus auswählen. Damit wird der Bezugscharakter jeweils korrekt gesetzt, egal wer gerade im Chat als Absender steht.
 
 #### Geschichtenerzählerausgabe
 
@@ -93,6 +89,16 @@ Minimalbeispiel für ein Kurzschwert, ohne die Erzählerei zu verändern (Voraus
 ```
 
 ## Changelog
+
+1.10.0 2021-12-13
+
+- Automatische Datenablage in den `m3mgd_*`-Attributen eines Dummy-Charakterblattes, das als Datenverschiebebahnhof genutzt wird
+- (Workaround) Wird das Skript von einem Benutzer aufgerufen, dem kein Charakter zugeordnet ist, gibt es den Namen des handelnden Tokens eingangs aus.
+- Geisterwesen (unendliche LP) und Untote (unendliche AP) werden nun korrekt behandelt
+- Finns neues Zauberschwert "Wirbelwind"
+- Bugfix: Datenübersichten für NPCs werden nur noch dem Spielleiter geflüstert
+- Bugfix: Zugriff auf Bezugstoken, nicht Bezugscharaktere (für NPCs wichtig)
+- intern: obj.prop-Syntax, erfordert MMM 1.20.0+
 
 1.9.0 2021-11-18 (requires MMM 1.18.0+)
 
