@@ -509,20 +509,20 @@ class MychScriptContext
         }
     }
 
-    *roll(nameOrIdOrRollExpression, rollExpressionIfNameOrId = undefined)
+    *roll(nameOrId_or_rollExpression, rollExpression_if_nameOrId = undefined)
     {
         let nameOrId;
         let rollExpression;
         
-        if (rollExpressionIfNameOrId == undefined)
+        if (arguments.length == 1)
         {
             nameOrId = this.sender;
-            rollExpression = MychExpression.coerceString(nameOrIdOrRollExpression);
+            rollExpression = MychExpression.coerceString(nameOrId_or_rollExpression);
         }
         else
         {
-            nameOrId = MychExpression.coerceString(nameOrIdOrRollExpression);
-            rollExpression = MychExpression.coerceString(rollExpressionIfNameOrId);
+            nameOrId = MychExpression.coerceString(nameOrId_or_rollExpression);
+            rollExpression = MychExpression.coerceString(rollExpression_if_nameOrId);
         }
 
         if (rollExpression.match(/^\s*$/u))
