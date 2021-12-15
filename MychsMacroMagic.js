@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.20.4";
+const MMM_VERSION = "1.21.0";
 
 on("chat:message", function(msg)
 {
@@ -509,20 +509,20 @@ class MychScriptContext
         }
     }
 
-    *roll(nameOrIdOrRollExpression, rollExpressionIfNameOrId = undefined)
+    *roll(nameOrId_or_rollExpression, rollExpression_if_nameOrId = undefined)
     {
         let nameOrId;
         let rollExpression;
         
-        if (rollExpressionIfNameOrId == undefined)
+        if (arguments.length == 1)
         {
             nameOrId = this.sender;
-            rollExpression = MychExpression.coerceString(nameOrIdOrRollExpression);
+            rollExpression = MychExpression.coerceString(nameOrId_or_rollExpression);
         }
         else
         {
-            nameOrId = MychExpression.coerceString(nameOrIdOrRollExpression);
-            rollExpression = MychExpression.coerceString(rollExpressionIfNameOrId);
+            nameOrId = MychExpression.coerceString(nameOrId_or_rollExpression);
+            rollExpression = MychExpression.coerceString(rollExpression_if_nameOrId);
         }
 
         if (rollExpression.match(/^\s*$/u))
@@ -674,11 +674,29 @@ class MychScriptContext
         return result;
     }
 
-    $getChatSender()
+    $getChatSender(nameOrId = undefined)
     {
-        let [character, token] = this.$getCharacterAndTokenObjs(this.sender);
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId || this.sender);
 
-        if (character)
+        let characterName;
+        let tokenName;
+
+        if (character && this.$canControlAttribute(character, "name"))
+        {
+            characterName = character.get("name");
+        }
+
+        if (token && this.$canControlAttribute(token, "name"))
+        {
+            tokenName = token.get("name");
+        }
+
+        if (tokenName && tokenName != characterName)
+        {
+            return tokenName;
+        }
+
+        if (characterName)
         {
             return "character|" + character.id;
         }
@@ -696,9 +714,23 @@ class MychScriptContext
         return "Mych's Macro Magic";
     }
 
-    chat(message)
+    chat(nameOrId_or_message, message_if_nameOrId = undefined)
     {
-        let sender = this.$getChatSender();
+        let nameOrId;
+        let message;
+
+        if (arguments.length == 1)
+        {
+            nameOrId = undefined;
+            message = nameOrId_or_message;
+        }
+        else
+        {
+            nameOrId = MychExpression.coerceString(nameOrId_or_message);
+            message = message_if_nameOrId;
+        }
+        
+        let sender = this.$getChatSender(nameOrId);
         let messageString = MychExpression.coerceString(message);
 
         if (messageString.startsWith("!"))
@@ -2329,7 +2361,7 @@ class MychScript
                 }
 
                 let chatContext = (variables.chat instanceof Function) ? variables : this.context;
-                chatContext.chat(message);
+                chatContext.chat(variables.sender || this.context.sender, message);
             },
 
             getCustomization: function(variables)
@@ -2391,14 +2423,24 @@ class MychScript
 
                 let combineNestedScriptExit;
 
-                let messages = [];
+                let collectedNameOrId;
+                let collectedMessages = [];
+                
                 let variablesToRestore = ("chat" in variables) ? { chat: variables.chat } : {};
 
                 try
                 {
-                    variables.chat = function(message)
+                    variables.chat = function(nameOrId_or_message, message_if_nameOrId = undefined)
                     {
-                        messages.push(message);
+                        if (arguments.length == 1)
+                        {
+                            collectedMessages.push(nameOrId_or_message);
+                        }
+                        else
+                        {
+                            collectedNameOrId = nameOrId_or_message;
+                            collectedMessages.push(message_if_nameOrId);
+                        }
                     };
 
                     combineNestedScriptExit = yield* this.executeNestedScripts(variables);
@@ -2410,12 +2452,12 @@ class MychScript
 
                 let combinedMessages =
                 {
-                    toScalar: () => messages.map(MychExpression.coerceString).join(MychExpression.coerceString(separator)),
-                    toMarkup: () => messages.map(MychExpression.coerceMarkup).join(MychExpression.coerceMarkup(separator)),
+                    toScalar: () => collectedMessages.map(MychExpression.coerceString).join(MychExpression.coerceString(separator)),
+                    toMarkup: () => collectedMessages.map(MychExpression.coerceMarkup).join(MychExpression.coerceMarkup(separator)),
                 };
 
                 let chatContext = (variables.chat ? variables : this.context);
-                chatContext.chat(combinedMessages);
+                chatContext.chat(collectedNameOrId || this.context.sender, combinedMessages);
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
             },
