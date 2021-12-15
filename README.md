@@ -900,6 +900,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.21.0  | 2021-12-15 | Support `chat` impersonation
 | 1.20.0  | 2021-05-28 | Introduce `list[idx]` and `obj.prop` expression syntax
 | 1.19.0  | 2021-05-07 | Add `for` loop and improve `findattr()` to return lists
 | 1.18.0  | 2021-05-04 | Improve `highlight()` with `"info"` and `default` types
