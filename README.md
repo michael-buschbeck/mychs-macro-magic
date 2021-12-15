@@ -129,6 +129,18 @@ If the template is completely absent, the **chat** command sends a line break in
 | 6    | _!mmm_     **chat:** Sorry for the trouble! | *(queue message part)*
 | 7    | _!mmm_ **end combine** | ***Finn:*** Attack with `23`<br>Here's `2` damage for you just in case<br>Sorry for the trouble!
 
+Chat messages sent through the **chat** command impersonate the `sender` running the script. You can set the `sender` variable to something else to impersonate some other character or token you control:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **chat:** Behold my gentle features, so pretty! | ***Finn:*** Behold my gentle features, so pretty!
+| 3    | _!mmm_     **set** sender = "Spiderbro" | *(impersonate another character under the player's control)*
+| 4    | _!mmm_     **chat:**  /me rolls his eyes. All six of them. | ***Spiderbro rolls his eyes. All six of them.***
+| 5    | _!mmm_ **end script**
+
+You can set `sender` to any character name, token name, character ID, or token ID. If you set it to an invalid value of if the player doesn't have control permission for the character or token, your customized `sender` value will be ignored and your chat message will be sent as the player running the script.
+
 
 ### _!mmm_ **chat [**<span>_label_</span>**]:** *template*
 
@@ -741,6 +753,7 @@ This works in any place with an expression, of course, not just in **set** – y
 | spawnfx(*type*, *left*, *top*)                     | Board     | spawnfx("nova-blood", 70, 70) | **[Side effect]** Spawns visual effect *type* around coordinates *left*, *top*
 | spawnfx(*type*, *left1*, *top1*, *left2*, *top2*)  | Board     | | **[Side effect]** Spawns directional visual effect *type* going from coordinates *left1*, *top1* to coordinates *left2*, *top2*
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
+| chat(*name\|id*, *str*)                            | Chat      | chat("Spiderbro", "Hi!") | **[Side effect]** Send string *str* to chat, impersonating another character or token under the player's control
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
 | findattr(*name\|id*)                               | Attribute | findattr("Finn") | List available character sheet table names – see below
 | findattr(*name\|id*, *table*)                      | Attribute | findattr("Finn", "attack") | List available columns in a character sheet table – see below
