@@ -755,6 +755,7 @@ This works in any place with an expression, of course, not just in **set** – y
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | chat(*name\|id*, *str*)                            | Chat      | chat("Spiderbro", "Hi!") | **[Side effect]** Send string *str* to chat, impersonating another character or token under the player's control
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
+| delay(*seconds*)                                   | Script    | delay(0.5) | **[Side effect]** Wait *seconds* before continuing execution of the script
 | findattr(*name\|id*)                               | Attribute | findattr("Finn") | List available character sheet table names – see below
 | findattr(*name\|id*, *table*)                      | Attribute | findattr("Finn", "attack") | List available columns in a character sheet table – see below
 | findattr(*name\|id*, *table*, *col*)               | Attribute | findattr("Finn", "attack", "weapon") | Find attribute name (or list of attribute names in `for` context) in a character sheet table – see below
@@ -900,6 +901,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.22.0  | 2021-12-15 | Add `delay(seconds)` to add delays in script execution
 | 1.21.0  | 2021-12-15 | Support `chat` impersonation
 | 1.20.0  | 2021-05-28 | Introduce `list[idx]` and `obj.prop` expression syntax
 | 1.19.0  | 2021-05-07 | Add `for` loop and improve `findattr()` to return lists
