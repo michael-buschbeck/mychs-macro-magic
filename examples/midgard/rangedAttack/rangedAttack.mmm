@@ -1,11 +1,11 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.10.0 (2021-12-13)"
+!mmm   set scriptVersion = "1.10.1 (2021-12-14)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.20
-!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
+!mmm   if version < 1.21
+!mmm     do whisperback("Abbruch: MMM-Version 1.21.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -58,9 +58,9 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
-!rem   // Workaround for identifying NPCs operated by the GM until we can manipulate the sender
-!mmm   if isdenied(sender.name)
-!mmm     set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!rem   // Override chat sender for characters unconnected to the player (usually NPCs)
+!mmm   if cOwnID ne sender
+!mmm     set sender = cOwnID
 !mmm   end if
 !rem
 !rem   // Init
@@ -132,7 +132,7 @@
 !mmm   set myViewAngle = ((foeDirectionFromMe - ownRotation) + 180) % 360 - 180
 !mmm   set foeViewAngle = ((ownDirectionFromFoe - foeRotation) + 180) % 360 - 180
 !mmm   if (myViewAngle < -45) or (myViewAngle > 45)
-!mmm     chat [OutsideFieldOfVision]: ${chatPrefix} $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
+!mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
 !mmm     exit script
 !mmm   end if
 !rem
@@ -154,7 +154,7 @@
 !mmm   set distanceUnits = distunits() 
 !mmm   if distance > cRangeUpperBoundFar
 !mmm     combine chat
-!mmm       chat [OutsideStrikeDistance]: ${chatPrefix} $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
+!mmm       chat [OutsideStrikeDistance]: $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
 !mmm       chat: Mein ${cWeaponLabel} fliegt grob in Richtung ${foeName}, der aber viel zu weit weg ist.
 !mmm       chat: ${"&"}{template:default} {{name=${cWeaponLabel}angriff: Außer Reichweite}} 
 !mmm       chat: {{Ziel=**${foeName}**}}
@@ -386,7 +386,6 @@
 !mmm
 !mmm   if cVerbose
 !mmm     combine chat
-!mmm       chat: ${chatPrefix} 
 !mmm       if not cAmmoMagic
 !mmm         chat [AttackOpening]:              Angriff mit dem $[weaponType]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}"): Einer/s meiner/s $[ammoLabel]{ammoLabel} fliegt in Richtung $[targetName]{foeName} in $[range]{rangeDescription} und
 !mmm       else

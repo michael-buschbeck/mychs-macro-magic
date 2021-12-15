@@ -1,11 +1,11 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.10.0 (2021-12-13)"
+!mmm   set scriptVersion = "v1.10.1 (2021-12-14)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.20
-!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
+!mmm   if version < 1.21
+!mmm     do whisperback("Abbruch: MMM-Version 1.21.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !rem
@@ -45,8 +45,9 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
-!mmm   if isdenied(sender.name)
-!mmm     set chatPrefix = "Ich, **" & cOwnID.token_name & "**, deklamiere feierlich: "
+!rem   // Override chat sender for characters unconnected to the player (usually NPCs)
+!mmm   if cOwnID ne sender
+!mmm     set sender = cOwnID
 !mmm   end if
 !rem
 !rem   // Init
@@ -102,7 +103,7 @@
 !mmm   set myViewAngle = (((foeDirectionFromMe - ownRotation) + 180) % 360 + 360) % 360 - 180
 !mmm   set foeViewAngle = (((ownDirectionFromFoe - foeRotation) + 180) % 360 + 360) % 360 - 180
 !mmm   if (myViewAngle < -90) or (myViewAngle > 90)
-!mmm     chat [OutsideFieldOfVision]: ${chatPrefix} $[targetName]{foeName} ist außerhalb meines Blickfeldes ($[viewAngle]{myViewAngle}°). Schade.
+!mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes ($[viewAngle]{myViewAngle}°). Schade.
 !mmm     exit script
 !mmm   end if
 !mmm   set absTokenDistY = round(((abs(getattr(cOwnID, "top")  - getattr(foeID, "top")))  - .5 * getattr(cOwnID, "height") - .5 * getattr(foeID, "height")) * distscale())
@@ -110,7 +111,7 @@
 !mmm   set distance = max(absTokenDistY, absTokenDistX)
 !mmm   set distanceUnits = distunits() 
 !mmm   if (distance/(distsnap()*distscale())) > 0
-!mmm     chat [OutsideStrikeDistance]: ${chatPrefix} $[targetName]{foeName} ist zu weit entfernt für mein $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} * ($[weaponLabel]{cWeaponLabel}). Schade.
+!mmm     chat [OutsideStrikeDistance]: $[targetName]{foeName} ist zu weit entfernt für mein $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} * ($[weaponLabel]{cWeaponLabel}). Schade.
 !mmm     exit script
 !mmm   end if
 !mmm      
@@ -279,7 +280,6 @@
 !mmm
 !mmm   if cVerbose
 !mmm     combine chat
-!mmm       chat: ${chatPrefix} 
 !mmm       if not magicExtraDamageActive
 !mmm         chat [AttackOpening]:                          Mein Angriff mit $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}") auf $[targetName]{foeName} 
 !mmm       else
