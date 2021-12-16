@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.10.1 (2021-12-14)"
+!mmm   set scriptVersion = "v1.10.2 (2021-12-16)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.21
@@ -250,7 +250,11 @@
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, damageRoll)
+!mmm     if damageRoll < 0
+!mmm       do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, 0)
+!mmm     else
+!mmm       do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, damageRoll)
+!mmm     end if
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
 !mmm   end if
 !rem
