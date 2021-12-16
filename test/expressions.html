@@ -163,7 +163,7 @@
             ],
             [
                 "1 + .prop",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + ❌.prop" }            ],
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ❌.prop" }            ],
             [
                 "strlen('ookook')",
                 { result: "6" },
@@ -182,15 +182,15 @@
             ],
             [
                 "1 + ()",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + (❌)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + (❌)" },
             ],
             [
                 "1 * ()",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 * (❌)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 * (❌)" },
             ],
             [
                 "3 * (() + 2)",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 3 * ((❌) + 2)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 3 * ((❌) + 2)" },
             ],
             [
                 "2 ** 8",
@@ -206,7 +206,7 @@
             ],
             [
                 "list12[]",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: list12[❌]" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: list12[❌]" },
             ],
             [
                 "list12[0] + list345[1 + 1]",
@@ -230,7 +230,7 @@
             ],
             [
                 "args(())",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: args((❌))" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: args((❌))" },
             ],
             [
                 "args(1)",
@@ -456,7 +456,7 @@
             ],
             [
                 "(3 + (2 + (1) *",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: (3 + (2 + (1) *❌" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: (3 + (2 + (1) *❌" },
             ],
             [
                 "(1 + 2 * 3 + 4 ** 5) - foo / bar + (6 + 7, (8 + 9) * 10 - strlen('foo \\'bar\\' baz \\\\quux'))",
@@ -476,23 +476,23 @@
             ],
             [
                 ") + 123",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: ❌) + 123" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: ❌) + 123" },
             ],
             [
                 "* 456",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: ❌* 456" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: ❌* 456" },
             ],
             [
                 "1 + ?",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + ?❌" },
+                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ?❌" },
             ],
             [
                 "1 + ? ? 2",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + ? ❌? 2" },
+                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ? ❌? 2" },
             ],
             [
                 "1 + ???? 2",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or opening parenthesis (for expression grouping) in expression: 1 + ???❌? 2" },
+                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ???❌? 2" },
             ],
             [
                 "1 + ? 2 * 3 + 4",
