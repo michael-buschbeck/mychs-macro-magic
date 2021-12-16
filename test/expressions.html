@@ -427,6 +427,38 @@
                 { result: "[unknown: Unknown attribute: someProp]" },
             ],
             [
+                "...",
+                { result: "\"anonymous!\"" },
+            ],
+            [
+                "... eq 'anonymous!'",
+                { result: "true" },
+            ],
+            [
+                "'<' & ... & '>'",
+                { result: "\"<anonymous!>\"" },
+            ],
+            [
+                "'<' & ...upper & '>'",
+                { result: "\"<ANONYMOUS!>\"" },
+            ],
+            [
+                "...HP",
+                { result: "\"15\"" },
+            ],
+            [
+                "...HP + 1",
+                { result: "16" },
+            ],
+            [
+                "...HP == 15",
+                { result: "true" },
+            ],
+            [
+                "...('H' & 'P')",
+                { result: "\"15\"" },
+            ],
+            [
                 "6+++++7",
                 { result: "13" },
             ],
@@ -775,6 +807,10 @@
             {
                 case "HP":
                     return "15";
+                case "upper":
+                    return MychExpression.coerceString(characterName).toUpperCase();
+                case "lower":
+                    return MychExpression.coerceString(characterName).toLowerCase();
             }
 
             return new MychScriptContext.Unknown("Unknown attribute: " + attributeName);
@@ -807,6 +843,8 @@
             foo: 123,
             bar: 456,
             
+            "...": "anonymous!",
+
             list12: [1, 2],
             list345: [3, 4, 5],
 
