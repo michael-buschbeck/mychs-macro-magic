@@ -3569,6 +3569,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]), 
         },
@@ -3603,6 +3604,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
         },
@@ -3679,6 +3681,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
             closeRuleNames: new Set(
@@ -3726,6 +3729,7 @@ class MychExpression
                 "unaryOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
         },
@@ -3762,6 +3766,79 @@ class MychExpression
                 "closingParenthesis",
                 "closingBracket",
                 "endOfExpression",
+            ]),
+        },
+        anonymousLookup:
+        {
+            description: "anonymous variable",
+            tokenType: "anonymousIdentifier",
+
+            processToken: function(token, state, context)
+            {
+                function* anonymousLookupEvaluator(variables)
+                {
+                    let anonymousValue = variables["..."];
+                    return anonymousValue;
+                }
+
+                state.pushEvaluator(token, anonymousLookupEvaluator);
+            },
+
+            nextRuleNames: new Set(
+            [
+                "anonymousPropertyName",
+                "anonymousPropertyExpression",
+                "binaryOperator",
+                "listLookup",
+                "closingParenthesis",
+                "closingBracket",
+                "endOfExpression",
+            ]),
+        },
+        anonymousPropertyName:
+        {
+            description: "property name",
+            tokenType: "identifier",
+
+            processToken: function(token, state, context)
+            {
+                state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
+                state.processRule(context, "propertyName", token)
+            },
+
+            nextRuleNames: new Set(
+            [
+                "binaryOperator",
+                "propertyLookup",
+                "listLookup",
+                "closingParenthesis",
+                "closingBracket",
+                "endOfExpression",
+            ]),
+        },
+        anonymousPropertyExpression:
+        {
+            description: "opening parenthesis (for property expression)",
+            tokenType: "openingParenthesis",
+
+            processToken: function(token, state, context)
+            {
+                state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
+                state.processRule(context, "propertyExpression", token)
+            },
+
+            nextRuleNames: new Set(
+            [
+                "unaryOperator",
+                "debugOperator",
+                "literal",
+                "symbolLookup",
+                "anonymousLookup",
+                "openingParenthesis",
+            ]),
+            closeRuleNames: new Set(
+            [
+                "closingParenthesis",
             ]),
         },
         literal:
@@ -3823,6 +3900,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
             closeRuleNames: new Set(
@@ -3847,6 +3925,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
             closeRuleNames: new Set(
@@ -3923,6 +4002,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
             closeRuleNames: new Set(
@@ -4202,6 +4282,8 @@ class MychExpression
             literalStringDouble:    /"([^"\\]|\\.)*"?/u,
             literalStringSingle:    /'([^'\\]|\\.)*'?/u,
 
+            anonymousIdentifier:    /\.\.\./u,
+
             propertyOperator:       /\./u,
             debugOperator:          /\?{1,3}/u,
 
@@ -4321,6 +4403,12 @@ class MychExpression
             this.evaluatorStack.push(operatorEvaluator);
 
             return operatorEvaluator;
+        }
+
+        processRule(context, ruleName, token)
+        {
+            let rule = MychExpression.rules[ruleName];
+            rule.processToken(token, this, context);
         }
     }
 
