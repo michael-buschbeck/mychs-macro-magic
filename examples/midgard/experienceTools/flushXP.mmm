@@ -1,0 +1,14 @@
+!rem // flushXP
+!rem // 2021-12-16
+!mmm script
+!mmm   set confirm = "?{Wirklich die EP aller Charaktere löschen?|nein,0|ja,1}"
+!mmm   if confirm == 1
+!mmm     combine chat
+!mmm       chat: /w GM ${"&"}{template:default} {{name=**EP gelöscht für:**}}
+!mmm       for char in "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
+!mmm         chat: {{${char.name}=${char.Erfahrungsschatz} -> 0 }}
+!mmm         do setattr(char, "Erfahrungsschatz", 0)
+!mmm       end for
+!mmm     end combine
+!mmm   end if 
+!mmm end script

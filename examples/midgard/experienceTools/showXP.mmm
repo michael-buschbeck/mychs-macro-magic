@@ -1,0 +1,11 @@
+!rem // showXP
+!rem // 2021-12-16
+!mmm script
+!mmm   combine chat
+!mmm     chat: /w GM ${"&"}{template:default} {{name=EP-Übersicht}}
+!mmm     for char in "Yorric MacRathgar", "Titos Panathos", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn"
+!mmm       chat: {{${char.name}=${char.Erfahrungsschatz} }}
+!mmm     end for
+!mmm     chat: {{ EP löschen=[**LÖSCHEN**](~FlushXP) }}
+!mmm   end combine
+!mmm end script
