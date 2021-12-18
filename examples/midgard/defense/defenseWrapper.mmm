@@ -1,0 +1,6 @@
+!rem // Midgard defense wrapper for 3D dice
+!mmm customize
+&{template:none} [[1d20]] {{}}
+!mmm   set cDefenseRoll = $[[0]]
+!mmm end customize
+%{MacroSheet|defenseMain}

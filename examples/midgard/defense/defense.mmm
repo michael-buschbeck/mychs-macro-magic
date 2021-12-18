@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.5.1 (2021-12-14)"
+!mmm   set scriptVersion = "1.6.1 (2021-12-18)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.21
@@ -14,13 +14,17 @@
 !rem   //  cCheckVersion        Toggle version check
 !rem   //  cVerbose             Toggle narrative output: true for on, false for off 
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
-!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
-!rem   //  cHealthAttr          Override if character's/token's health is stored differently than usual
-!rem   //  cEnduranceAttr       Override if character's/token's endurance is stored differently than usual
 !rem   //
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Abwehr ohne Schild"
+!rem
+!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
+!rem   //  cHealthAttr          Override if character's/token's health is stored differently than usual
+!rem   //  cEnduranceAttr       Override if character's/token's endurance is stored differently than usual
+!rem   //  cGMSilentMode        0/1: override if GM operates this script and wants to keep it silent
+!rem   //  cDefenseRoll         Override by player to see beautifully animated 3D dice
+!rem   //
 !mmm   if selected
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
@@ -30,6 +34,8 @@
 !mmm     set customizable cHealthAttr = "LP"
 !mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
+!mmm   set customizable cGMSilentMode = 0
+!mmm   set customizable cDefenseRoll = undef
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
@@ -56,6 +62,13 @@
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
 !mmm     exit script
 !mmm   end if
+!rem
+!rem   // GM silent mode vs. player mode
+!mmm   if cGMSilentMode == 0 and not cDefenseRoll
+!mmm     do whisperback("Abbruch: Spielermodus erfordert Übergabe des Würfelwurfs - " & cDefenseRoll) 
+!mmm     exit script
+!mmm   end if
+!rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
 !mmm   if cOwnID ne sender
 !mmm     set sender = cOwnID
@@ -168,22 +181,24 @@
 !mmm   end if
 !rem
 !rem   // Run & format rolls
-&{template:none} [[1d20]] {{}}
-!mmm   set defenseRoll = $[[0]]
-!mmm   set defenseResult = defenseRoll + effDefense + modifiers
+!rem
+!mmm   if cGMSilentMode
+!mmm     set cDefenseRoll = roll("1d20")
+!mmm   end if
+!mmm   set defenseResult = cDefenseRoll + effDefense + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
 !mmm   else if modifiers > 0
 !mmm     set modifiers = "+" & modifiers
 !mmm   end if
-!mmm   set defenseResultLog = defenseResult & " = (1d20:" & defenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
+!mmm   set defenseResultLog = defenseResult & " = (1d20:" & cDefenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
 !mmm   set modifiers = highlight(modifiers, "info")
 !mmm   set defenseResult = highlight(defenseResult, default, defenseResultLog)
 !mmm
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
 !mmm
-!mmm   if (criticalAttack == 0 and (defenseResult >= attackResult or iscritical(defenseRoll))) or (criticalAttack == 1 and iscritical(defenseRoll))
+!mmm   if (criticalAttack == 0 and (defenseResult >= attackResult or iscritical(cDefenseRoll))) or (criticalAttack == 1 and iscritical(cDefenseRoll))
 !rem     // Defense successful
 !mmm     set defenseSuccess = true
 !mmm
@@ -228,7 +243,7 @@
 !mmm
 !rem   // Process loss of endurance, if any, and applicable consequences
 !mmm   set newEndurance = highlight(endurance - effEnduranceLoss, "normal", "bin fit!")
-!mmm   if newEndurance <= 0 
+!mmm   if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance <= 0 
 !rem     // AP=0: Green token marker
 !mmm     set newEndurance = highlight(0, "bad", "🟢 erschöpft")
 !mmm     do setattr(cOwnID, "status_green", true)
@@ -238,15 +253,15 @@
 !mmm
 !rem   // Process loss of health and applicable consequences 
 !mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
-!mmm   if newHealth <= 0
+!mmm   if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 0
 !rem     // LP <=0 : Death zone marker
 !mmm     set newHealth = highlight(newHealth, "bad", "💀 (fast) tot")
 !mmm     do setattr(cOwnID, "status_death_zone", true)
-!mmm   else if newHealth <= 3 
+!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 3 
 !rem     // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
 !mmm     set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt")
 !mmm     do setattr(cOwnID, "status_red", true)
-!mmm   else if newHealth <= .5 * maxHealth
+!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= .5 * maxHealth
 !rem     // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
 !mmm     set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt")
 !mmm     do setattr(cOwnID, "status_yellow", true)
@@ -288,6 +303,10 @@
 !rem   // Verbose output
 !mmm   if cVerbose
 !mmm     combine chat
+!rem       // Check if script is run for an NPC (whisper data to GM only)
+!mmm       if cGMSilentMode == 1
+!mmm         chat: /w GM 
+!mmm       end if
 !mmm       if defenseSuccess
 !mmm         chat       [DefenseSuccess]:           Ich winde mich, strecke mich, wehre mich, und erleide nur einen **leichten Treffer**.
 !mmm         if newHealth < 0
@@ -321,9 +340,9 @@
 !rem
 !rem   // Data table
 !mmm   combine chat
-!rem     // Check if script is run for an NPC (whisper data to GM only) -- determination by health attribute is an ugly workaround
-!mmm     if cHealthAttr ne "LP"
-!mmm       chat: /w GM
+!rem     // Check if script is run for an NPC (whisper data to GM only)
+!mmm     if cGMSilentMode == 1
+!mmm       chat: /w GM 
 !mmm     end if
 !mmm     chat: ${"&"}{template:default} 
 !mmm     if (not parryWeapon) or (parryWeapon and endurance > 0)
@@ -338,7 +357,7 @@
 !mmm     else
 !mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden**}}
 !mmm     end if
-!mmm     chat: {{Abwehr=${defenseResult}&nbsp;(**Wurf**&nbsp;${defenseRoll})}}
+!mmm     chat: {{Abwehr=${defenseResult}&nbsp;(**Wurf**&nbsp;${cDefenseRoll})}}
 !mmm     chat: {{Boni/Mali=**${modifiers}**}}
 !mmm     if attackDamage == 0 and defenseSuccess
 !mmm       chat: {{Erfolg=**Abwehr gelungen**}}
@@ -365,25 +384,25 @@
 !mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
 !mmm     else 
 !mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
-!mmm       if newHealth > 3 and newHealth <= 0.5 * maxHealth
+!mmm       if not cOwnID.(cHealthAttr).max == 0 and newHealth > 3 and newHealth <= 0.5 * maxHealth
 !mmm         chat: {{Schwer verwundet=🟡 max. halbe AP, halbe Bewegung}}
-!mmm       else if newHealth > 0 and newHealth <= 3
+!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth > 0 and newHealth <= 3
 !mmm         chat: {{Extrem schwer verwundet=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
-!mmm       else if newHealth == 0
+!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth == 0
 !mmm         chat: {{Dem Tode nah=💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
 !mmm       else if newHealth < 0 and defenseSuccess
 !mmm         chat: {{Tödlich verwundet=💀 **Countdown läuft**}}
 !mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
 !mmm         chat: {{Tödlich verwundet=💀 **${timeToDie} Minuten bis zum Tod**}}
 !mmm       end if
-!mmm       if newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
+!mmm       if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
 !mmm         chat: {{Erschöpft=🟢 (-4 auf alles, max. Last reduziert)}}
 !mmm       end if
 !mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
-!mmm   if parryWeapon and iscritical(defenseRoll)
+!mmm   if parryWeapon and iscritical(cDefenseRoll)
 !mmm     chat: /w "${cOwnID.name}" ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM               ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   end if
