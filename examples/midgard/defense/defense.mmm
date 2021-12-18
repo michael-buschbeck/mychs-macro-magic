@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.6.0 (2021-12-18)"
+!mmm   set scriptVersion = "1.6.1 (2021-12-18)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.21
@@ -243,7 +243,7 @@
 !mmm
 !rem   // Process loss of endurance, if any, and applicable consequences
 !mmm   set newEndurance = highlight(endurance - effEnduranceLoss, "normal", "bin fit!")
-!mmm   if newEndurance <= 0 
+!mmm   if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance <= 0 
 !rem     // AP=0: Green token marker
 !mmm     set newEndurance = highlight(0, "bad", "🟢 erschöpft")
 !mmm     do setattr(cOwnID, "status_green", true)
@@ -253,15 +253,15 @@
 !mmm
 !rem   // Process loss of health and applicable consequences 
 !mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
-!mmm   if newHealth <= 0
+!mmm   if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 0
 !rem     // LP <=0 : Death zone marker
 !mmm     set newHealth = highlight(newHealth, "bad", "💀 (fast) tot")
 !mmm     do setattr(cOwnID, "status_death_zone", true)
-!mmm   else if newHealth <= 3 
+!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 3 
 !rem     // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
 !mmm     set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt")
 !mmm     do setattr(cOwnID, "status_red", true)
-!mmm   else if newHealth <= .5 * maxHealth
+!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= .5 * maxHealth
 !rem     // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
 !mmm     set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt")
 !mmm     do setattr(cOwnID, "status_yellow", true)
@@ -384,18 +384,18 @@
 !mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
 !mmm     else 
 !mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
-!mmm       if newHealth > 3 and newHealth <= 0.5 * maxHealth
+!mmm       if not cOwnID.(cHealthAttr).max == 0 and newHealth > 3 and newHealth <= 0.5 * maxHealth
 !mmm         chat: {{Schwer verwundet=🟡 max. halbe AP, halbe Bewegung}}
-!mmm       else if newHealth > 0 and newHealth <= 3
+!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth > 0 and newHealth <= 3
 !mmm         chat: {{Extrem schwer verwundet=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
-!mmm       else if newHealth == 0
+!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth == 0
 !mmm         chat: {{Dem Tode nah=💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
 !mmm       else if newHealth < 0 and defenseSuccess
 !mmm         chat: {{Tödlich verwundet=💀 **Countdown läuft**}}
 !mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
 !mmm         chat: {{Tödlich verwundet=💀 **${timeToDie} Minuten bis zum Tod**}}
 !mmm       end if
-!mmm       if newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
+!mmm       if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
 !mmm         chat: {{Erschöpft=🟢 (-4 auf alles, max. Last reduziert)}}
 !mmm       end if
 !mmm     end if
