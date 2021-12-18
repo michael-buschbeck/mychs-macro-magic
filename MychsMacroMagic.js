@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.22.0";
+const MMM_VERSION = "1.23.0";
 
 on("chat:message", function(msg)
 {
@@ -3512,6 +3512,32 @@ class MychExpression
         return [value];
     }
 
+    static *mapList(list, mapping = function*(item) {})
+    {
+        let mappedList = [];
+
+        for (let item of list)
+        {
+            let mappedItem = yield* mapping(item);
+
+            if (mappedItem == undefined)
+            {
+                continue;
+            }
+
+            if (Array.isArray(mappedItem))
+            {
+                mappedList.push(...mappedItem.flat().filter(item => item != undefined));
+            }
+            else
+            {
+                mappedList.push(mappedItem);
+            }
+        }
+
+        return mappedList;
+    }
+
     static literal(value)
     {
         if (Array.isArray(value))
@@ -3569,6 +3595,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]), 
         },
@@ -3586,11 +3613,35 @@ class MychExpression
 
                 function binaryOperator(evaluatorA, evaluatorB)
                 {
-                    return function* binaryOperatorEvaluator(variables)
+                    if (operatorDef.evaluate.constructor.name != "GeneratorFunction")
                     {
-                        let valueA = coerceValueA(yield* evaluatorA(variables));
-                        let valueB = coerceValueB(yield* evaluatorB(variables));
-                        return operatorDef.evaluate(valueA, valueB);
+                        return function* binaryOperatorEvaluator(variables)
+                        {
+                            let valueA = coerceValueA(yield* evaluatorA(variables));
+                            let valueB = coerceValueB(yield* evaluatorB(variables));
+
+                            return operatorDef.evaluate(valueA, valueB);
+                        }
+                    }
+                    else
+                    {
+                        return function* binaryOperatorEvaluator(variables)
+                        {
+                            function createCoercedEvaluator(coerceValue, evaluator)
+                            {
+                                return function* coercedEvaluator(anonymousValue = undefined)
+                                {
+                                    return (arguments.length == 0)
+                                        ? coerceValue(yield* evaluator(variables))
+                                        : coerceValue(yield* evaluator({ ...variables, "...": anonymousValue }));
+                                }
+                            }
+    
+                            let coercedEvaluatorA = createCoercedEvaluator(coerceValueA, evaluatorA);
+                            let coercedEvaluatorB = createCoercedEvaluator(coerceValueB, evaluatorB);
+
+                            return yield* operatorDef.evaluate(coercedEvaluatorA, coercedEvaluatorB);
+                        }
                     }
                 }
 
@@ -3603,6 +3654,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
         },
@@ -3679,6 +3731,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
             closeRuleNames: new Set(
@@ -3726,6 +3779,7 @@ class MychExpression
                 "unaryOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
         },
@@ -3762,6 +3816,79 @@ class MychExpression
                 "closingParenthesis",
                 "closingBracket",
                 "endOfExpression",
+            ]),
+        },
+        anonymousLookup:
+        {
+            description: "anonymous variable",
+            tokenType: "anonymousIdentifier",
+
+            processToken: function(token, state, context)
+            {
+                function* anonymousLookupEvaluator(variables)
+                {
+                    let anonymousValue = variables["..."];
+                    return anonymousValue;
+                }
+
+                state.pushEvaluator(token, anonymousLookupEvaluator);
+            },
+
+            nextRuleNames: new Set(
+            [
+                "anonymousPropertyName",
+                "anonymousPropertyExpression",
+                "binaryOperator",
+                "listLookup",
+                "closingParenthesis",
+                "closingBracket",
+                "endOfExpression",
+            ]),
+        },
+        anonymousPropertyName:
+        {
+            description: "property name",
+            tokenType: "identifier",
+
+            processToken: function(token, state, context)
+            {
+                state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
+                state.processRule(context, "propertyName", token)
+            },
+
+            nextRuleNames: new Set(
+            [
+                "binaryOperator",
+                "propertyLookup",
+                "listLookup",
+                "closingParenthesis",
+                "closingBracket",
+                "endOfExpression",
+            ]),
+        },
+        anonymousPropertyExpression:
+        {
+            description: "opening parenthesis (for property expression)",
+            tokenType: "openingParenthesis",
+
+            processToken: function(token, state, context)
+            {
+                state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
+                state.processRule(context, "propertyExpression", token)
+            },
+
+            nextRuleNames: new Set(
+            [
+                "unaryOperator",
+                "debugOperator",
+                "literal",
+                "symbolLookup",
+                "anonymousLookup",
+                "openingParenthesis",
+            ]),
+            closeRuleNames: new Set(
+            [
+                "closingParenthesis",
             ]),
         },
         literal:
@@ -3823,6 +3950,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
             closeRuleNames: new Set(
@@ -3847,6 +3975,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
             closeRuleNames: new Set(
@@ -3923,6 +4052,7 @@ class MychExpression
                 "debugOperator",
                 "literal",
                 "symbolLookup",
+                "anonymousLookup",
                 "openingParenthesis",
             ]),
             closeRuleNames: new Set(
@@ -4105,9 +4235,30 @@ class MychExpression
             coerceValueB: MychExpression.coerceBoolean,
             evaluate: (valueA, valueB) => valueA || valueB,
         },
-        ",":
+        "select":
         {
             precedence: 11,
+            coerceValueA: MychExpression.coerceList,
+            evaluate: function*(evaluatorA, evaluatorB)
+            {
+                return yield* MychExpression.mapList(yield* evaluatorA(),
+                    function*(itemA) { return yield* evaluatorB(itemA) });
+            }
+        },
+        "where":
+        {
+            precedence: 11,
+            coerceValueA: MychExpression.coerceList,
+            coerceValueB: MychExpression.coerceBoolean,
+            evaluate: function*(evaluatorA, evaluatorB)
+            {
+                return yield* MychExpression.mapList(yield* evaluatorA(),
+                    function*(itemA) { return (yield* evaluatorB(itemA)) ? itemA : undefined });
+            }
+        },
+        ",":
+        {
+            precedence: 12,
             coerceValueA: MychExpression.coerceArgs,
             coerceValueB: MychExpression.coerceArgs,
             evaluate: (valueA, valueB) => valueA.concat(valueB),
@@ -4201,6 +4352,8 @@ class MychExpression
             literalBooleanFalse:    MychExpression.createTokenRegExpSource("false"),
             literalStringDouble:    /"([^"\\]|\\.)*"?/u,
             literalStringSingle:    /'([^'\\]|\\.)*'?/u,
+
+            anonymousIdentifier:    /\.\.\./u,
 
             propertyOperator:       /\./u,
             debugOperator:          /\?{1,3}/u,
@@ -4321,6 +4474,12 @@ class MychExpression
             this.evaluatorStack.push(operatorEvaluator);
 
             return operatorEvaluator;
+        }
+
+        processRule(context, ruleName, token)
+        {
+            let rule = MychExpression.rules[ruleName];
+            rule.processToken(token, this, context);
         }
     }
 

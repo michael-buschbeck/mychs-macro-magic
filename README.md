@@ -671,31 +671,45 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 
 ### Operators
 
-| Syntax               | Precedence  | Category | Description
-| -------------------- | ----------- | -------- | -----------
-| *a* `**` *b*         | 1 (highest) | Math     | Calculate *a* to the power of *b*
-| `+`*a*               | 2           | Math     | Return *a* unchanged (even if *a* is not a number)
-| `-`*a*               | 2           | Math     | Negate *a*
-| *a* `*` *b*          | 3           | Math     | Multiply *a* with *b*
-| *a* `/` *b*          | 3           | Math     | Divide *a* by *b*
-| *a* `%` *b*          | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b* – result always has the sign of *b*
-| *a* `+` *b*          | 4           | Math     | Add *a* and *b*
-| *a* `-` *b*          | 4           | Math     | Subtract *b* from *a*
-| *a* `&` *b*          | 5           | String   | Concatenate strings *a* and *b*
-| *a* `<` *b*          | 6           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
-| *a* `<=` *b*         | 6           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
-| *a* `>` *b*          | 6           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
-| *a* `>=` *b*         | 6           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
-| *a* `==` *b*         | 7           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
-| *a* `!=` *b*         | 7           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
-| *a* `eq` *b*         | 7           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
-| *a* `ne` *b*         | 7           | Logic    | Return `true` if *a* is alphanumerically unequal to *b*, else `false`
-| `not` *a*            | 8           | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
-| *a* `and` *b*        | 9           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
-| *a* `or` *b*         | 10          | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
-| *a*`,` *b*`,` *c*... | 11 (lowest) | List     | Make an ordered list of *a*, *b*, *c*, and more – also used for function arguments
+| Syntax                 | Precedence  | Category | Description
+| ---------------------- | ----------- | -------- | -----------
+| *a* `**` *b*           | 1 (highest) | Math     | Calculate *a* to the power of *b*
+| `+`*a*                 | 2           | Math     | Return *a* unchanged (even if *a* is not a number)
+| `-`*a*                 | 2           | Math     | Negate *a*
+| *a* `*` *b*            | 3           | Math     | Multiply *a* with *b*
+| *a* `/` *b*            | 3           | Math     | Divide *a* by *b*
+| *a* `%` *b*            | 3           | Math     | Calculate the remainder (modulus) of dividing *a* by *b* – result always has the sign of *b*
+| *a* `+` *b*            | 4           | Math     | Add *a* and *b*
+| *a* `-` *b*            | 4           | Math     | Subtract *b* from *a*
+| *a* `&` *b*            | 5           | String   | Concatenate strings *a* and *b*
+| *a* `<` *b*            | 6           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
+| *a* `<=` *b*           | 6           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
+| *a* `>` *b*            | 6           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
+| *a* `>=` *b*           | 6           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
+| *a* `==` *b*           | 7           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
+| *a* `!=` *b*           | 7           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
+| *a* `eq` *b*           | 7           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
+| *a* `ne` *b*           | 7           | Logic    | Return `true` if *a* is alphanumerically unequal to *b*, else `false`
+| `not` *a*              | 8           | Logic    | Return `true` if *a* is `false`, or `false` if *a* is `true`
+| *a* `and` *b*          | 9           | Logic    | Return `true` if *a* and *b* are both `true`, else `false`
+| *a* `or` *b*           | 10          | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
+| *list* `where` *expr*  | 11          | List     | For each *list* item in turn, set the special `...` variable to the item, evaluate *expr*, and return a list of all items for which the result of *expr* is true
+| *list* `select` *expr* | 11          | List     | For each *list* item in turn, set the special `...` variable to the item, evaluate *expr*, and return a list of the results of *expr*
+| *a*`,` *b*`,` *c*...   | 12 (lowest) | List     | Make an ordered list of *a*, *b*, *c*, and more – also used for function arguments
 
 If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
+
+In the right-hand-side *expr* of the `where` and `select` operators, the special `...` variable (literally three dots – called the "anonymous variable" because, y'know, it has no name) is temporarily set to each *list* item in turn and then *expr* is evaluated, and then something is done with the result of evaluating *expr* depending on the operator. In *expr*, you can use the `...` variable wherever you'd use any other variable, and you can even simply write `...attrname` to do attribute lookups on the currently evaluated item:
+
+| Line | Commands | Result
+| ---- | -------- | ------
+| 1    | _!mmm_ **set** odd_numbers = (1, 2, 3, 4, 5) **where** ... % 1 == 1 | odd_numbers = 1, 3, 5
+| 2    | _!mmm_ **set** nearly_dead = selected **where** ...HP < 5 | *(selected tokens with less than 5 HP)*
+| 3    | _!mmm_ **set** my_tokens = selected **where** ...permission **eq** "control" | *(selected tokens that can be controlled by the player)*
+| 4    | _!mmm_ **set** squares = (1, 2, 3, 4, 5) **select** ... ** 2 | squares = 1, 4, 9, 16, 25
+| 5    | _!mmm_ **set** pairs = (1, 2, 3) **select** (..., ...) | pairs = 1, 1, 2, 2, 3, 3
+| 6    | _!mmm_ **set** nearly_dead_HP = selected **select** ...HP **where** ... < 5 | nearly_dead_HP = 4, 1
+| 7    | _!mmm_ **set** nearly_dead_names = selected **where** ...HP < 5 **select** ...name | nearly_dead_names = "Finn", "Yorric"
 
 There are also three special debug operators: `?` *expr*, `??` *expr*, and `???` *expr*. They don't quite fit into the table above because they don't actually change the result of the expression they're used in. Instead, they just whisper a partial expression result back at you, and then continue evaluating the expression as if nothing happened.
 
@@ -901,6 +915,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.23.0  | 2021-12-16 | Introduce `where` and `select` operators and `...` variable
 | 1.22.0  | 2021-12-15 | Add `delay(seconds)` to add delays in script execution
 | 1.21.0  | 2021-12-15 | Support `chat` impersonation
 | 1.20.0  | 2021-05-28 | Introduce `list[idx]` and `obj.prop` expression syntax
