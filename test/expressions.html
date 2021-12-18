@@ -225,6 +225,46 @@
                 { result: "33" },
             ],
             [
+                "list345 select ... + 1",
+                { result: "4, 5, 6" },
+            ],
+            [
+                "list345 select (..., ...)",
+                { result: "3, 3, 4, 4, 5, 5" },
+            ],
+            [
+                "list345 select ..., ...",
+                { result: "3, 4, 5, \"anonymous!\"" },
+            ],
+            [
+                "list345 where ... < 3",
+                { result: "" },
+            ],
+            [
+                "list345 where ... < 4",
+                { result: "3" },
+            ],
+            [
+                "list345 where ... < 5",
+                { result: "3, 4" },
+            ],
+            [
+                "list345 where true",
+                { result: "3, 4, 5" },
+            ],
+            [
+                "(22, 33, 44) where ... % 2 == 0",
+                { result: "22, 44" },
+            ],
+            [
+                "list345 select ... + 10 where ... < 15",
+                { result: "13, 14" },
+            ],
+            [
+                "list345 where ... < 5 select ... + 10",
+                { result: "13, 14" },
+            ],
+            [
                 "args()",
                 { result: "" },
             ],
