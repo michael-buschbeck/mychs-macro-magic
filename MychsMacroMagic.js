@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.22.0";
+const MMM_VERSION = "1.23.0";
 
 on("chat:message", function(msg)
 {
@@ -3512,6 +3512,32 @@ class MychExpression
         return [value];
     }
 
+    static *mapList(list, mapping = function*(item) {})
+    {
+        let mappedList = [];
+
+        for (let item of list)
+        {
+            let mappedItem = yield* mapping(item);
+
+            if (mappedItem == undefined)
+            {
+                continue;
+            }
+
+            if (Array.isArray(mappedItem))
+            {
+                mappedList.push(...mappedItem.flat().filter(item => item != undefined));
+            }
+            else
+            {
+                mappedList.push(mappedItem);
+            }
+        }
+
+        return mappedList;
+    }
+
     static literal(value)
     {
         if (Array.isArray(value))
@@ -4209,9 +4235,30 @@ class MychExpression
             coerceValueB: MychExpression.coerceBoolean,
             evaluate: (valueA, valueB) => valueA || valueB,
         },
-        ",":
+        "select":
         {
             precedence: 11,
+            coerceValueA: MychExpression.coerceList,
+            evaluate: function*(evaluatorA, evaluatorB)
+            {
+                return yield* MychExpression.mapList(yield* evaluatorA(),
+                    function*(itemA) { return yield* evaluatorB(itemA) });
+            }
+        },
+        "where":
+        {
+            precedence: 11,
+            coerceValueA: MychExpression.coerceList,
+            coerceValueB: MychExpression.coerceBoolean,
+            evaluate: function*(evaluatorA, evaluatorB)
+            {
+                return yield* MychExpression.mapList(yield* evaluatorA(),
+                    function*(itemA) { return (yield* evaluatorB(itemA)) ? itemA : undefined });
+            }
+        },
+        ",":
+        {
+            precedence: 12,
             coerceValueA: MychExpression.coerceArgs,
             coerceValueB: MychExpression.coerceArgs,
             evaluate: (valueA, valueB) => valueA.concat(valueB),
