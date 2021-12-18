@@ -3587,11 +3587,35 @@ class MychExpression
 
                 function binaryOperator(evaluatorA, evaluatorB)
                 {
-                    return function* binaryOperatorEvaluator(variables)
+                    if (operatorDef.evaluate.constructor.name != "GeneratorFunction")
                     {
-                        let valueA = coerceValueA(yield* evaluatorA(variables));
-                        let valueB = coerceValueB(yield* evaluatorB(variables));
-                        return operatorDef.evaluate(valueA, valueB);
+                        return function* binaryOperatorEvaluator(variables)
+                        {
+                            let valueA = coerceValueA(yield* evaluatorA(variables));
+                            let valueB = coerceValueB(yield* evaluatorB(variables));
+
+                            return operatorDef.evaluate(valueA, valueB);
+                        }
+                    }
+                    else
+                    {
+                        return function* binaryOperatorEvaluator(variables)
+                        {
+                            function createCoercedEvaluator(coerceValue, evaluator)
+                            {
+                                return function* coercedEvaluator(anonymousValue = undefined)
+                                {
+                                    return (arguments.length == 0)
+                                        ? coerceValue(yield* evaluator(variables))
+                                        : coerceValue(yield* evaluator({ ...variables, "...": anonymousValue }));
+                                }
+                            }
+    
+                            let coercedEvaluatorA = createCoercedEvaluator(coerceValueA, evaluatorA);
+                            let coercedEvaluatorB = createCoercedEvaluator(coerceValueB, evaluatorB);
+
+                            return yield* operatorDef.evaluate(coercedEvaluatorA, coercedEvaluatorB);
+                        }
                     }
                 }
 
