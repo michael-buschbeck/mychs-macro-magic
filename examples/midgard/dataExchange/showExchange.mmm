@@ -6,7 +6,6 @@
 !mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
 !mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
 !mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
@@ -23,13 +22,12 @@
 !mmm   end if 
 !mmm   combine chat
 !mmm     chat: /w "${user}" ${"&"}{template:default} {{name=m3mgdShowExchange}}
-!mmm     chat: {{${m3mgdAttrAttackType}=${m3mgdExchange.(m3mgdAttrAttackType)}}}
-!mmm     chat: {{${m3mgdAttrAttackerID}=${m3mgdExchange.(m3mgdAttrAttackerID)}}}
-!mmm     chat: {{${m3mgdAttrAttackTargetID}=${m3mgdExchange.(m3mgdAttrAttackTargetID)}}}
-!mmm     chat: {{${m3mgdAttrAttackResult}=${m3mgdExchange.(m3mgdAttrAttackResult)}}}
-!mmm     chat: {{${m3mgdAttrAttackCriticalSuccess}=${m3mgdExchange.(m3mgdAttrAttackCriticalSuccess)}}}
-!mmm     chat: {{${m3mgdAttrAttackDamage}=${m3mgdExchange.(m3mgdAttrAttackDamage)}}}
-!mmm     chat: {{${m3mgdAttrAttackDamageRoll}=${m3mgdExchange.(m3mgdAttrAttackDamageRoll)}}}
-!mmm     chat: {{${m3mgdAttrAttackWeaponType}=${m3mgdExchange.(m3mgdAttrAttackWeaponType)}}}
+!mmm     chat: {{${m3mgdAttrAttackType}=${m3mgdExchange.(m3mgdAttrAttackType)} / ${m3mgdExchange.(m3mgdAttrAttackType).max}}}
+!mmm     chat: {{${m3mgdAttrAttackerID}=${m3mgdExchange.(m3mgdAttrAttackerID)} / ${m3mgdExchange.(m3mgdAttrAttackerID).max}}}
+!mmm     chat: {{${m3mgdAttrAttackTargetID}=${m3mgdExchange.(m3mgdAttrAttackTargetID)} / ${m3mgdExchange.(m3mgdAttrAttackTargetID).max}}}
+!mmm     chat: {{${m3mgdAttrAttackResult}=${m3mgdExchange.(m3mgdAttrAttackResult)} / ${m3mgdExchange.(m3mgdAttrAttackResult).max}}}
+!mmm     chat: {{${m3mgdAttrAttackDamage}=${m3mgdExchange.(m3mgdAttrAttackDamage)} / ${m3mgdExchange.(m3mgdAttrAttackDamage).max}}}
+!mmm     chat: {{${m3mgdAttrAttackDamageRoll}=${m3mgdExchange.(m3mgdAttrAttackDamageRoll)} / ${m3mgdExchange.(m3mgdAttrAttackDamageRoll).max}}}
+!mmm     chat: {{${m3mgdAttrAttackWeaponType}=${m3mgdExchange.(m3mgdAttrAttackWeaponType)} / ${m3mgdExchange.(m3mgdAttrAttackWeaponType).max}}}
 !mmm   end combine
 !mmm end script
