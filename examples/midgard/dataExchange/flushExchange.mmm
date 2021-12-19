@@ -19,6 +19,7 @@
 !mmm   set counter = 0
 !mmm   for attribute in m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackCriticalSuccess, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
 !mmm     do setattr(m3mgdExchange, attribute, "")
+!mmm     do setattrmax(m3mgdExchange, attribute, "")
 !mmm     set counter = counter + 1
 !mmm   end for
 !mmm

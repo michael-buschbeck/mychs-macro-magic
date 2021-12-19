@@ -2,10 +2,19 @@
 !rem //
 !mmm script
 !mmm
+!mmm   if selected
+!mmm     set customizable cOwnID = selected.token_id
+!mmm     set customizable cHealthAttr = "bar3"
+!mmm     set customizable cEnduranceAttr = "bar2"
+!mmm   else 
+!mmm     set customizable cOwnID = sender.token_id
+!mmm     set customizable cHealthAttr = "LP"
+!mmm     set customizable cEnduranceAttr = "AP"
+!mmm   end if
+!mmm
 !mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
 !mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
 !mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
 !mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm
@@ -16,12 +25,6 @@
 !mmm   end if
 !mmm   if not attackType eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Snatch"
 !mmm     do whisperback("Wrong attack/spell data found: " & m3mgdExchange.(m3mgdAttrAttackType) & "/" & m3mgdExchange.(m3mgdAttrAttackType).max)
-!mmm     exit script
-!mmm   end if
-!mmm   
-!mmm   set targetID = m3mgdExchange.(m3mgdAttrAttackTargetID)
-!mmm   if isdenied(targetID) or isunknown(targetID)
-!mmm     do whisperback("Access to target token failed: " & getreason(targetID))
 !mmm     exit script
 !mmm   end if
 !mmm   

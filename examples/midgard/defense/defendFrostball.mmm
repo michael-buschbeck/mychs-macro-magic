@@ -1,0 +1,193 @@
+!rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
+!rem //
+!mmm script
+!mmm
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cGMSilentMode = false
+!mmm   if selected
+!mmm     set customizable cOwnID = selected.token_id
+!mmm     set customizable cHealthAttr = "bar3"
+!mmm     set customizable cEnduranceAttr = "bar2"
+!mmm   else 
+!mmm     set customizable cOwnID = sender.token_id
+!mmm     set customizable cHealthAttr = "LP"
+!mmm     set customizable cEnduranceAttr = "AP"
+!mmm   end if
+!mmm
+!mmm   set endurance = cOwnID.(cEnduranceAttr)
+!mmm   set health = cOwnID.(cHealthAttr)
+!mmm
+!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
+!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetDesc = "m3mgd_attack_target_desc"
+!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
+!mmm
+!mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
+!mmm   if isdenied(attackType) or isunknown(attackType)
+!mmm     do whisperback("Access to data exchange sheet failed: " & getreason(attackType))
+!mmm     exit script
+!mmm   end if
+!mmm   if not attackType eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Frostball"
+!mmm     do whisperback("Wrong attack/spell data found: " & m3mgdExchange.(m3mgdAttrAttackType) & "/" & m3mgdExchange.(m3mgdAttrAttackType).max)
+!mmm     exit script
+!mmm   end if
+!mmm   
+!mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
+!mmm   if isdenied(attackResult) or isunknown(attackResult)
+!mmm     do whisperback("Access to attack result value failed: " & getreason(attackResult))
+!mmm     exit script
+!mmm   end if
+!mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
+!mmm   if criticalAttack == true
+!mmm     set attackResult = highlight(attackResult, "good")
+!mmm   else 
+!mmm     set attackResult = highlight(attackResult, "normal")
+!mmm   end if 
+!mmm
+!mmm   set defenseModifier = 0
+!mmm   if endurance <= 0
+!mmm     set defenseModifier = -4
+!mmm   end if
+!mmm
+!mmm   set defenseResult = roll("1d20+" & (cOwnID.Abwehr + defenseModifier))
+!mmm   
+!mmm   set effEnduranceLoss = 0
+!mmm   set effHealthLoss = 0
+!mmm
+!mmm   if iscritical(defenseResult) or (criticalAttack == false and defenseResult >= attackResult)
+!mmm     
+!rem     // Defense successful
+!mmm     set defenseSuccess = true
+!mmm
+!rem     // Calculate endurance damage (only for max endurance > 0; armor, parry weapons or shields do not matter)
+!mmm     if not cOwnID.(cEnduranceAttr).max == 0
+!mmm       set effEnduranceLoss = 1
+!mmm     end if
+!mmm     
+!mmm   else 
+!mmm     
+!rem     // Defense failed
+!mmm     set defenseSuccess = false
+!mmm
+!rem     // AP loss: 1d6, if not an undead creature with unlimited endurance
+!mmm     if not cOwnID.(cEnduranceAttr).max == 0
+!mmm       set effEnduranceLoss = roll("1d6")
+!mmm     end if
+!mmm
+!rem     // Health loss: 2, regardless of armor but only for non-ghosts (max health > 0)
+!mmm     if not cOwnID.(cHealthAttr).max == 0
+!mmm       set effHealthLoss = 2
+!mmm     end if
+!mmm
+!mmm   end if
+!mmm
+!rem   // Process loss of endurance, if any, and applicable consequences
+!mmm   set newEndurance = highlight(endurance - effEnduranceLoss, "normal", "bin fit!")
+!mmm   if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance <= 0 
+!rem     // AP=0: Green token marker
+!mmm     set newEndurance = highlight(0, "bad", "🟢 erschöpft")
+!mmm     do setattr(cOwnID, "status_green", true)
+!mmm   end if
+!mmm   do setattr(cOwnID, cEnduranceAttr, newEndurance)
+!mmm   set effEnduranceLoss = highlight(effEnduranceLoss, "info")
+!mmm
+!rem   // Process loss of health and applicable consequences 
+!mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
+!mmm   if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 0
+!rem     // LP <=0 : Death zone marker
+!mmm     set newHealth = highlight(newHealth, "bad", "💀 (fast) tot")
+!mmm     do setattr(cOwnID, "status_death_zone", true)
+!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 3 
+!rem     // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
+!mmm     set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt")
+!mmm     do setattr(cOwnID, "status_red", true)
+!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= .5 * maxHealth
+!rem     // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
+!mmm     set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt")
+!mmm     do setattr(cOwnID, "status_yellow", true)
+!mmm   end if
+!mmm   do setattr(cOwnID, cHealthAttr, newHealth)
+!mmm   if effHealthLoss > 0 and newHealth < 0
+!mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
+!mmm   end if
+!mmm   set effHealthLoss = highlight(effHealthLoss, "info")
+!mmm
+!rem   // Verbose output
+!mmm   if cVerbose
+!mmm     set sender = cOwnID
+!mmm     combine chat
+!rem       // Check if script is run for an NPC (whisper data to GM only)
+!mmm       if cGMSilentMode
+!mmm         chat: /w GM 
+!mmm       end if
+!mmm       if defenseSuccess
+!mmm         chat:      Schlangengleich winde ich mich und weiche dem fiesen Frostball aus.
+!mmm         if newHealth < 0
+!mmm           chat:    ***Ich bin aber immer noch lebensgefährlich verletzt, mein Countdown läuft weiter.*** [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Ich. brauchte. jetzt!!! Hilfe!!!!!***
+!mmm         end if
+!mmm       else
+!mmm         if criticalAttack == true
+!mmm           chat:    Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer **kritischer Treffer**.
+!mmm         else 
+!mmm           chat:    Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer Treffer.
+!mmm         end if
+!mmm         if newHealth < 0 and timeToDie < 0
+!mmm           chat:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{cOwnID.name}, out. [x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
+!mmm         else if newHealth < 0 and timeToDie >= 0
+!mmm           chat:    ***Ich bin lebensgefährlich verletzt.*** Ich habe noch **$[timeToDie]{timeToDie+0} Minuten** zu leben. [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif)
+!mmm           chat:    ***Ungefähr genau jetzt könnte ich eine heilende Hand gebrauchen...***
+!mmm         end if
+!mmm       end if 
+!mmm     end combine
+!mmm   end if
+!rem
+!rem   // Data table
+!mmm   combine chat
+!rem     // Check if script is run for an NPC (whisper data to GM only)
+!mmm     if cGMSilentMode == 1
+!mmm       chat: /w GM 
+!mmm     end if
+!mmm     chat: ${"&"}{template:default} 
+!mmm     if endurance > 0
+!mmm       chat: {{name=${cOwnID.name}: Abwehr gegen Frostball}} 
+!mmm     else 
+!mmm       chat: {{name=${cOwnID.name}: Abwehr gegen Frostball (erschöpft)}} 
+!mmm     end if 
+!mmm     chat: {{Angriff=${attackResult}}}
+!mmm     if defenseSuccess
+!mmm       chat: {{Abwehr=${defenseResult} **Leichter Treffer**}}
+!mmm       chat: {{Schaden=**${effEnduranceLoss}&nbsp;AP**}}
+!mmm       do spawnfx("bubbling-water", cOwnID.left, cOwnID.top)
+!mmm     else if criticalAttack == true
+!mmm       chat: {{Abwehr=${defenseResult} **Schwerer kritischer Treffer**}}
+!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
+!mmm       chat: {{Kritischer Treffer=Zauber wirkt **doppelt so stark** oder ist **halb so teuer**: Nach Wahl des Zauberers umsetzen.}}
+!mmm       do spawnfx("nova-blood", cOwnID.left, cOwnID.top)
+!mmm     else 
+!mmm       chat: {{Abwehr=${defenseResult} **Schwerer Treffer**}}
+!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
+!mmm       do spawnfx("bubbling-blood", cOwnID.left, cOwnID.top)
+!mmm     end if
+!mmm     if newHealth < 0 and timeToDie < 0
+!mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
+!mmm     else 
+!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
+!mmm       if not cOwnID.(cHealthAttr).max == 0 and newHealth > 3 and newHealth <= 0.5 * maxHealth
+!mmm         chat: {{Schwer verwundet=🟡 max. halbe AP, halbe Bewegung}}
+!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth > 0 and newHealth <= 3
+!mmm         chat: {{Extrem schwer verwundet=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
+!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth == 0
+!mmm         chat: {{Dem Tode nah=💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
+!mmm       else if newHealth < 0 and defenseSuccess
+!mmm         chat: {{Tödlich verwundet=💀 **Countdown läuft**}}
+!mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
+!mmm         chat: {{Tödlich verwundet=💀 **${timeToDie} Minuten bis zum Tod**}}
+!mmm       end if
+!mmm       if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
+!mmm         chat: {{Erschöpft=🟢 (-4 auf alles, max. Last reduziert)}}
+!mmm       end if
+!mmm     end if
+!mmm   end combine
+!mmm end script

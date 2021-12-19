@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.11.0 (2021-12-18)"
+!mmm   set scriptVersion = "1.11.1 (2021-12-19)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.21
@@ -368,6 +368,7 @@
 !rem   // Save key attack data for defense script
 !mmm   if attackResult >= 20 and damageResult > 0
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "ranged")
+!mmm     do setattrmax(m3mgdExchange, m3mgdAttrAttackType, "")
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnID)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeID)
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
