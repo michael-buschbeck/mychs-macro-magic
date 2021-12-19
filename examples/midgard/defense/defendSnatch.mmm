@@ -1,0 +1,46 @@
+!rem // Defends against Midgard's Snatch ("Heranholen") spell, as defined in Arkanum:91
+!rem //
+!mmm script
+!mmm
+!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
+!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
+!mmm
+!mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
+!mmm   if isdenied(attackType) or isunknown(attackType)
+!mmm     do whisperback("Access to data exchange sheet failed: " & getreason(attackType))
+!mmm     exit script
+!mmm   end if
+!mmm   if not attackType eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Snatch"
+!mmm     do whisperback("Wrong attack/spell data found: " & m3mgdExchange.(m3mgdAttrAttackType) & "/" & m3mgdExchange.(m3mgdAttrAttackType).max)
+!mmm     exit script
+!mmm   end if
+!mmm   
+!mmm   set targetID = m3mgdExchange.(m3mgdAttrAttackTargetID)
+!mmm   if isdenied(targetID) or isunknown(targetID)
+!mmm     do whisperback("Access to target token failed: " & getreason(targetID))
+!mmm     exit script
+!mmm   end if
+!mmm   
+!mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
+!mmm   if isdenied(attackResult) or isunknown(attackResult)
+!mmm     do whisperback("Access to attack result value failed: " & getreason(attackResult))
+!mmm     exit script
+!mmm   end if
+!mmm   
+!mmm   set defenseResult = roll("1d20+" & (targetID.Abwehr + round(targetID.St / 5)))
+!mmm   
+!mmm   if iscritical(defenseResult) or (m3mgdExchange.(m3mgdAttrAttackCriticalSuccess) == false and defenseResult >= attackResult)
+!mmm     
+!mmm     do whisperback("Abwehr " & defenseResult & " gg. Zaubererfolg " & attackResult & ": Der Gegenstand hat gewackelt aber " & targetID.name & " konnte ihn festhalten.")
+!mmm     
+!mmm   else 
+!mmm     
+!mmm     do whisperback("Abwehr " & defenseResult & " gg. Zaubererfolg " & attackResult & ": Der Gegenstand löst sich aus den Fingern von " & targetID.name & " und schwebt in Richtung " & m3mgdExchange.(m3mgdAttrAttackerID).name & ".")
+!mmm     
+!mmm   end if
+!mmm
+!mmm end script
