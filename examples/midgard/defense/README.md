@@ -1,6 +1,6 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.5.1 vom 2021-12-14,** erfordert MMM 1.21.0+.
+Aktuelle Version: **1.7.0 vom 2021-12-19,** erfordert MMM 1.23.0+.
 
 Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch, deren Daten automatisch von den Angriffsskripten übernommen werden oder, falls nicht auffindbar, manuell eingegeben werden müssen. Die üblichen Regeln werden automatisch angewendet. Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden.
 
@@ -73,6 +73,15 @@ Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzu
 ```
 
 ## Changelog
+
+1.7.0 2021-12-19
+
+- Parierwaffen und Schilde werden automatisch auf Anwendbarkeit gegenüber der Angriffswaffe überprüft
+
+1.6.0 2021-12-18
+
+- Stiller Spielleiter-Modus ganz ohne Ausgaben und 3D-Würfel
+- Chatausgaben erscheinen nun im Namen des handelnden Tokens, auch bei NPCs
 
 1.5.0 2021-12-13
 

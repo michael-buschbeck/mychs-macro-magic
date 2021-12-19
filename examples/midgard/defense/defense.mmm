@@ -1,11 +1,11 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.6.1 (2021-12-18)"
+!mmm   set scriptVersion = "1.7.0 (2021-12-19)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.21
-!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
+!mmm   if version < 1.23
+!mmm     do whisperback("Abbruch: MMM-Version 1.23.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -43,6 +43,7 @@
 !mmm   end if
 !mmm
 !rem   // Constants
+!rem   //
 !mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
 !mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
 !mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
@@ -53,6 +54,12 @@
 !mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
+!mmm
+!mmm   set parryWeaponLargeShieldTypes = "Großer Schild"
+!mmm   set parryWeaponSmallShieldTypes = "Kleiner Schild"
+!mmm   set parryWeaponSmallShieldEffectiveAgainst = "Einhandschlagwaffe", "Einhandschwert", "Fechtwaffe", "Kettenwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "waffenlos"
+!mmm   set parryWeaponStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
+!mmm   set parryWeaponStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln"
 !rem
 !rem   // Initialize & collect data
 !rem
@@ -122,17 +129,32 @@
 !mmm   set health = cOwnID.(cHealthAttr)
 !mmm   set maxHealth = cOwnID.(cHealthAttr).max
 !rem
+!rem   // Initialize modifier log to collect rule effects as applied by the script for user output
+!mmm   set modifierLog = ""
+!mmm   set modifierTooltip = ""
+!rem
 !rem   // Check for applicability of parry weapon or shield
 !rem   // TODO: parry weapons are usable only if the attack is from the front or the respective side, plus further restrictions based on the kind of parry weapon (Kodex, 70).
-!mmm   set parryWeaponUsable = true
-!mmm   set parryWeapon = (getattr(cOwnID,findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
+!mmm   set parryWeaponUsable = false
+!mmm   set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
+!mmm   if parryWeaponLargeShieldTypes where ... eq cWeaponLabel 
+!mmm     set parryWeaponUsable = true
+!mmm   else if (parryWeaponSmallShieldTypes where ... eq cWeaponLabel) and (parryWeaponSmallShieldEffectiveAgainst where ... eq attackWeaponType)
+!mmm     set parryWeaponUsable = true
+!mmm   else if (parryWeaponStandardTypes where ... eq cWeaponLabel) and (parryWeaponStandardEffectiveAgainst where ... eq attackWeaponType)
+!mmm     set parryWeaponUsable = true
+!mmm   end if
 !rem   // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
 !mmm   if (cOwnID.(cEnduranceAttr).max > 0 and endurance > 0 and parryWeapon and parryWeaponUsable) or (cOwnID.(cEnduranceAttr).max == 0 and parryWeapon and parryWeaponUsable)
-!mmm     set effParryWeaponSkill = getattr(cOwnID, findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) + getattr(cOwnID, findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "WaffeAbwB"))
-!mmm     set parryWeaponEnduranceProtection = getattr(cOwnID,findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
+!mmm     set effParryWeaponSkill = cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) + cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "WaffeAbwB"))
+!rem     // Endurance protection: reverse sign for more logical handling (modifier is stored as negative in character sheet)
+!mmm     set parryWeaponEnduranceProtection = -1 * cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
 !mmm     set effDefense = effDefense + effParryWeaponSkill
+!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW +" & effParryWeaponSkill & ", AP-Verlust -" & parryWeaponEnduranceProtection & "}}"
+!mmm   else if parryWeapon and not parryWeaponUsable
+!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackWeaponType & "}}"
 !mmm   else if parryWeapon
-!mmm     do whisperback("Parierwaffe " & cWeaponLabel & " wegen Erschöpfung (AP=0) nicht berücksichtigt.")
+!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos: bin erschöpft (AP=0)}}"
 !mmm   end if
 !rem
 !rem   // Check for armor piercing projectiles
@@ -145,8 +167,6 @@
 !rem   // Collect defense modifiers
 !mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
-!mmm   set modifierLog = ""
-!mmm   set modifierTooltip = ""
 !rem   // 1. Defender exhausted
 !mmm   if cOwnID.(cEnduranceAttr).max > 0 and endurance <= 0
 !mmm     set autoModifiers = autoModifiers - 4
@@ -202,13 +222,12 @@
 !rem     // Defense successful
 !mmm     set defenseSuccess = true
 !mmm
-!rem     // Calculate endurance damage (only for max endurance > 0; may be reduced due to parry weapon or shield properties, which are stored as negative values)
+!rem     // Calculate endurance damage (only for max endurance > 0; may be reduced due to parry weapon or shield properties)
 !mmm     if not cOwnID.(cEnduranceAttr).max == 0 and parryWeaponEnduranceProtection
-!mmm       set effEnduranceLoss = attackDamage + parryWeaponEnduranceProtection
+!mmm       set effEnduranceLoss = attackDamage - parryWeaponEnduranceProtection
 !mmm       if effEnduranceLoss < 0
 !mmm         set effEnduranceLoss = 0
 !mmm       end if
-!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "=AP-Verlust " & parryWeaponEnduranceProtection & "}} "
 !mmm     else if not cOwnID.(cEnduranceAttr).max == 0
 !mmm       set effEnduranceLoss = attackDamage
 !mmm     end if
@@ -402,7 +421,7 @@
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
-!mmm   if parryWeapon and iscritical(cDefenseRoll)
+!mmm   if parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)
 !mmm     chat: /w "${cOwnID.name}" ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM               ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   end if
