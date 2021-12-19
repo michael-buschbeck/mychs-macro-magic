@@ -20,9 +20,7 @@
 !mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
 !mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
 !mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetDesc = "m3mgd_attack_target_desc"
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm
 !mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
 !mmm   if isdenied(attackType) or isunknown(attackType)

@@ -2,6 +2,8 @@
 !rem //
 !mmm script
 !mmm
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cGMSilentMode = false
 !mmm   if selected
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
@@ -16,7 +18,6 @@
 !mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
 !mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm
 !mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
 !mmm   if isdenied(attackType) or isunknown(attackType)
@@ -33,17 +34,55 @@
 !mmm     do whisperback("Access to attack result value failed: " & getreason(attackResult))
 !mmm     exit script
 !mmm   end if
+!mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
+!mmm   if criticalAttack == true
+!mmm     set attackResult = highlight(attackResult, "good")
+!mmm   else 
+!mmm     set attackResult = highlight(attackResult, "normal")
+!mmm   end if 
 !mmm   
-!mmm   set defenseResult = roll("1d20+" & (targetID.Abwehr + round(targetID.St / 5)))
+!mmm   set defenseResult = roll("1d20+" & (targetID.Abwehr + round(cOwnID.St / 5)))
 !mmm   
 !mmm   if iscritical(defenseResult) or (m3mgdExchange.(m3mgdAttrAttackCriticalSuccess) == false and defenseResult >= attackResult)
 !mmm     
-!mmm     do whisperback("Abwehr " & defenseResult & " gg. Zaubererfolg " & attackResult & ": Der Gegenstand hat gewackelt aber " & targetID.name & " konnte ihn festhalten.")
-!mmm     
+!mmm     set defenseSuccess = true 
+!mmm
 !mmm   else 
 !mmm     
-!mmm     do whisperback("Abwehr " & defenseResult & " gg. Zaubererfolg " & attackResult & ": Der Gegenstand löst sich aus den Fingern von " & targetID.name & " und schwebt in Richtung " & m3mgdExchange.(m3mgdAttrAttackerID).name & ".")
+!mmm     set defenseSuccess = false
 !mmm     
 !mmm   end if
+!rem
+!rem   // Verbose output
+!mmm   if cVerbose
+!mmm     set sender = cOwnID
+!mmm     combine chat
+!rem       // Check if script is run for an NPC (whisper data to GM only)
+!mmm       if cGMSilentMode
+!mmm         chat: /w GM 
+!mmm       end if
+!mmm       if defenseSuccess
+!mmm         chat: Der Gegenstand hat gewackelt aber ich konnte ihn festhalten.
+!mmm       else 
+!mmm         chat: Der Gegenstand löst sich aus den meinen Fingern und schwebt in Richtung ${m3mgdExchange.(m3mgdAttrAttackerID).name}.
+!mmm       end if
+!mmm     end combine
+!mmm   end if
+!mmm
+!rem   // Data table
+!mmm   combine chat
+!rem     // Check if script is run for an NPC (whisper data to GM only)
+!mmm     if cGMSilentMode == 1
+!mmm       chat: /w GM 
+!mmm     end if
+!mmm     chat: ${"&"}{template:default} 
+!mmm     chat: {{name=${cOwnID.name}: Abwehr gegen Heranholen}} 
+!mmm     chat: {{Zaubererfolg=${attackResult}}}
+!mmm     if defenseSuccess
+!mmm       chat: {{Abwehrerfolg=${defenseResult}}}
+!mmm     else 
+!mmm       chat: {{Abwehrmisserfolg=${defenseResult}}}
+!mmm     end if
+!mmm   end combine
 !mmm
 !mmm end script
