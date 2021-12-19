@@ -64,7 +64,7 @@
 !rem   // Initialize & collect data
 !rem
 !rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = getattr(cOwnID, "token_id")
+!mmm   set cOwnID = cOwnID.token_id
 !mmm   if isdenied(cOwnID) or isunknown(cOwnID)
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
 !mmm     exit script
@@ -118,12 +118,12 @@
 !mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
-!mmm   set armorLabel = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
-!mmm   set armorProtection = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RsGetragen", true, "RüsLP"))
+!mmm   set armorLabel = cOwnID.(findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
+!mmm   set armorProtection = cOwnID.(findattr(cOwnID, "Ruestung", "RsGetragen", true, "RüsLP"))
 !mmm   if isunknown(armorLabel) or isunknown(armorProtection)
 !rem     // For NPC tokens where the search for "RsGetragen==true" doesn't work, just take first armor in sheet
-!mmm     set armorLabel = getattr(cOwnID, findattr(cOwnID, "Ruestung", "Rüstung"))
-!mmm     set armorProtection = getattr(cOwnID, findattr(cOwnID, "Ruestung", "RüsLP"))
+!mmm     set armorLabel = cOwnID.(findattr(cOwnID, "Ruestung", "Rüstung"))
+!mmm     set armorProtection = cOwnID.(findattr(cOwnID, "Ruestung", "RüsLP"))
 !mmm   end if
 !mmm   set endurance = cOwnID.(cEnduranceAttr)
 !mmm   set health = cOwnID.(cHealthAttr)
@@ -295,7 +295,7 @@
 !mmm   set attacker = m3mgdExchange.(m3mgdAttrAttackerID)
 !mmm   if attacker.permission eq "control"
 !mmm     if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
-!mmm       set attackerXPGain = getattr(cOwnID, "Grad") + 3
+!mmm       set attackerXPGain = cOwnID.Grad + 3
 !mmm       set XPGainLog = "3+" & cOwnID.Grad
 !mmm       if m3mgdExchange.(m3mgdAttrAttackType) eq "ranged"
 !mmm         set attackerXPGain = attackerXPGain / 2
@@ -389,15 +389,15 @@
 !mmm     else if attackDamage > 0 and defenseSuccess
 !mmm       chat: {{Erfolg=**Leichter Treffer**}}
 !mmm       chat: {{Schaden=**${effEnduranceLoss}&nbsp;AP**}}
-!mmm       do spawnfx("bubbling-water", getattr(cOwnID, "left"), getattr(cOwnID, "top"))
+!mmm       do spawnfx("bubbling-water", cOwnID.left, cOwnID.top)
 !mmm     else if attackDamage > 0 and (not defenseSuccess) and criticalAttack == 1
 !mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
 !mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP +&nbsp;krit.&nbsp;Schaden!**}}
-!mmm       do spawnfx("nova-blood", getattr(cOwnID, "left"), getattr(cOwnID, "top"))
+!mmm       do spawnfx("nova-blood", cOwnID.left, cOwnID.top)
 !mmm     else 
 !mmm       chat: {{Fehlschlag=**Schwerer Treffer**}}
 !mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
-!mmm       do spawnfx("bubbling-blood", getattr(cOwnID, "left"), getattr(cOwnID, "top"))
+!mmm       do spawnfx("bubbling-blood", cOwnID.left, cOwnID.top)
 !mmm     end if
 !mmm     if newHealth < 0 and timeToDie < 0
 !mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
