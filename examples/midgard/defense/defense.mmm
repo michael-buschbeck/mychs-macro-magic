@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.7.0 (2021-12-19)"
+!mmm   set scriptVersion = "1.7.1 (2021-12-20)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.23
@@ -49,7 +49,6 @@
 !mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
 !mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
 !mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
 !mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
 !mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
@@ -93,10 +92,6 @@
 !mmm       set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
 !mmm       set validInputs = validInputs + 1
 !mmm     end if
-!mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackCriticalSuccess)) and m3mgdExchange.(m3mgdAttrAttackCriticalSuccess) == 0 or m3mgdExchange.(m3mgdAttrAttackCriticalSuccess) == 1
-!mmm       set criticalAttack = m3mgdExchange.(m3mgdAttrAttackCriticalSuccess)
-!mmm       set validInputs = validInputs + 1
-!mmm     end if
 !mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackDamage)) and m3mgdExchange.(m3mgdAttrAttackDamage) >= 0
 !mmm       set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
 !mmm       set validInputs = validInputs + 1
@@ -111,10 +106,11 @@
 !mmm     end if 
 !mmm   end if
 !mmm   
-!mmm   if validInputs < 7
+!mmm   if validInputs < 6
 !mmm     do whisperback("**Abwehrskript: Daten fehlen** [**Angriffsdaten eingeben**](~defenseDataEntry)")
 !mmm     exit script
 !mmm   end if
+!mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
 !mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
