@@ -2528,14 +2528,17 @@ class MychScript
                     throw new MychScriptError("parse", "unexpected \"return\" outside of \"function\" block", this.source, 0);
                 }
                 
-                try
+                if (args.expression)
                 {
-                    this.definition.expressionOffset = args.expression.offset;
-                    this.definition.expression = new MychExpression(args.expression.value, this.context);
-                }
-                catch (exception)
-                {
-                    this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    try
+                    {
+                        this.definition.expressionOffset = args.expression.offset;
+                        this.definition.expression = new MychExpression(args.expression.value, this.context);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    }
                 }
 
                 this.complete = true;

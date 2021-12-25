@@ -1034,6 +1034,17 @@
             ],
             [
                 "!mmm script",
+                "!mmm     function test()",
+                "!mmm         chat: correct",
+                "!mmm         return",
+                "!mmm         chat: broken",
+                "!mmm     end function",
+                "!mmm     do test()",
+                "!mmm end script",
+                { chat: "correct" },
+            ],
+            [
+                "!mmm script",
                 "!mmm     return",
                 { error: "During parse, unexpected \"return\" outside of \"function\" block in script: ❌    return" },
                 "!mmm end script",
