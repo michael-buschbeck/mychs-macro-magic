@@ -2476,12 +2476,12 @@ class MychScript
 
         function:
         {
-            tokens: [ /(?<name>[\p{L}_][\p{L}\p{N}_]*)/u, "(", /(?<parameters>([\p{L}_][\p{L}\p{N}_]*)(\s*,\s*([\p{L}_][\p{L}\p{N}_]*))*)/u, ")" ],
+            tokens: [ /(?<name>[\p{L}_][\p{L}\p{N}_]*)/u, "(", /(?<parameters>([\p{L}_][\p{L}\p{N}_]*)(\s*,\s*([\p{L}_][\p{L}\p{N}_]*))*)?/u, ")" ],
 
             parse: function(args)
             {
                 this.definition.functionName = args.name.value;
-                this.definition.functionParams = args.parameters.value.split(/\s*,\s*/);
+                this.definition.functionParams = args.parameters ? args.parameters.value.split(/\s*,\s*/) : [];
             },
 
             execute: function*(variables)
