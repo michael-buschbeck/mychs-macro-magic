@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.23.0";
+const MMM_VERSION = "1.24.0";
 
 on("chat:message", function(msg)
 {
@@ -1920,9 +1920,10 @@ class MychScriptError
 
 class MychScriptExit
 {
-    constructor(type)
+    constructor(type, result = undefined)
     {
         this.type = type;
+        this.result = result;
     }
 }
 
@@ -2470,6 +2471,86 @@ class MychScript
                 chatContext.chat(collectedNameOrId || this.context.sender, combinedMessages);
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
+            },
+        },
+
+        function:
+        {
+            tokens: [ /(?<name>[\p{L}_][\p{L}\p{N}_]*)/u, "(", /(?<parameters>([\p{L}_][\p{L}\p{N}_]*)(\s*,\s*([\p{L}_][\p{L}\p{N}_]*))*)/u, ")" ],
+
+            parse: function(args)
+            {
+                this.definition.functionName = args.name.value;
+                this.definition.functionParams = args.parameters.value.split(/\s*,\s*/);
+            },
+
+            execute: function*(variables)
+            {
+                let functionCommand = this;
+                let functionParams = this.definition.functionParams;
+
+                variables[this.definition.functionName] = function*(...args)
+                {
+                    let functionVariables = new MychScriptVariables();
+
+                    for (let functionParamIndex = 0; functionParamIndex < functionParams.length; ++functionParamIndex)
+                    {
+                        functionVariables[functionParams[functionParamIndex]] =
+                            (functionParamIndex < args.length) ? args[functionParamIndex] : new MychScriptContext.Default();
+                    }
+
+                    let functionExit = yield* functionCommand.executeNestedScripts(functionVariables);
+
+                    return functionExit ? functionExit.result : undefined;
+                };
+            },
+        },
+
+        return:
+        {
+            tokens:
+            {
+                retundef: [],
+                retvalue: [ /(?<expression>.+)/u ],  
+            },
+
+            parse: function(args, parentScripts)
+            {
+                if (!parentScripts.some(script => script.type == "function"))
+                {
+                    throw new MychScriptError("parse", "unexpected \"return\" outside of \"function\" block", this.source, 0);
+                }
+                
+                try
+                {
+                    this.definition.expressionOffset = args.expression.offset;
+                    this.definition.expression = new MychExpression(args.expression.value, this.context);
+                }
+                catch (exception)
+                {
+                    this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*(variables)
+            {
+                let returnValue = undefined;
+
+                if (this.definition.expression)
+                {
+                    try
+                    {
+                        returnValue = yield* this.definition.expression.evaluate(variables);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
+                    }
+                }
+
+                return new MychScriptExit("function", returnValue);
             },
         },
 
