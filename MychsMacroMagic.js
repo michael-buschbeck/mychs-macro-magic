@@ -2495,10 +2495,8 @@ class MychScript
                 {
                     let functionVariables = new MychScriptVariables();
 
-                    functionVariables.script =
-                    {
-                        getProperty: key => scriptVariables[key],
-                    }
+                    functionVariables.$customizations = variables.$customizations;
+                    functionVariables.script = { getProperty: key => scriptVariables[key] };
 
                     for (let functionParamIndex = 0; functionParamIndex < functionParams.length; ++functionParamIndex)
                     {
