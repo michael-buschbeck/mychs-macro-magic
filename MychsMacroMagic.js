@@ -14,6 +14,7 @@ on("chat:message", function(msg)
             lastseen: undefined,
             context: new MychScriptContext(),
             script: undefined,
+            functions: {},
             customizations: undefined,
             exception: undefined,
         };
@@ -193,6 +194,8 @@ on("chat:message", function(msg)
 
                 let scriptVariables = new MychScriptVariables();
 
+                Object.assign(scriptVariables, player.functions);
+
                 if (script.type == "set")
                 {
                     let variableName = script.definition.variable;
@@ -200,6 +203,14 @@ on("chat:message", function(msg)
                 }
 
                 script.startExecute(scriptVariables);
+
+                if (script.type == "function")
+                {
+                    let functionName = script.definition.functionName;
+                    let functionCode = scriptVariables[functionName];
+
+                    player.functions[functionName] = functionCode;
+                }
             }
         }
     }
