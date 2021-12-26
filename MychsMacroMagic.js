@@ -2500,13 +2500,13 @@ class MychScript
                 let functionCommand = this;
                 let functionParams = this.definition.functionParams;
 
-                let scriptVariables = variables.script || variables;
-
                 variables[this.definition.functionName] = function*(...args)
                 {
+                    let scriptVariables = this.script || this;
+
                     let functionVariables = new MychScriptVariables();
 
-                    functionVariables.$customizations = variables.$customizations;
+                    functionVariables.$customizations = this.$customizations;
                     functionVariables.script = { getProperty: key => scriptVariables[key] };
 
                     for (let functionParamIndex = 0; functionParamIndex < functionParams.length; ++functionParamIndex)
