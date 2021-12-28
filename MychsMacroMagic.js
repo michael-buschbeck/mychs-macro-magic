@@ -1981,7 +1981,7 @@ class MychScriptVariables extends MychProperties
         return nestedVariables;
     }
 
-    integrateCustomizations(customizations)
+    $integrateCustomizations(customizations)
     {
         for (let [key, value] of Object.entries(customizations))
         {
@@ -2787,7 +2787,7 @@ class MychScript
                     let nestedVariables = Object.create(variables);
                     let nestedScriptExit = yield* this.executeNestedScripts(nestedVariables);
 
-                    variables.integrateCustomizations(nestedVariables);
+                    variables.$integrateCustomizations(nestedVariables);
 
                     return this.propagateExitOnReturn(nestedScriptExit);
                 }
