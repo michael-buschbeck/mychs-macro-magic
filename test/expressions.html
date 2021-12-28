@@ -878,7 +878,9 @@
             });
         }
 
-        let variables =
+        let variables = new MychScriptVariables();
+
+        Object.assign(variables,
         {
             foo: 123,
             bar: 456,
@@ -890,13 +892,13 @@
 
             structABC:
             {
-                getProperty: function(key) { return this[key] },
+                $getProperty: function(key) { return this[key] },
 
                 propA: "A!",
                 propB: "B!",
                 propC: "C!",
             },
-        };
+        });
 
         function getResultRepresentation(context, result)
         {
