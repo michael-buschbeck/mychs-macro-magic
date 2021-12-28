@@ -1968,6 +1968,19 @@ class MychScriptVariables extends MychProperties
         return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
     }
 
+    $getAnonymousVariable()
+    {
+        return this["..."];
+    }
+
+    $withAnonymousVariable(anonymousValue)
+    {
+        let nestedVariables = new MychScriptVariables(this);
+        nestedVariables["..."] = anonymousValue;
+
+        return nestedVariables;
+    }
+
     integrateCustomizations(customizations)
     {
         for (let [key, value] of Object.entries(customizations))
@@ -3806,7 +3819,7 @@ class MychExpression
                                 {
                                     return (arguments.length == 0)
                                         ? coerceValue(yield* evaluator(variables))
-                                        : coerceValue(yield* evaluator({ ...variables, "...": anonymousValue }));
+                                        : coerceValue(yield* evaluator(variables.$withAnonymousVariable(anonymousValue)));
                                 }
                             }
     
@@ -3992,7 +4005,7 @@ class MychExpression
             {
                 function* anonymousLookupEvaluator(variables)
                 {
-                    let anonymousValue = variables["..."];
+                    let anonymousValue = variables.$getAnonymousVariable();
                     return anonymousValue;
                 }
 

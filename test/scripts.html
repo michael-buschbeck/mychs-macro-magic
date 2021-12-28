@@ -345,6 +345,16 @@
                 { chat: "correct" },
             ],
             [
+                "!mmm script",
+                "!mmm     set weapons = 'slingshot', 'sword'",
+                "!mmm     set label = 'sword'",
+                "!mmm     if weapons where ... eq label",
+                "!mmm         chat: correct",
+                "!mmm     end if",
+                "!mmm end script",
+                { chat: "correct" },
+            ],
+            [
                 "!mmm chat: isdefault(default) = ${isdefault(default)}",
                 { chat: "isdefault(default) = true" },
                 "!mmm chat: isdenied(denied) = ${isdenied(denied)}",
