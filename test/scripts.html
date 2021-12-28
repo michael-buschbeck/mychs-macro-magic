@@ -1093,6 +1093,18 @@
                 { chat: "test 2" },
             ],
             [
+                "!mmm function test(foo, broken!, bar)",
+                { error: "During parse, syntax error in script: !mmm function test(foo, broken❌!, bar)" },
+            ],
+            [
+                "!mmm function test(foo, bar,)",
+                { error: "During parse, syntax error in script: !mmm function test(foo, bar❌,)" },
+            ],
+            [
+                "!mmm function test(foo,, bar)",
+                { error: "During parse, syntax error in script: !mmm function test(foo❌,, bar)" },
+            ],
+            [
                 "!mmm function test1()",
                 "!mmm     do test2()",
                 "!mmm end function",
