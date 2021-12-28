@@ -3882,6 +3882,7 @@ class MychExpression
             [
                 "binaryOperator",
                 "propertyLookup",
+                "call",
                 "listLookup",
                 "closingParenthesis",
                 "closingBracket",
@@ -4024,6 +4025,7 @@ class MychExpression
             [
                 "binaryOperator",
                 "propertyLookup",
+                "call",
                 "listLookup",
                 "closingParenthesis",
                 "closingBracket",
@@ -4103,7 +4105,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, callOperator, -1);
+                state.pushOperator(token, callOperator, 0);
                 state.startGroup(token);
             },
 
