@@ -2013,7 +2013,16 @@ class MychScriptError
 
     toString()
     {
-        return "During " + this.stage + ", " + this.message + " in script: " + this.source.substring(0, this.offset) + "\u274C" + this.source.substring(this.offset);
+        let errorSourceLocation =
+            this.source.substring(0, this.offset) + "\u274C" +
+            this.source.substring(this.offset);
+
+        if (this.cause instanceof MychScriptError)
+        {
+            return this.cause + "\n" + "Called from: " + errorSourceLocation;
+        }
+
+        return "During " + this.stage + ", " + this.message + " in script: " + errorSourceLocation;
     }
 }
 
