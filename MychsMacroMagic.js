@@ -3854,7 +3854,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, propertyLookupOperator, 0);
+                state.pushOperator(token, propertyLookupOperator, -1);
             },
 
             nextRuleNames: new Set(
@@ -4105,7 +4105,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, callOperator, 0);
+                state.pushOperator(token, callOperator, -1);
                 state.startGroup(token);
             },
 
