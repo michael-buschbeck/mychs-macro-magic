@@ -181,15 +181,15 @@
             ],
             [
                 "!mmm set missingExpression",
-                { error: "During parse, syntax error in script: set missingExpression❌"}
+                { error: "During parse, syntax error in script: !mmm set missingExpression❌"}
             ],
             [
                 "!mmm set incorrectAssignmentOperator := 123 + 456",
-                { error: "During parse, syntax error in script: set incorrectAssignmentOperator ❌:= 123 + 456" },
+                { error: "During parse, syntax error in script: !mmm set incorrectAssignmentOperator ❌:= 123 + 456" },
             ],
             [
                 "!mmm set 123 = 456",
-                { error: "During parse, syntax error in script: set ❌123 = 456" },
+                { error: "During parse, syntax error in script: !mmm set ❌123 = 456" },
             ],
             [
                 "!mmm script",
@@ -200,7 +200,7 @@
             ],
             [
                 "!mmm set customizable 123",
-                { error: "During parse, syntax error in script: set customizable ❌123" },
+                { error: "During parse, syntax error in script: !mmm set customizable ❌123" },
             ],
             [
                 "!mmm set customizable äöü",
@@ -209,7 +209,7 @@
             ],
             [
                 "!mmm set customizable 123 = 456",
-                { error: "During parse, syntax error in script: set customizable ❌123 = 456" },
+                { error: "During parse, syntax error in script: !mmm set customizable ❌123 = 456" },
             ],
             [
                 "!mmm set customizable äöü = 456",
@@ -217,9 +217,9 @@
             ],
             [
                 "!mmm for 123 in 1, 2, 3",
-                { error: "During parse, syntax error in script: for ❌123 in 1, 2, 3" },
+                { error: "During parse, syntax error in script: !mmm for ❌123 in 1, 2, 3" },
                 "!mmm end for",
-                { error: "During parse, unknown command in script: ❌end for" },
+                { error: "During parse, unknown command in script: !mmm ❌end for" },
             ],
             [
                 "!mmm for äöü in 1, 2, 3",
@@ -231,7 +231,7 @@
             ],
             [
                 "!mmm chat: ${syntax error}",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in template in script: chat: ${syntax ❌error}" },
+                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in template in script: !mmm chat: ${syntax ❌error}" },
             ],
             [
                 "!mmm do chat('correct')",
@@ -270,15 +270,15 @@
             ],
             [
                 "!mmm do chat 'unknown operator'!",
-                { error: "During parse, syntax error in expression in script: do chat 'unknown operator'❌!" },
+                { error: "During parse, syntax error in expression in script: !mmm do chat 'unknown operator'❌!" },
             ],
             [
                 "!mmm do chat 'missing parentheses'",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: do chat ❌'missing parentheses'" }
+                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: !mmm do chat ❌'missing parentheses'" }
             ],
             [
                 "!mmm     unknown command",
-                { error: "During parse, unknown command in script:     ❌unknown command" },
+                { error: "During parse, unknown command in script: !mmm     ❌unknown command" },
             ],
             [
                 "!mmm chat: Hello World! Meaning of life: ${6*7}, current HP: ${getattr('Finn', 'HP')}",
@@ -431,19 +431,19 @@
             ],
             [
                 "!mmm else",
-                { error: "During parse, unexpected \"else\" outside of \"if\" block in script: ❌else" },
+                { error: "During parse, unexpected \"else\" outside of \"if\" block in script: !mmm ❌else" },
             ],
             [
                 "!mmm if true",
                 "!mmm else",
                 "!mmm else",
-                { error: "During parse, unexpected \"else\" after previous \"else\" in same \"if\" block in script: ❌else" },
+                { error: "During parse, unexpected \"else\" after previous \"else\" in same \"if\" block in script: !mmm ❌else" },
                 "!mmm end if",
             ],
             [
                 "!mmm if false",
                 "!mmm else if broken syntax in expression",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: else if broken ❌syntax in expression" },
+                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: !mmm else if broken ❌syntax in expression" },
                 "!mmm end if",
             ],
             [
@@ -673,7 +673,7 @@
             [
                 "!mmm script",
                 "!mmm    end script syntax error",
-                { error: "During parse, syntax error in script:    end script ❌syntax error" },
+                { error: "During parse, syntax error in script: !mmm    end script ❌syntax error" },
                 "!mmm end script",
             ],
             [
@@ -681,7 +681,7 @@
                 "!mmm    chat: broken",
                 "!mmm    if true",
                 "!mmm        syntax error",
-                { error: "During parse, unknown command in script:        ❌syntax error" },
+                { error: "During parse, unknown command in script: !mmm        ❌syntax error" },
                 "!mmm    end if",
                 "!mmm end script",
                 "!mmm chat: correct[1/1]",
@@ -692,13 +692,13 @@
                 "!mmm    chat: broken",
                 "!mmm    if true",
                 "!mmm end script",
-                { error: "During parse, unexpected block end in script: end ❌script" },
+                { error: "During parse, unexpected block end in script: !mmm end ❌script" },
                 "!mmm chat: correct[1/1]",
                 { chat: "correct[1/1]" },
             ],
             [
                 "!mmm parse error",
-                { error: "During parse, unknown command in script: ❌parse error" },
+                { error: "During parse, unknown command in script: !mmm ❌parse error" },
                 "!mmm script",
                 "!mmm    chat: correct[1/2]",
                 "!mmm end script",
@@ -708,7 +708,7 @@
             ],
             [
                 "!mmm parse error",
-                { error: "During parse, unknown command in script: ❌parse error" },
+                { error: "During parse, unknown command in script: !mmm ❌parse error" },
                 "!mmm combine chat",
                 "!mmm    chat: correct[1/2]",
                 "!mmm end combine",
@@ -752,7 +752,7 @@
                 "!mmm    chat: broken",
                 "!mmm    if true",
                 "!mmm        end unknown",
-                { error: "During parse, unexpected block end in script:        end ❌unknown" },
+                { error: "During parse, unexpected block end in script: !mmm        end ❌unknown" },
                 "!mmm    end if",
                 "!mmm    chat: broken",
                 "!mmm end script",
@@ -822,7 +822,7 @@
                 "!mmm     combine chat",
                 "!mmm         chat: broken",
                 "!mmm         exit unknown",
-                { error: "During parse, unexpected block exit in script:         exit ❌unknown" },
+                { error: "During parse, unexpected block exit in script: !mmm         exit ❌unknown" },
                 "!mmm         chat: broken",
                 "!mmm     end combine",
                 "!mmm     chat: broken",
@@ -1056,7 +1056,7 @@
             [
                 "!mmm script",
                 "!mmm     return",
-                { error: "During parse, unexpected \"return\" outside of \"function\" block in script: ❌    return" },
+                { error: "During parse, unexpected \"return\" outside of \"function\" block in script: !mmm ❌    return" },
                 "!mmm end script",
             ],
             [
@@ -1266,7 +1266,7 @@
                 "!mmm     set foo = 'broken'",
                 "!mmm end customize",
                 "!mmm syntax error",
-                { error: "During parse, unknown command in script: ❌syntax error" },
+                { error: "During parse, unknown command in script: !mmm ❌syntax error" },
                 "!mmm customize",
                 "!mmm     set bar = 'correct'",
                 "!mmm end customize",
@@ -1281,7 +1281,7 @@
                 "!mmm customize",
                 "!mmm     set foo = 'broken'",
                 "!mmm     syntax error",
-                { error: "During parse, unknown command in script:     ❌syntax error" },
+                { error: "During parse, unknown command in script: !mmm     ❌syntax error" },
                 "!mmm end customize",
                 "!mmm script",
                 "!mmm     set customizable foo = 'correct'",
@@ -1296,7 +1296,7 @@
                 "!mmm customize",
                 "!mmm     set foo = 'broken'",
                 "!mmm     syntax error",
-                { error: "During parse, unknown command in script:     ❌syntax error" },
+                { error: "During parse, unknown command in script: !mmm     ❌syntax error" },
                 "!mmm end customize",
                 "!mmm script",
                 "!mmm     set customizable foo",
@@ -1316,7 +1316,7 @@
                 "!mmm     set customizable foo",
                 "!mmm     chat: correct, foo=${foo}",
                 "!mmm end script",
-                { whisper: "During customize, unknown function in expression in script:     do runtimeError❌()" },
+                { whisper: "During customize, unknown function in expression in script: !mmm     do runtimeError❌()" },
                 { chat: "correct, foo=correct" },
             ],
             [

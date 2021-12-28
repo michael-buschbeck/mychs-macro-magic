@@ -2000,12 +2000,14 @@ class MychScriptVariables extends MychProperties
 
 class MychScriptError
 {
+    static prefix = "!mmm ";
+
     constructor(stage, message, source, offset, cause = undefined)
     {
         this.stage = stage;
         this.message = message;
-        this.source = source;
-        this.offset = offset;
+        this.source = MychScriptError.prefix + source;
+        this.offset = MychScriptError.prefix.length + offset;
         this.cause = cause;
     }
 
@@ -3130,12 +3132,6 @@ class MychScript
         }
         catch (exception)
         {
-            if (exception instanceof MychScriptError)
-            {
-                exception.source = "!mmm " + exception.source;
-                exception.offset += "!mmm ".length;
-            }
-
             this.context.error(exception);
         }
     }
