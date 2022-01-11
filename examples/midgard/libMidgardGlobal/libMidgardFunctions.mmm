@@ -336,3 +336,16 @@
 !mmm   return myViewAngle
 !mmm
 !mmm end function
+
+!rem // m3mgdGetDistance(fromTokenID, toTokenID)
+!rem //
+!rem // Returns distance between fromTokenID and toTokenID, in distunits(). 
+!rem //
+!mmm function m3mgdGetDistance(fromTokenID, toTokenID)
+!mmm
+!mmm   set absDistY = ((abs(fromTokenID.top  - toTokenID.top))  - .5 * fromTokenID.height - .5 * toTokenID.height) * distscale()
+!mmm   set absDistX = ((abs(fromTokenID.left - toTokenID.left)) - .5 * fromTokenID.width  - .5 * toTokenID.width)  * distscale()
+!mmm
+!mmm   return round(max(absDistY, absDistX))
+!mmm
+!mmm end function

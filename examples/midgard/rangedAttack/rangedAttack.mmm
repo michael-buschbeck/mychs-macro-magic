@@ -156,9 +156,7 @@
 !mmm   end if
 !rem
 !rem   // Calculate distance, exit if distance exceeds range
-!mmm   set absTokenDistY = round(((abs(getattr(cOwnID, "top")  - getattr(foeID, "top")))  - .5 * getattr(cOwnID, "height") - .5 * getattr(foeID, "height")) * distscale())
-!mmm   set absTokenDistX = round(((abs(getattr(cOwnID, "left") - getattr(foeID, "left"))) - .5 * getattr(cOwnID, "width")  - .5 * getattr(foeID, "width"))  * distscale())
-!mmm   set distance = max(absTokenDistY, absTokenDistX)
+!mmm   set distance = m3mgdGetDistance(cOwnID, foeID)
 !mmm   set distanceUnits = distunits() 
 !mmm   if distance > cRangeUpperBoundFar
 !mmm     combine chat
