@@ -1,6 +1,7 @@
 !rem // defenseDataEntry
+%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "defenseDataEntry 2.0.0 (2021-12-24)"
+!mmm   set scriptVersion = "defenseDataEntry 2.1.0 (2021-12-27)"
 !mmm
 !rem   // Initialize globals (mainly data exchange)
 !mmm
@@ -10,13 +11,9 @@
 !mmm
 !rem   // Flush data structure
 !mmm
-!mmm   set _m3mgdExchangeAttributesFlushed = "invalid"
-!mmm
-!mmm   set CURRENT = scriptVersion
-%{MacroSheetLibrary|libFlushExchange}
-!mmm   
-!mmm   if _m3mgdExchangeAttributesFlushed eq "invalid"
-!mmm     do whisperback("Something went wrong, did libFlushExchange not execute properly?")
+!mmm   set flushedCount = m3mgdFlushExchange(m3mgdExchange, m3mgdExchangeAttrList)
+!mmm   if not flushedCount
+!mmm     do whisperback("Something went wrong, did m3mgdFlushExchange() not execute properly?")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -42,7 +39,7 @@
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackerID, attackerID)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, targetID)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
-!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
+!mmm   do setattrmax(m3mgdExchange, m3mgdAttrAttackResult, (criticalAttack == 1))
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamage, attackDamage)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, attackDamageRoll)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, armorPiercing)

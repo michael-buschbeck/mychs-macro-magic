@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.1.0 (2021-12-24)"
+!mmm   set scriptVersion = "defendFrostball 1.2.0 (2021-12-27)"
 !mmm
 !mmm   set CURRENT = scriptVersion
 %{MacroSheetLibrary|libMidgardGlobal}
@@ -137,18 +137,7 @@
 !mmm   end if
 !rem
 !rem   // Output data table using data table execution code from library
-!mmm   set CURRENT = scriptVersion
-!mmm   set _GMSilentMode = (cGMSilentMode == 1)
-!mmm   set _ownID = cOwnID
-!mmm   set _defenseSuccess = defenseSuccess
-!mmm   set _defenseResult = defenseResult
-!mmm   set _prvEndurance = endurance
-!mmm   set _maxEndurance = m3mgdExchange.(cEnduranceAttr).max
-!mmm   set _newEndurance = newEndurance
-!mmm   set _prvHealth = health
-!mmm   set _maxHealth = maxHealth
-!mmm   set _newHealth = newHealth
-!mmm   set _timeToDie = timeToDie
 %{MacroSheetLibrary|libDefenseDataTable}
+!mmm   do m3mgdDefenseDataTable()
 !mmm
 !mmm end script

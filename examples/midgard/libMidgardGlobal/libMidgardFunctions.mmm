@@ -1,4 +1,23 @@
 !rem //
+!rem // m3mgdFlushExchange(dataExchangeID, attrList)
+!rem // 
+!rem //   Expects a global data exchange character sheet as script.m3mgdExchange or as an argument
+!rem // 
+!rem //   Returns the number of attributes set to "" in both their current and max values
+!rem // 
+!mmm function m3mgdFlushExchange(dataExchangeID, attrList)
+!mmm
+!mmm   set flushedCounter = 0
+!mmm   for attribute in attrList
+!mmm     do setattr(dataExchangeID, attribute, "")
+!mmm     do setattrmax(dataExchangeID, attribute, "")
+!mmm     set flushedCounter = flushedCounter + 1
+!mmm   end for
+!mmm
+!mmm   return flushedCounter
+!mmm 
+!mmm end function
+!rem //
 !rem // m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
 !rem // 
 !rem // TODO: validate arguments, handle defaults/remove enduranceAttr arg once access to global script.foo variables works

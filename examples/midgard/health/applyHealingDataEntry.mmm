@@ -1,4 +1,5 @@
 !rem // applyHealingDataEntry
+%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
 !mmm   set scriptVersion = "applyHealingDataEntry 1.0.0 (2021-12-27)"
 !mmm
@@ -10,13 +11,8 @@
 !mmm
 !rem   // Flush data structure
 !mmm
-!mmm   set _m3mgdExchangeAttributesFlushed = "invalid"
-!mmm
-!mmm   set CURRENT = scriptVersion
-%{MacroSheetLibrary|libFlushExchange}
-!mmm   
-!mmm   if _m3mgdExchangeAttributesFlushed eq "invalid"
-!mmm     do whisperback("Something went wrong, did libFlushExchange not execute properly?")
+!mmm   if not m3mgdFlushExchange(m3mgdExchange, m3mgdExchangeAttrList)
+!mmm     do whisperback("Something went wrong, did m3mgdFlushExchange() not execute properly?")
 !mmm     exit script
 !mmm   end if
 !mmm

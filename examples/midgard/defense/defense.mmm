@@ -213,7 +213,7 @@
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
 !mmm
-!mmm   if (criticalAttack == 0 and (defenseResult >= attackResult or iscritical(cDefenseRoll))) or (criticalAttack == 1 and iscritical(cDefenseRoll))
+!mmm   if (not criticalAttack and (defenseResult >= attackResult or iscritical(cDefenseRoll))) or (criticalAttack and iscritical(cDefenseRoll))
 !rem     // Defense successful
 !mmm     set defenseSuccess = true
 !mmm
@@ -327,7 +327,7 @@
 !mmm           chat     [OngoingCriticalInjury]:    ***Ich bin immer noch lebensgefährlich verletzt, mein Countdown läuft weiter.*** [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Jetzt könnte ich eine heilende Hand gebrauchen...***
 !mmm         end if
 !mmm       else
-!mmm         if criticalAttack == 1
+!mmm         if criticalAttack
 !mmm           chat     [DefenseFailureCritDamage]: Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer **kritischer Treffer**.
 !mmm         else 
 !mmm           chat     [DefenseFailureRegDamage]:  Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer Treffer.
@@ -353,21 +353,8 @@
 !mmm   end if
 !rem
 !rem   // Output data table using data table execution code from library
-!mmm   set CURRENT = scriptVersion
-!mmm   set _GMSilentMode = (cGMSilentMode == 1)
-!mmm   set _ownID = cOwnID
-!mmm   set _weaponLabel = cWeaponLabel
-!mmm   set _armorPiercing = (armorPiercing == 1)
-!mmm   set _defenseSuccess = defenseSuccess
-!mmm   set _defenseResult = defenseResult
-!mmm   set _prvEndurance = endurance
-!mmm   set _maxEndurance = m3mgdExchange.(cEnduranceAttr).max
-!mmm   set _newEndurance = newEndurance
-!mmm   set _prvHealth = health
-!mmm   set _maxHealth = maxHealth
-!mmm   set _newHealth = newHealth
-!mmm   set _timeToDie = timeToDie
 %{MacroSheetLibrary|libDefenseDataTable}
+!mmm   do m3mgdDefenseDataTable()
 !mmm
 !rem   // Output modifier log and PP reminder
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
