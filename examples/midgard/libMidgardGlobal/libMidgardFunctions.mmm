@@ -4,8 +4,7 @@
 !rem //   Returns the ID or false in case of validation or access issues.
 !rem // 
 !mmm function m3mgdValidateOwnTokenID(tokenID)
-!mmm 
-!mmm   if tokenID == default
+!mmm   if isdefault(tokenID)
 !mmm     set id = script.cOwnID.token_id
 !mmm   else
 !mmm     set id = tokenID.token_id
@@ -27,7 +26,7 @@
 !rem // 
 !mmm function m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
 !mmm 
-!mmm   if attrLabel == default
+!mmm   if isdefault(attrLabel)
 !mmm     set attrLabel = script.(defaultAttrLabel) 
 !mmm   end if
 !mmm   
@@ -48,10 +47,10 @@
 !rem // 
 !mmm function m3mgdFlushExchange(dataExchangeID, attrList)
 !mmm
-!mmm   if dataExchangeID == default
+!mmm   if isdefault(dataExchangeID)
 !mmm     set dataExchangeID = script.m3mgdExchange
 !mmm   end if
-!mmm   if attrList == default
+!mmm   if isdefault(attrList)
 !mmm     set attrList = script.m3mgdExchangeAttrList
 !mmm   end if 
 !mmm
@@ -482,17 +481,21 @@
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
-!mmm   if healthAttr == default and script.cHealthAttr ne ""
-!mmm     set healthAttr = script.cHealthAttr
-!mmm   else
-!mmm     do whisperback("No health attribute provided as argument or at script level")
-!mmm     return false
+!mmm   if isdefault(healthAttr)
+!mmm     if script.cHealthAttr
+!mmm       set healthAttr = script.cHealthAttr
+!mmm     else 
+!mmm       do whisperback("No health attribute provided as argument or at script level")
+!mmm       return false
+!mmm     end if
 !mmm   end if
-!mmm   if enduranceAttr == default and script.cEnduranceAttr ne ""
-!mmm     set enduranceAttr = script.cEnduranceAttr
-!mmm   else
-!mmm     do whisperback("No endurance attribute provided as argument or at script level")
-!mmm     return false
+!mmm   if isdefault(enduranceAttr)
+!mmm     if script.cEnduranceAttr
+!mmm       set enduranceAttr = script.cEnduranceAttr
+!mmm     else
+!mmm       do whisperback("No endurance attribute provided as argument or at script level")
+!mmm       return false
+!mmm     end if
 !mmm   end if
 !mmm
 !mmm   if isdenied(tokenID.(healthAttr)) or isdenied(tokenID.(enduranceAttr))

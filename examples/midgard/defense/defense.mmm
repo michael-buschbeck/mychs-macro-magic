@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.9.0 (2021-12-28)"
+!mmm   set scriptVersion = "defense 1.10.0 (2021-12-30)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -12,6 +12,7 @@
 !rem   // Initialize globals (mainly data exchange)
 %{MacroSheetLibrary|libMidgardGlobal}
 !rem   // including function libraries here to avoid breaking the link between customize and script blocks 
+%{MacroSheetLibrary|libBasics}
 %{MacroSheetLibrary|libMidgardFunctions}
 %{MacroSheetLibrary|libDefenseDataTable}
 !rem
@@ -23,7 +24,7 @@
 !rem   //
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
-!mmm   set customizable cWeaponLabel = "Abwehr ohne Schild"
+!mmm   set customizable cWeaponLabel = ""
 !rem
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cHealthAttr          Override if character's/token's health is stored differently than usual
@@ -70,6 +71,23 @@
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
 !mmm   if cOwnID ne sender
 !mmm     set sender = cOwnID
+!mmm   end if
+!rem
+!rem   // Validate defense weapon and request manual entry if selection is missing
+!mmm   if cWeaponLabel eq ""
+!mmm     set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
+!mmm     if not defenseWeaponList
+!mmm       do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
+!mmm       exit script
+!mmm     else if count(defenseWeaponList) == 1
+!mmm       set cWeaponLabel = cOwnID.(defenseWeaponList)
+!mmm     else if count(defenseWeaponList) > 1 and (defenseWeaponList where cOwnID.(...) eq "Abwehr ohne Schild")
+!mmm       do whisperback(cOwnID.name & " hat mehrere Abwehrfertigkeiten, nutze 'Abwehr ohne Schild'.")
+!mmm       set cWeaponLabel = "Abwehr ohne Schild"
+!mmm     else 
+!mmm       do whisperback("Fehler: " & cOwnID.name & " hat mehrere Abwehrfertigkeiten, aber nicht 'Abwehr ohne Schild'.")
+!mmm       exit script
+!mmm     end if
 !mmm   end if
 !rem
 !rem   // Validate attack data and request manual entry if anything is amiss
