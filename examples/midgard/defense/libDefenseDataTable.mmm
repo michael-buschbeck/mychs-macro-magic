@@ -29,8 +29,8 @@
 !mmm
 !mmm     if script.m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
 !mmm       chat: {{name=${shapeMoji}${script.cOwnID.name}: Abwehr gegen ${script.m3mgdExchange.(m3mgdAttrAttackType).max} }}
-!mmm     else if _weaponLabel eq "Abwehr ohne Schild"
-!mmm       chat: {{name=${shapeMoji}${script.cOwnID.name}: ${script.cWeaponLabel} }}
+!mmm     else if script.cWeaponLabel eq "Abwehr ohne Schild"
+!mmm       chat: {{name=${shapeMoji}${script.cOwnID.name}: Abwehr ohne Schild }}
 !mmm     else
 !mmm       chat: {{name=${shapeMoji}${script.cOwnID.name}: Abwehr mit ${script.cWeaponLabel} }}
 !mmm     end if 
