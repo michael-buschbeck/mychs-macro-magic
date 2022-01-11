@@ -318,3 +318,21 @@
 !mmm   return newHealth
 !mmm   
 !mmm end function
+
+!rem // m3mgdGetViewAngle(fromTokenID, toTokenID)
+!rem //
+!rem // Returns fromTokenID's angle of vision towards toTokenID, in degrees. 
+!rem // The reverse (toTokenID's angle of vision towards fromTokenID) is the result minus 180.
+!rem //
+!mmm function m3mgdGetViewAngle(fromTokenID, toTokenID)
+!mmm
+!mmm   set offsetYfromFoe = round((fromTokenID.top  - toTokenID.top)  * distscale())
+!mmm   set offsetXfromFoe = round((fromTokenID.left - toTokenID.left) * distscale())
+!mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
+!mmm   set foeDirectionFromMe = round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
+!mmm
+!mmm   set myViewAngle = ((foeDirectionFromMe - round(fromTokenID.rotation) % 360) + 180) % 360 - 180
+!mmm
+!mmm   return myViewAngle
+!mmm
+!mmm end function

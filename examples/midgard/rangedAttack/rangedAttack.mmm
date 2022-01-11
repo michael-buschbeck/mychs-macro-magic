@@ -1,7 +1,12 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.11.1 (2021-12-19)"
+!mmm   set scriptVersion = "1.12.0 (2021-12-28)"
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.21
@@ -9,6 +14,9 @@
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem // including function library here to avoid breaking the link between customize and script blocks 
+%{MacroSheetLibrary|libMidgardFunctions}
+!rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
 !rem   //  cCheckVersion        Toggle version check
@@ -51,11 +59,6 @@
 !mmm   set customizable cEnduranceAttr = "AP"
 !mmm   set customizable cGMSilentMode = 0
 !mmm   set customizable cAttackRoll = undef
-!mmm
-!mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
-!mmm     exit script
-!mmm   end if
 !mmm
 !rem   // Refetch token_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = cOwnID.token_id
@@ -116,8 +119,6 @@
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
 !mmm   end if
-!mmm   set ownRotation = round(cOwnID.rotation) % 360
-!mmm   set foeRotation = round(cOwnID.rotation) % 360
 !mmm   set ammoCount = cOwnID.(cAmmoLabel)
 !mmm   set ammoLabel = cAmmoLabel
 !mmm   if cAmmoMagic
@@ -136,16 +137,12 @@
 !mmm   set foeEndurance = foeID.bar2
 !rem
 !rem   // Calculate direction, exit if direction to target is outside arc of view 
-!mmm   set offsetYfromFoe = round((getattr(cOwnID, "top")  - getattr(foeID, "top"))  * distscale())
-!mmm   set offsetXfromFoe = round((getattr(cOwnID, "left") - getattr(foeID, "left")) * distscale())
-!mmm   set ownDirectionFromFoe = round(atan(offsetYfromFoe, offsetXfromFoe)) - 90
-!mmm   set foeDirectionFromMe = round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
-!mmm   set myViewAngle = ((foeDirectionFromMe - ownRotation) + 180) % 360 - 180
-!mmm   set foeViewAngle = ((ownDirectionFromFoe - foeRotation) + 180) % 360 - 180
+!mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, foeID)
 !mmm   if (myViewAngle < -45) or (myViewAngle > 45)
 !mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
 !mmm     exit script
 !mmm   end if
+!mmm   set foeViewAngle = myViewAngle - 180
 !rem
 !rem   // Deduce ammo spent
 !mmm   set ammoCount = ammoCount - 1
