@@ -1,7 +1,7 @@
 !rem // defenseDataEntry
 %{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "defenseDataEntry 2.1.0 (2021-12-27)"
+!mmm   set scriptVersion = "defenseDataEntry 2.1.1 (2021-12-29)"
 !mmm
 !rem   // Initialize globals (mainly data exchange)
 !mmm
@@ -27,7 +27,7 @@
 !mmm   set attackDamage = "?{Schaden laut Angreifer|0}"
 !mmm   set attackDamageRoll = "?{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}"
 !mmm   set armorPiercing = "?{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust| Nein,0| Ja,1}"
-!mmm   set weaponType = "?{Waffentyp|Einhandschwert|Beidhänder|Fechtwaffe|Stichwaffe|Stockwaffe|Spießwaffe|Langbogen|Kompositbogen|schwere Armbrust|leichte Armbrust|Schleuder|Blasrohr}"
+!mmm   set weaponType = "?{Waffentyp|waffenlos|Einhandschwert|Zweihandschwert|Fechtwaffe|Stichwaffe|Stockwaffe|Spießwaffe|Kettenwaffe|Einhandschlagwaffe|Zweihandschlagwaffe|Zauberstab|Bogen|Langbogen|Kompositbogen|schwere Armbrust|leichte Armbrust|Handarmbrust|Schleuder|Blasrohr|Wurfspieß|Wurfscheibe|Wurfklinge|Stielwurfwaffe}"
 !mmm   if attackResult < 20
 !mmm     do whisperback("Abbruch: Angriff mit **" & attackResult & "** war nicht erfolgreich, keine Abwehr nötig.")
 !mmm     exit script

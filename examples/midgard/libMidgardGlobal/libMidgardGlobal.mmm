@@ -46,6 +46,10 @@
 !mmm   set m3mgdExchangeAttrList = m3mgdExchangeAttrList, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
 !mmm   set m3mgdExchangeAttrList = m3mgdExchangeAttrList, m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
 !mmm
+!mmm   set m3mgdValidMeleeAttackWeaponTypes = "waffenlos", "Einhandschwert", "Zweihandschwert", "Fechtwaffe", "Stichwaffe", "Stockwaffe", "Spießwaffe", "Kettenwaffe", "Einhandschlagwaffe", "Zweihandschlagwaffe", "Zauberstab"
+!mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
+!mmm   set m3mgdValidAttackWeaponTypes = m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
+!mmm
 !mmm   set CURRENT = PARENT
 !mmm   set PARENT = undef
 !rem // end MMM fragment
