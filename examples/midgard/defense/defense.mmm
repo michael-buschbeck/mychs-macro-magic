@@ -260,31 +260,11 @@
 !mmm   end if
 !mmm
 !rem   // Process loss of endurance, if any, and applicable consequences
-!mmm   set newEndurance = highlight(endurance - effEnduranceLoss, "normal", "bin fit!")
-!mmm   if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance <= 0 
-!rem     // AP=0: Green token marker
-!mmm     set newEndurance = highlight(0, "bad", "🟢 erschöpft")
-!mmm     do setattr(cOwnID, "status_green", true)
-!mmm   end if
-!mmm   do setattr(cOwnID, cEnduranceAttr, newEndurance)
+!mmm   set newEndurance = m3mgdModifyEndurance(-effEnduranceLoss)
 !mmm   set effEnduranceLoss = highlight(effEnduranceLoss, "info")
 !mmm
 !rem   // Process loss of health and applicable consequences 
-!mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
-!mmm   if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 0
-!rem     // LP <=0 : Death zone marker
-!mmm     set newHealth = highlight(newHealth, "bad", "💀 (fast) tot")
-!mmm     do setattr(cOwnID, "status_death_zone", true)
-!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 3 
-!rem     // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
-!mmm     set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt")
-!mmm     do setattr(cOwnID, "status_red", true)
-!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= .5 * maxHealth
-!rem     // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
-!mmm     set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt")
-!mmm     do setattr(cOwnID, "status_yellow", true)
-!mmm   end if
-!mmm   do setattr(cOwnID, cHealthAttr, newHealth)
+!mmm   set newHealth = m3mgdModifyHealth(-effHealthLoss)
 !mmm   if effHealthLoss > 0 and newHealth < 0
 !mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
 !mmm   end if

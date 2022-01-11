@@ -14,8 +14,8 @@
 !mmm     set attackResult = highlight(script.attackResult, "info", "Angriff von " & script.m3mgdExchange.(m3mgdAttrAttackerID).name)
 !mmm   end if
 !mmm   set attackDamage = highlight(script.m3mgdExchange.(m3mgdAttrAttackDamage), "info", script.m3mgdExchange.(m3mgdAttrAttackType))
-!mmm   set effEnduranceLoss = highlight(prvEndurance - newEndurance, "normal")
-!mmm   set effHealthLoss = highlight(prvHealth - newHealth, "normal")
+!mmm   set effEnduranceLoss = highlight(script.effEnduranceLoss, "normal")
+!mmm   set effHealthLoss = highlight(script.effHealthLoss, "normal")
 !rem
 !rem   // Build data table
 !rem

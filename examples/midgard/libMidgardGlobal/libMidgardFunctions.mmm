@@ -262,17 +262,13 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdEnduranceBoost(enduranceGain, [tokenID], [enduranceAttr])
+!rem // m3mgdModifyEndurance(offset, [tokenID], [enduranceAttr])
 !rem // 
-!rem // enduranceGain       Number of endurance points applied to character
-!rem //   
-!rem // Returns the new level of endurance
+!rem // Modifies [tokenID's] or script.cOwnID's endurance by offset points. For a loss, offset is negative.
+!rem // Uses script.cEnduranceAttr to access endurance if no enduranceAttr is specified.
+!rem // Returns the new level of endurance.
 !rem //
-!mmm function m3mgdEnduranceBoost(enduranceGain, tokenID, enduranceAttr)
-!mmm   
-!mmm   if enduranceGain <= 0
-!mmm     return false
-!mmm   end if
+!mmm function m3mgdModifyEndurance(offset, tokenID, enduranceAttr)
 !mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
@@ -296,57 +292,62 @@
 !mmm
 !mmm   else
 !mmm
-!rem     // Process endurance gain and applicable consequences 
+!rem     // Process change of endurance and applicable consequences 
 !mmm
-!mmm     if prvEndurance + enduranceGain > maxEndurance
-!mmm       set effEnduranceGain = highlight(maxEndurance - prvEndurance, "important", "begrenzt auf Maximum")
+!mmm     if prvEndurance + offset > maxEndurance
+!mmm       set effOffset = highlight(maxEndurance - prvEndurance, "important", "begrenzt auf Maximum")
+!mmm     else if prvEndurance + offset <= 0
+!mmm       set effOffset = highlight(0 - prvEndurance, "bad", "begrenzt auf Minimum 0")
 !mmm     else
-!mmm       set effEnduranceGain = highlight(enduranceGain, "normal")
+!mmm       set effOffset = highlight(offset, "normal")
 !mmm     end if 
 !mmm   
-!mmm     set newEndurance = prvEndurance + effEnduranceGain
+!mmm     set newEndurance = prvEndurance + effOffset
+!mmm   
+!mmm     if effOffset >= 0
+!mmm       set effOffset = "+" & effOffset
+!mmm     end if
 !mmm   
 !mmm     if newEndurance == maxEndurance
 !mmm   
-!mmm       set newEndurance = highlight(newEndurance, "good", "= " & prvEndurance & " + " & effEnduranceGain)
-!mmm   
-!mmm     else if newEndurance <= 0
-!mmm   
-!mmm       set newEndurance = highlight(newEndurance, "bad", "🟢 (= " & prvEndurance & " + " & effEnduranceGain & ")")
-!mmm       do setattr(tokenID, "status_green", true)
-!mmm   
-!mmm     else if newEndurance < maxEndurance
-!mmm   
-!mmm       set newEndurance = highlight(newEndurance, "normal", "Och, das bisschen Schweiß! (= " & prvEndurance & " + " & effEnduranceGain & ")")
+!mmm       set newEndurance = highlight(newEndurance, "good", "Bin sowas von topfit! (= " & prvEndurance & effOffset & ")")
 !mmm       do setattr(tokenID, "status_green", false)
+!mmm   
+!mmm     else if newEndurance == 0
+!mmm   
+!mmm       set newEndurance = highlight(newEndurance, "bad", "🟢 (= " & prvEndurance & effOffset & ")")
+!mmm       do setattr(tokenID, "status_green", true)
 !mmm   
 !mmm     else
 !mmm   
-!mmm       set newEndurance = highlight(newEndurance, "good", "Bin sowas von topfit! (= " & prvEndurance & " + " & effEnduranceGain & ")")
+!mmm       set newEndurance = highlight(newEndurance, "normal", "Och, das bisschen Schweiß! (= " & prvEndurance & effOffset & ")")
 !mmm       do setattr(tokenID, "status_green", false)
 !mmm   
 !mmm     end if
 !mmm   
-!mmm     do setattr(tokenID, enduranceAttr, newEndurance)
+!mmm     if setattr(tokenID, enduranceAttr, newEndurance) == newEndurance
+!mmm   
+!mmm       return newEndurance
+!mmm     
+!mmm     else 
+!mmm     
+!mmm       do whisperback("Error writing changes to endurance (" & effOffset & ") into " & tokenID & "." & enduranceAttr)
+!mmm       return false
+!mmm     
+!mmm     end if
 !mmm   
 !mmm   end if
-!mmm   
-!mmm   return newEndurance
 !mmm   
 !mmm end function
 !rem // 
-!rem // m3mgdHealthBoost(healthGain, [tokenID], [healthAttr])
+!rem // m3mgdModifyHealth(offset, [tokenID], [healthAttr])
 !rem // 
-!rem // healthGain      Number of health points applied to character
-!rem //   
-!rem // Returns the number of health points effectively applied (differs from parameter if max HP are hit)
+!rem // Modifies [tokenID's] or script.cOwnID's health by offset points. For a loss, offset is negative.
+!rem // Uses script.cHealthAttr to access health points if no healthAttr is specified.
+!rem // Returns the new level of health.
 !rem //
-!mmm function m3mgdHealthBoost(healthGain, tokenID, healthAttr)
+!mmm function m3mgdModifyHealth(offset, tokenID, healthAttr)
 !mmm
-!mmm   if healthGain <= 0
-!mmm     return false
-!mmm   end if
-!mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return false
@@ -370,21 +371,30 @@
 !mmm
 !rem     // Process health gain and applicable consequences 
 !mmm
-!mmm     if prvHealth + healthGain > maxHealth
-!mmm       set effHealthGain = highlight(maxHealth - prvHealth, "important", "begrenzt auf Maximum")
+!mmm     if prvHealth + offset > maxHealth
+!mmm       set effOffset = highlight(maxHealth - prvHealth, "important", "begrenzt auf Maximum")
+!mmm     else if prvHealth + offset <= 0
+!mmm       set effOffset = highlight(offset, "bad")
 !mmm     else
-!mmm       set effHealthGain = highlight(healthGain, "normal")
+!mmm       set effOffset = highlight(offset, "normal")
 !mmm     end if 
 !mmm   
-!mmm     set newHealth = prvHealth + effHealthGain
+!mmm     set newHealth = prvHealth + effOffset
+!mmm   
+!mmm     if effOffset >= 0
+!mmm       set effOffset = "+" & effOffset
+!mmm     end if
 !mmm   
 !mmm     if newHealth == maxHealth
 !mmm   
-!mmm       set newHealth = highlight(newHealth, "good", "= " & prvHealth & " + " & effHealthGain)
+!mmm       set newHealth = highlight(newHealth, "good", "= " & prvHealth & effOffset)
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", false)
 !mmm   
 !mmm     else if newHealth <= 0
 !mmm   
-!mmm       set newHealth = highlight(newHealth, "bad", "💀 (fast) tot (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       set newHealth = highlight(newHealth, "bad", "💀 (fast) tot (= " & prvHealth & effOffset & ")")
 !mmm       do setattr(tokenID, "status_death_zone", true)
 !mmm       do setattr(tokenID, "status_red", false)
 !mmm       do setattr(tokenID, "status_yellow", false)
@@ -392,7 +402,7 @@
 !mmm     else if newHealth <= 3
 !mmm   
 !rem       // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
-!mmm       set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt (= " & prvHealth & effOffset & ")")
 !mmm       do setattr(tokenID, "status_death_zone", false)
 !mmm       do setattr(tokenID, "status_red", true)
 !mmm       do setattr(tokenID, "status_yellow", false)
@@ -400,28 +410,30 @@
 !mmm     else if newHealth <= .5 * maxHealth
 !mmm   
 !rem       // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
-!mmm       set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt (= " & prvHealth & effOffset & ")")
 !mmm       do setattr(tokenID, "status_death_zone", false)
 !mmm       do setattr(tokenID, "status_red", false)
 !mmm       do setattr(tokenID, "status_yellow", true)
 !mmm   
-!mmm     else if newHealth < maxHealth
-!mmm   
-!mmm       set newHealth = highlight(newHealth, "normal", "Nur ein paar Kratzer! (= " & prvHealth & " + " & effHealthGain & ")")
-!mmm       do setattr(tokenID, "status_death_zone", false)
-!mmm       do setattr(tokenID, "status_red", false)
-!mmm       do setattr(tokenID, "status_yellow", false)
-!mmm   
 !mmm     else
 !mmm   
-!mmm       set newHealth = highlight(newHealth, "normal", "Kerngesund! (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       set newHealth = highlight(newHealth, "normal", "Nur ein paar Kratzer! (= " & prvHealth & effOffset & ")")
 !mmm       do setattr(tokenID, "status_death_zone", false)
 !mmm       do setattr(tokenID, "status_red", false)
 !mmm       do setattr(tokenID, "status_yellow", false)
 !mmm   
 !mmm     end if
 !mmm   
-!mmm     do setattr(tokenID, healthAttr, newHealth)
+!mmm     if setattr(tokenID, healthAttr, newHealth) == newHealth
+!mmm   
+!mmm       return newHealth
+!mmm     
+!mmm     else 
+!mmm     
+!mmm       do whisperback("Error writing changes to health (" & effOffset & ") into " & tokenID & "." & healthAttr)
+!mmm       return false
+!mmm     
+!mmm     end if
 !mmm   
 !mmm   end if
 !mmm   

@@ -2,7 +2,7 @@
 !rem //
 %{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "applyHealing 1.0.0 (2021-12-27)"
+!mmm   set scriptVersion = "applyHealing 1.0.0 (2021-12-29)"
 !mmm
 %{MacroSheetLibrary|libMidgardGlobal}
 !mmm
@@ -25,9 +25,9 @@
 !mmm
 !mmm   end if 
 !mmm   
-!mmm   set newHealth = m3mgdHealthBoost(m3mgdExchange.(m3mgdAttrHealthGain), cOwnID, cHealthAttr)
+!mmm   set newHealth = m3mgdModifyHealth(m3mgdExchange.(m3mgdAttrHealthGain), cOwnID, cHealthAttr)
 !mmm   
-!mmm   set newEndurance = m3mgdEnduranceBoost(m3mgdExchange.(m3mgdAttrEnduranceGain), cOwnID, cEnduranceAttr)
+!mmm   set newEndurance = m3mgdModifyEndurance(m3mgdExchange.(m3mgdAttrEnduranceGain), cOwnID, cEnduranceAttr)
 !mmm
 !mmm   if newHealth <= 0 and timeToDie == undef
 !mmm     set timeToDie = "(unbekannt)"
