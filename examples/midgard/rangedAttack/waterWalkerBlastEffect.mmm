@@ -31,7 +31,7 @@
 !mmm
 !rem   // Identify target (user points to token)
 !mmm   set foe = m3mgdExchange.(m3mgdAttrAttackTargetID)
-!mmm   if not foe or foe.permission ne "control"
+!mmm   if isunknown(foe) or isdenied(foe) or foe.permission ne "control"
 !mmm     do whisperback("Target given as token ID '" & foe & "' may not be a correct token ID, or does not allow control of attributes")
 !mmm     exit script
 !mmm   end if

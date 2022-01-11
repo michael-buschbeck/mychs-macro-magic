@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.12.0 (2021-12-31)"
+!mmm   set scriptVersion = "1.12.0 (2022-01-01)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -115,8 +115,16 @@
 !mmm
 !rem   // - Fetch ammo properties
 !mmm
-!mmm   set ammoCount = cOwnID.(cAmmoLabel)
-!mmm   set ammoLabel = cAmmoLabel
+!mmm   if count(cAmmoLabel) == 2 and cAmmoLabel[1] eq "∞"
+!mmm     set ammoCount = "∞"
+!mmm     set ammoLabel = cAmmoLabel[0]
+!mmm   else if not count(cAmmoLabel) and not isunknown(cOwnID.(cAmmoLabel))
+!mmm     set ammoCount = cOwnID.(cAmmoLabel)
+!mmm     set ammoLabel = cAmmoLabel
+!mmm   else
+!mmm     do whisperback("Abbruch: Munitionsattribut '" & cAmmoLabel & "'falsch definiert oder fehlt")
+!mmm     exit script
+!mmm   end if
 !mmm   if cAmmoMagic
 !mmm     set magicAmmoCount = cOwnID.(cAmmoMagicLabel)
 !mmm     if isunknown(magicAmmoCount)
@@ -126,7 +134,7 @@
 !mmm     set ammoCount = magicAmmoCount
 !mmm     set ammoLabel = cAmmoMagicLabel
 !mmm   end if
-!mmm   if ammoCount <= 0
+!mmm   if ammoCount ne "∞" and ammoCount <= 0
 !mmm     chat [OutOfAmmo]: Ich greife nach meinen ${ammoLabel}n, um auf ${foeName} zu schießen, doch **OH SCHRECK -- keine ${ammoLabel} mehr drin!** Schade. Da hat ${foeName} nochmal Glück gehabt.
 !mmm     exit script
 !mmm   end if
@@ -139,15 +147,19 @@
 !mmm   end if
 !mmm   set foeViewAngle = m3mgdGetViewAngle(foeID, cOwnID)
 !mmm
-!rem   // Deduce ammo spent
-!mmm   set ammoCount = ammoCount - 1
-!mmm   do setattr(cOwnID, ammoLabel, ammoCount)  
-!mmm   set ammoCount = highlight(getattr(cOwnID, ammoLabel), "info")
-!mmm   set ammoMax = getattrmax(cOwnID, ammoLabel)
-!mmm   if ammoCount < 1
-!mmm     set ammoCount = highlight(ammoCount, "bad")
-!mmm   else if ammoCount <= round(cAmmoWarnThreshold * ammoMax)
-!mmm     set ammoCount = highlight(ammoCount, "important", "Nur noch " & ammoCount & "/" & ammoMax & " übrig")
+!rem   // Deduce ammo spent, if not magically unlimited
+!mmm   if ammoCount ne "∞"
+!mmm     set ammoCount = ammoCount - 1
+!mmm     if not setattr(cOwnID, ammoLabel, ammoCount) == ammoCount
+!mmm       do whisperback("Problem beim Speichern des neuen Munitionsvorrats in '" & cOwnID.name & "'." & ammoLabel)
+!mmm     end if
+!mmm     set ammoCount = highlight(getattr(cOwnID, ammoLabel), "info")
+!mmm     set ammoMax = getattrmax(cOwnID, ammoLabel)
+!mmm     if ammoCount < 1
+!mmm       set ammoCount = highlight(ammoCount, "bad")
+!mmm     else if ammoCount <= round(cAmmoWarnThreshold * ammoMax)
+!mmm       set ammoCount = highlight(ammoCount, "important", "Nur noch " & ammoCount & "/" & ammoMax & " übrig")
+!mmm     end if
 !mmm   end if
 !rem
 !rem   // Calculate distance, exit if distance exceeds range
@@ -157,11 +169,13 @@
 !mmm     combine chat
 !mmm       chat [OutsideStrikeDistance]: $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
 !mmm       chat: Mein ${cAmmoLabel} fliegt grob in Richtung ${foeName}, der aber viel zu weit weg ist.
-!mmm       chat: ${"&"}{template:default} {{name=${cWeaponLabel}angriff: Außer Reichweite}} 
+!mmm       chat: ${"&"}{template:default} {{name=${cWeaponLabel}: Außer Reichweite}} 
 !mmm       chat: {{Ziel=**${foeName}**}}
 !mmm       chat: {{Entfernung=${distance} ${distanceUnits} 
 !mmm       chat: (${round(distance/(distsnap()*distscale()))} Planquadrate, **außerhalb der Reichweite: >${cRangeUpperBoundFar}m**)}}
-!mmm       chat: {{${cAmmoLabel}=${ammoCount}}}
+!mmm       if ammoCount ne "∞"
+!mmm         chat: {{${cAmmoLabel}=${ammoCount}}}
+!mmm       end if
 !mmm     end combine
 !mmm     exit script
 !mmm   end if
@@ -177,8 +191,8 @@
 !mmm     if cWeaponMagicSkillBonus > 0
 !mmm       set cWeaponMagicSkillBonus = "+" & abs(cWeaponMagicSkillBonus)
 !mmm     end if 
-!mmm     set modifierLog = modifierLog & " {{" & cAmmoLabel & "=" & cWeaponMagicSkillBonus & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " " & cAmmoLabel & "&nbsp;&nbsp;&nbsp;" & cWeaponMagicSkillBonus & "<br/> "
+!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "=EW" & cWeaponMagicSkillBonus & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & cWeaponLabel & "&nbsp;&nbsp;&nbsp;EW" & cWeaponMagicSkillBonus & "<br/> "
 !mmm   end if
 !rem   // If we have magic ammunition with a skill bonus, add that
 !mmm   if cAmmoMagicSkillBonus
@@ -382,7 +396,7 @@
 !mmm   if cWeaponName eq ""
 !mmm     set outputWeaponLabel = cWeaponLabel
 !mmm   else
-!mmm     set outputWeaponLabel = cWeaponType & " *" & cWeaponName & "*"
+!mmm     set outputWeaponLabel = cWeaponType[0] & " *" & cWeaponName & "*"
 !mmm   end if
 !mmm
 !mmm
@@ -393,9 +407,9 @@
 !mmm         chat: /w GM 
 !mmm       end if
 !mmm       if not cAmmoMagic
-!mmm         chat [AttackOpening]:              Angriff mit dem $[weaponType]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}"): Einer/s meiner/s $[ammoLabel]{ammoLabel} fliegt in Richtung $[targetName]{foeName} in $[range]{rangeDescription} und
+!mmm         chat [AttackOpening]:              Angriff mit dem $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType[0]} "$[weaponName]{cWeaponName}"): Einer/s meiner/s $[ammoLabel]{ammoLabel} fliegt in Richtung $[targetName]{foeName} in $[range]{rangeDescription} und
 !mmm       else
-!mmm         chat [AttackOpeningMagicDamage]:   Mein Angriff mit $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}", magischer Zusatzschaden aktiviert) auf $[targetName]{foeName} 
+!mmm         chat [AttackOpeningMagicDamage]:   Mein Angriff mit $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType[0]} "$[weaponName]{cWeaponName}", magischer Zusatzschaden aktiviert) auf $[targetName]{foeName} 
 !mmm       end if
 !mmm       if criticalAttack
 !mmm         chat [AttackIsCriticalSuccess]:    ist ein **kritischer Erfolg** ($[attackResult]{attackResult+0}). 
@@ -429,7 +443,7 @@
 !mmm     if cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
-!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
+!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff mit ${cWeaponType[0]} * ${cWeaponName} *}} 
 !mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(foeID, cHealthAttr, cEnduranceAttr)}}}
 !mmm     if iscritical(cAttackRoll)
 !mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${cAttackRoll})}}
@@ -450,7 +464,9 @@
 !mmm     else if attackResult >= 20
 !mmm       chat:    {{Schaden=${damageResult}}}
 !mmm     end if
-!mmm     chat:      {{${ammoLabel}=${ammoCount}}}
+!mmm     if ammoCount ne "∞"
+!mmm       chat:    {{${ammoLabel}=${ammoCount}}}
+!mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}

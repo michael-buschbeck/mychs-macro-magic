@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.10.0 (2021-12-31)"
+!mmm   set scriptVersion = "defense 1.10.0 (2022-01-01)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -85,6 +85,10 @@
 !mmm   set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
 !mmm   set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
 !mmm   set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
+!rem   // Special case: magic weapons or weapon spells with additional effects scripts whose name is stored in .max
+!mmm   if m3mgdExchange.(m3mgdAttrAttackWeaponType).max ne ""
+!mmm     set attackWeaponSpecialEffectScript = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
+!mmm   end if
 !mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
@@ -277,7 +281,12 @@
 !mmm   else
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(**kein Zugriff**: " & getreason(attacker) & ") }} "
 !mmm   end if
-!rem
+!mmm
+!rem   // Add button for player to call special damage effects script
+!mmm   if not defenseSuccess and attackWeaponSpecialEffectScript
+!mmm     set modifierLog = modifierLog & " {{ " & attackWeaponType & "=[**Sondereffekt**](~" & attackWeaponSpecialEffectScript & ") }}"
+!mmm   end if
+!mmm
 !rem   // Verbose output
 !mmm   if cVerbose
 !mmm     combine chat

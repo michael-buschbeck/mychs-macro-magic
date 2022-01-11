@@ -4,16 +4,15 @@
 !mmm   set cVerbose = true
 !mmm   set cWeaponLabel = "Wasserläufer (Wasserstrahl)"
 !mmm   set cWeaponName = "Wasserläufer"
-!mmm   set cWeaponType = "Magisch"
+!mmm   set cWeaponType = "Magischer Wasserstrahl", "waterWalkerBlastEffect"
 !mmm   set cRangeUpperBoundClose = 5
 !mmm   set cRangeUpperBoundMid = 5
 !mmm   set cRangeUpperBoundFar = 5
 !mmm   set cWeaponMagicSkillBonus = "+10"
-!mmm   set cAmmoLabel = "Wasserstrahl"
+!mmm   set cAmmoLabel = "Wasserstrahl", "∞"
 !mmm   set cAmmoMagicDamage = ""
 !mmm   set cMagicEnduranceCost = 1
 !mmm   set cOwnID = sender.token_id
-!mmm 
-!rem  //     chat: {{Wenn Abwehr fehlschlägt=[**Druckeffekt**](~waterWalkerBlastEffect)}}
+!mmm
 !mmm end customize
 %{MacroSheet|rangedAttack}

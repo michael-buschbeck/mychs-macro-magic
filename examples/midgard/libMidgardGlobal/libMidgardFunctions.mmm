@@ -74,7 +74,9 @@
 !mmm     set validItems = validItems + 1
 !mmm   end if
 !mmm   if not isunknown(dataExchangeID.(m3mgdAttrAttackWeaponType))
-!mmm     if dataExchangeID.(m3mgdAttrAttackType) eq "melee" and (m3mgdValidMeleeAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType))
+!mmm     if dataExchangeID.(m3mgdAttrAttackWeaponType).max ne "" 
+!mmm       set validItems = validItems + 1
+!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "melee" and (m3mgdValidMeleeAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType))
 !mmm       set validItems = validItems + 1
 !mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "ranged" and (m3mgdValidRangedAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType))
 !mmm       set validItems = validItems + 1
@@ -617,11 +619,16 @@
 !mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackDamageRoll, damageRoll) == damageRoll
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
-!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackWeaponType, script.cWeaponType) eq script.cWeaponType
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackWeaponType, script.cWeaponType[0]) eq script.cWeaponType[0]
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
+!mmm   if script.cWeaponType[1] ne ""
+!mmm     if setattrmax(dataExchangeID, script.m3mgdAttrAttackWeaponType, script.cWeaponType[1]) eq script.cWeaponType[1]
+!mmm       set storeCounter = storeCounter + 1
+!mmm     end if
+!mmm   end if
 !mmm   
-!mmm   return (storeCounter == 9)
+!mmm   return ((count(script.cWeaponType) == 2 and storeCounter == 10) or (not count(script.cWeaponType) and storeCounter == 9))
 !mmm   
 !mmm end function
 !rem
