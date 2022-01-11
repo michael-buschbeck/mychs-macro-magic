@@ -1,14 +1,18 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.8.0 (2021-12-20)"
+!mmm   set scriptVersion = "defense 1.9.0 (2021-12-28)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.23
-!mmm     do whisperback("Abbruch: MMM-Version 1.23.0 oder höher erforderlich.")
+!mmm   if version < 1.24
+!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem // including function libraries here to avoid breaking the link between customize and script blocks 
+%{MacroSheetLibrary|libMidgardFunctions}
+%{MacroSheetLibrary|libDefenseDataTable}
+!rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
 !rem   //  cCheckVersion        Toggle version check
@@ -353,7 +357,6 @@
 !mmm   end if
 !rem
 !rem   // Output data table using data table execution code from library
-%{MacroSheetLibrary|libDefenseDataTable}
 !mmm   do m3mgdDefenseDataTable()
 !mmm
 !rem   // Output modifier log and PP reminder
