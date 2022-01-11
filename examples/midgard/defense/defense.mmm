@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.8.0 (2021-12-20)"
+!mmm   set scriptVersion = "defense 1.8.0 (2021-12-20)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.23
@@ -44,14 +44,10 @@
 !mmm
 !rem   // Constants
 !rem   //
-!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
-!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
-!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
-!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
+!rem   // Include global constants
+!mmm   set CURRENT = scriptVersion
+%{MacroSheetLibrary|libMidgardGlobal}
+!mmm
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm
 !mmm   set parryWeaponLargeShieldTypes = "Großer Schild"
