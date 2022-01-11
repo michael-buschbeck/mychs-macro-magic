@@ -1,6 +1,10 @@
 !rem // Defends against Midgard's Snatch ("Heranholen") spell, as defined in Arkanum:91
 !rem //
 !mmm script
+!mmm   set scriptVersion = "defendSnatch 1.1.0 (2021-12-24)"
+!mmm
+!mmm   set CURRENT = scriptVersion
+%{MacroSheetLibrary|libMidgardGlobal}
 !mmm
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cGMSilentMode = false
@@ -14,18 +18,8 @@
 !mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
 !mmm
-!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
-!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm
-!mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
-!mmm   if isdenied(attackType) or isunknown(attackType)
-!mmm     do whisperback("Access to data exchange sheet failed: " & getreason(attackType))
-!mmm     exit script
-!mmm   end if
-!mmm   if not attackType eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Snatch"
-!mmm     do whisperback("Wrong attack/spell data found: " & m3mgdExchange.(m3mgdAttrAttackType) & "/" & m3mgdExchange.(m3mgdAttrAttackType).max)
+!mmm   if not (m3mgdExchange.(m3mgdAttrAttackType) eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Snatch")
+!mmm     do whisperback("Wrong attack/spell data found: '" & m3mgdExchange.(m3mgdAttrAttackType) & "' / '" & m3mgdExchange.(m3mgdAttrAttackType).max & "'")
 !mmm     exit script
 !mmm   end if
 !mmm   
