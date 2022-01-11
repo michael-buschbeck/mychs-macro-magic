@@ -76,10 +76,18 @@
 !mmm   if not isunknown(dataExchangeID.(m3mgdAttrAttackWeaponType))
 !mmm     if dataExchangeID.(m3mgdAttrAttackWeaponType).max ne "" 
 !mmm       set validItems = validItems + 1
-!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "melee" and (m3mgdValidMeleeAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType))
-!mmm       set validItems = validItems + 1
-!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "ranged" and (m3mgdValidRangedAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType))
-!mmm       set validItems = validItems + 1
+!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "melee" 
+!mmm       if m3mgdValidMeleeAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType)
+!mmm         set validItems = validItems + 1
+!mmm       else
+!mmm         do whisperback("Invalid melee attack weapon type: " & dataExchangeID.(m3mgdAttrAttackWeaponType) & " is none of " & m3mgdValidMeleeAttackWeaponTypes)
+!mmm       end if
+!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "ranged" 
+!mmm       if m3mgdValidRangedAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType)
+!mmm         set validItems = validItems + 1
+!mmm       else
+!mmm         do whisperback("Invalid range attack weapon type: " & dataExchangeID.(m3mgdAttrAttackWeaponType) & " is none of " & m3mgdValidRangedAttackWeaponTypes)
+!mmm       end if
 !mmm     end if
 !mmm   end if 
 !mmm
