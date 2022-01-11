@@ -2,17 +2,17 @@
 !rem // 
 !mmm script
 !rem
-!mmm   set scriptVersion = "flushExchange 1.1.0 (2021-12-22)"
+!mmm   set scriptVersion = "flushExchange 2.0.0 (2021-12-24)"
+!mmm
+!mmm   set _m3mgdExchangeAttributesFlushed = "invalid"
 !mmm
 !mmm   set CURRENT = scriptVersion
-%{MacroSheetLibrary|libMidgardGlobal}
-!mmm
-!mmm   set counter = 0
-!mmm   for attribute in m3mgdExchangeAttrList
-!mmm     do setattr(m3mgdExchange, attribute, "")
-!mmm     do setattrmax(m3mgdExchange, attribute, "")
-!mmm     set counter = counter + 1
-!mmm   end for
+%{MacroSheetLibrary|libFlushExchange}
+!mmm   
+!mmm   if _m3mgdExchangeAttributesFlushed eq "invalid"
+!mmm     do whisperback("Something went wrong, did libFlushExchange not execute properly?")
+!mmm     exit script
+!mmm   end if
 !mmm
 !mmm   if isdenied(sender.name)
 !mmm     set user = "GM"
@@ -21,6 +21,6 @@
 !mmm   end if 
 !mmm   combine chat
 !mmm     chat: /w "${user}" ${"&"}{template:default} {{name=m3mgd tools: flushExchange}}
-!mmm     chat: {{Result=Flushed ${counter} attributes}}
+!mmm     chat: {{Result=Flushed ${_m3mgdExchangeAttributesFlushed} attributes}}
 !mmm   end combine
 !mmm end script

@@ -1,19 +1,30 @@
 !rem // defenseDataEntry
 !mmm script
-!rem
-!rem   // Constants
-!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
-!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
-!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackCriticalSuccess = "m3mgd_attack_critical_success"
-!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
-!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackArmorPiercing = "m3mgd_attack_armor_piercing"
-!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
-!rem
+!mmm   set scriptVersion = "defenseDataEntry 2.0.0 (2021-12-24)"
+!mmm
+!rem   // Initialize globals (mainly data exchange)
+!mmm
+!mmm   set CURRENT = scriptVersion
+!mmm
+%{MacroSheetLibrary|libMidgardGlobal}
+!mmm
+!rem   // Flush data structure
+!mmm
+!mmm   set _m3mgdExchangeAttributesFlushed = "invalid"
+!mmm
+!mmm   set CURRENT = scriptVersion
+%{MacroSheetLibrary|libFlushExchange}
+!mmm   
+!mmm   if _m3mgdExchangeAttributesFlushed eq "invalid"
+!mmm     do whisperback("Something went wrong, did libFlushExchange not execute properly?")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Collect manually entered attack data
+!mmm
 !mmm   set attackType = "?{Art des Angriffs| Nahkampf,melee| Fernkampf,ranged}"
-!mmm   set targetID = "@{target|Ziel des Angriffs|token_id}"
+!mmm   set attackerID = "@{target|Wer greift an?|token_id}"
+!mmm   set targetID = "@{target|Wer wird angegriffen (Ziel)?|token_id}"
 !mmm   set attackResult = "?{Angriffswert|0}"
 !mmm   set criticalAttack = "?{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}"
 !mmm   set attackDamage = "?{Schaden laut Angreifer|0}"
@@ -25,12 +36,10 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm   if m3mgdExchange.permission ne "control"
-!mmm     do whisperback("Abbruch: Kein Zugriff auf Charakterblatt " & m3mgdExchange.name & " (" & m3mgdExchange & ")")
-!mmm     exit script
-!mmm   end if
+!rem   // Store attack data in exchange structure
 !mmm
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackType, attackType)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackerID, attackerID)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, targetID)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
 !mmm   do setattr(m3mgdExchange, m3mgdAttrAttackCriticalSuccess, criticalAttack)
