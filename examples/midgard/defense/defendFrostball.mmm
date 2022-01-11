@@ -1,10 +1,12 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.2.0 (2021-12-27)"
+!mmm   set scriptVersion = "defendFrostball 1.3.0 (2021-12-29)"
 !mmm
 !mmm   set CURRENT = scriptVersion
 %{MacroSheetLibrary|libMidgardGlobal}
+%{MacroSheetLibrary|libMidgardFunctions}
+%{MacroSheetLibrary|libDefenseDataTable}
 !mmm
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cGMSilentMode = false
@@ -20,6 +22,8 @@
 !mmm
 !mmm   set endurance = cOwnID.(cEnduranceAttr)
 !mmm   set health = cOwnID.(cHealthAttr)
+!mmm   set maxEndurance = cOwnID.(cEnduranceAttr).max
+!mmm   set maxHealth = cOwnID.(cHealthAttr).max
 !mmm
 !mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
 !mmm   if not (attackType eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Frostball")
@@ -77,31 +81,11 @@
 !mmm   end if
 !mmm
 !rem   // Process loss of endurance, if any, and applicable consequences
-!mmm   set newEndurance = highlight(endurance - effEnduranceLoss, "normal", "bin fit!")
-!mmm   if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance <= 0 
-!rem     // AP=0: Green token marker
-!mmm     set newEndurance = highlight(0, "bad", "🟢 erschöpft")
-!mmm     do setattr(cOwnID, "status_green", true)
-!mmm   end if
-!mmm   do setattr(cOwnID, cEnduranceAttr, newEndurance)
+!mmm   set newEndurance = m3mgdModifyEndurance(-effEnduranceLoss)
 !mmm   set effEnduranceLoss = highlight(effEnduranceLoss, "info")
 !mmm
 !rem   // Process loss of health and applicable consequences 
-!mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
-!mmm   if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 0
-!rem     // LP <=0 : Death zone marker
-!mmm     set newHealth = highlight(newHealth, "bad", "💀 (fast) tot")
-!mmm     do setattr(cOwnID, "status_death_zone", true)
-!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 3 
-!rem     // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
-!mmm     set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt")
-!mmm     do setattr(cOwnID, "status_red", true)
-!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= .5 * maxHealth
-!rem     // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
-!mmm     set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt")
-!mmm     do setattr(cOwnID, "status_yellow", true)
-!mmm   end if
-!mmm   do setattr(cOwnID, cHealthAttr, newHealth)
+!mmm   set newHealth = m3mgdModifyHealth(-effHealthLoss)
 !mmm   if effHealthLoss > 0 and newHealth < 0
 !mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
 !mmm   end if
@@ -137,7 +121,6 @@
 !mmm   end if
 !rem
 !rem   // Output data table using data table execution code from library
-%{MacroSheetLibrary|libDefenseDataTable}
 !mmm   do m3mgdDefenseDataTable()
 !mmm
 !mmm end script
