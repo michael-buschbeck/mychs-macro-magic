@@ -345,16 +345,32 @@
 !mmm           chat     [DefenseFailureNoDamage]:   Doch kein Problem für meine $[armorLabel]{armorLabel}, außer Schweiß verliere ich nichts.
 !mmm         end if
 !mmm         if newHealth < 0 and timeToDie < 0
-!mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{cOwnID.name}, out. [x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
+!mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{cOwnID.name}, out.${"<"}br>[x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
 !mmm         else if newHealth < 0 and timeToDie >= 0
-!mmm           chat     [EffectsCriticalInjury]:    ***Ich bin lebensgefährlich verletzt.*** Ich habe noch **$[timeToDie]{timeToDie+0} Minuten** zu leben. [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Jetzt könnte ich eine heilende Hand gebrauchen...***
+!mmm           chat     [EffectsCriticalInjury]:    ***Ich bin lebensgefährlich verletzt.*** Ich habe noch **$[timeToDie]{timeToDie+0} Minuten** zu leben.${"<"}br>[x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif)${"<"}br>***Jetzt könnte ich eine heilende Hand gebrauchen...***
 !mmm         end if
 !mmm       end if 
 !mmm     end combine
 !mmm   end if
 !rem
-!rem   // Data table
+!rem   // Output data table using data table execution code from library
+!mmm   set CURRENT = scriptVersion
+!mmm   set _GMSilentMode = (cGMSilentMode == 1)
+!mmm   set _ownID = cOwnID
+!mmm   set _weaponLabel = cWeaponLabel
+!mmm   set _armorPiercing = (armorPiercing == 1)
+!mmm   set _defenseSuccess = defenseSuccess
+!mmm   set _defenseResult = defenseResult
+!mmm   set _prvEndurance = endurance
+!mmm   set _maxEndurance = m3mgdExchange.(cEnduranceAttr).max
+!mmm   set _newEndurance = newEndurance
+!mmm   set _prvHealth = health
+!mmm   set _maxHealth = maxHealth
+!mmm   set _newHealth = newHealth
+!mmm   set _timeToDie = timeToDie
 %{MacroSheetLibrary|libDefenseDataTable}
+!mmm
+!rem   // Output modifier log and PP reminder
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   if parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)
