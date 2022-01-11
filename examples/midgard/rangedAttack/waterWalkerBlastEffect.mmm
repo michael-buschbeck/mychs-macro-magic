@@ -1,29 +1,28 @@
 !rem // waterWalkerBlastEffect
-!rem // v1.0.2 2021-12-05
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.0.1 (2021-11-17)"
-!rem
-!rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.20
-!mmm     do whisperback("Abbruch: MMM-Version 1.20.0 oder höher erforderlich.")
-!mmm     exit script
-!mmm   end if
+!mmm   set scriptVersion = "1.1.0 (2021-12-31)"
 !mmm
-!rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
-!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !mmm   set customizable cCheckVersion = false
-!mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
-!mmm   set customizable cWeaponLabel = "Wasserläufer (Langschwert)"
-!mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("waterWalkerBlastEffect v" & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Initialize constants
-!mmm   set m3mgdAttrBlastBearing = "m3mgd_waterWalkerBlastEffect_bearing"
-!mmm   set m3mgdAttrTargetID = "m3mgd_waterWalkerBlastEffect_targetID"
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.24
+!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
+!mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
+!mmm   set customizable cWeaponLabel = "Wasserläufer (Wasserstrahl)"
+!mmm
+!rem // including global constants
+%{MacroSheetLibrary|libMidgardGlobal}
+!rem // including function library here to avoid breaking the link between customize and script blocks 
+%{MacroSheetLibrary|libMidgardFunctions}
 !mmm 
 !mmm   if not cWeaponWielder.name eq cWeaponWielder
 !mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")
@@ -31,7 +30,7 @@
 !mmm   end if
 !mmm
 !rem   // Identify target (user points to token)
-!mmm   set foe = cWeaponWielder.(m3mgdAttrTargetID)
+!mmm   set foe = m3mgdExchange.(m3mgdAttrAttackTargetID)
 !mmm   if not foe or foe.permission ne "control"
 !mmm     do whisperback("Target given as token ID '" & foe & "' may not be a correct token ID, or does not allow control of attributes")
 !mmm     exit script
@@ -52,13 +51,12 @@
 !mmm     if blastDistance == 0
 !mmm       chat: Der harte Strahl lässt ${foe.name} auf der Stelle stolpern und stürzen: PW:St(${foe.St}) = ${stRoll} / Strahlstärke: ${blastDistance}
 !mmm     else 
-!mmm       set blastBearing = cWeaponWielder.(m3mgdAttrBlastBearing)
+!mmm       set blastBearing = m3mgdGetTokenDirection(cWeaponWielder, foe)
 !mmm       do setattr(foe, "left", foe.left - (sin(blastBearing) * blastDistance / distscale()))
 !mmm       do setattr(foe, "top", foe.top + (cos(blastBearing) * blastDistance / distscale()))
 !mmm       chat: Der harte Wasserstrahl spült ${foe.name} ${blastDistance} Meter nach hinten und auf den Hosenboden: PW:St(${foe.St}) = ${stRoll} / Strahlstärke: ${blastDistance}
 !mmm     end if
 !mmm   end if
 !mmm   
-!mmm   do setattr(cWeaponWielder, m3mgdAttrTargetID, "")
-!mmm   do setattr(cWeaponWielder, m3mgdAttrBlastBearing, "")
+!mmm   do m3mgdFlushExchange()
 !mmm end script

@@ -43,12 +43,14 @@
 !mmm   set customizable cRangeUpperBoundClose = 30
 !mmm   set customizable cRangeUpperBoundMid = 100
 !mmm   set customizable cRangeUpperBoundFar = 180
+!mmm   set customizable cWeaponMagicSkillBonus = ""
 !mmm   set customizable cAmmoLabel = "Pfeile"
 !mmm   set customizable cAmmoWarnThreshold = 0.25
 !mmm   set customizable cAmmoMagic = false
 !mmm   set customizable cAmmoMagicLabel = ""
 !mmm   set customizable cAmmoMagicSkillBonus = 0
 !mmm   set customizable cAmmoMagicDamage = ""
+!mmm   set customizable cMagicEnduranceCost = 0
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
 !rem
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
@@ -97,6 +99,9 @@
 !rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
 !mmm     do whisperback("Abbruch: " & cOwnID.name & " hat keine Waffe namens " & cWeaponLabel & ".")
 !mmm     exit script
+!mmm   else if cMagicEnduranceCost > 0 and cOwnID.(cEnduranceAttr) <= cMagicEnduranceCost
+!mmm     do whisperback("Abbruch: " & cOwnID.name & " ist zu erschöpft für diesen magischen Angriff.")
+!mmm     exit script
 !mmm   end if
 !rem
 !rem   // - Fetch NPC (target) data
@@ -125,7 +130,7 @@
 !mmm     chat [OutOfAmmo]: Ich greife nach meinen ${ammoLabel}n, um auf ${foeName} zu schießen, doch **OH SCHRECK -- keine ${ammoLabel} mehr drin!** Schade. Da hat ${foeName} nochmal Glück gehabt.
 !mmm     exit script
 !mmm   end if
-!rem
+!mmm
 !rem   // Calculate direction, exit if direction to target is outside arc of view 
 !mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, foeID)
 !mmm   if (myViewAngle < -45) or (myViewAngle > 45)
@@ -133,7 +138,7 @@
 !mmm     exit script
 !mmm   end if
 !mmm   set foeViewAngle = m3mgdGetViewAngle(foeID, cOwnID)
-!rem
+!mmm
 !rem   // Deduce ammo spent
 !mmm   set ammoCount = ammoCount - 1
 !mmm   do setattr(cOwnID, ammoLabel, ammoCount)  
@@ -151,7 +156,7 @@
 !mmm   if distance > cRangeUpperBoundFar
 !mmm     combine chat
 !mmm       chat [OutsideStrikeDistance]: $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
-!mmm       chat: Mein ${cWeaponLabel} fliegt grob in Richtung ${foeName}, der aber viel zu weit weg ist.
+!mmm       chat: Mein ${cAmmoLabel} fliegt grob in Richtung ${foeName}, der aber viel zu weit weg ist.
 !mmm       chat: ${"&"}{template:default} {{name=${cWeaponLabel}angriff: Außer Reichweite}} 
 !mmm       chat: {{Ziel=**${foeName}**}}
 !mmm       chat: {{Entfernung=${distance} ${distanceUnits} 
@@ -166,7 +171,16 @@
 !mmm   set autoModifiers = 0
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
-!rem   // Before we get to the specifics of this attack: if we have magic ammunition with a skill bonus, add that
+!rem   // If we have a magic weapon with a skill bonus, add that
+!mmm   if cWeaponMagicSkillBonus
+!mmm     set autoModifiers = autoModifiers + cWeaponMagicSkillBonus
+!mmm     if cWeaponMagicSkillBonus > 0
+!mmm       set cWeaponMagicSkillBonus = "+" & abs(cWeaponMagicSkillBonus)
+!mmm     end if 
+!mmm     set modifierLog = modifierLog & " {{" & cAmmoLabel & "=" & cWeaponMagicSkillBonus & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & cAmmoLabel & "&nbsp;&nbsp;&nbsp;" & cWeaponMagicSkillBonus & "<br/> "
+!mmm   end if
+!rem   // If we have magic ammunition with a skill bonus, add that
 !mmm   if cAmmoMagicSkillBonus
 !mmm     set autoModifiers = autoModifiers + cAmmoMagicSkillBonus
 !mmm     if cAmmoMagicSkillBonus > 0
@@ -285,6 +299,12 @@
 !mmm   else
 !mmm     set attackFromBehind = false
 !mmm   end if
+!mmm
+!rem   // For magic weapons: Process optional endurance cost
+!mmm   if cMagicEnduranceCost > 0
+!mmm     do setattr(cOwnID, cEnduranceAttr, cOwnID.(cEnduranceAttr) - cMagicEnduranceCost)
+!mmm     set modifierLog = modifierLog & "{{ " & cWeaponLabel & "=-" & cMagicEnduranceCost & " AP }}"
+!mmm   end if
 !rem
 !rem   // Run & format rolls
 !rem
@@ -309,7 +329,7 @@
 !mmm     set attackResult = highlight(attackResult, "normal", attackResultLog)
 !mmm     set criticalAttack = false
 !mmm   end if
-!rem
+!mmm 
 !mmm   if attackResult >= 20
 !rem     // Damage roll (and make sure it doesn't get negative)
 !mmm     set damageRoll = roll(weaponDamageExpr)
@@ -405,10 +425,10 @@
 !rem
 !rem   // Add data table for easy reference
 !mmm   combine chat
-!rem       // Check if script is run for an NPC (whisper data to GM only)
-!mmm       if cGMSilentMode
-!mmm         chat: /w GM 
-!mmm       end if
+!rem     // Check if script is run for an NPC (whisper data to GM only)
+!mmm     if cGMSilentMode
+!mmm       chat: /w GM 
+!mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
 !mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(foeID, cHealthAttr, cEnduranceAttr)}}}
 !mmm     if iscritical(cAttackRoll)
