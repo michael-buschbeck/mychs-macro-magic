@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.23.0";
+const MMM_VERSION = "1.24.0";
 
 on("chat:message", function(msg)
 {
@@ -14,6 +14,7 @@ on("chat:message", function(msg)
             lastseen: undefined,
             context: new MychScriptContext(),
             script: undefined,
+            functions: new MychProperties(),
             customizations: undefined,
             exception: undefined,
         };
@@ -191,7 +192,7 @@ on("chat:message", function(msg)
                     script = scriptCustomizations;
                 }
 
-                let scriptVariables = new MychScriptVariables();
+                let scriptVariables = new MychScriptVariables(player.functions);
 
                 if (script.type == "set")
                 {
@@ -200,15 +201,92 @@ on("chat:message", function(msg)
                 }
 
                 script.startExecute(scriptVariables);
+
+                if (script.type == "function")
+                {
+                    let functionName = script.definition.functionName;
+                    let functionImpl = scriptVariables[functionName];
+
+                    player.functions.$setProperty(functionName, functionImpl);
+                }
             }
         }
     }
 });
 
-class MychScriptContext
+class MychProperties
+{
+    constructor(parentProperties = undefined)
+    {
+        this.$parentProperties = parentProperties;
+    }
+
+    $isValidPropertyKey(key)
+    {
+        return true;
+    }
+
+    $getProperty(key, fallbackProperties = undefined)
+    {
+        for (let properties = this; properties; properties = properties.$parentProperties)
+        {
+            if (properties.$isValidPropertyKey(key) && key in properties)
+            {
+                let value = properties[key];
+    
+                if (value instanceof Function && !value.hasBoundVariables)
+                {
+                    let variables = this;
+
+                    function functionImplWithVariables(...args)
+                    {
+                        return value.apply(variables, args);
+                    }
+
+                    functionImplWithVariables.variables = variables;
+                    functionImplWithVariables.hasBoundVariables = true;
+
+                    return functionImplWithVariables;
+                }
+    
+                return value;
+            }
+        }
+
+        if (fallbackProperties)
+        {
+            return fallbackProperties.$getProperty(key);
+        }
+
+        return undefined;
+    }
+
+    $setProperty(key, value)
+    {
+        if (this.$isValidPropertyKey(key))
+        {
+            this[key] = value;
+        }
+    }
+
+    $removeProperty(key)
+    {
+        if (this.$isValidPropertyKey(key))
+        {
+            delete this[key];
+        }
+    }
+}
+
+class MychScriptContext extends MychProperties
 {
     static players = {};
     static impersonation = undefined;
+
+    $isValidPropertyKey(key)
+    {
+        return /^[\p{L}_][\p{L}\p{N}_]*$|\$\[\[\d+\]\]/u.test(key);
+    }
 
     version = MMM_VERSION;
     playerid = undefined;
@@ -807,7 +885,7 @@ class MychScriptContext
         let attributeStruct =
         {
             toScalar: () => attributeValue,
-            getProperty: key => (key == "max") ? this.getattrmax(nameOrId, attributeName) : this.getprop(attributeValue, key),
+            $getProperty: key => (key == "max") ? this.getattrmax(nameOrId, attributeName) : this.getprop(attributeValue, key),
         };
 
         return attributeStruct;
@@ -1877,14 +1955,33 @@ class MychScriptContext
     }
 }
 
-class MychScriptVariables
+class MychScriptVariables extends MychProperties
 {
-    constructor()
+    constructor(parent = undefined)
     {
-        this.$customizations = {};
+        super(parent);
+        this.$customizations = (parent && parent.$customizations) ? parent.$customizations : {};
     }
 
-    integrateCustomizations(customizations)
+    $isValidPropertyKey(key)
+    {
+        return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
+    }
+
+    $getAnonymousVariable()
+    {
+        return this["..."];
+    }
+
+    $withAnonymousVariable(anonymousValue)
+    {
+        let nestedVariables = new MychScriptVariables(this);
+        nestedVariables["..."] = anonymousValue;
+
+        return nestedVariables;
+    }
+
+    $integrateCustomizations(customizations)
     {
         for (let [key, value] of Object.entries(customizations))
         {
@@ -1903,26 +2000,38 @@ class MychScriptVariables
 
 class MychScriptError
 {
+    static prefix = "!mmm ";
+
     constructor(stage, message, source, offset, cause = undefined)
     {
         this.stage = stage;
         this.message = message;
-        this.source = source;
-        this.offset = offset;
+        this.source = MychScriptError.prefix + source;
+        this.offset = MychScriptError.prefix.length + offset;
         this.cause = cause;
     }
 
     toString()
     {
-        return "During " + this.stage + ", " + this.message + " in script: " + this.source.substring(0, this.offset) + "\u274C" + this.source.substring(this.offset);
+        let errorSourceLocation =
+            this.source.substring(0, this.offset) + "\u274C" +
+            this.source.substring(this.offset);
+
+        if (this.cause instanceof MychScriptError)
+        {
+            return this.cause + "\n" + "Called from: " + errorSourceLocation;
+        }
+
+        return "During " + this.stage + ", " + this.message + " in script: " + errorSourceLocation;
     }
 }
 
 class MychScriptExit
 {
-    constructor(type)
+    constructor(type, result = undefined)
     {
         this.type = type;
+        this.result = result;
     }
 }
 
@@ -2169,7 +2278,7 @@ class MychScript
 
                 for (let item of items)
                 {
-                    variables[this.definition.variable] = item;
+                    variables.$setProperty(this.definition.variable, item);
 
                     let nestedScriptExit = yield* this.executeNestedScripts(variables);
                     
@@ -2180,7 +2289,7 @@ class MychScript
                     }
                 }
 
-                delete variables[this.definition.variable];
+                variables.$removeProperty(this.definition.variable);
             },
         },
 
@@ -2224,7 +2333,7 @@ class MychScript
 
                         if (!(customization instanceof MychScriptContext.Default))
                         {
-                            variables[this.definition.variable] = customization;
+                            variables.$setProperty(this.definition.variable, customization);
                             return;
                         }
                     }
@@ -2237,7 +2346,8 @@ class MychScript
 
                 try
                 {
-                    variables[this.definition.variable] = yield* this.definition.expression.evaluate(variables);
+                    let value = yield* this.definition.expression.evaluate(variables);
+                    variables.$setProperty(this.definition.variable, value);
                 }
                 catch (exception)
                 {
@@ -2473,6 +2583,93 @@ class MychScript
             },
         },
 
+        function:
+        {
+            tokens: [ /(?<name>[\p{L}_][\p{L}\p{N}_]*)/u, "(", /(?<parameters>([\p{L}_][\p{L}\p{N}_]*)(\s*,\s*([\p{L}_][\p{L}\p{N}_]*))*)?/u, ")" ],
+
+            parse: function(args)
+            {
+                this.definition.functionName = args.name.value;
+                this.definition.functionParams = args.parameters ? args.parameters.value.split(/\s*,\s*/) : [];
+            },
+
+            execute: function*(variables)
+            {
+                let functionCommand = this;
+                let functionParams = this.definition.functionParams;
+
+                function* functionImpl(...args)
+                {
+                    let functionVariables = new MychScriptVariables(this);
+
+                    functionVariables.$setProperty("script", this.script || this);
+
+                    for (let functionParamIndex = 0; functionParamIndex < functionParams.length; ++functionParamIndex)
+                    {
+                        let functionParamValue = (functionParamIndex < args.length) ? args[functionParamIndex] : new MychScriptContext.Default();
+                        functionVariables.$setProperty(functionParams[functionParamIndex], functionParamValue);
+                    }
+
+                    let functionExit = yield* functionCommand.executeNestedScripts(functionVariables);
+
+                    return functionExit ? functionExit.result : undefined;
+                }
+
+                variables.$setProperty(this.definition.functionName, functionImpl);
+            },
+        },
+
+        return:
+        {
+            tokens:
+            {
+                retundef: [],
+                retvalue: [ /(?<expression>.+)/u ],  
+            },
+
+            parse: function(args, parentScripts)
+            {
+                if (!parentScripts.some(script => script.type == "function"))
+                {
+                    throw new MychScriptError("parse", "unexpected \"return\" outside of \"function\" block", this.source, 0);
+                }
+                
+                if (args.expression)
+                {
+                    try
+                    {
+                        this.definition.expressionOffset = args.expression.offset;
+                        this.definition.expression = new MychExpression(args.expression.value, this.context);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("parse", exception, this.definition.expressionOffset);
+                    }
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*(variables)
+            {
+                let returnValue = undefined;
+
+                if (this.definition.expression)
+                {
+                    try
+                    {
+                        returnValue = yield* this.definition.expression.evaluate(variables);
+                    }
+                    catch (exception)
+                    {
+                        this.rethrowExpressionError("execute", exception, this.definition.expressionOffset);
+                    }
+                }
+
+                return new MychScriptExit("function", returnValue);
+            },
+        },
+
         $customizations:
         {
             execute: function*(variables)
@@ -2590,7 +2787,7 @@ class MychScript
                     let nestedVariables = Object.create(variables);
                     let nestedScriptExit = yield* this.executeNestedScripts(nestedVariables);
 
-                    variables.integrateCustomizations(nestedVariables);
+                    variables.$integrateCustomizations(nestedVariables);
 
                     return this.propagateExitOnReturn(nestedScriptExit);
                 }
@@ -2944,12 +3141,6 @@ class MychScript
         }
         catch (exception)
         {
-            if (exception instanceof MychScriptError)
-            {
-                exception.source = "!mmm " + exception.source;
-                exception.offset += "!mmm ".length;
-            }
-
             this.context.error(exception);
         }
     }
@@ -3633,7 +3824,7 @@ class MychExpression
                                 {
                                     return (arguments.length == 0)
                                         ? coerceValue(yield* evaluator(variables))
-                                        : coerceValue(yield* evaluator({ ...variables, "...": anonymousValue }));
+                                        : coerceValue(yield* evaluator(variables.$withAnonymousVariable(anonymousValue)));
                                 }
                             }
     
@@ -3672,16 +3863,16 @@ class MychExpression
                         let valueStruct = yield* evaluatorStruct(variables);
                         let valueKey = MychExpression.coerceString(yield* evaluatorKey(variables));
 
-                        if (valueStruct && valueStruct.getProperty instanceof Function)
+                        if (valueStruct && valueStruct.$getProperty instanceof Function)
                         {
-                            return valueStruct.getProperty(valueKey);
+                            return valueStruct.$getProperty(valueKey);
                         }
 
                         return context.getprop(valueStruct, valueKey);
                     }
                 }
 
-                state.pushOperator(token, propertyLookupOperator, 0);
+                state.pushOperator(token, propertyLookupOperator, -1);
             },
 
             nextRuleNames: new Set(
@@ -3709,6 +3900,7 @@ class MychExpression
             [
                 "binaryOperator",
                 "propertyLookup",
+                "call",
                 "listLookup",
                 "closingParenthesis",
                 "closingBracket",
@@ -3792,16 +3984,7 @@ class MychExpression
             {
                 function* symbolLookupEvaluator(variables)
                 {
-                    let symbolContext = (token.value in variables) ? variables : context;
-                    let symbolValue = symbolContext[token.value];
-
-                    if (symbolValue instanceof Function)
-                    {
-                        // call symbolValue function as method of symbolContext
-                        return (...args) => symbolValue.apply(symbolContext, args);
-                    }
-                    
-                    return symbolValue;
+                    return variables.$getProperty(token.value, context);
                 }
 
                 state.pushEvaluator(token, symbolLookupEvaluator);
@@ -3827,7 +4010,7 @@ class MychExpression
             {
                 function* anonymousLookupEvaluator(variables)
                 {
-                    let anonymousValue = variables["..."];
+                    let anonymousValue = variables.$getAnonymousVariable();
                     return anonymousValue;
                 }
 
@@ -3860,6 +4043,7 @@ class MychExpression
             [
                 "binaryOperator",
                 "propertyLookup",
+                "call",
                 "listLookup",
                 "closingParenthesis",
                 "closingBracket",
