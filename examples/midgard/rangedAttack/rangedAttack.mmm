@@ -1,8 +1,9 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.12.0 (2021-12-29)"
+!mmm   set scriptVersion = "1.12.0 (2021-12-31)"
 !mmm
+!mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
 !mmm     exit script
@@ -17,11 +18,11 @@
 !rem // including global constants
 %{MacroSheetLibrary|libMidgardGlobal}
 !rem // including function library here to avoid breaking the link between customize and script blocks 
+%{MacroSheetLibrary|libBasics}
 %{MacroSheetLibrary|libMidgardFunctions}
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cCheckVersion        Toggle version check
 !rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
@@ -35,7 +36,6 @@
 !rem   //  cAmmoMagicDamage     Damage roll expression ("1d6+x") for optional additional magic damage
 !rem   //  cFoeNameDefault      Output label for targets without names
 !rem   //
-!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Bogen"
 !mmm   set customizable cWeaponName = ""

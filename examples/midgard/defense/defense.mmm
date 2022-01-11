@@ -3,6 +3,12 @@
 !mmm script
 !mmm   set scriptVersion = "defense 1.10.0 (2021-12-31)"
 !mmm
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
 !mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
@@ -18,11 +24,9 @@
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cCheckVersion        Toggle version check
 !rem   //  cVerbose             Toggle narrative output: true for on, false for off 
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //
-!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = ""
 !rem
@@ -47,11 +51,6 @@
 !mmm   end if
 !mmm   set customizable cGMSilentMode = 0
 !mmm   set customizable cDefenseRoll = roll("1d20")
-!mmm
-!mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
-!mmm     exit script
-!mmm   end if
 !mmm
 !rem   // Constants
 !mmm
