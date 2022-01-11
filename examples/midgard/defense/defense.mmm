@@ -72,39 +72,20 @@
 !mmm   end if
 !rem
 !rem   // Validate attack data and request manual entry if anything is amiss
-!mmm   set validInputs = 0
-!mmm   if m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
-!mmm     set validInputs = validInputs + 1
-!mmm   end if
-!mmm   if m3mgdExchange.(m3mgdAttrAttackType) eq "melee" or m3mgdExchange.(m3mgdAttrAttackType) eq "ranged"
-!mmm     set attackType = m3mgdExchange.(m3mgdAttrAttackType)
-!mmm     set validInputs = validInputs + 1
-!mmm   end if
-!mmm   if m3mgdExchange.(m3mgdAttrAttackResult) >= 20
-!mmm     set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
-!mmm     set validInputs = validInputs + 1
-!mmm   end if
-!mmm   if m3mgdExchange.(m3mgdAttrAttackResult).max eq "true" or m3mgdExchange.(m3mgdAttrAttackResult).max eq "false"
-!mmm     set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
-!mmm     set validInputs = validInputs + 1
-!mmm   end if
-!mmm   if not isunknown(m3mgdExchange.(m3mgdAttrAttackDamage)) and m3mgdExchange.(m3mgdAttrAttackDamage) >= 0
-!mmm     set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
-!mmm     set validInputs = validInputs + 1
-!mmm   end if
-!mmm   if not isunknown(m3mgdExchange.(m3mgdAttrAttackDamageRoll)) and m3mgdExchange.(m3mgdAttrAttackDamageRoll) >= 0
-!mmm     set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
-!mmm     set validInputs = validInputs + 1
-!mmm   end if
-!mmm   if not isunknown(m3mgdExchange.(m3mgdAttrAttackWeaponType)) and not m3mgdExchange.(m3mgdAttrAttackWeaponType) eq ""
-!mmm     set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
-!mmm     set validInputs = validInputs + 1
-!mmm   end if 
-!mmm   
-!mmm   if validInputs < 7
-!mmm     do whisperback("**Abwehrskript: Daten fehlen** [**Angriffsdaten eingeben**](~defenseDataEntry)")
+!mmm   if not m3mgdValidateAttackData()
+!mmm     do whisperback("**Abwehrskript: Daten fehlen oder widersprüchlich** [**Angriffsdaten eingeben**](~defenseDataEntry)")
 !mmm     exit script
 !mmm   end if
+!mmm   if not m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
+!mmm     do whisperback("**Abwehrskript:** " & m3mgdExchange.(m3mgdAttrAttackTargetID).name & " wurde zuletzt angegriffen, nicht ich. [**Angriffsdaten eingeben**](~defenseDataEntry)")
+!mmm     exit script
+!mmm   end if
+!mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
+!mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
+!mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
+!mmm   set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
+!mmm   set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
+!mmm   set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
 !mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
