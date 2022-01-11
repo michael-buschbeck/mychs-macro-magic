@@ -1,13 +1,17 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.11.1 (2021-12-19)"
+!mmm   set scriptVersion = "v1.12.0 (2021-12-28)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.21
-!mmm     do whisperback("Abbruch: MMM-Version 1.21.0 oder höher erforderlich.")
+!mmm   if version < 1.24
+!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
+!mmm
+!rem // including function library here to avoid breaking the link between customize and script blocks 
+%{MacroSheetLibrary|libMidgardFunctions}
+!rem
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
@@ -288,14 +292,6 @@
 !mmm     set outputWeaponLabel = cWeaponType & " *" & cWeaponName & "*"
 !mmm   end if
 !mmm
-!rem   // Prepare visual indicator of exhaustion or lack to access to endurance attribute for output
-!mmm   if isdenied(foeEndurance)
-!mmm     set foeEnduranceIndicator = highlight(emojiLock, "bad", foeName & ".AP: Zugriff verweigert")
-!mmm   else if foeEndurance <= 0
-!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "info", foeName & ".AP:0")
-!mmm   else
-!mmm     set foeEnduranceIndicator = ""
-!mmm   end if 
 !mmm
 !mmm   if cVerbose
 !mmm     combine chat
@@ -352,7 +348,7 @@
 !mmm       chat: /w GM 
 !mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
-!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${foeEnduranceIndicator}}}
+!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(foeID, cHealthAttr, cEnduranceAttr)}}}
 !mmm     if attackResult >= 20
 !mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{cAttackRoll})}}
 !mmm     else 

@@ -349,3 +349,44 @@
 !mmm   return round(max(absDistY, absDistX))
 !mmm
 !mmm end function
+
+!rem // m3mgdShapeMoji(tokenID, [healthAttr], [enduranceAttr])
+!rem //
+!rem // Returns visual indicator of health and exhaustion or lack to access to health/endurance attributes.
+!rem // If healthAttr/enduranceAttr are not provided, they default to script.cHealthAttr/cEnduranceAttr.
+!rem //
+!mmm function m3mgdShapeMoji(tokenID, healthAttr, enduranceAttr)
+!mmm   if healthAttr == default and script.cHealthAttr ne ""
+!mmm     set healthAttr = script.cHealthAttr
+!mmm   else
+!mmm     do whisperback("No health attribute provided as argument or at script level")
+!mmm     return false
+!mmm   end if
+!mmm   if enduranceAttr == default and script.cEnduranceAttr ne ""
+!mmm     set enduranceAttr = script.cEnduranceAttr
+!mmm   else
+!mmm     do whisperback("No endurance attribute provided as argument or at script level")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isdenied(tokenID.(healthAttr)) or isdenied(tokenID.(enduranceAttr))
+!mmm     return highlight("🔒", "bad", tokenID.name & ".AP/LP: Zugriff auf mind. ein Attribut verweigert")
+!mmm   end if 
+!mmm
+!mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 0
+!mmm     return highlight("💀", "bad", "Dem Tode nah... jetzt zählt jede Sekunde!")
+!mmm   end if
+!mmm
+!mmm   set shapeMoji = ""
+!mmm   if tokenID.(healthAttr).max != 0 and tokenID.(healthAttr) < .5 * tokenID.(healthAttr).max
+!mmm     set shapeMoji = shapeMoji & "🤕"
+!mmm   end if 
+!mmm   if tokenID.(enduranceAttr).max != 0 and tokenID.(enduranceAttr) <= 0
+!mmm     set shapeMoji = shapeMoji & "🥴"
+!mmm   end if 
+!mmm   if shapeMoji eq ""
+!mmm     set shapeMoji = "😀"
+!mmm   end if 
+!mmm   return shapeMoji
+!mmm     
+!mmm end function

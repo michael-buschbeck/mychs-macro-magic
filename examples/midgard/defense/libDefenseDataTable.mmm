@@ -6,13 +6,7 @@
 !rem
 !mmm   set prvEndurance = script.endurance
 !mmm   set prvHealth = script.health
-!mmm   set shapeMoji = ""
-!mmm   if not script.cOwnID.(cEnduranceAttr).max == 0 and prvEndurance <= 0
-!mmm     set shapeMoji = "🥴"
-!mmm   end if
-!mmm   if not script.cOwnID.(cHealthAttr).max == 0 and prvHealth <= 0
-!mmm     set shapeMoji = "💀"
-!mmm   end if
+!mmm   set shapeMoji = m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr)
 !mmm
 !mmm   if script.criticalAttack
 !mmm     set attackResult = highlight(script.attackResult, "good", "Kritisch erfolgreicher Angriff von " & script.m3mgdExchange.(m3mgdAttrAttackerID).name)

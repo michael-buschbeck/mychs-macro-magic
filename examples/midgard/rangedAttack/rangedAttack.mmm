@@ -388,14 +388,6 @@
 !mmm     set outputWeaponLabel = cWeaponType & " *" & cWeaponName & "*"
 !mmm   end if
 !mmm
-!rem   // Prepare visual indicator of exhaustion or lack to access to endurance attribute for output
-!mmm   if isdenied(foeEndurance)
-!mmm     set foeEnduranceIndicator = highlight(emojiLock, "bad", foeName & ".AP: Zugriff verweigert")
-!mmm   else if foeEndurance <= 0
-!mmm     set foeEnduranceIndicator = highlight(emojiExhausted, "normal", foeName & ".AP:0")
-!mmm   else
-!mmm     set foeEnduranceIndicator = ""
-!mmm   end if 
 !mmm
 !mmm   if cVerbose
 !mmm     combine chat
@@ -441,7 +433,7 @@
 !mmm         chat: /w GM 
 !mmm       end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Angriff mit ${cWeaponType} * ${cWeaponName} *}} 
-!mmm     chat:      {{Ziel=**${foeName}** ${foeEnduranceIndicator}}}
+!mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(foeID, cHealthAttr, cEnduranceAttr)}}}
 !mmm     if iscritical(cAttackRoll)
 !mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${cAttackRoll})}}
 !mmm     else if attackResult >= 20
