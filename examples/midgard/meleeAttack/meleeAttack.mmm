@@ -249,7 +249,7 @@
 !rem   // Save key attack data for defense script
 !rem
 !mmm   if attackResult >= 20 and damageResult > 0
-!mmm     if not m3mgdExchangeStoreAttack("ranged") 
+!mmm     if not m3mgdExchangeStoreAttack("melee") 
 !mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
 !mmm     end if
 !mmm   end if
