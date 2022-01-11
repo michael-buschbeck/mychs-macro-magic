@@ -384,6 +384,108 @@ Shorthand for doing **exit *block*** inside an **if** block because that's a pre
 Just use whichever you prefer.
 
 
+### _!mmm_ **function** _funcname_**()** [...] **end function**
+
+Defines a custom function that you can call – like any of the [built-in functions](#functions) – as part of any expression you like. For example, you can define a custom function that sends a cheer to chat and call it in a **do** command:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **function** cheer() | *(define custom function called `cheer`)*
+| 3    | _!mmm_         **chat:** Rejoice! | *(commands to execute when function is called)*
+| 4    | _!mmm_     **end function**
+| 5    | _!mmm_     **do** cheer() | ***Finn:*** Rejoice!
+| 6    | _!mmm_     **chat:** I have defeated our enemy! | ***Finn:*** I have defeated our enemy!
+| 7    | _!mmm_     **do** cheer() | ***Finn:*** Rejoice!
+| 8    | _!mmm_ **end script**
+
+You can use any commands you like (and any number of commands) between **function** and **end function**. The commands you put inside a **function** block are called the _function body_. You can even put nested **function** blocks inside a function body; the nested function will be available only in the function that contains it.
+
+Functions defined inside a **script** block can be called any time after their definition but only inside the same **script** block – it has the same lifetime as a script variable. If a function is defined outside a **script** block, it becomes a _global function_ that can be called from anywhere (but only by the player that defined it).
+
+A function body works like a mini-script inside your script and gets its own, clean variable stash so you can't accidentally overwrite any of the script's variables. If you need to _read_ any of the script's variables, you can do so by accessing them through the special `script` variable available only in function bodies:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **function** cheer() | *(define custom function called `cheer`)*
+| 3    | _!mmm_         **chat:** Rejoice! ${script.message} | *(use `script.message` to read the script's variable)*
+| 4    | _!mmm_     **end function**
+| 5    | _!mmm_     **set** message = "I have done a great deed!" | *(set variable `message` read by function)*
+| 6    | _!mmm_     **do** cheer() | ***Finn:*** Rejoice! I have done a great deed!
+| 7    | _!mmm_     **set** message = "I have defeated our enemy!" | *(set variable `message` read by function)*
+| 8    | _!mmm_     **do** cheer() | ***Finn:*** Rejoice! I have defeated our enemy!
+| 9    | _!mmm_ **end script**
+
+This lets you pass information into your function: Set some script variables before a function call and read them through the `script` variable in the function body. It's sometimes more convenient to define and use _function parameters_ though; see the next section for details on that.
+
+To pass information back from your function to the script code that called it, use the [**return** command](#mmm-return-expression).
+
+
+### _!mmm_  **function** _funcname_**(**_param1_**,** _param2_**,** _..._**)** [...] **end function**
+
+Like the **function** command described in the previous section, but defines a function that has one or several _parameters_.
+
+When you call this function in an expression, you can supply a list of _function arguments_ in parentheses – one function argument per parameter you've defined for your function:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **function** boast(action) | *(define function `boast` with one parameter called `action`)*
+| 3    | _!mmm_         **chat:** Rejoice! I have ${action}! | *(use value passed in `action` parameter)*
+| 4    | _!mmm_     **end function**
+| 5    | _!mmm_     **do** boast("done a great deed") | ***Finn:*** Rejoice! I have done a great deed!
+| 6    | _!mmm_     **do** boast("defeated our enemy") | ***Finn:*** Rejoice! I have defeated our enemy!
+| 7    | _!mmm_ **end script**
+
+This works just as well as setting a script variable and reading it through the special `script` variable in the function body except it's more concise. What's more, it also works when you want to pass information into a custom function from inside another custom function – in contrast, the `script` variable only allows access to the main script's variables.
+
+If you supply fewer function arguments in a call than there are parameters defined for the function, all parameters than don't get an explicit argument value are assigned the special `default` value. You can use the built-in `isdefault()` function to check if a parameter was omitted in the function call:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **function** boast(action, exclamation) | *(define function `boast` with parameters `action` and `exclamation`)*
+| 3    | _!mmm_         **if** isdefault(exclamation) | *(check if `exclamation` argument was omitted)*
+| 4    | _!mmm_             **set** exclamation = "Rejoice" | *(set `exclamation` to default value if necessary)*
+| 5    | _!mmm_         **end if**
+| 6    | _!mmm_         **chat:** \${exclamation}! I have \${action}! | *(use values in `action` and `exclamation` parameters)*
+| 7    | _!mmm_     **end function**
+| 8    | _!mmm_     **do** boast("done a great deed") | ***Finn:*** Rejoice! I have done a great deed!
+| 9    | _!mmm_     **do** boast("defeated our enemy", "Behold") | ***Finn:*** Behold! I have defeated our enemy!
+| 10   | _!mmm_ **end script**
+
+
+### _!mmm_ **return**
+
+Exits a function immediately. Can only be used inside a [**function** block](#mmm-function--end-function).
+
+This variant of the **return** command (without an expression to return) works exactly the same as the [**exit function** command](#mmm-exit-block) – you can use either or both interchangeably. The **return** command with an expression to return is more interesting – see the next section for details.
+
+
+### _!mmm_ **return** *expression*
+
+Exits a function immediately and makes it return a value. Can only be used inside a [**function** block](#mmm-function--end-function).
+
+This command is how you can pass information back from within a function body to the script code that called the function. Consider the [built-in functions](#functions): Most of them take one or several arguments, do some function-specific processing with them, and then _return_ a result – for example, `min(a,b)` returns the lesser of its `a` and `b` arguments.
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **function** attack(skill, modifiers) | *(define function `attack` with parameters `skill` and `modifiers`)*
+| 3    | _!mmm_         **set** effectiveAttackRoll = roll("1d20") + modifiers | *(roll and add modifiers)*
+| 4    | _!mmm_         **return** effectiveAttackRoll >= skill | *(return `true` if attack succeeded, else `false`)*
+| 5    | _!mmm_     **end function**
+| 6    | _!mmm_     **if** attack(sender.SwordSkill) | *(roll attack with sword, no modifiers)*
+| 7    | _!mmm_         **chat:** I've landed a hit with my sword! | ***Finn:*** I've landed a hit with my sword!
+| 8    | _!mmm_     **else if** attack(sender.SlingshotSkill, -1) | *(roll attack with slingshot with modifier)*
+| 9    | _!mmm_         **chat:** I've hit them with my slingshot even though they're close!
+| 10   | _!mmm_     **end if**
+| 11   | _!mmm_ **end script**
+
+Notice that the `attack(sender.SwordSkill)` call only passes a value for the `skill` parameter but omits an argument for the `modifiers` parameter – so `modifiers` becomes the special `default` value in the function, which is interpreted as zero when it's added to the roll result.
+
+
 ### _!mmm_ **customize** [...] **end customize**
 
 Placed before a **script** block to customize it. In a **customize** block, use **set** and **translate** commands to customize variables and chat messages in the script that follows.
@@ -915,6 +1017,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.24.0  | 2021-12-25 | Support `function` and `return` commands for custom functions
 | 1.23.0  | 2021-12-16 | Introduce `where` and `select` operators and `...` variable
 | 1.22.0  | 2021-12-15 | Add `delay(seconds)` to add delays in script execution
 | 1.21.0  | 2021-12-15 | Support `chat` impersonation
