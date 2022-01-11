@@ -60,18 +60,12 @@
 !mmm   set customizable cHealthAttr = "LP"
 !mmm   set customizable cEnduranceAttr = "AP"
 !mmm   set customizable cGMSilentMode = 0
-!mmm   set customizable cAttackRoll = undef
+!mmm   set customizable cAttackRoll = roll("1d20")
 !mmm
 !rem   // Refetch token_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = cOwnID.token_id
 !mmm   if isdenied(cOwnID)
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
-!mmm     exit script
-!mmm   end if
-!rem
-!rem   // GM silent mode vs. player mode
-!mmm   if cGMSilentMode == 0 and not cAttackRoll
-!mmm     do whisperback("Abbruch: Spielermodus erfordert Übergabe des Würfelwurfs - " & cAttackRoll) 
 !mmm     exit script
 !mmm   end if
 !rem
@@ -112,6 +106,10 @@
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
 !mmm   end if
+!mmm   set foeEndurance = foeID.bar2
+!mmm
+!rem   // - Fetch ammo properties
+!mmm
 !mmm   set ammoCount = cOwnID.(cAmmoLabel)
 !mmm   set ammoLabel = cAmmoLabel
 !mmm   if cAmmoMagic
@@ -127,7 +125,6 @@
 !mmm     chat [OutOfAmmo]: Ich greife nach meinen ${ammoLabel}n, um auf ${foeName} zu schießen, doch **OH SCHRECK -- keine ${ammoLabel} mehr drin!** Schade. Da hat ${foeName} nochmal Glück gehabt.
 !mmm     exit script
 !mmm   end if
-!mmm   set foeEndurance = foeID.bar2
 !rem
 !rem   // Calculate direction, exit if direction to target is outside arc of view 
 !mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, foeID)
