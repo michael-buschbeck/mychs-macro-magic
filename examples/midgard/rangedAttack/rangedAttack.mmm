@@ -9,11 +9,13 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.21
-!mmm     do whisperback("Abbruch: MMM-Version 1.21.0 oder höher erforderlich.")
+!mmm   if version < 1.24
+!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem // including global constants
+%{MacroSheetLibrary|libMidgardGlobal}
 !rem // including function library here to avoid breaking the link between customize and script blocks 
 %{MacroSheetLibrary|libMidgardFunctions}
 !rem
@@ -82,18 +84,9 @@
 !rem
 !rem   // - Constants
 !rem
-!mmm   set emojiExhausted = "🥴"
 !mmm   set emojiLock = "🔒"
 !mmm   set emojiMagic = "✨"
 !mmm   set emojiKnife = "🔪"
-!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
-!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
-!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
-!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
 !mmm
 !mmm   set whirlWindMagicMarker = "status_half_haze"
 !mmm
@@ -361,19 +354,9 @@
 !mmm
 !rem   // Save key attack data for defense script
 !mmm   if attackResult >= 20 and damageResult > 0
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackType, "ranged")
-!mmm     do setattrmax(m3mgdExchange, m3mgdAttrAttackType, "")
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackerID, cOwnID)
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, foeID)
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)
-!mmm     do setattrmax(m3mgdExchange, m3mgdAttrAttackResult, criticalAttack)
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, damageResult)
-!mmm     if damageRoll < 0
-!mmm       do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, 0)
-!mmm     else
-!mmm       do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, damageRoll)
+!mmm     if not m3mgdExchangeStoreAttack("ranged") 
+!mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
 !mmm     end if
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, cWeaponType)
 !mmm   end if
 !rem
 !rem   // Break down extra magic damage to player and GM
