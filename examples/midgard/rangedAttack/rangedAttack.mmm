@@ -307,13 +307,13 @@
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & cAttackRoll & ") + (EW = " & effAttack & ") " & modifiers
 !mmm   if iscritical(cAttackRoll)
 !mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
-!mmm     set criticalAttack = 1
+!mmm     set criticalAttack = true
 !mmm   else if isfumble(cAttackRoll)
 !mmm     set attackResult = highlight(attackResult, "bad", attackResultLog)
-!mmm     set criticalAttack = 0
+!mmm     set criticalAttack = false
 !mmm   else 
 !mmm     set attackResult = highlight(attackResult, "normal", attackResultLog)
-!mmm     set criticalAttack = 0
+!mmm     set criticalAttack = false
 !mmm   end if
 !rem
 !mmm   if attackResult >= 20
@@ -383,7 +383,7 @@
 !mmm       else
 !mmm         chat [AttackOpeningMagicDamage]:   Mein Angriff mit $[weaponLabel]{outputWeaponLabel} ($[weaponType]{cWeaponType} "$[weaponName]{cWeaponName}", magischer Zusatzschaden aktiviert) auf $[targetName]{foeName} 
 !mmm       end if
-!mmm       if criticalAttack == 1
+!mmm       if criticalAttack
 !mmm         chat [AttackIsCriticalSuccess]:    ist ein **kritischer Erfolg** ($[attackResult]{attackResult+0}). 
 !mmm       else if isfumble(cAttackRoll)
 !mmm         chat [AttackIsCriticalFailure]:    ist ein **grausamer Patzer**. 
