@@ -348,6 +348,7 @@
 !mmm   if maxEndurance == 0
 !mmm
 !mmm     do whisperback(tokenID.token_name & " ist kein Wesen, das Ausdauerpunkte gewinnen kann (AP.max=0).")
+!mmm     return highlight(prvEndurance, "normal", "unverändert")
 !mmm
 !mmm   else
 !mmm
@@ -425,6 +426,7 @@
 !mmm   if maxHealth == 0
 !mmm
 !mmm     do whisperback(tokenID.token_name & " ist kein Lebewesen (LP=0), dass geheilt werden kann.")
+!mmm     return highlight(prvHealth, "normal", "unverändert")
 !mmm
 !mmm   else
 !mmm
@@ -446,7 +448,7 @@
 !mmm   
 !mmm     if newHealth == maxHealth
 !mmm   
-!mmm       set newHealth = highlight(newHealth, "good", "= " & prvHealth & effOffset)
+!mmm       set newHealth = highlight(newHealth, "good", "💪 kerngesund! (= " & prvHealth & effOffset & ")")
 !mmm       do setattr(tokenID, "status_death_zone", false)
 !mmm       do setattr(tokenID, "status_red", false)
 !mmm       do setattr(tokenID, "status_yellow", false)
@@ -495,8 +497,6 @@
 !mmm     end if
 !mmm   
 !mmm   end if
-!mmm   
-!mmm   return newHealth
 !mmm   
 !mmm end function
 !rem

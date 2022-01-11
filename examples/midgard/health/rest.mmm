@@ -1,0 +1,108 @@
+!rem // rest: process health & endurance effects of rest or sleep
+!rem //
+%{MacroSheetLibrary|libMidgardFunctions}
+!mmm script
+!mmm   set scriptVersion = "sleep 1.0.0 (2022-01-11)"
+!mmm
+!mmm   if selected
+!mmm     set customizable cOwnID = selected.token_id
+!mmm     set customizable cHealthAttr = "bar3"
+!mmm     set customizable cEnduranceAttr = "bar2"
+!mmm     set user = "GM"
+!mmm   else 
+!mmm     set customizable cOwnID = sender.token_id
+!mmm     set customizable cHealthAttr = "LP"
+!mmm     set customizable cEnduranceAttr = "AP"
+!mmm     set user = cOwnID.name
+!mmm   end if
+!mmm   
+!mmm   set sleepTime = "?{Wie viele Stunden Ruhe/Schlaf?|keine,0|mind. 10min,10|mind. 30min,30|mind. 4h,240|mind. 8h,480}"
+!mmm   set midnightPassage = ?{Ist es Mitternacht gewesen?|Ja,true|Nein,false}
+!mmm   
+!mmm   set enduranceGain = 0
+!mmm   set healthGain = 0
+!mmm   set restLog = ""
+!mmm   set enduranceTooltip = ""
+!mmm   
+!mmm   if cOwnID.(cEnduranceAttr).max != 0
+!mmm
+!mmm     if sleepTime == 10 and cOwnID.(cEnduranceAttr) <= 1
+!mmm
+!mmm       set enduranceGain = 2 - cOwnID.(cEnduranceAttr)
+!mmm       set restLog = "10min Ruhe"
+!mmm       set enduranceTooltip = "= +(2-AP:" & cOwnID.(cEnduranceAttr) & ")"
+!mmm   
+!mmm     else if sleepTime == 10
+!mmm    
+!mmm       set restLog = "10min Ruhe ohne Erholung"
+!mmm       set enduranceTooltip = "AP > 2: keine Erholung nach nur 10min"
+!mmm   
+!mmm     else if sleepTime == 30
+!mmm   
+!mmm       set enduranceGain = 1 + cOwnID.Grad
+!mmm       set restLog = "30min Kurzschlaf"
+!mmm       set enduranceTooltip = "= +(Grad:" & cOwnID.Grad & "+1)"
+!mmm   
+!mmm     else if sleepTime == 240
+!mmm   
+!mmm       set enduranceGain = ceil((cOwnID.(cEnduranceAttr).max - cOwnID.(cEnduranceAttr)) / 2)
+!mmm       set restLog = "4h Schlaf"
+!mmm       set enduranceTooltip = "= +(fehlendeAP:" & (cOwnID.(cEnduranceAttr).max - cOwnID.(cEnduranceAttr)) & "/2)"
+!mmm   
+!mmm     else if sleepTime == 480
+!mmm   
+!mmm       set enduranceGain = cOwnID.(cEnduranceAttr).max - cOwnID.(cEnduranceAttr)
+!mmm       set restLog = "8h Schlaf"
+!mmm       set enduranceTooltip = "= +(fehlendeAP:" & (cOwnID.(cEnduranceAttr).max - cOwnID.(cEnduranceAttr)) & ")"
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   if restLog ne ""
+!mmm     set restLog = restLog & ", "
+!mmm   end if
+!mmm   
+!mmm   if midnightPassage and cOwnID.(cHealthAttr).max != 0
+!mmm   
+!mmm     set healthGain = 1
+!mmm     set restLog = restLog & "über Mitternacht"
+!mmm   
+!mmm   else if cOwnID.(cHealthAttr).max != 0
+!mmm   
+!mmm     set restLog = restLog & "nicht über Mitternacht"
+!mmm   
+!mmm   end if
+!mmm
+!mmm   set newHealth = m3mgdModifyHealth(healthGain, cOwnID, cHealthAttr)
+!mmm   set newEndurance = m3mgdModifyEndurance(enduranceGain, cOwnID, cEnduranceAttr)
+!mmm
+!mmm   if newHealth <= 0 and timeToDie == undef
+!mmm     set timeToDie = "(unbekannt)"
+!mmm   end if
+!mmm
+!mmm   set enduranceGain = highlight("+" & enduranceGain, "normal", enduranceTooltip)
+!mmm   set healthGain = highlight("+" & healthGain, "normal", "über Mitternacht: " & midnightPassage)
+!mmm   
+!mmm   combine chat
+!mmm     
+!mmm     chat: /w "${user}" ${"&"}{template:default} 
+!mmm     chat: {{name=${m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr) & cOwnID.name}: Erholung}} 
+!mmm     
+!mmm     chat: {{${restLog}=${enduranceGain} **AP** / ${healthGain} **LP**}}
+!mmm
+!mmm     if newHealth < 0 and timeToDie < 0
+!mmm     
+!mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
+!mmm     
+!mmm     else
+!mmm     
+!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
+!mmm       chat: {{${m3mgdHealthStatusLabel(cOwnID, cHealthAttr)}=${m3mgdHealthStatusEffectsDesc(cOwnID, cHealthAttr)}}}
+!mmm       chat: {{${m3mgdEnduranceStatusLabel(cOwnID, cEnduranceAttr)}=${m3mgdEnduranceStatusEffectsDesc(cOwnID, cEnduranceAttr)}}}
+!mmm     
+!mmm     end if
+!mmm     
+!mmm   end combine
+!mmm
+!mmm end script
