@@ -635,8 +635,7 @@
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm   end if
-!mmm   
-!mmm   return ((count(script.cWeaponType) == 2 and storeCounter == 10) or (not count(script.cWeaponType) and storeCounter == 9))
+!mmm   return ((count(script.cWeaponType) == 2 and storeCounter == 10) or (count(script.cWeaponType) == 1 and storeCounter == 9))
 !mmm   
 !mmm end function
 !rem

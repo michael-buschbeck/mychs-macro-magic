@@ -118,7 +118,7 @@
 !mmm   if count(cAmmoLabel) == 2 and cAmmoLabel[1] eq "∞"
 !mmm     set ammoCount = "∞"
 !mmm     set ammoLabel = cAmmoLabel[0]
-!mmm   else if not count(cAmmoLabel) and not isunknown(cOwnID.(cAmmoLabel))
+!mmm   else if count(cAmmoLabel) == 1 and not isunknown(cOwnID.(cAmmoLabel))
 !mmm     set ammoCount = cOwnID.(cAmmoLabel)
 !mmm     set ammoLabel = cAmmoLabel
 !mmm   else
