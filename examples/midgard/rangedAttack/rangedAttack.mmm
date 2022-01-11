@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.12.0 (2021-12-28)"
+!mmm   set scriptVersion = "1.12.0 (2021-12-29)"
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
@@ -135,7 +135,7 @@
 !mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
 !mmm     exit script
 !mmm   end if
-!mmm   set foeViewAngle = myViewAngle - 180
+!mmm   set foeViewAngle = m3mgdGetViewAngle(foeID, cOwnID)
 !rem
 !rem   // Deduce ammo spent
 !mmm   set ammoCount = ammoCount - 1

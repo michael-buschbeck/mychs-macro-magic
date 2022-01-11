@@ -111,7 +111,7 @@
 !mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes ($[viewAngle]{myViewAngle}°). Schade.
 !mmm     exit script
 !mmm   end if
-!mmm   set foeViewAngle = myViewAngle - 180
+!mmm   set foeViewAngle = m3mgdGetViewAngle(foeID, cOwnID)
 !mmm   set distance = m3mgdGetDistance(cOwnID, foeID)
 !mmm   set distanceUnits = distunits() 
 !mmm   if (distance/(distsnap()*distscale())) > 0
