@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.10.0 (2021-12-30)"
+!mmm   set scriptVersion = "defense 1.10.0 (2021-12-31)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -36,13 +36,17 @@
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
 !mmm     set customizable cEnduranceAttr = "bar2"
+!mmm   else if m3mgdExchange.(m3mgdAttrAttackTargetID) ne ""
+!mmm     set customizable cOwnID = m3mgdExchange.(m3mgdAttrAttackTargetID)
+!mmm     set customizable cHealthAttr = "bar3"
+!mmm     set customizable cEnduranceAttr = "bar2"
 !mmm   else 
 !mmm     set customizable cOwnID = sender.token_id
 !mmm     set customizable cHealthAttr = "LP"
 !mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
 !mmm   set customizable cGMSilentMode = 0
-!mmm   set customizable cDefenseRoll = undef
+!mmm   set customizable cDefenseRoll = roll("1d20")
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
@@ -59,12 +63,6 @@
 !mmm   set cOwnID = cOwnID.token_id
 !mmm   if isdenied(cOwnID) or isunknown(cOwnID)
 !mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
-!mmm     exit script
-!mmm   end if
-!rem
-!rem   // GM silent mode vs. player mode
-!mmm   if cGMSilentMode == 0 and not cDefenseRoll
-!mmm     do whisperback("Abbruch: Spielermodus erfordert Übergabe des Würfelwurfs - " & cDefenseRoll) 
 !mmm     exit script
 !mmm   end if
 !rem
@@ -211,9 +209,6 @@
 !rem
 !rem   // Run & format rolls
 !rem
-!mmm   if cGMSilentMode
-!mmm     set cDefenseRoll = roll("1d20")
-!mmm   end if
 !mmm   set defenseResult = cDefenseRoll + effDefense + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
