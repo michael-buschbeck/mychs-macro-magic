@@ -1,0 +1,17 @@
+!rem // libBasics
+!rem // 
+!rem // Basic MMM utility functions
+!rem // 
+!rem // 
+!rem // count(list) counts the number of items in list
+!rem // 
+!mmm function count(list)
+!mmm   if not list
+!mmm     return false
+!mmm   end if
+!mmm   set count = 0
+!mmm   for item in list
+!mmm     set count = count + 1
+!mmm   end for
+!mmm   return count
+!mmm end function

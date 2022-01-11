@@ -568,3 +568,50 @@
 !mmm   return (storeCounter == 9)
 !mmm   
 !mmm end function
+!rem
+!rem // m3mgdListDefenseWeapons(tokenID)
+!rem // 
+!rem //   Returns a list of tokenID's defense weapons (attribute names), or false if there are none or none accessible.
+!rem // 
+!mmm function m3mgdListDefenseWeapons(tokenID)
+!mmm   set defenseWeaponsList = findattr(tokenID, "Abwehr", "AbwWaffe")
+!mmm   if isunknown(defenseWeaponsList) or isdenied(defenseWeaponsList)
+!mmm     return false
+!mmm   else 
+!mmm     return defenseWeaponsList
+!mmm   end if
+!mmm end function
+!rem
+!rem // m3mgdListMeleeAttackWeapons(tokenID)
+!rem // 
+!rem //   Returns a list of tokenID's melee attack weapons (attribute names), or false if there are none or none accessible.
+!rem // 
+!mmm function m3mgdListMeleeAttackWeapons(tokenID)
+!mmm   set attackWeaponsList = findattr(tokenID, "Angriff", "Waffe")
+!mmm   if isunknown(attackWeaponsList) or isdenied(attackWeaponsList)
+!mmm     return false
+!mmm   end if
+!mmm   for attackWeaponAttr in attackWeaponsList
+!mmm     if tokenID.(findattr(tokenID, "Angriff", "Waffe", tokenID.(attackWeaponAttr), "FKWaffe")) != 1
+!mmm       set meleeAttackWeaponsList = meleeAttackWeaponsList, attackWeaponAttr
+!mmm     end if
+!mmm   end for
+!mmm   return meleeAttackWeaponsList
+!mmm end function
+!rem
+!rem // m3mgdListRangedAttackWeapons(tokenID)
+!rem // 
+!rem //   Returns a list of tokenID's ranged attack weapons (attribute names), or false if there are none or none accessible.
+!rem // 
+!mmm function m3mgdListRangedAttackWeapons(tokenID)
+!mmm   set attackWeaponsList = findattr(tokenID, "Angriff", "Waffe")
+!mmm   if isunknown(attackWeaponsList) or isdenied(attackWeaponsList)
+!mmm     return false
+!mmm   end if
+!mmm   for attackWeaponAttr in attackWeaponsList
+!mmm     if tokenID.(findattr(tokenID, "Angriff", "Waffe", tokenID.(attackWeaponAttr), "FKWaffe")) == 1
+!mmm       set rangedAttackWeaponsList = rangedAttackWeaponsList, attackWeaponAttr
+!mmm     end if
+!mmm   end for
+!mmm   return rangedAttackWeaponsList
+!mmm end function
