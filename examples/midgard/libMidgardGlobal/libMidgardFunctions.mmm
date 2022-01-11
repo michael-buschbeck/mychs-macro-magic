@@ -125,6 +125,8 @@
 !rem // 
 !mmm function m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
 !mmm   
+!mmm   set enduranceLabel = "🔋 "
+!mmm
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return false
@@ -137,11 +139,11 @@
 !mmm
 !mmm   if tokenID.status_green eq "shown"
 !mmm     
-!mmm     return "Erschöpft"
+!mmm     return enduranceLabel & "Erschöpft"
 !mmm     
 !mmm   else
 !mmm     
-!mmm     return "Geht noch!"
+!mmm     return enduranceLabel & "Geht noch!"
 !mmm     
 !mmm   end if
 !mmm     
@@ -207,6 +209,8 @@
 !rem // 
 !mmm function m3mgdHealthStatusLabel(tokenID, healthAttr)
 !mmm   
+!mmm   set healthLabel = "⚕️ "
+!mmm
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return false
@@ -219,23 +223,23 @@
 !mmm
 !mmm   if tokenID.status_yellow eq "shown"
 !mmm     
-!mmm     return "Schwer verwundet"
+!mmm     return healthLabel & "Schwer verwundet"
 !mmm     
 !mmm   else if tokenID.status_red eq "shown"
 !mmm     
-!mmm     return "Extrem schwer verwundet"
+!mmm     return healthLabel & "Extrem schwer verwundet"
 !mmm     
 !mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) >= 0
 !mmm     
-!mmm     return "Dem Tode nah"
+!mmm     return healthLabel & "Dem Tode nah"
 !mmm     
 !mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) < 0
 !mmm     
-!mmm     return "Tödlich verwundet"
+!mmm     return healthLabel & "Tödlich verwundet"
 !mmm     
 !mmm   else
 !mmm     
-!mmm     return "Soweit in Ordnung!"
+!mmm     return healthLabel & "Soweit in Ordnung!"
 !mmm     
 !mmm   end if
 !mmm     

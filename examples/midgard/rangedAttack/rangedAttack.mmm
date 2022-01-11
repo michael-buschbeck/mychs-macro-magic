@@ -122,7 +122,7 @@
 !mmm     set ammoCount = cOwnID.(cAmmoLabel)
 !mmm     set ammoLabel = cAmmoLabel
 !mmm   else
-!mmm     do whisperback("Abbruch: Munitionsattribut '" & cAmmoLabel & "'falsch definiert oder fehlt")
+!mmm     do whisperback("Abbruch: Munitionsattribut '" & cAmmoLabel & "' falsch definiert oder fehlt.")
 !mmm     exit script
 !mmm   end if
 !mmm   if cAmmoMagic
