@@ -71,23 +71,6 @@
 !mmm     set sender = cOwnID
 !mmm   end if
 !rem
-!rem   // Validate defense weapon and request manual entry if selection is missing
-!mmm   if cWeaponLabel eq ""
-!mmm     set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
-!mmm     if not defenseWeaponList
-!mmm       do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
-!mmm       exit script
-!mmm     else if count(defenseWeaponList) == 1
-!mmm       set cWeaponLabel = cOwnID.(defenseWeaponList)
-!mmm     else if count(defenseWeaponList) > 1 and (defenseWeaponList where cOwnID.(...) eq "Abwehr ohne Schild")
-!mmm       do whisperback(cOwnID.name & " hat mehrere Abwehrfertigkeiten, nutze 'Abwehr ohne Schild'.")
-!mmm       set cWeaponLabel = "Abwehr ohne Schild"
-!mmm     else 
-!mmm       do whisperback("Fehler: " & cOwnID.name & " hat mehrere Abwehrfertigkeiten, aber nicht 'Abwehr ohne Schild'.")
-!mmm       exit script
-!mmm     end if
-!mmm   end if
-!rem
 !rem   // Validate attack data and request manual entry if anything is amiss
 !mmm   set validInputs = 0
 !mmm   if m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
@@ -140,8 +123,24 @@
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !rem
-!rem   // Check for applicability of parry weapon or shield
-!rem   // TODO: parry weapons are usable only if the attack is from the front or the respective side, plus further restrictions based on the kind of parry weapon (Kodex, 70).
+!rem   // Validate defense weapon and request manual entry if selection is missing
+!mmm   if cWeaponLabel eq ""
+!mmm     set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
+!mmm     if not defenseWeaponList
+!mmm       do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
+!mmm       exit script
+!mmm     else if count(defenseWeaponList) == 1
+!mmm       set cWeaponLabel = cOwnID.(defenseWeaponList)
+!mmm     else if count(defenseWeaponList) > 1 and (defenseWeaponList where cOwnID.(...) eq "Abwehr ohne Schild")
+!mmm       set modifierLog = modifierLog & " {{Default=Abwehr ohne Schild}}"
+!mmm       set cWeaponLabel = "Abwehr ohne Schild"
+!mmm     else 
+!mmm       do whisperback("Fehler: " & cOwnID.name & " hat mehrere Abwehrfertigkeiten, aber nicht 'Abwehr ohne Schild'.")
+!mmm       exit script
+!mmm     end if
+!mmm   end if
+!rem
+!rem   // If user wants to use a parry weapon/shield, validate
 !mmm   set parryWeaponUsable = false
 !mmm   set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
 !mmm   if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
@@ -157,7 +156,7 @@
 !rem     // Endurance protection: reverse sign for more logical handling (modifier is stored as negative in character sheet)
 !mmm     set parryWeaponEnduranceProtection = -1 * cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
 !mmm     set effDefense = effDefense + effParryWeaponSkill
-!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW +" & effParryWeaponSkill & ", AP-Verlust -" & parryWeaponEnduranceProtection & "}}"
+!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW inkl. +" & effParryWeaponSkill & ", AP-Verlust (leichte Treffer) -" & parryWeaponEnduranceProtection & "}}"
 !mmm   else if parryWeapon and not parryWeaponUsable
 !mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackWeaponType & "}}"
 !mmm   else if parryWeapon
