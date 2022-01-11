@@ -142,50 +142,6 @@
 !mmm   end if
 !rem
 !rem   // Data table
-!mmm   combine chat
-!rem     // Check if script is run for an NPC (whisper data to GM only)
-!mmm     if cGMSilentMode == 1
-!mmm       chat: /w GM 
-!mmm     end if
-!mmm     chat: ${"&"}{template:default} 
-!mmm     if endurance > 0
-!mmm       chat: {{name=${cOwnID.name}: Abwehr gegen Frostball}} 
-!mmm     else 
-!mmm       chat: {{name=${cOwnID.name}: Abwehr gegen Frostball (erschöpft)}} 
-!mmm     end if 
-!mmm     chat: {{Angriff=${attackResult}}}
-!mmm     if defenseSuccess
-!mmm       chat: {{Abwehr=${defenseResult} **Leichter Treffer**}}
-!mmm       chat: {{Schaden=**${effEnduranceLoss}&nbsp;AP**}}
-!mmm       do spawnfx("bubbling-water", cOwnID.left, cOwnID.top)
-!mmm     else if criticalAttack == true
-!mmm       chat: {{Abwehr=${defenseResult} **Schwerer kritischer Treffer**}}
-!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
-!mmm       chat: {{Kritischer Treffer=Zauber wirkt **doppelt so stark** oder ist **halb so teuer**: Nach Wahl des Zauberers umsetzen.}}
-!mmm       do spawnfx("nova-blood", cOwnID.left, cOwnID.top)
-!mmm     else 
-!mmm       chat: {{Abwehr=${defenseResult} **Schwerer Treffer**}}
-!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
-!mmm       do spawnfx("bubbling-blood", cOwnID.left, cOwnID.top)
-!mmm     end if
-!mmm     if newHealth < 0 and timeToDie < 0
-!mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
-!mmm     else 
-!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
-!mmm       if not cOwnID.(cHealthAttr).max == 0 and newHealth > 3 and newHealth <= 0.5 * maxHealth
-!mmm         chat: {{Schwer verwundet=🟡 max. halbe AP, halbe Bewegung}}
-!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth > 0 and newHealth <= 3
-!mmm         chat: {{Extrem schwer verwundet=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
-!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth == 0
-!mmm         chat: {{Dem Tode nah=💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
-!mmm       else if newHealth < 0 and defenseSuccess
-!mmm         chat: {{Tödlich verwundet=💀 **Countdown läuft**}}
-!mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
-!mmm         chat: {{Tödlich verwundet=💀 **${timeToDie} Minuten bis zum Tod**}}
-!mmm       end if
-!mmm       if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
-!mmm         chat: {{Erschöpft=🟢 (-4 auf alles, max. Last reduziert)}}
-!mmm       end if
-!mmm     end if
-!mmm   end combine
+%{MacroSheetLibrary|libDefenseDataTable}
+!mmm
 !mmm end script

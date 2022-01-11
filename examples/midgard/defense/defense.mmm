@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.7.1 (2021-12-20)"
+!mmm   set scriptVersion = "1.8.0 (2021-12-20)"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.23
@@ -354,67 +354,7 @@
 !mmm   end if
 !rem
 !rem   // Data table
-!mmm   combine chat
-!rem     // Check if script is run for an NPC (whisper data to GM only)
-!mmm     if cGMSilentMode == 1
-!mmm       chat: /w GM 
-!mmm     end if
-!mmm     chat: ${"&"}{template:default} 
-!mmm     if (not parryWeapon) or (parryWeapon and endurance > 0)
-!mmm       chat: {{name=${cOwnID.name}: Abwehr mit ${cWeaponLabel}}} 
-!mmm     else 
-!mmm       chat: {{name=${cOwnID.name}: Abwehr (erschöpft)}} 
-!mmm     end if 
-!mmm     if armorPiercing == 1 and attackDamage > 3
-!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (Rüstungsschutz wg. Geschosstyp auf 3 begrenzt)}}
-!mmm     else if attackDamage == 0
-!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;Sonderschaden**}}
-!mmm     else
-!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden**}}
-!mmm     end if
-!mmm     chat: {{Abwehr=${defenseResult}&nbsp;(**Wurf**&nbsp;${cDefenseRoll})}}
-!mmm     chat: {{Boni/Mali=**${modifiers}**}}
-!mmm     if attackDamage == 0 and defenseSuccess
-!mmm       chat: {{Erfolg=**Abwehr gelungen**}}
-!mmm     else if attackDamage == 0 and (not defenseSuccess) and criticalAttack
-!mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
-!mmm       chat: {{Schaden=**SPEZIAL**}}
-!mmm     else if attackDamage == 0 and (not defenseSuccess) and (not criticalAttack)
-!mmm       chat: {{Fehlschlag=**Schwerer Treffer**}}
-!mmm       chat: {{Schaden=**SPEZIAL**}}
-!mmm     else if attackDamage > 0 and defenseSuccess
-!mmm       chat: {{Erfolg=**Leichter Treffer**}}
-!mmm       chat: {{Schaden=**${effEnduranceLoss}&nbsp;AP**}}
-!mmm       do spawnfx("bubbling-water", cOwnID.left, cOwnID.top)
-!mmm     else if attackDamage > 0 and (not defenseSuccess) and criticalAttack == 1
-!mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
-!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP +&nbsp;krit.&nbsp;Schaden!**}}
-!mmm       do spawnfx("nova-blood", cOwnID.left, cOwnID.top)
-!mmm     else 
-!mmm       chat: {{Fehlschlag=**Schwerer Treffer**}}
-!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
-!mmm       do spawnfx("bubbling-blood", cOwnID.left, cOwnID.top)
-!mmm     end if
-!mmm     if newHealth < 0 and timeToDie < 0
-!mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
-!mmm     else 
-!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
-!mmm       if not cOwnID.(cHealthAttr).max == 0 and newHealth > 3 and newHealth <= 0.5 * maxHealth
-!mmm         chat: {{Schwer verwundet=🟡 max. halbe AP, halbe Bewegung}}
-!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth > 0 and newHealth <= 3
-!mmm         chat: {{Extrem schwer verwundet=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
-!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth == 0
-!mmm         chat: {{Dem Tode nah=💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
-!mmm       else if newHealth < 0 and defenseSuccess
-!mmm         chat: {{Tödlich verwundet=💀 **Countdown läuft**}}
-!mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
-!mmm         chat: {{Tödlich verwundet=💀 **${timeToDie} Minuten bis zum Tod**}}
-!mmm       end if
-!mmm       if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
-!mmm         chat: {{Erschöpft=🟢 (-4 auf alles, max. Last reduziert)}}
-!mmm       end if
-!mmm     end if
-!mmm   end combine
+%{MacroSheetLibrary|libDefenseDataTable}
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   if parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)
