@@ -22,7 +22,7 @@
 !rem // 
 !rem // begin MMM fragment
 !mmm   set PARENT = CURRENT
-!mmm   set CURRENT = "libMidgardGlobal 1.1.0 (2021-12-24)"
+!mmm   set CURRENT = "libMidgardGlobal 1.2.0 (2021-12-29)"
 !mmm
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
@@ -42,13 +42,19 @@
 !mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
 !mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
 !mmm
-!mmm   set m3mgdExchangeAttrList = m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult
-!mmm   set m3mgdExchangeAttrList = m3mgdExchangeAttrList, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
-!mmm   set m3mgdExchangeAttrList = m3mgdExchangeAttrList, m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
+!mmm   set m3mgdExchangeAttrList = m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType, m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
 !mmm
 !mmm   set m3mgdValidMeleeAttackWeaponTypes = "waffenlos", "Einhandschwert", "Zweihandschwert", "Fechtwaffe", "Stichwaffe", "Stockwaffe", "Spießwaffe", "Kettenwaffe", "Einhandschlagwaffe", "Zweihandschlagwaffe", "Zauberstab"
 !mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
 !mmm   set m3mgdValidAttackWeaponTypes = m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
+!mmm
+!mmm   set m3mgdArmorPiercingWeaponTypes = "Langbogen", "Kompositbogen", "schwere Armbrust", "Schwere Armbrust"
+!mmm
+!mmm   set m3mgdParryLargeShieldTypes = "Großer Schild"
+!mmm   set m3mgdParrySmallShieldTypes = "Kleiner Schild"
+!mmm   set m3mgdParrySmallShieldEffectiveAgainst = "Einhandschlagwaffe", "Einhandschwert", "Fechtwaffe", "Kettenwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "waffenlos"
+!mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
+!mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln"
 !mmm
 !mmm   set CURRENT = PARENT
 !mmm   set PARENT = undef

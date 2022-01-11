@@ -9,7 +9,9 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem // including function libraries here to avoid breaking the link between customize and script blocks 
+!rem   // Initialize globals (mainly data exchange)
+%{MacroSheetLibrary|libMidgardGlobal}
+!rem   // including function libraries here to avoid breaking the link between customize and script blocks 
 %{MacroSheetLibrary|libMidgardFunctions}
 %{MacroSheetLibrary|libDefenseDataTable}
 !rem
@@ -46,19 +48,9 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Initialize globals (mainly data exchange)
-!mmm   set CURRENT = scriptVersion
-%{MacroSheetLibrary|libMidgardGlobal}
-!mmm
 !rem   // Constants
 !mmm
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
-!mmm
-!mmm   set parryWeaponLargeShieldTypes = "Großer Schild"
-!mmm   set parryWeaponSmallShieldTypes = "Kleiner Schild"
-!mmm   set parryWeaponSmallShieldEffectiveAgainst = "Einhandschlagwaffe", "Einhandschwert", "Fechtwaffe", "Kettenwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "waffenlos"
-!mmm   set parryWeaponStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
-!mmm   set parryWeaponStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln"
 !rem
 !rem   // Initialize & collect data
 !rem
@@ -136,11 +128,11 @@
 !rem   // TODO: parry weapons are usable only if the attack is from the front or the respective side, plus further restrictions based on the kind of parry weapon (Kodex, 70).
 !mmm   set parryWeaponUsable = false
 !mmm   set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
-!mmm   if parryWeaponLargeShieldTypes where ... eq cWeaponLabel 
+!mmm   if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
 !mmm     set parryWeaponUsable = true
-!mmm   else if (parryWeaponSmallShieldTypes where ... eq cWeaponLabel) and (parryWeaponSmallShieldEffectiveAgainst where ... eq attackWeaponType)
+!mmm   else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
 !mmm     set parryWeaponUsable = true
-!mmm   else if (parryWeaponStandardTypes where ... eq cWeaponLabel) and (parryWeaponStandardEffectiveAgainst where ... eq attackWeaponType)
+!mmm   else if (m3mgdParryStandardTypes where ... eq cWeaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackWeaponType)
 !mmm     set parryWeaponUsable = true
 !mmm   end if
 !rem   // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
@@ -157,10 +149,10 @@
 !mmm   end if
 !rem
 !rem   // Check for armor piercing projectiles
-!mmm   if attackWeaponType eq "Langbogen" or attackWeaponType eq "Kompositbogen" or attackWeaponType eq "schwere Armbrust" or attackWeaponType eq "Schwere Armbrust"
-!mmm     set armorPiercing = 1
+!mmm   if m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType
+!mmm     set armorPiercing = true
 !mmm   else
-!mmm     set armorPiercing = 0
+!mmm     set armorPiercing = false
 !mmm   end if
 !mmm
 !rem   // Collect defense modifiers
@@ -244,7 +236,7 @@
 !mmm
 !rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health)
 !mmm     if not cOwnID.(cHealthAttr).max == 0 and armorProtection > 0
-!mmm       if armorProtection > 3 and armorPiercing == 1
+!mmm       if armorProtection > 3 and armorPiercing == true
 !mmm         set armorProtection = 3
 !mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & ", reduziert wg. Geschosstyp (" & m3mgdExchange.(m3mgdAttrAttackWeaponType) & ")}} "
 !mmm       else
