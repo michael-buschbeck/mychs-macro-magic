@@ -1,7 +1,7 @@
 !rem // m3mgdValidateOwnTokenID(tokenID)
 !rem // 
-!rem // 
-!rem // 
+!rem //   Validates tokenID or pulls script.cOwnID as a default, checks for reading access.
+!rem //   Returns the ID or false in case of validation or access issues.
 !rem // 
 !mmm function m3mgdValidateOwnTokenID(tokenID)
 !mmm 
@@ -17,6 +17,26 @@
 !mmm   end if
 !mmm 
 !mmm   return id 
+!mmm 
+!mmm end function
+!rem // 
+!rem // m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
+!rem // 
+!rem //   Validates attrLabel or, if set to default, defaultAttrLabel, as a readable attribute of tokenID.
+!rem //   Returns the attrLabel value found valid or false in case of validation or access issues.
+!rem // 
+!mmm function m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
+!mmm 
+!mmm   if attrLabel == default
+!mmm     set attrLabel = script.(defaultAttrLabel) 
+!mmm   end if
+!mmm   
+!mmm   if isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
+!mmm     do whisperback("Attribute label " & attrLabel & " invalid for token " & tokenID.name & "/" & tokenID)
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   return attrLabel
 !mmm 
 !mmm end function
 !rem // 
@@ -41,8 +61,6 @@
 !rem // 
 !rem // m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
 !rem // 
-!rem // TODO: validate arguments, handle defaults/remove enduranceAttr arg once access to global script.foo variables works
-!rem // 
 !mmm function m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
 !mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
@@ -50,10 +68,8 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   if enduranceAttr == default and not (isunknown(tokenID.(script.cEnduranceAttr)) or isdenied(tokenID.(script.cEnduranceAttr)))
-!mmm     set enduranceAttr = script.cEnduranceAttr
-!mmm   else
-!mmm     do whisperback("Fatal call to m3mgdEnduranceStatusLabel(): default enduranceAttr invalid")
+!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
+!mmm   if not enduranceAttr
 !mmm     return false
 !mmm   end if
 !mmm
@@ -69,14 +85,17 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdEnduranceStatusEffectsDesc(tokenID, enduranceAttr)
-!rem // 
-!rem // TODO: validate arguments, handle defaults/remove enduranceAttr arg once access to global script.foo variables works
+!rem // m3mgdEnduranceStatusEffectsDesc([tokenID], [enduranceAttr])
 !rem // 
 !mmm function m3mgdEnduranceStatusEffectsDesc(tokenID, enduranceAttr)
 !mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
+!mmm   if not enduranceAttr
 !mmm     return false
 !mmm   end if
 !mmm
@@ -92,14 +111,17 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdEnduranceStatusHighlight(tokenID, enduranceAttr)
-!rem // 
-!rem // TODO: validate arguments, handle defaults/remove enduranceAttr arg once access to global script.foo variables works
+!rem // m3mgdEnduranceStatusHighlight([tokenID], [enduranceAttr])
 !rem // 
 !mmm function m3mgdEnduranceStatusHighlight(tokenID, enduranceAttr)
 !mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
+!mmm   if not enduranceAttr
 !mmm     return false
 !mmm   end if
 !mmm
@@ -119,14 +141,17 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdHealthStatusLabel(tokenID, healthAttr)
-!rem // 
-!rem // TODO: validate arguments, handle defaults/remove healthAttr arg once access to global script.foo variables works
+!rem // m3mgdHealthStatusLabel([tokenID], [healthAttr])
 !rem // 
 !mmm function m3mgdHealthStatusLabel(tokenID, healthAttr)
 !mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
+!mmm   if not healthAttr
 !mmm     return false
 !mmm   end if
 !mmm
@@ -154,14 +179,17 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdHealthStatusEffectsDesc(tokenID, healthAttr)
-!rem // 
-!rem // TODO: validate arguments, handle defaults/remove healthAttr arg once access to global script.foo variables works
+!rem // m3mgdHealthStatusEffectsDesc([tokenID], [healthAttr])
 !rem // 
 !mmm function m3mgdHealthStatusEffectsDesc(tokenID, healthAttr)
 !mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
+!mmm   if not healthAttr
 !mmm     return false
 !mmm   end if
 !mmm
@@ -189,14 +217,17 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdHealthStatusHighlight(tokenID, healthAttr)
-!rem // 
-!rem // TODO: validate arguments, handle defaults/remove healthAttr arg once access to global script.foo variables works
+!rem // m3mgdHealthStatusHighlight([tokenID], [healthAttr])
 !rem // 
 !mmm function m3mgdHealthStatusHighlight(tokenID, healthAttr)
 !mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
+!mmm   if not healthAttr
 !mmm     return false
 !mmm   end if
 !mmm
@@ -224,22 +255,25 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdEnduranceBoost(enduranceGain, tokenID, enduranceAttr)
+!rem // m3mgdEnduranceBoost(enduranceGain, [tokenID], [enduranceAttr])
 !rem // 
 !rem // enduranceGain       Number of endurance points applied to character
 !rem //   
 !rem // Returns the new level of endurance
 !rem //
 !mmm function m3mgdEnduranceBoost(enduranceGain, tokenID, enduranceAttr)
-!mmm
+!mmm   
+!mmm   if enduranceGain <= 0
+!mmm     return false
+!mmm   end if
+!mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
-!mmm   if enduranceAttr == default and not (isunknown(script.cOwnID.(script.cEnduranceAttr)) or isdenied(script.cOwnID.(script.cEnduranceAttr)))
-!mmm     set enduranceAttr = script.cEnduranceAttr
-!mmm   else
-!mmm     do whisperback("Fatal call to m3mgdEnduranceBoost(): default health attribute invalid - " & script.cEnduranceAttr)
+!mmm
+!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
+!mmm   if not enduranceAttr
 !mmm     return false
 !mmm   end if
 !mmm   
@@ -302,14 +336,17 @@
 !rem //
 !mmm function m3mgdHealthBoost(healthGain, tokenID, healthAttr)
 !mmm
+!mmm   if healthGain <= 0
+!mmm     return false
+!mmm   end if
+!mmm   
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
-!mmm   if healthAttr == default and not (isunknown(script.cOwnID.(script.cHealthAttr)) or isdenied(script.cOwnID.(script.cHealthAttr)))
-!mmm     set healthAttr = script.cHealthAttr
-!mmm   else
-!mmm     do whisperback("Fatal call to m3mgdHealthBoost(): default health attribute invalid - " & script.cHealthAttr)
+!mmm   
+!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
+!mmm   if not healthAttr
 !mmm     return false
 !mmm   end if
 !mmm   
