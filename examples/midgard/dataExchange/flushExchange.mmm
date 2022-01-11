@@ -1,22 +1,14 @@
 !rem // flushExchange: MMM-Midgard auxiliary tool to quickly delete current info from the exchange data structure
 !rem // 
 !mmm script
-!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
-!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
-!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
-!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
-!mmm 
-!mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
-!mmm     do whisperback("No permission to access exchange sheet.")
-!mmm     exit script
-!mmm   end if
 !rem
+!mmm   set scriptVersion = "flushExchange 1.1.0 (2021-12-22)"
+!mmm
+!mmm   set CURRENT = scriptVersion
+%{MacroSheetLibrary|libMidgardGlobal}
+!mmm
 !mmm   set counter = 0
-!mmm   for attribute in m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
+!mmm   for attribute in m3mgdExchangeAttrList
 !mmm     do setattr(m3mgdExchange, attribute, "")
 !mmm     do setattrmax(m3mgdExchange, attribute, "")
 !mmm     set counter = counter + 1
@@ -28,7 +20,7 @@
 !mmm     set user = sender.name
 !mmm   end if 
 !mmm   combine chat
-!mmm     chat: /w "${user}" ${"&"}{template:default} {{name=m3mgdFlushExchange}}
+!mmm     chat: /w "${user}" ${"&"}{template:default} {{name=m3mgd tools: flushExchange}}
 !mmm     chat: {{Result=Flushed ${counter} attributes}}
 !mmm   end combine
 !mmm end script
