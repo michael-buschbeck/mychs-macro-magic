@@ -1,0 +1,38 @@
+!rem // applyHealingDataEntry
+!mmm script
+!mmm   set scriptVersion = "applyHealingDataEntry 1.0.0 (2021-12-27)"
+!mmm
+!rem   // Initialize globals (mainly data exchange)
+!mmm
+!mmm   set CURRENT = scriptVersion
+!mmm
+%{MacroSheetLibrary|libMidgardGlobal}
+!mmm
+!rem   // Flush data structure
+!mmm
+!mmm   set _m3mgdExchangeAttributesFlushed = "invalid"
+!mmm
+!mmm   set CURRENT = scriptVersion
+%{MacroSheetLibrary|libFlushExchange}
+!mmm   
+!mmm   if _m3mgdExchangeAttributesFlushed eq "invalid"
+!mmm     do whisperback("Something went wrong, did libFlushExchange not execute properly?")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Collect manually entered healing data
+!mmm
+!mmm   set healthGain = "?{Hinzugewonnene Lebenspunkte (LP)|0}"
+!mmm   set enduranceGain = "?{Hinzugewonnene Ausdauerpunkte (AP)|0}"
+!mmm   if healthGain == 0 and enduranceGain == 0
+!mmm     do whisperback("Abbruch: Weder LP noch AP gewonnen.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Store healing data in exchange structure
+!mmm
+!mmm   do setattr(m3mgdExchange, m3mgdAttrHealthGain, healthGain)
+!mmm   do setattr(m3mgdExchange, m3mgdAttrEnduranceGain, enduranceGain)
+!mmm   
+!mmm end script
+%{MacroSheet|applyHealing}

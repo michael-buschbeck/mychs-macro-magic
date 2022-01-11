@@ -1,0 +1,301 @@
+!rem //
+!rem // m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
+!rem // 
+!rem // TODO: validate arguments, handle defaults/remove enduranceAttr arg once access to global script.foo variables works
+!rem // 
+!mmm function m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
+!mmm   
+!rem //   if tokenID == default and not (isunknown(script.cOwnID.name) or isdenied(script.cOwnID.name))
+!rem //     set tokenID = script.cOwnID
+!rem //   else
+!rem //     do whisperback("Fatal call to m3mgdEnduranceStatusRow(): default token ID invalid - " & tokenID)
+!rem //     return false
+!rem //   end if
+!rem //   
+!rem //   if enduranceAttr == default and not (isunknown(tokenID.(script.cEnduranceAttr)) or isdenied(tokenID.(script.cEnduranceAttr)))
+!rem //     set enduranceAttr = script.cEnduranceAttr
+!rem //   else
+!rem //     do whisperback("Fatal call to m3mgdEnduranceStatusRow(): default enduranceAttr invalid")
+!rem //     return false
+!rem //   end if
+!mmm
+!mmm   if tokenID.status_green eq "shown"
+!mmm     
+!mmm     return "Erschöpft"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "Geht noch!"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem //
+!rem // m3mgdEnduranceStatusEffectsDesc(tokenID, enduranceAttr)
+!rem // 
+!rem // TODO: validate arguments, handle defaults/remove enduranceAttr arg once access to global script.foo variables works
+!rem // 
+!mmm function m3mgdEnduranceStatusEffectsDesc(tokenID, enduranceAttr)
+!mmm   
+!mmm   if tokenID.status_green eq "shown"
+!mmm     
+!mmm     return "🟢 -4 auf alles, max. Last reduziert"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "keine Einschränkungen"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem //
+!rem // m3mgdEnduranceStatusHighlight(tokenID, enduranceAttr)
+!rem // 
+!rem // TODO: validate arguments, handle defaults/remove enduranceAttr arg once access to global script.foo variables works
+!rem // 
+!mmm function m3mgdEnduranceStatusHighlight(tokenID, enduranceAttr)
+!mmm   
+!mmm   if tokenID.(enduranceAttr) == tokenID.(enduranceAttr).max
+!mmm     
+!mmm     return "good"
+!mmm     
+!mmm   else if tokenID.status_green eq "shown"
+!mmm     
+!mmm     return "bad"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "normal"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem //
+!rem // m3mgdHealthStatusLabel(tokenID, healthAttr)
+!rem // 
+!rem // TODO: validate arguments, handle defaults/remove healthAttr arg once access to global script.foo variables works
+!rem // 
+!mmm function m3mgdHealthStatusLabel(tokenID, healthAttr)
+!mmm   
+!mmm   if tokenID.status_yellow eq "shown"
+!mmm     
+!mmm     return "Schwer verwundet"
+!mmm     
+!mmm   else if tokenID.status_red eq "shown"
+!mmm     
+!mmm     return "Extrem schwer verwundet"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) >= 0
+!mmm     
+!mmm     return "Dem Tode nah"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) < 0
+!mmm     
+!mmm     return "Tödlich verwundet"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "Soweit in Ordnung!"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem //
+!rem // m3mgdHealthStatusEffectsDesc(tokenID, healthAttr)
+!rem // 
+!rem // TODO: validate arguments, handle defaults/remove healthAttr arg once access to global script.foo variables works
+!rem // 
+!mmm function m3mgdHealthStatusEffectsDesc(tokenID, healthAttr)
+!mmm   
+!mmm   if tokenID.status_yellow eq "shown"
+!mmm     
+!mmm     return "🟡 max. halbe AP, halbe Bewegung"
+!mmm     
+!mmm   else if tokenID.status_red eq "shown"
+!mmm     
+!mmm     return "🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) >= 0
+!mmm     
+!mmm     return "💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) < 0
+!mmm     
+!mmm     return "💀 **Countdown läuft**"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "keine Einschränkungen"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem //
+!rem // m3mgdHealthStatusHighlight(tokenID, healthAttr)
+!rem // 
+!rem // TODO: validate arguments, handle defaults/remove healthAttr arg once access to global script.foo variables works
+!rem // 
+!mmm function m3mgdHealthStatusHighlight(tokenID, healthAttr)
+!mmm   
+!mmm   if tokenID.(healthAttr) == tokenID.(healthAttr).max
+!mmm     
+!mmm     return "good"
+!mmm     
+!mmm   else if tokenID.status_yellow eq "shown"
+!mmm     
+!mmm     return "important"
+!mmm     
+!mmm   else if tokenID.status_red eq "shown"
+!mmm     
+!mmm     return "bad"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown"
+!mmm     
+!mmm     return "bad"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "normal"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem // 
+!rem // m3mgdEnduranceBoost(enduranceGain, tokenID, enduranceAttr)
+!rem // 
+!rem // enduranceGain       Number of endurance points applied to character
+!rem //   
+!rem // Returns the new level of endurance
+!rem //
+!mmm function m3mgdEnduranceBoost(enduranceGain, tokenID, enduranceAttr)
+!mmm
+!rem   // Check if character is actually alive
+!mmm
+!mmm   set prvEndurance = tokenID.(enduranceAttr)
+!mmm   set maxEndurance = tokenID.(enduranceAttr).max
+!mmm   set newEndurance = false
+!mmm
+!mmm   if maxEndurance == 0
+!mmm
+!mmm     do whisperback(tokenID.token_name & " ist kein Wesen, das Ausdauerpunkte gewinnen kann (AP.max=0).")
+!mmm
+!mmm   else
+!mmm
+!rem     // Process endurance gain and applicable consequences 
+!mmm
+!mmm     if prvEndurance + enduranceGain > maxEndurance
+!mmm       set effEnduranceGain = highlight(maxEndurance - prvEndurance, "important", "begrenzt auf Maximum")
+!mmm     else
+!mmm       set effEnduranceGain = highlight(enduranceGain, "normal")
+!mmm     end if 
+!mmm   
+!mmm     set newEndurance = prvEndurance + effEnduranceGain
+!mmm   
+!mmm     if newEndurance == maxEndurance
+!mmm   
+!mmm       set newEndurance = highlight(newEndurance, "good", "= " & prvEndurance & " + " & effEnduranceGain)
+!mmm   
+!mmm     else if newEndurance <= 0
+!mmm   
+!mmm       set newEndurance = highlight(newEndurance, "bad", "🟢 (= " & prvEndurance & " + " & effEnduranceGain & ")")
+!mmm       do setattr(tokenID, "status_green", true)
+!mmm   
+!mmm     else if newEndurance < maxEndurance
+!mmm   
+!mmm       set newEndurance = highlight(newEndurance, "normal", "Och, das bisschen Schweiß! (= " & prvEndurance & " + " & effEnduranceGain & ")")
+!mmm       do setattr(tokenID, "status_green", false)
+!mmm   
+!mmm     else
+!mmm   
+!mmm       set newEndurance = highlight(newEndurance, "good", "Bin sowas von topfit! (= " & prvEndurance & " + " & effEnduranceGain & ")")
+!mmm       do setattr(tokenID, "status_green", false)
+!mmm   
+!mmm     end if
+!mmm   
+!mmm     do setattr(tokenID, enduranceAttr, newEndurance)
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return newEndurance
+!mmm   
+!mmm end function
+!rem // 
+!rem // m3mgdHealthBoost(healthGain, tokenID, healthAttr)
+!rem // 
+!rem // healthGain      Number of health points applied to character
+!rem //   
+!rem // Returns the number of health points effectively applied (differs from parameter if max HP are hit)
+!rem //
+!mmm function m3mgdHealthBoost(healthGain, tokenID, healthAttr)
+!mmm
+!rem   // Check if character is actually alive
+!mmm
+!mmm   set prvHealth = tokenID.(healthAttr)
+!mmm   set maxHealth = tokenID.(healthAttr).max
+!mmm
+!mmm   if maxHealth == 0
+!mmm
+!mmm     do whisperback(tokenID.token_name & " ist kein Lebewesen (LP=0), dass geheilt werden kann.")
+!mmm
+!mmm   else
+!mmm
+!rem     // Process health gain and applicable consequences 
+!mmm
+!mmm     if prvHealth + healthGain > maxHealth
+!mmm       set effHealthGain = highlight(maxHealth - prvHealth, "important", "begrenzt auf Maximum")
+!mmm     else
+!mmm       set effHealthGain = highlight(healthGain, "normal")
+!mmm     end if 
+!mmm   
+!mmm     set newHealth = prvHealth + effHealthGain
+!mmm   
+!mmm     if newHealth == maxHealth
+!mmm   
+!mmm       set newHealth = highlight(newHealth, "good", "= " & prvHealth & " + " & effHealthGain)
+!mmm   
+!mmm     else if newHealth <= 0
+!mmm   
+!mmm       set newHealth = highlight(newHealth, "bad", "💀 (fast) tot (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       do setattr(tokenID, "status_death_zone", true)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", false)
+!mmm   
+!mmm     else if newHealth <= 3
+!mmm   
+!rem       // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
+!mmm       set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", true)
+!mmm       do setattr(tokenID, "status_yellow", false)
+!mmm   
+!mmm     else if newHealth <= .5 * maxHealth
+!mmm   
+!rem       // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
+!mmm       set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", true)
+!mmm   
+!mmm     else if newHealth < maxHealth
+!mmm   
+!mmm       set newHealth = highlight(newHealth, "normal", "Nur ein paar Kratzer! (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", false)
+!mmm   
+!mmm     else
+!mmm   
+!mmm       set newHealth = highlight(newHealth, "normal", "Kerngesund! (= " & prvHealth & " + " & effHealthGain & ")")
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", false)
+!mmm   
+!mmm     end if
+!mmm   
+!mmm     do setattr(tokenID, healthAttr, newHealth)
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return newHealth
+!mmm   
+!mmm end function

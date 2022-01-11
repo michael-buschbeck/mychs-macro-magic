@@ -1,4 +1,7 @@
-!rem // libMidgardGlobal defines global "constants" for use across Midgard scripts
+!rem // libMidgardGlobal
+!rem // 
+!rem // 
+!rem // defines global "constants" for use across Midgard scripts
 !rem // 
 !rem // Expects ("imports") variables:
 !rem //   CURRENT
@@ -14,11 +17,12 @@
 !rem //   m3mgdAttrAttackDamage         Attribute label for the attack damage (integer)
 !rem //   m3mgdAttrAttackDamageRoll     Attribute label for the attack damage roll result (integer)
 !rem //   m3mgdAttrAttackWeaponType     Attribute label for the attack weapon type (string)
-!rem //   
+!rem //   m3mgdAttrHealthGain           Attribute label for the number of health points gained (e.g. through First Aid or a healing spell)
+!rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !rem // begin MMM fragment
 !mmm   set PARENT = CURRENT
-!mmm   set CURRENT = "libMidgardGlobal 1.0.0 (2021-12-22)"
+!mmm   set CURRENT = "libMidgardGlobal 1.1.0 (2021-12-24)"
 !mmm
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
@@ -28,15 +32,19 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
-!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
-!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
+!mmm   set m3mgdAttrAttackType          = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID          = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetID      = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult        = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackDamage        = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll    = "m3mgd_attack_damage_roll"
+!mmm   set m3mgdAttrAttackWeaponType    = "m3mgd_attack_weapon_type"
+!mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
+!mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
 !mmm
-!mmm   set m3mgdExchangeAttrList = m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
+!mmm   set m3mgdExchangeAttrList = m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult
+!mmm   set m3mgdExchangeAttrList = m3mgdExchangeAttrList, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
+!mmm   set m3mgdExchangeAttrList = m3mgdExchangeAttrList, m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
 !mmm
 !mmm   set CURRENT = PARENT
 !mmm   set PARENT = undef
