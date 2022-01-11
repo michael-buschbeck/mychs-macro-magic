@@ -165,11 +165,7 @@
 !mmm   end if
 !rem
 !rem   // Check for armor piercing projectiles
-!mmm   if m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType
-!mmm     set armorPiercing = true
-!mmm   else
-!mmm     set armorPiercing = false
-!mmm   end if
+!mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
 !mmm
 !rem   // Collect defense modifiers
 !mmm   set modifiers = 0
