@@ -3,6 +3,12 @@
 !mmm script
 !mmm   set scriptVersion = "v1.12.0 (2021-12-29)"
 !rem
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Melee Attack Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
 !mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
@@ -17,7 +23,6 @@
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cCheckVersion        Toggle version check
 !rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
@@ -26,7 +31,6 @@
 !rem   //  cMagicExtraDamage    Damage roll expression ("1d6+x") for additional magic damage
 !rem   //  cFoeNameDefault      Output label for targets without names
 !rem   //
-!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = "Kurzschwert"
 !mmm   set customizable cWeaponName = ""
@@ -46,11 +50,6 @@
 !mmm   set customizable cEnduranceAttr = "AP"
 !mmm   set customizable cGMSilentMode = 0
 !mmm   set customizable cAttackRoll = undef
-!mmm
-!mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Melee Attack Script " & scriptVersion)
-!mmm     exit script
-!mmm   end if
 !mmm
 !rem   // Refetch token_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = cOwnID.token_id
