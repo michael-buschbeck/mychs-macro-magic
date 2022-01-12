@@ -1,0 +1,55 @@
+!rem // applyHealing applies both healing and energy boosts (or either)
+!rem //
+%{MacroSheetLibrary|libMidgardFunctions}
+!mmm script
+!mmm   set scriptVersion = "applyHealing 1.0.0 (2021-12-29)"
+!mmm
+%{MacroSheetLibrary|libMidgardGlobal}
+!mmm
+!mmm   if selected
+!mmm     set customizable cOwnID = selected.token_id
+!mmm     set customizable cHealthAttr = "bar3"
+!mmm     set customizable cEnduranceAttr = "bar2"
+!mmm     set user = "GM"
+!mmm   else 
+!mmm     set customizable cOwnID = sender.token_id
+!mmm     set customizable cHealthAttr = "LP"
+!mmm     set customizable cEnduranceAttr = "AP"
+!mmm     set user = cOwnID.name
+!mmm   end if
+!mmm   
+!mmm   if not (m3mgdExchange.(m3mgdAttrHealthGain) > 0 or m3mgdExchange.(m3mgdAttrEnduranceGain) > 0)
+!mmm   
+!mmm     chat: /w "${user}" [**Lebens-/Ausdauergewinn eingeben**](~applyHealingDataEntry)
+!mmm     exit script
+!mmm
+!mmm   end if 
+!mmm   
+!mmm   set newHealth = m3mgdModifyHealth(m3mgdExchange.(m3mgdAttrHealthGain), cOwnID, cHealthAttr)
+!mmm   
+!mmm   set newEndurance = m3mgdModifyEndurance(m3mgdExchange.(m3mgdAttrEnduranceGain), cOwnID, cEnduranceAttr)
+!mmm
+!mmm   if newHealth <= 0 and timeToDie == undef
+!mmm     set timeToDie = "(unbekannt)"
+!mmm   end if
+!mmm
+!mmm   combine chat
+!mmm     
+!mmm     chat: ${"&"}{template:default} 
+!mmm     chat: {{name=${cOwnID.name}}} 
+!mmm     
+!mmm     if newHealth < 0 and timeToDie < 0
+!mmm     
+!mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
+!mmm     
+!mmm     else
+!mmm     
+!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
+!mmm       chat: {{${m3mgdHealthStatusLabel(cOwnID, cHealthAttr)}=${m3mgdHealthStatusEffectsDesc(cOwnID, cHealthAttr)}}}
+!mmm       chat: {{${m3mgdEnduranceStatusLabel(cOwnID, cEnduranceAttr)}=${m3mgdEnduranceStatusEffectsDesc(cOwnID, cEnduranceAttr)}}}
+!mmm     
+!mmm     end if
+!mmm     
+!mmm   end combine
+!mmm
+!mmm end script

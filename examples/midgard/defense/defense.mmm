@@ -1,23 +1,34 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "1.7.1 (2021-12-20)"
+!mmm   set scriptVersion = "defense 1.10.0 (2022-01-01)"
 !mmm
-!rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.23
-!mmm     do whisperback("Abbruch: MMM-Version 1.23.0 oder höher erforderlich.")
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.24
+!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Initialize globals (mainly data exchange)
+%{MacroSheetLibrary|libMidgardGlobal}
+!rem   // including function libraries here to avoid breaking the link between customize and script blocks 
+%{MacroSheetLibrary|libBasics}
+%{MacroSheetLibrary|libMidgardFunctions}
+%{MacroSheetLibrary|libDefenseDataTable}
+!rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cCheckVersion        Toggle version check
 !rem   //  cVerbose             Toggle narrative output: true for on, false for off 
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //
-!mmm   set customizable cCheckVersion = false
 !mmm   set customizable cVerbose = true
-!mmm   set customizable cWeaponLabel = "Abwehr ohne Schild"
+!mmm   set customizable cWeaponLabel = ""
 !rem
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cHealthAttr          Override if character's/token's health is stored differently than usual
@@ -29,36 +40,21 @@
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
 !mmm     set customizable cEnduranceAttr = "bar2"
+!mmm   else if m3mgdExchange.(m3mgdAttrAttackTargetID) ne ""
+!mmm     set customizable cOwnID = m3mgdExchange.(m3mgdAttrAttackTargetID)
+!mmm     set customizable cHealthAttr = "bar3"
+!mmm     set customizable cEnduranceAttr = "bar2"
 !mmm   else 
 !mmm     set customizable cOwnID = sender.token_id
 !mmm     set customizable cHealthAttr = "LP"
 !mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
 !mmm   set customizable cGMSilentMode = 0
-!mmm   set customizable cDefenseRoll = undef
-!mmm
-!mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
-!mmm     exit script
-!mmm   end if
+!mmm   set customizable cDefenseRoll = roll("1d20")
 !mmm
 !rem   // Constants
-!rem   //
-!mmm   set m3mgdExchange = getattr("MacroSheet", "character_id")
-!mmm   set m3mgdAttrAttackType = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackerID = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetID = "m3mgd_attack_targetID"
-!mmm   set m3mgdAttrAttackResult = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackDamage = "m3mgd_attack_damage"
-!mmm   set m3mgdAttrAttackDamageRoll = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackWeaponType = "m3mgd_attack_weapon_type"
-!mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm
-!mmm   set parryWeaponLargeShieldTypes = "Großer Schild"
-!mmm   set parryWeaponSmallShieldTypes = "Kleiner Schild"
-!mmm   set parryWeaponSmallShieldEffectiveAgainst = "Einhandschlagwaffe", "Einhandschwert", "Fechtwaffe", "Kettenwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "waffenlos"
-!mmm   set parryWeaponStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
-!mmm   set parryWeaponStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln"
+!mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !rem
 !rem   // Initialize & collect data
 !rem
@@ -69,48 +65,30 @@
 !mmm     exit script
 !mmm   end if
 !rem
-!rem   // GM silent mode vs. player mode
-!mmm   if cGMSilentMode == 0 and not cDefenseRoll
-!mmm     do whisperback("Abbruch: Spielermodus erfordert Übergabe des Würfelwurfs - " & cDefenseRoll) 
-!mmm     exit script
-!mmm   end if
-!rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
 !mmm   if cOwnID ne sender
 !mmm     set sender = cOwnID
 !mmm   end if
 !rem
-!rem   // Collect attack data and exit if no defense necessary
-!mmm   set validInputs = 0
-!mmm   if m3mgdExchange.permission eq "control" and m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
-!mmm     set validInputs = validInputs + 1
-!mmm     if m3mgdExchange.(m3mgdAttrAttackType) eq "melee" or m3mgdExchange.(m3mgdAttrAttackType) eq "ranged"
-!mmm       set attackType = m3mgdExchange.(m3mgdAttrAttackType)
-!mmm       set validInputs = validInputs + 1
-!mmm     end if
-!mmm     if m3mgdExchange.(m3mgdAttrAttackResult) >= 20
-!mmm       set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
-!mmm       set validInputs = validInputs + 1
-!mmm     end if
-!mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackDamage)) and m3mgdExchange.(m3mgdAttrAttackDamage) >= 0
-!mmm       set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
-!mmm       set validInputs = validInputs + 1
-!mmm     end if
-!mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackDamageRoll)) and m3mgdExchange.(m3mgdAttrAttackDamageRoll) >= 0
-!mmm       set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
-!mmm       set validInputs = validInputs + 1
-!mmm     end if
-!mmm     if not isunknown(m3mgdExchange.(m3mgdAttrAttackWeaponType)) and not m3mgdExchange.(m3mgdAttrAttackWeaponType) eq ""
-!mmm       set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
-!mmm       set validInputs = validInputs + 1
-!mmm     end if 
-!mmm   end if
-!mmm   
-!mmm   if validInputs < 6
-!mmm     do whisperback("**Abwehrskript: Daten fehlen** [**Angriffsdaten eingeben**](~defenseDataEntry)")
+!rem   // Validate attack data and request manual entry if anything is amiss
+!mmm   if not m3mgdValidateAttackData()
+!mmm     do whisperback("**Abwehrskript: Daten fehlen oder widersprüchlich** [**Angriffsdaten eingeben**](~defenseDataEntry)")
 !mmm     exit script
 !mmm   end if
+!mmm   if not m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
+!mmm     do whisperback("**Abwehrskript:** " & m3mgdExchange.(m3mgdAttrAttackTargetID).name & " wurde zuletzt angegriffen, nicht ich. [**Angriffsdaten eingeben**](~defenseDataEntry)")
+!mmm     exit script
+!mmm   end if
+!mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
+!mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
 !mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
+!mmm   set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
+!mmm   set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
+!mmm   set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
+!rem   // Special case: magic weapons or weapon spells with additional effects scripts whose name is stored in .max
+!mmm   if m3mgdExchange.(m3mgdAttrAttackWeaponType).max ne ""
+!mmm     set attackWeaponSpecialEffectScript = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
+!mmm   end if
 !mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
@@ -129,15 +107,31 @@
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !rem
-!rem   // Check for applicability of parry weapon or shield
-!rem   // TODO: parry weapons are usable only if the attack is from the front or the respective side, plus further restrictions based on the kind of parry weapon (Kodex, 70).
+!rem   // Validate defense weapon and request manual entry if selection is missing
+!mmm   if cWeaponLabel eq ""
+!mmm     set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
+!mmm     if not defenseWeaponList
+!mmm       do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
+!mmm       exit script
+!mmm     else if count(defenseWeaponList) == 1
+!mmm       set cWeaponLabel = cOwnID.(defenseWeaponList)
+!mmm     else if count(defenseWeaponList) > 1 and (defenseWeaponList where cOwnID.(...) eq "Abwehr ohne Schild")
+!mmm       set modifierLog = modifierLog & " {{Default=Abwehr ohne Schild}}"
+!mmm       set cWeaponLabel = "Abwehr ohne Schild"
+!mmm     else 
+!mmm       do whisperback("Fehler: " & cOwnID.name & " hat mehrere Abwehrfertigkeiten, aber nicht 'Abwehr ohne Schild'.")
+!mmm       exit script
+!mmm     end if
+!mmm   end if
+!rem
+!rem   // If user wants to use a parry weapon/shield, validate
 !mmm   set parryWeaponUsable = false
 !mmm   set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
-!mmm   if parryWeaponLargeShieldTypes where ... eq cWeaponLabel 
+!mmm   if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
 !mmm     set parryWeaponUsable = true
-!mmm   else if (parryWeaponSmallShieldTypes where ... eq cWeaponLabel) and (parryWeaponSmallShieldEffectiveAgainst where ... eq attackWeaponType)
+!mmm   else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
 !mmm     set parryWeaponUsable = true
-!mmm   else if (parryWeaponStandardTypes where ... eq cWeaponLabel) and (parryWeaponStandardEffectiveAgainst where ... eq attackWeaponType)
+!mmm   else if (m3mgdParryStandardTypes where ... eq cWeaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackWeaponType)
 !mmm     set parryWeaponUsable = true
 !mmm   end if
 !rem   // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
@@ -146,7 +140,7 @@
 !rem     // Endurance protection: reverse sign for more logical handling (modifier is stored as negative in character sheet)
 !mmm     set parryWeaponEnduranceProtection = -1 * cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
 !mmm     set effDefense = effDefense + effParryWeaponSkill
-!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW +" & effParryWeaponSkill & ", AP-Verlust -" & parryWeaponEnduranceProtection & "}}"
+!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW inkl. +" & effParryWeaponSkill & ", AP-Verlust (leichte Treffer) -" & parryWeaponEnduranceProtection & "}}"
 !mmm   else if parryWeapon and not parryWeaponUsable
 !mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackWeaponType & "}}"
 !mmm   else if parryWeapon
@@ -154,11 +148,7 @@
 !mmm   end if
 !rem
 !rem   // Check for armor piercing projectiles
-!mmm   if attackWeaponType eq "Langbogen" or attackWeaponType eq "Kompositbogen" or attackWeaponType eq "schwere Armbrust" or attackWeaponType eq "Schwere Armbrust"
-!mmm     set armorPiercing = 1
-!mmm   else
-!mmm     set armorPiercing = 0
-!mmm   end if
+!mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
 !mmm
 !rem   // Collect defense modifiers
 !mmm   set modifiers = 0
@@ -198,9 +188,6 @@
 !rem
 !rem   // Run & format rolls
 !rem
-!mmm   if cGMSilentMode
-!mmm     set cDefenseRoll = roll("1d20")
-!mmm   end if
 !mmm   set defenseResult = cDefenseRoll + effDefense + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
@@ -214,7 +201,7 @@
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
 !mmm
-!mmm   if (criticalAttack == 0 and (defenseResult >= attackResult or iscritical(cDefenseRoll))) or (criticalAttack == 1 and iscritical(cDefenseRoll))
+!mmm   if (not criticalAttack and (defenseResult >= attackResult or iscritical(cDefenseRoll))) or (criticalAttack and iscritical(cDefenseRoll))
 !rem     // Defense successful
 !mmm     set defenseSuccess = true
 !mmm
@@ -241,7 +228,7 @@
 !mmm
 !rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health)
 !mmm     if not cOwnID.(cHealthAttr).max == 0 and armorProtection > 0
-!mmm       if armorProtection > 3 and armorPiercing == 1
+!mmm       if armorProtection > 3 and armorPiercing == true
 !mmm         set armorProtection = 3
 !mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & ", reduziert wg. Geschosstyp (" & m3mgdExchange.(m3mgdAttrAttackWeaponType) & ")}} "
 !mmm       else
@@ -257,31 +244,11 @@
 !mmm   end if
 !mmm
 !rem   // Process loss of endurance, if any, and applicable consequences
-!mmm   set newEndurance = highlight(endurance - effEnduranceLoss, "normal", "bin fit!")
-!mmm   if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance <= 0 
-!rem     // AP=0: Green token marker
-!mmm     set newEndurance = highlight(0, "bad", "🟢 erschöpft")
-!mmm     do setattr(cOwnID, "status_green", true)
-!mmm   end if
-!mmm   do setattr(cOwnID, cEnduranceAttr, newEndurance)
+!mmm   set newEndurance = m3mgdModifyEndurance(-effEnduranceLoss)
 !mmm   set effEnduranceLoss = highlight(effEnduranceLoss, "info")
 !mmm
 !rem   // Process loss of health and applicable consequences 
-!mmm   set newHealth = highlight(health - effHealthLoss, "normal", "nur ein paar Kratzer")
-!mmm   if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 0
-!rem     // LP <=0 : Death zone marker
-!mmm     set newHealth = highlight(newHealth, "bad", "💀 (fast) tot")
-!mmm     do setattr(cOwnID, "status_death_zone", true)
-!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= 3 
-!rem     // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
-!mmm     set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt")
-!mmm     do setattr(cOwnID, "status_red", true)
-!mmm   else if not cOwnID.(cHealthAttr).max == 0 and newHealth <= .5 * maxHealth
-!rem     // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
-!mmm     set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt")
-!mmm     do setattr(cOwnID, "status_yellow", true)
-!mmm   end if
-!mmm   do setattr(cOwnID, cHealthAttr, newHealth)
+!mmm   set newHealth = m3mgdModifyHealth(-effHealthLoss)
 !mmm   if effHealthLoss > 0 and newHealth < 0
 !mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
 !mmm   end if
@@ -314,7 +281,12 @@
 !mmm   else
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(**kein Zugriff**: " & getreason(attacker) & ") }} "
 !mmm   end if
-!rem
+!mmm
+!rem   // Add button for player to call special damage effects script
+!mmm   if not defenseSuccess and attackWeaponSpecialEffectScript
+!mmm     set modifierLog = modifierLog & " {{ " & attackWeaponType & "=[**Sondereffekt**](~" & attackWeaponSpecialEffectScript & ") }}"
+!mmm   end if
+!mmm
 !rem   // Verbose output
 !mmm   if cVerbose
 !mmm     combine chat
@@ -328,7 +300,7 @@
 !mmm           chat     [OngoingCriticalInjury]:    ***Ich bin immer noch lebensgefährlich verletzt, mein Countdown läuft weiter.*** [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Jetzt könnte ich eine heilende Hand gebrauchen...***
 !mmm         end if
 !mmm       else
-!mmm         if criticalAttack == 1
+!mmm         if criticalAttack
 !mmm           chat     [DefenseFailureCritDamage]: Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer **kritischer Treffer**.
 !mmm         else 
 !mmm           chat     [DefenseFailureRegDamage]:  Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer Treffer.
@@ -345,76 +317,18 @@
 !mmm           chat     [DefenseFailureNoDamage]:   Doch kein Problem für meine $[armorLabel]{armorLabel}, außer Schweiß verliere ich nichts.
 !mmm         end if
 !mmm         if newHealth < 0 and timeToDie < 0
-!mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{cOwnID.name}, out. [x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
+!mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{cOwnID.name}, out.${"<"}br>[x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
 !mmm         else if newHealth < 0 and timeToDie >= 0
-!mmm           chat     [EffectsCriticalInjury]:    ***Ich bin lebensgefährlich verletzt.*** Ich habe noch **$[timeToDie]{timeToDie+0} Minuten** zu leben. [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Jetzt könnte ich eine heilende Hand gebrauchen...***
+!mmm           chat     [EffectsCriticalInjury]:    ***Ich bin lebensgefährlich verletzt.*** Ich habe noch **$[timeToDie]{timeToDie+0} Minuten** zu leben.${"<"}br>[x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif)${"<"}br>***Jetzt könnte ich eine heilende Hand gebrauchen...***
 !mmm         end if
 !mmm       end if 
 !mmm     end combine
 !mmm   end if
 !rem
-!rem   // Data table
-!mmm   combine chat
-!rem     // Check if script is run for an NPC (whisper data to GM only)
-!mmm     if cGMSilentMode == 1
-!mmm       chat: /w GM 
-!mmm     end if
-!mmm     chat: ${"&"}{template:default} 
-!mmm     if (not parryWeapon) or (parryWeapon and endurance > 0)
-!mmm       chat: {{name=${cOwnID.name}: Abwehr mit ${cWeaponLabel}}} 
-!mmm     else 
-!mmm       chat: {{name=${cOwnID.name}: Abwehr (erschöpft)}} 
-!mmm     end if 
-!mmm     if armorPiercing == 1 and attackDamage > 3
-!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (Rüstungsschutz wg. Geschosstyp auf 3 begrenzt)}}
-!mmm     else if attackDamage == 0
-!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;Sonderschaden**}}
-!mmm     else
-!mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden**}}
-!mmm     end if
-!mmm     chat: {{Abwehr=${defenseResult}&nbsp;(**Wurf**&nbsp;${cDefenseRoll})}}
-!mmm     chat: {{Boni/Mali=**${modifiers}**}}
-!mmm     if attackDamage == 0 and defenseSuccess
-!mmm       chat: {{Erfolg=**Abwehr gelungen**}}
-!mmm     else if attackDamage == 0 and (not defenseSuccess) and criticalAttack
-!mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
-!mmm       chat: {{Schaden=**SPEZIAL**}}
-!mmm     else if attackDamage == 0 and (not defenseSuccess) and (not criticalAttack)
-!mmm       chat: {{Fehlschlag=**Schwerer Treffer**}}
-!mmm       chat: {{Schaden=**SPEZIAL**}}
-!mmm     else if attackDamage > 0 and defenseSuccess
-!mmm       chat: {{Erfolg=**Leichter Treffer**}}
-!mmm       chat: {{Schaden=**${effEnduranceLoss}&nbsp;AP**}}
-!mmm       do spawnfx("bubbling-water", cOwnID.left, cOwnID.top)
-!mmm     else if attackDamage > 0 and (not defenseSuccess) and criticalAttack == 1
-!mmm       chat: {{Fehlschlag=**Schwerer kritischer Treffer**}}
-!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP +&nbsp;krit.&nbsp;Schaden!**}}
-!mmm       do spawnfx("nova-blood", cOwnID.left, cOwnID.top)
-!mmm     else 
-!mmm       chat: {{Fehlschlag=**Schwerer Treffer**}}
-!mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
-!mmm       do spawnfx("bubbling-blood", cOwnID.left, cOwnID.top)
-!mmm     end if
-!mmm     if newHealth < 0 and timeToDie < 0
-!mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
-!mmm     else 
-!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
-!mmm       if not cOwnID.(cHealthAttr).max == 0 and newHealth > 3 and newHealth <= 0.5 * maxHealth
-!mmm         chat: {{Schwer verwundet=🟡 max. halbe AP, halbe Bewegung}}
-!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth > 0 and newHealth <= 3
-!mmm         chat: {{Extrem schwer verwundet=🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock}}
-!mmm       else if not cOwnID.(cHealthAttr).max == 0 and newHealth == 0
-!mmm         chat: {{Dem Tode nah=💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock}}
-!mmm       else if newHealth < 0 and defenseSuccess
-!mmm         chat: {{Tödlich verwundet=💀 **Countdown läuft**}}
-!mmm       else if newHealth < 0 and not defenseSuccess and timeToDie >= 0
-!mmm         chat: {{Tödlich verwundet=💀 **${timeToDie} Minuten bis zum Tod**}}
-!mmm       end if
-!mmm       if not cOwnID.(cEnduranceAttr).max == 0 and newEndurance == 0 and (newHealth >= 0 and not (timeToDie < 0))
-!mmm         chat: {{Erschöpft=🟢 (-4 auf alles, max. Last reduziert)}}
-!mmm       end if
-!mmm     end if
-!mmm   end combine
+!rem   // Output data table using data table execution code from library
+!mmm   do m3mgdDefenseDataTable()
+!mmm
+!rem   // Output modifier log and PP reminder
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   if parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)

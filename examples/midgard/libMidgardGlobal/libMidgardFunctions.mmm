@@ -1,0 +1,691 @@
+!rem // m3mgdValidateOwnTokenID(tokenID)
+!rem // 
+!rem //   Validates tokenID or pulls script.cOwnID as a default, checks for reading access.
+!rem //   Returns the ID or false in case of validation or access issues.
+!rem // 
+!mmm function m3mgdValidateOwnTokenID(tokenID)
+!mmm   if isdefault(tokenID)
+!mmm     set id = script.cOwnID.token_id
+!mmm   else
+!mmm     set id = tokenID.token_id
+!mmm   end if
+!mmm 
+!mmm   if isunknown(id) or isdenied(id)
+!mmm     do whisperback("Token ID invalid: " & tokenID & " - " & getreason(id))
+!mmm     return false
+!mmm   end if
+!mmm 
+!mmm   return id 
+!mmm 
+!mmm end function
+!rem // 
+!rem // m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
+!rem // 
+!rem //   Validates attrLabel or, if set to default, defaultAttrLabel, as a readable attribute of tokenID.
+!rem //   Returns the attrLabel value found valid or false in case of validation or access issues.
+!rem // 
+!mmm function m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
+!mmm 
+!mmm   if isdefault(attrLabel)
+!mmm     set attrLabel = script.(defaultAttrLabel) 
+!mmm   end if
+!mmm   
+!mmm   if isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
+!mmm     do whisperback("Attribute label " & attrLabel & " invalid for token " & tokenID.name & "/" & tokenID)
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   return attrLabel
+!mmm 
+!mmm end function
+!rem
+!rem // m3mgdValidateAttackData([dataExchangeID])
+!rem // 
+!rem //   Expects a global data exchange character sheet as script.m3mgdExchange or as an argument.
+!rem //   Validates attack data stack within that sheet and returns true/false.
+!rem // 
+!mmm function m3mgdValidateAttackData(dataExchangeID)
+!mmm
+!mmm   if isdefault(dataExchangeID)
+!mmm     set dataExchangeID = script.m3mgdExchange
+!mmm   end if
+!mmm   if isunknown(dataExchangeID) or isdenied(dataExchangeID)
+!mmm     do whisperback("Invalid attack data exchange sheet: " & getreason(dataExchangeID))
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set validItems = 0
+!mmm   if dataExchangeID.(m3mgdAttrAttackTargetID).token_id
+!mmm     set validItems = validItems + 1
+!mmm   end if
+!mmm   if dataExchangeID.(m3mgdAttrAttackType) eq "melee" or dataExchangeID.(m3mgdAttrAttackType) eq "ranged"
+!mmm     set validItems = validItems + 1
+!mmm   end if
+!mmm   if dataExchangeID.(m3mgdAttrAttackResult) >= 20
+!mmm     set validItems = validItems + 1
+!mmm   end if
+!mmm   if dataExchangeID.(m3mgdAttrAttackResult).max eq "true" or dataExchangeID.(m3mgdAttrAttackResult).max eq "false"
+!mmm     set validItems = validItems + 1
+!mmm   end if
+!mmm   if not isunknown(dataExchangeID.(m3mgdAttrAttackDamage)) and dataExchangeID.(m3mgdAttrAttackDamage) >= 0
+!mmm     set validItems = validItems + 1
+!mmm   end if
+!mmm   if not isunknown(dataExchangeID.(m3mgdAttrAttackDamageRoll)) and dataExchangeID.(m3mgdAttrAttackDamageRoll) >= 0
+!mmm     set validItems = validItems + 1
+!mmm   end if
+!mmm   if not isunknown(dataExchangeID.(m3mgdAttrAttackWeaponType))
+!mmm     if dataExchangeID.(m3mgdAttrAttackWeaponType).max ne "" 
+!mmm       set validItems = validItems + 1
+!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "melee" 
+!mmm       if m3mgdValidMeleeAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType)
+!mmm         set validItems = validItems + 1
+!mmm       else
+!mmm         do whisperback("Invalid melee attack weapon type: " & dataExchangeID.(m3mgdAttrAttackWeaponType) & " is none of " & m3mgdValidMeleeAttackWeaponTypes)
+!mmm       end if
+!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "ranged" 
+!mmm       if m3mgdValidRangedAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType)
+!mmm         set validItems = validItems + 1
+!mmm       else
+!mmm         do whisperback("Invalid range attack weapon type: " & dataExchangeID.(m3mgdAttrAttackWeaponType) & " is none of " & m3mgdValidRangedAttackWeaponTypes)
+!mmm       end if
+!mmm     end if
+!mmm   end if 
+!mmm
+!mmm   return (validItems == 7)
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdFlushExchange([dataExchangeID], [attrList])
+!rem // 
+!rem //   Expects a global data exchange character sheet as script.m3mgdExchange or as an argument
+!rem // 
+!rem //   Returns the number of attributes set to "" in both their current and max values
+!rem // 
+!mmm function m3mgdFlushExchange(dataExchangeID, attrList)
+!mmm
+!mmm   if isdefault(dataExchangeID)
+!mmm     set dataExchangeID = script.m3mgdExchange
+!mmm   end if
+!mmm   if isdefault(attrList)
+!mmm     set attrList = script.m3mgdExchangeAttrList
+!mmm   end if 
+!mmm
+!mmm   set flushedCounter = 0
+!mmm   for attribute in attrList
+!mmm     do setattr(dataExchangeID, attribute, "")
+!mmm     do setattrmax(dataExchangeID, attribute, "")
+!mmm     set flushedCounter = flushedCounter + 1
+!mmm   end for
+!mmm
+!mmm   return flushedCounter
+!mmm 
+!mmm end function
+!rem // 
+!rem // m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
+!rem // 
+!mmm function m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
+!mmm   
+!mmm   set enduranceLabel = "🔋 "
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
+!mmm   if not enduranceAttr
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if tokenID.status_green eq "shown"
+!mmm     
+!mmm     return enduranceLabel & "Erschöpft"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return enduranceLabel & "Geht noch!"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem // 
+!rem // m3mgdEnduranceStatusEffectsDesc([tokenID], [enduranceAttr])
+!rem // 
+!mmm function m3mgdEnduranceStatusEffectsDesc(tokenID, enduranceAttr)
+!mmm   
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
+!mmm   if not enduranceAttr
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if tokenID.status_green eq "shown"
+!mmm     
+!mmm     return "🟢 -4 auf alles, max. Last reduziert"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "keine Einschränkungen"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem // 
+!rem // m3mgdEnduranceStatusHighlight([tokenID], [enduranceAttr])
+!rem // 
+!mmm function m3mgdEnduranceStatusHighlight(tokenID, enduranceAttr)
+!mmm   
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
+!mmm   if not enduranceAttr
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if tokenID.(enduranceAttr) == tokenID.(enduranceAttr).max
+!mmm     
+!mmm     return "good"
+!mmm     
+!mmm   else if tokenID.status_green eq "shown"
+!mmm     
+!mmm     return "bad"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "normal"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem // 
+!rem // m3mgdHealthStatusLabel([tokenID], [healthAttr])
+!rem // 
+!mmm function m3mgdHealthStatusLabel(tokenID, healthAttr)
+!mmm   
+!mmm   set healthLabel = "⚕️ "
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
+!mmm   if not healthAttr
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if tokenID.status_yellow eq "shown"
+!mmm     
+!mmm     return healthLabel & "Schwer verwundet"
+!mmm     
+!mmm   else if tokenID.status_red eq "shown"
+!mmm     
+!mmm     return healthLabel & "Extrem schwer verwundet"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) >= 0
+!mmm     
+!mmm     return healthLabel & "Dem Tode nah"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) < 0
+!mmm     
+!mmm     return healthLabel & "Tödlich verwundet"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return healthLabel & "Soweit in Ordnung!"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem // 
+!rem // m3mgdHealthStatusEffectsDesc([tokenID], [healthAttr])
+!rem // 
+!mmm function m3mgdHealthStatusEffectsDesc(tokenID, healthAttr)
+!mmm   
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
+!mmm   if not healthAttr
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if tokenID.status_yellow eq "shown"
+!mmm     
+!mmm     return "🟡 max. halbe AP, halbe Bewegung"
+!mmm     
+!mmm   else if tokenID.status_red eq "shown"
+!mmm     
+!mmm     return "🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) >= 0
+!mmm     
+!mmm     return "💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) < 0
+!mmm     
+!mmm     return "💀 **Countdown läuft**"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "keine Einschränkungen"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem // 
+!rem // m3mgdHealthStatusHighlight([tokenID], [healthAttr])
+!rem // 
+!mmm function m3mgdHealthStatusHighlight(tokenID, healthAttr)
+!mmm   
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
+!mmm   if not healthAttr
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if tokenID.(healthAttr) == tokenID.(healthAttr).max
+!mmm     
+!mmm     return "good"
+!mmm     
+!mmm   else if tokenID.status_yellow eq "shown"
+!mmm     
+!mmm     return "important"
+!mmm     
+!mmm   else if tokenID.status_red eq "shown"
+!mmm     
+!mmm     return "bad"
+!mmm     
+!mmm   else if tokenID.status_death_zone eq "shown"
+!mmm     
+!mmm     return "bad"
+!mmm     
+!mmm   else
+!mmm     
+!mmm     return "normal"
+!mmm     
+!mmm   end if
+!mmm     
+!mmm end function
+!rem // 
+!rem // m3mgdModifyEndurance(offset, [tokenID], [enduranceAttr])
+!rem // 
+!rem // Modifies [tokenID's] or script.cOwnID's endurance by offset points. For a loss, offset is negative.
+!rem // Uses script.cEnduranceAttr to access endurance if no enduranceAttr is specified.
+!rem // Returns the new level of endurance.
+!rem //
+!mmm function m3mgdModifyEndurance(offset, tokenID, enduranceAttr)
+!mmm   
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
+!mmm   if not enduranceAttr
+!mmm     return false
+!mmm   end if
+!mmm   
+!rem   // Check if character is actually alive
+!mmm
+!mmm   set prvEndurance = tokenID.(enduranceAttr)
+!mmm   set maxEndurance = tokenID.(enduranceAttr).max
+!mmm   set newEndurance = false
+!mmm
+!mmm   if maxEndurance == 0
+!mmm
+!mmm     do whisperback(tokenID.token_name & " ist kein Wesen, das Ausdauerpunkte gewinnen kann (AP.max=0).")
+!mmm     return highlight(prvEndurance, "normal", "unverändert")
+!mmm
+!mmm   else
+!mmm
+!rem     // Process change of endurance and applicable consequences 
+!mmm
+!mmm     if prvEndurance + offset > maxEndurance
+!mmm       set effOffset = highlight(maxEndurance - prvEndurance, "important", "begrenzt auf Maximum")
+!mmm     else if prvEndurance + offset <= 0
+!mmm       set effOffset = highlight(0 - prvEndurance, "bad", "begrenzt auf Minimum 0")
+!mmm     else
+!mmm       set effOffset = highlight(offset, "normal")
+!mmm     end if 
+!mmm   
+!mmm     set newEndurance = prvEndurance + effOffset
+!mmm   
+!mmm     if effOffset >= 0
+!mmm       set effOffset = "+" & effOffset
+!mmm     end if
+!mmm   
+!mmm     if newEndurance == maxEndurance
+!mmm   
+!mmm       set newEndurance = highlight(newEndurance, "good", "Bin sowas von topfit! (= " & prvEndurance & effOffset & ")")
+!mmm       do setattr(tokenID, "status_green", false)
+!mmm   
+!mmm     else if newEndurance == 0
+!mmm   
+!mmm       set newEndurance = highlight(newEndurance, "bad", "🟢 (= " & prvEndurance & effOffset & ")")
+!mmm       do setattr(tokenID, "status_green", true)
+!mmm   
+!mmm     else
+!mmm   
+!mmm       set newEndurance = highlight(newEndurance, "normal", "Och, das bisschen Schweiß! (= " & prvEndurance & effOffset & ")")
+!mmm       do setattr(tokenID, "status_green", false)
+!mmm   
+!mmm     end if
+!mmm   
+!mmm     if setattr(tokenID, enduranceAttr, newEndurance) == newEndurance
+!mmm   
+!mmm       return newEndurance
+!mmm     
+!mmm     else 
+!mmm     
+!mmm       do whisperback("Error writing changes to endurance (" & effOffset & ") into " & tokenID & "." & enduranceAttr)
+!mmm       return false
+!mmm     
+!mmm     end if
+!mmm   
+!mmm   end if
+!mmm   
+!mmm end function
+!rem // 
+!rem // m3mgdModifyHealth(offset, [tokenID], [healthAttr])
+!rem // 
+!rem // Modifies [tokenID's] or script.cOwnID's health by offset points. For a loss, offset is negative.
+!rem // Uses script.cHealthAttr to access health points if no healthAttr is specified.
+!rem // Returns the new level of health.
+!rem //
+!mmm function m3mgdModifyHealth(offset, tokenID, healthAttr)
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
+!mmm   if not healthAttr
+!mmm     return false
+!mmm   end if
+!mmm   
+!rem   // Check if character is actually alive
+!mmm
+!mmm   set prvHealth = tokenID.(healthAttr)
+!mmm   set maxHealth = tokenID.(healthAttr).max
+!mmm
+!mmm   if maxHealth == 0
+!mmm
+!mmm     do whisperback(tokenID.token_name & " ist kein Lebewesen (LP=0), dass geheilt werden kann.")
+!mmm     return highlight(prvHealth, "normal", "unverändert")
+!mmm
+!mmm   else
+!mmm
+!rem     // Process health gain and applicable consequences 
+!mmm
+!mmm     if prvHealth + offset > maxHealth
+!mmm       set effOffset = highlight(maxHealth - prvHealth, "important", "begrenzt auf Maximum")
+!mmm     else if prvHealth + offset <= 0
+!mmm       set effOffset = highlight(offset, "bad")
+!mmm     else
+!mmm       set effOffset = highlight(offset, "normal")
+!mmm     end if 
+!mmm   
+!mmm     set newHealth = prvHealth + effOffset
+!mmm   
+!mmm     if effOffset >= 0
+!mmm       set effOffset = "+" & effOffset
+!mmm     end if
+!mmm   
+!mmm     if newHealth == maxHealth
+!mmm   
+!mmm       set newHealth = highlight(newHealth, "good", "💪 kerngesund! (= " & prvHealth & effOffset & ")")
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", false)
+!mmm   
+!mmm     else if newHealth <= 0
+!mmm   
+!mmm       set newHealth = highlight(newHealth, "bad", "💀 (fast) tot (= " & prvHealth & effOffset & ")")
+!mmm       do setattr(tokenID, "status_death_zone", true)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", false)
+!mmm   
+!mmm     else if newHealth <= 3
+!mmm   
+!rem       // Health <= 3: Red token marker => no actions, movement reduced to 4, 10-minute countdown to shock
+!mmm       set newHealth = highlight(newHealth, "bad", "🔴 sehr schwer verletzt (= " & prvHealth & effOffset & ")")
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", true)
+!mmm       do setattr(tokenID, "status_yellow", false)
+!mmm   
+!mmm     else if newHealth <= .5 * maxHealth
+!mmm   
+!rem       // Health <= 50%: Yellow token marker => endurance and movement to be limited to 50%
+!mmm       set newHealth = highlight(newHealth, "important", "🟡 schwer verletzt (= " & prvHealth & effOffset & ")")
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", true)
+!mmm   
+!mmm     else
+!mmm   
+!mmm       set newHealth = highlight(newHealth, "normal", "Nur ein paar Kratzer! (= " & prvHealth & effOffset & ")")
+!mmm       do setattr(tokenID, "status_death_zone", false)
+!mmm       do setattr(tokenID, "status_red", false)
+!mmm       do setattr(tokenID, "status_yellow", false)
+!mmm   
+!mmm     end if
+!mmm   
+!mmm     if setattr(tokenID, healthAttr, newHealth) == newHealth
+!mmm   
+!mmm       return newHealth
+!mmm     
+!mmm     else 
+!mmm     
+!mmm       do whisperback("Error writing changes to health (" & effOffset & ") into " & tokenID & "." & healthAttr)
+!mmm       return false
+!mmm     
+!mmm     end if
+!mmm   
+!mmm   end if
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdGetTokenDirection(fromTokenID, toTokenID)
+!rem //
+!rem // Returns toTokenID's direction from the vantage point of fromTokenID, in degrees. 
+!rem //
+!mmm function m3mgdGetTokenDirection(fromTokenID, toTokenID)
+!mmm
+!mmm   set offsetYfromFoe = round((fromTokenID.top  - toTokenID.top)  * distscale())
+!mmm   set offsetXfromFoe = round((fromTokenID.left - toTokenID.left) * distscale())
+!mmm   return round(atan(-offsetYfromFoe, -offsetXfromFoe)) - 90
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdGetViewAngle(fromTokenID, toTokenID)
+!rem //
+!rem // Returns fromTokenID's angle of vision towards toTokenID, in degrees. 
+!rem //
+!mmm function m3mgdGetViewAngle(fromTokenID, toTokenID)
+!mmm
+!mmm   set foeDirectionFromMe = m3mgdGetTokenDirection(fromTokenID, toTokenID)
+!mmm   set myViewAngle = ((foeDirectionFromMe - round(fromTokenID.rotation) % 360) + 180) % 360 - 180
+!mmm
+!mmm   return myViewAngle
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdGetDistance(fromTokenID, toTokenID)
+!rem //
+!rem // Returns distance between fromTokenID and toTokenID, in distunits(). 
+!rem //
+!mmm function m3mgdGetDistance(fromTokenID, toTokenID)
+!mmm
+!mmm   set absDistY = ((abs(fromTokenID.top  - toTokenID.top))  - .5 * fromTokenID.height - .5 * toTokenID.height) * distscale()
+!mmm   set absDistX = ((abs(fromTokenID.left - toTokenID.left)) - .5 * fromTokenID.width  - .5 * toTokenID.width)  * distscale()
+!mmm
+!mmm   return round(max(absDistY, absDistX))
+!mmm
+!mmm end function
+!rem // 
+!rem // m3mgdShapeMoji(tokenID, [healthAttr], [enduranceAttr])
+!rem //
+!rem // Returns visual indicator of health and exhaustion or lack to access to health/endurance attributes.
+!rem // If healthAttr/enduranceAttr are not provided, they default to script.cHealthAttr/cEnduranceAttr.
+!rem //
+!mmm function m3mgdShapeMoji(tokenID, healthAttr, enduranceAttr)
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   if isdefault(healthAttr)
+!mmm     if script.cHealthAttr
+!mmm       set healthAttr = script.cHealthAttr
+!mmm     else 
+!mmm       do whisperback("No health attribute provided as argument or at script level")
+!mmm       return false
+!mmm     end if
+!mmm   end if
+!mmm   if isdefault(enduranceAttr)
+!mmm     if script.cEnduranceAttr
+!mmm       set enduranceAttr = script.cEnduranceAttr
+!mmm     else
+!mmm       do whisperback("No endurance attribute provided as argument or at script level")
+!mmm       return false
+!mmm     end if
+!mmm   end if
+!mmm
+!mmm   if isdenied(tokenID.(healthAttr)) or isdenied(tokenID.(enduranceAttr))
+!mmm     return highlight("🔒", "bad", tokenID.name & ".AP/LP: Zugriff auf mind. ein Attribut verweigert")
+!mmm   end if 
+!mmm
+!mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 0
+!mmm     return highlight("💀", "bad", "Dem Tode nah... jetzt zählt jede Sekunde!")
+!mmm   end if
+!mmm
+!mmm   set shapeMoji = ""
+!mmm   if tokenID.(healthAttr).max != 0 and tokenID.(healthAttr) < .5 * tokenID.(healthAttr).max
+!mmm     set shapeMoji = shapeMoji & "🤕"
+!mmm   end if 
+!mmm   if tokenID.(enduranceAttr).max != 0 and tokenID.(enduranceAttr) <= 0
+!mmm     set shapeMoji = shapeMoji & "🥴"
+!mmm   end if 
+!mmm   if shapeMoji eq ""
+!mmm     set shapeMoji = "😀"
+!mmm   end if 
+!mmm     
+!mmm   return shapeMoji
+!mmm     
+!mmm end function
+!rem
+!rem // m3mgdExchangeStoreAttack(attackType)
+!rem //
+!mmm function m3mgdExchangeStoreAttack(attackType, magicSpell)
+!mmm   
+!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   do m3mgdFlushExchange(dataExchangeID)
+!mmm
+!mmm   if attackType eq "magic" and magicSpell eq ""
+!mmm     do whisperback("Incomplete data for a magic attack: spell argument missing")
+!mmm     return false
+!mmm   else if attackType ne "magic"
+!mmm     set magicSpell = ""
+!mmm   end if
+!mmm 
+!mmm   set storeCounter = 0
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackType, attackType) eq attackType
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattrmax(dataExchangeID, script.m3mgdAttrAttackType, magicSpell) eq magicSpell
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackerID, script.cOwnID) eq script.cOwnID
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackTargetID, script.foeID) eq script.foeID
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackResult, script.attackResult) == script.attackResult
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattrmax(dataExchangeID, script.m3mgdAttrAttackResult, script.criticalAttack) == script.criticalAttack
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackDamage, script.damageResult) == script.damageResult
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   set damageRoll = script.damageRoll
+!mmm   if script.damageRoll < 0
+!mmm     set damageRoll = 0
+!mmm   end if
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackDamageRoll, damageRoll) == damageRoll
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackWeaponType, script.cWeaponType[0]) eq script.cWeaponType[0]
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if script.cWeaponType[1] ne ""
+!mmm     if setattrmax(dataExchangeID, script.m3mgdAttrAttackWeaponType, script.cWeaponType[1]) eq script.cWeaponType[1]
+!mmm       set storeCounter = storeCounter + 1
+!mmm     end if
+!mmm   end if
+!mmm   return ((count(script.cWeaponType) == 2 and storeCounter == 10) or (count(script.cWeaponType) == 1 and storeCounter == 9))
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdListDefenseWeapons(tokenID)
+!rem // 
+!rem //   Returns a list of tokenID's defense weapons (attribute names), or false if there are none or none accessible.
+!rem // 
+!mmm function m3mgdListDefenseWeapons(tokenID)
+!mmm   set defenseWeaponsList = findattr(tokenID, "Abwehr", "AbwWaffe")
+!mmm   if isunknown(defenseWeaponsList) or isdenied(defenseWeaponsList)
+!mmm     return false
+!mmm   else 
+!mmm     return defenseWeaponsList
+!mmm   end if
+!mmm end function
+!rem
+!rem // m3mgdListMeleeAttackWeapons(tokenID)
+!rem // 
+!rem //   Returns a list of tokenID's melee attack weapons (attribute names), or false if there are none or none accessible.
+!rem // 
+!mmm function m3mgdListMeleeAttackWeapons(tokenID)
+!mmm   set attackWeaponsList = findattr(tokenID, "Angriff", "Waffe")
+!mmm   if isunknown(attackWeaponsList) or isdenied(attackWeaponsList)
+!mmm     return false
+!mmm   end if
+!mmm   for attackWeaponAttr in attackWeaponsList
+!mmm     if tokenID.(findattr(tokenID, "Angriff", "Waffe", tokenID.(attackWeaponAttr), "FKWaffe")) != 1
+!mmm       set meleeAttackWeaponsList = meleeAttackWeaponsList, attackWeaponAttr
+!mmm     end if
+!mmm   end for
+!mmm   return meleeAttackWeaponsList
+!mmm end function
+!rem
+!rem // m3mgdListRangedAttackWeapons(tokenID)
+!rem // 
+!rem //   Returns a list of tokenID's ranged attack weapons (attribute names), or false if there are none or none accessible.
+!rem // 
+!mmm function m3mgdListRangedAttackWeapons(tokenID)
+!mmm   set attackWeaponsList = findattr(tokenID, "Angriff", "Waffe")
+!mmm   if isunknown(attackWeaponsList) or isdenied(attackWeaponsList)
+!mmm     return false
+!mmm   end if
+!mmm   for attackWeaponAttr in attackWeaponsList
+!mmm     if tokenID.(findattr(tokenID, "Angriff", "Waffe", tokenID.(attackWeaponAttr), "FKWaffe")) == 1
+!mmm       set rangedAttackWeaponsList = rangedAttackWeaponsList, attackWeaponAttr
+!mmm     end if
+!mmm   end for
+!mmm   return rangedAttackWeaponsList
+!mmm end function

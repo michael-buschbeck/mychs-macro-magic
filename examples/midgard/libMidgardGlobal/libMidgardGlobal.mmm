@@ -1,0 +1,61 @@
+!rem // libMidgardGlobal
+!rem // 
+!rem // 
+!rem // defines global "constants" for use across Midgard scripts
+!rem // 
+!rem // Expects ("imports") variables:
+!rem //   CURRENT
+!rem // 
+!rem // Sets ("exports") variables:
+!rem //   m3mgdExchange                 Exchange data sheet ID. Use to access any attribute: m3mgdExchange.(m3mgdAttrAttackType)
+!rem //   m3mgdExchangeDataSheet        Sheet name to look up the exchange data sheet, for portability between games
+!rem //   m3mgdExchangeAttrList         List of valid attribute labels (contained in the list of variables below)
+!rem //   m3mgdAttrAttackType           Attribute label for the attack type ("melee", "ranged", "magic"), with spell names stored in "max"
+!rem //   m3mgdAttrAttackerID           Attribute label for the attacker's token ID
+!rem //   m3mgdAttrAttackTargetID       Attribute label for the target's token ID
+!rem //   m3mgdAttrAttackResult         Attribute label for the attack result (integer)
+!rem //   m3mgdAttrAttackDamage         Attribute label for the attack damage (integer)
+!rem //   m3mgdAttrAttackDamageRoll     Attribute label for the attack damage roll result (integer)
+!rem //   m3mgdAttrAttackWeaponType     Attribute label for the attack weapon type (string)
+!rem //   m3mgdAttrHealthGain           Attribute label for the number of health points gained (e.g. through First Aid or a healing spell)
+!rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
+!rem // 
+!rem // begin MMM fragment
+!mmm   set PARENT = CURRENT
+!mmm   set CURRENT = "libMidgardGlobal 1.2.0 (2021-12-29)"
+!mmm
+!mmm   set m3mgdExchangeDataSheet = "MacroSheet"
+!mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
+!mmm 
+!mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
+!mmm     do whisperback("No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Aborting script " & PARENT & ".")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   set m3mgdAttrAttackType          = "m3mgd_attack_type"
+!mmm   set m3mgdAttrAttackerID          = "m3mgd_attack_attackerID"
+!mmm   set m3mgdAttrAttackTargetID      = "m3mgd_attack_targetID"
+!mmm   set m3mgdAttrAttackResult        = "m3mgd_attack_result"
+!mmm   set m3mgdAttrAttackDamage        = "m3mgd_attack_damage"
+!mmm   set m3mgdAttrAttackDamageRoll    = "m3mgd_attack_damage_roll"
+!mmm   set m3mgdAttrAttackWeaponType    = "m3mgd_attack_weapon_type"
+!mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
+!mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
+!mmm
+!mmm   set m3mgdExchangeAttrList = m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType, m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
+!mmm
+!mmm   set m3mgdValidMeleeAttackWeaponTypes = "waffenlos", "Einhandschwert", "Zweihandschwert", "Fechtwaffe", "Stichwaffe", "Stockwaffe", "Spießwaffe", "Kettenwaffe", "Einhandschlagwaffe", "Zweihandschlagwaffe", "Zauberstab"
+!mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
+!mmm   set m3mgdValidAttackWeaponTypes = m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
+!mmm
+!mmm   set m3mgdArmorPiercingWeaponTypes = "Langbogen", "Kompositbogen", "schwere Armbrust", "Schwere Armbrust"
+!mmm
+!mmm   set m3mgdParryLargeShieldTypes = "Großer Schild"
+!mmm   set m3mgdParrySmallShieldTypes = "Kleiner Schild"
+!mmm   set m3mgdParrySmallShieldEffectiveAgainst = "Einhandschlagwaffe", "Einhandschwert", "Fechtwaffe", "Kettenwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "waffenlos"
+!mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
+!mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln"
+!mmm
+!mmm   set CURRENT = PARENT
+!mmm   set PARENT = undef
+!rem // end MMM fragment
