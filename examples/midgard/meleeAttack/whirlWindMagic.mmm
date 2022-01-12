@@ -59,7 +59,7 @@
 !mmm       if cWeaponToggleCost > 0
 !mmm         set endurance = setattr(cOwnID, "AP", endurance - cWeaponToggleCost)
 !mmm         chat: /w "${ownName}" Das hat ${cWeaponToggleCost} AP gekostet.
-!mmm         chat: /GM ${ownName} hat die magischen Windböen seiner Runenklinge aktiviert. Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen). Alle Gegner haben nun -4 auf Angriff.
+!mmm         chat: /GM ${ownName} hat die magischen Windböen seiner Runenklinge aktiviert. Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen). Alle Gegner haben nun -4 auf Angriff (wird automatisch berücksichtigt).
 !mmm       end if
 !mmm   
 !mmm     end if
@@ -101,7 +101,7 @@
 !mmm     else
 !mmm       set torches = ""
 !mmm     end if
-!mmm     chat: /w GM ${cOwnID.name}s Windstoß löscht alle Kerzen ${torches} auf 30m Entfernung; Nebel, Rauch oder Gas werden weggeweht.
+!mmm     chat: ${cOwnID.name}s Windstoß löscht alle Kerzen ${torches} auf 30m Entfernung; Nebel, Rauch oder Gas werden weggeweht.
 !mmm     
 !mmm   end if
 !mmm   
