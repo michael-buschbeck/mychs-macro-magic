@@ -45,7 +45,7 @@
 !mmm   set m3mgdExchangeAttrList = m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType, m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
 !mmm
 !mmm   set m3mgdValidMeleeAttackWeaponTypes = "waffenlos", "Einhandschwert", "Zweihandschwert", "Fechtwaffe", "Stichwaffe", "Stockwaffe", "Spießwaffe", "Kettenwaffe", "Einhandschlagwaffe", "Zweihandschlagwaffe", "Zauberstab"
-!mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
+!mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Kurzbogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
 !mmm   set m3mgdValidAttackWeaponTypes = m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm
 !mmm   set m3mgdArmorPiercingWeaponTypes = "Langbogen", "Kompositbogen", "schwere Armbrust", "Schwere Armbrust"
