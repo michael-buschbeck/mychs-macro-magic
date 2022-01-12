@@ -2,11 +2,17 @@
 !rem //
 %{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "applyHealing 1.0.0 (2021-12-29)"
+!mmm   set scriptVersion = "applyHealing 1.0.1 (2022-01-12)"
+!mmm
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 %{MacroSheetLibrary|libMidgardGlobal}
 !mmm
-!mmm   if selected
+!mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
 !mmm     set customizable cEnduranceAttr = "bar2"
@@ -20,7 +26,7 @@
 !mmm   
 !mmm   if not (m3mgdExchange.(m3mgdAttrHealthGain) > 0 or m3mgdExchange.(m3mgdAttrEnduranceGain) > 0)
 !mmm   
-!mmm     chat: /w "${user}" [**Lebens-/Ausdauergewinn eingeben**](~applyHealingDataEntry)
+!mmm     chat: /w "${user}" [**Lebens-/Ausdauergewinn eingeben**](~MacroSheet|applyHealingDataEntry)
 !mmm     exit script
 !mmm
 !mmm   end if 

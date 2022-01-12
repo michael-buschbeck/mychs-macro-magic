@@ -1,7 +1,13 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.3.0 (2021-12-29)"
+!mmm   set scriptVersion = "defendFrostball 1.3.1 (2022-01-12)"
+!mmm
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
 !mmm
 !mmm   set CURRENT = scriptVersion
 %{MacroSheetLibrary|libMidgardGlobal}
@@ -10,7 +16,7 @@
 !mmm
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cGMSilentMode = false
-!mmm   if selected
+!mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
 !mmm     set customizable cEnduranceAttr = "bar2"
