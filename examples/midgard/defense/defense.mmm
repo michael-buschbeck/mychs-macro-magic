@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.10.0 (2022-01-01)"
+!mmm   set scriptVersion = "defense 1.10.1 (2022-01-12)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -36,7 +36,7 @@
 !rem   //  cGMSilentMode        0/1: override if GM operates this script and wants to keep it silent
 !rem   //  cDefenseRoll         Override by player to see beautifully animated 3D dice
 !rem   //
-!mmm   if selected
+!mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
 !mmm     set customizable cEnduranceAttr = "bar2"
@@ -72,11 +72,11 @@
 !rem
 !rem   // Validate attack data and request manual entry if anything is amiss
 !mmm   if not m3mgdValidateAttackData()
-!mmm     do whisperback("**Abwehrskript: Daten fehlen oder widersprüchlich** [**Angriffsdaten eingeben**](~defenseDataEntry)")
+!mmm     do whisperback("**Abwehrskript: Daten fehlen oder widersprüchlich** [**Angriffsdaten eingeben**](~MacroSheet|defenseDataEntry)")
 !mmm     exit script
 !mmm   end if
 !mmm   if not m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
-!mmm     do whisperback("**Abwehrskript:** " & m3mgdExchange.(m3mgdAttrAttackTargetID).name & " wurde zuletzt angegriffen, nicht ich. [**Angriffsdaten eingeben**](~defenseDataEntry)")
+!mmm     do whisperback("**Abwehrskript:** " & m3mgdExchange.(m3mgdAttrAttackTargetID).name & " wurde zuletzt angegriffen, nicht ich. [**Angriffsdaten eingeben**](~MacroSheet|defenseDataEntry)")
 !mmm     exit script
 !mmm   end if
 !mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
