@@ -643,6 +643,60 @@
 !mmm   
 !mmm end function
 !rem
+!rem // m3mgdExchangeStoreHealthBoost(healthGain, targetID)
+!rem //
+!mmm function m3mgdExchangeStoreHealthBoost(healthGain, targetID)
+!mmm   
+!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   do m3mgdFlushExchange(dataExchangeID)
+!mmm
+!mmm   if healthGain <= 0
+!mmm     do whisperback("Storing health gain <=0 makes no sense.")
+!mmm     return false
+!mmm   else if isdefault(targetID) and script.cOwnID ne ""
+!mmm     set targetID = script.cOwnID
+!mmm   else if isdefault(targetID)
+!mmm     set targetID = sender.token_id
+!mmm   end if
+!mmm 
+!mmm   set storeCounter = 0
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrHealthGain, healthGain) eq healthGain
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattrmax(dataExchangeID, script.m3mgdAttrHealthGain, targetID) eq targetID
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   return (storeCounter == 2)
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
+!rem //
+!mmm function m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
+!mmm   
+!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   do m3mgdFlushExchange(dataExchangeID)
+!mmm
+!mmm   if enduranceGain <= 0
+!mmm     do whisperback("Storing endurance gain <=0 makes no sense.")
+!mmm     return false
+!mmm   else if isdefault(targetID) and script.cOwnID ne ""
+!mmm     set targetID = script.cOwnID
+!mmm   else if isdefault(targetID)
+!mmm     set targetID = sender.token_id
+!mmm   end if
+!mmm 
+!mmm   set storeCounter = 0
+!mmm   if setattr(dataExchangeID, script.m3mgdAttrEnduranceGain, enduranceGain) eq enduranceGain
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   if setattrmax(dataExchangeID, script.m3mgdAttrEnduranceGain, targetID) eq targetID
+!mmm     set storeCounter = storeCounter + 1
+!mmm   end if
+!mmm   return (storeCounter == 2)
+!mmm   
+!mmm end function
+!rem
 !rem // m3mgdListDefenseWeapons(tokenID)
 !rem // 
 !rem //   Returns a list of tokenID's defense weapons (attribute names), or false if there are none or none accessible.
