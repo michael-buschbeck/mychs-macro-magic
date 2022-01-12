@@ -6,7 +6,7 @@
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
+!mmm     do whisperback("Midgard script " & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
