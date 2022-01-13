@@ -1177,6 +1177,28 @@
                 { chat: "test 3" },
             ],
             [
+                "!mmm chat: ${floor}",
+                { chat: "floor(param1)" },
+            ],
+            [
+                "!mmm function test0()",
+                "!mmm end function",
+                "!mmm chat: ${test0}",
+                { chat: "test0()" },
+            ],
+            [
+                "!mmm function test1(foo)",
+                "!mmm end function",
+                "!mmm chat: ${test1}",
+                { chat: "test1(foo)" },
+            ],
+            [
+                "!mmm function test3(foo, bar, baz)",
+                "!mmm end function",
+                "!mmm chat: ${test3}",
+                { chat: "test3(foo, bar, baz)" },
+            ],
+            [
                 "!mmm script",
                 "!mmm     set customizable foo",
                 "!mmm     chat: broken, foo=${foo}",
