@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.24.0";
+const MMM_VERSION = "1.24.1";
 
 on("chat:message", function(msg)
 {
@@ -243,7 +243,10 @@ class MychProperties
                         return value.apply(variables, args);
                     }
 
-                    functionImplWithVariables.variables = variables;
+                    functionImplWithVariables.functionName = value.functionName || value.name;
+                    functionImplWithVariables.functionParamCount = value.functionParamCount || value.length;
+                    functionImplWithVariables.functionParamNames = value.functionParamNames;
+                    functionImplWithVariables.boundVariables = variables;
                     functionImplWithVariables.hasBoundVariables = true;
 
                     return functionImplWithVariables;
@@ -2615,6 +2618,10 @@ class MychScript
                     return functionExit ? functionExit.result : undefined;
                 }
 
+                functionImpl.functionName = this.definition.functionName;
+                functionImpl.functionParamCount = functionParams.length;
+                functionImpl.functionParamNames = functionParams;
+
                 variables.$setProperty(this.definition.functionName, functionImpl);
             },
         },
@@ -3612,6 +3619,15 @@ class MychExpression
         if (value == undefined || value == null)
         {
             return "";
+        }
+
+        if (value instanceof Function)
+        {
+            let name = value.functionName || value.name;
+            let paramCount = value.functionParamCount || value.length;
+            let paramNames = value.functionParamNames || [...Array(paramCount).keys()].map(index => "param" + (index + 1));
+            
+            return name + "(" + paramNames.join(", ") + ")";
         }
 
         return String(value);
