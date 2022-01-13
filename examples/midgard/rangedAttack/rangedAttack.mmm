@@ -455,7 +455,7 @@
 !mmm     chat:      {{Boni/Mali=**${modifiers}**}}
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
 !mmm     if attackFromBehind
-!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** ($[targetViewAngle]{foeViewAngle}°)}}
+!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** (${foeViewAngle}°)}}
 !mmm     end if 
 !mmm     if attackResult >= 20 and semiAutoModCode % 23 == 0
 !mmm       chat:    {{Basisschaden=${damageResultBasic}}}
