@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.10.1 (2022-01-12)"
+!mmm   set scriptVersion = "defense 1.10.2 (2022-01-13)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -196,7 +196,13 @@
 !mmm   end if
 !mmm   set defenseResultLog = defenseResult & " = (1d20:" & cDefenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
 !mmm   set modifiers = highlight(modifiers, "info")
-!mmm   set defenseResult = highlight(defenseResult, default, defenseResultLog)
+!mmm   if iscritical(cDefenseRoll)
+!mmm     set defenseResult = highlight(defenseResult, "good", defenseResultLog)
+!mmm   else if isfumble(cDefenseRoll)
+!mmm     set defenseResult = highlight(defenseResult, "bad", defenseResultLog)
+!mmm   else
+!mmm     set defenseResult = highlight(defenseResult, "normal", defenseResultLog)
+!mmm   end if
 !mmm
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
