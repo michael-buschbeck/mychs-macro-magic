@@ -1199,6 +1199,16 @@
                 { chat: "test3(foo, bar, baz)" },
             ],
             [
+                "!mmm debug do floor",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>floor(param1)</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>floor</span>" },
+            ],
+            [
+                "!mmm function test3(foo, bar, baz)",
+                "!mmm end function",
+                "!mmm debug do test3",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>test3(foo, bar, baz)</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>test3</span>" },
+            ],
+            [
                 "!mmm script",
                 "!mmm     set customizable foo",
                 "!mmm     chat: broken, foo=${foo}",

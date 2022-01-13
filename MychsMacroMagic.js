@@ -3752,6 +3752,11 @@ class MychExpression
             return value.map(MychExpression.literal).join(", ");
         }
 
+        if (value instanceof Function)
+        {
+            return MychExpression.coerceString(value);
+        }
+
         value = MychExpression.coerceScalar(value);
 
         switch (typeof(value))
