@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.12.0 (2022-01-01)"
+!mmm   set scriptVersion = "1.13.0 (2022-01-13)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -455,7 +455,7 @@
 !mmm     chat:      {{Boni/Mali=**${modifiers}**}}
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
 !mmm     if attackFromBehind
-!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** ($[targetViewAngle]{foeViewAngle}°)}}
+!mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** (${foeViewAngle}°)}}
 !mmm     end if 
 !mmm     if attackResult >= 20 and semiAutoModCode % 23 == 0
 !mmm       chat:    {{Basisschaden=${damageResultBasic}}}
@@ -469,11 +469,16 @@
 !mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
+!mmm   if not cGMSilentMode
+!mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
+!mmm   end if
 !mmm   if iscritical(cAttackRoll) and foeEndurance > 0
 !mmm     chat: /w "${cOwnID.name}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM                ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   else if iscritical(cAttackRoll)
 !mmm     chat: /w "${cOwnID.name}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
+!mmm   end if
+!mmm   if attackResult >= 20
+!mmm     do m3mgdSendDefenseChatButtons(foeID)
 !mmm   end if
 !mmm end script

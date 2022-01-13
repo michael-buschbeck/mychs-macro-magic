@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.12.0 (2021-12-31)"
+!mmm   set scriptVersion = "v1.13.0 (2022-01-13)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -44,12 +44,12 @@
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cHealthAttr          Override if the script operates on a token for a generic NPC
 !rem   //  cEnduranceAttr       Override if the script operates on a token for a generic NPC
-!rem   //  cGMSilentMode        0/1: override if GM operates this script and wants to keep it silent
+!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
 !rem   //  cAttackRoll          Override by player to see beautifully animated 3D dice
 !mmm   set customizable cOwnID = sender.token_id
 !mmm   set customizable cHealthAttr = "LP"
 !mmm   set customizable cEnduranceAttr = "AP"
-!mmm   set customizable cGMSilentMode = 0
+!mmm   set customizable cGMSilentMode = false
 !mmm   set customizable cAttackRoll = roll("1d20")
 !mmm
 !rem   // Refetch token_id to ensure access in case of erroneous override in customize block
@@ -279,7 +279,7 @@
 !mmm   if cVerbose
 !mmm     combine chat
 !rem       // Check if script is run for an NPC (whisper data to GM only)
-!mmm       if cGMSilentMode == 1
+!mmm       if cGMSilentMode
 !mmm         chat: /w GM 
 !mmm       end if
 !mmm       if not magicExtraDamageActive
@@ -327,7 +327,7 @@
 !rem   // Add data table for easy reference
 !mmm   combine chat
 !rem     // Check if script is run for an NPC (whisper data to GM only)
-!mmm     if cGMSilentMode == 1
+!mmm     if cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
@@ -347,11 +347,16 @@
 !mmm     end if
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
+!mmm   if not cGMSilentMode
+!mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
+!mmm   end if
 !mmm   if iscritical(cAttackRoll) and foeEndurance > 0
 !mmm     chat: /w "${cOwnID.name}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM            ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   else if iscritical(cAttackRoll)
 !mmm     chat: /w "${cOwnID.name}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
+!mmm   end if
+!mmm   if attackResult >= 20
+!mmm     do m3mgdSendDefenseChatButtons(foeID)
 !mmm   end if
 !mmm end script
