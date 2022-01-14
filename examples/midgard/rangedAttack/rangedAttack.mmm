@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.13.0 (2022-01-13)"
+!mmm   set scriptVersion = "1.13.1 (2022-01-14)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
