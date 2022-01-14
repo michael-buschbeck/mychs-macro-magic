@@ -1,7 +1,11 @@
 !rem // Defends against Midgard's Snatch ("Heranholen") spell, as defined in Arkanum:91
 !rem //
+!mmm customize
+!mmm   set cGMSilentMode = true
+!mmm   set cTargetID = "@{target|Angriffsziel|token_id}"
+!mmm end customize
 !mmm script
-!mmm   set scriptVersion = "defendSnatch 1.1.1 (2022-01-12)"
+!mmm   set scriptVersion = "defendSnatch 1.2.0 (2022-01-14)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -14,14 +18,10 @@
 !mmm
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cGMSilentMode = false
-!mmm   if selected and sender.token_id ne selected
-!mmm     set customizable cOwnID = selected.token_id
-!mmm     set customizable cHealthAttr = "bar3"
-!mmm     set customizable cEnduranceAttr = "bar2"
+!mmm   if selected
+!mmm     set customizable cTargetID = selected.token_id
 !mmm   else 
-!mmm     set customizable cOwnID = sender.token_id
-!mmm     set customizable cHealthAttr = "LP"
-!mmm     set customizable cEnduranceAttr = "AP"
+!mmm     set customizable cTargetID = sender.token_id
 !mmm   end if
 !mmm
 !mmm   if not (m3mgdExchange.(m3mgdAttrAttackType) eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Snatch")
@@ -29,6 +29,7 @@
 !mmm     exit script
 !mmm   end if
 !mmm   
+!mmm   set attackerID = m3mgdExchange.(m3mgdAttrAttackerID)
 !mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
 !mmm   if isdenied(attackResult) or isunknown(attackResult)
 !mmm     do whisperback("Access to attack result value failed: " & getreason(attackResult))
@@ -36,14 +37,16 @@
 !mmm   end if
 !mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
 !mmm   if criticalAttack == true
-!mmm     set attackResult = highlight(attackResult, "good")
+!mmm     set attackResult = highlight(attackResult, "good", "Übergeben von " & attackerID.name)
 !mmm   else 
-!mmm     set attackResult = highlight(attackResult, "normal")
+!mmm     set attackResult = highlight(attackResult, "normal", "Übergeben von " & attackerID.name)
 !mmm   end if 
 !mmm   
-!mmm   set defenseResult = roll("1d20+" & (targetID.Abwehr + round(cOwnID.St / 5)))
+!mmm   set defenseRoll = roll("1d20")
+!mmm   set defenseResult = defenseRoll + (cTargetID.Abwehr + round(cTargetID.St / 5))
+!mmm   set defenseResult = highlight(defenseResult, default, "= 🎲" & defenseRoll & " + Abwehr:" & cTargetID.Abwehr & " + St/5:" & round(cTargetID.St / 5))
 !mmm   
-!mmm   if iscritical(defenseResult) or (m3mgdExchange.(m3mgdAttrAttackCriticalSuccess) == false and defenseResult >= attackResult)
+!mmm   if iscritical(defenseRoll) or (criticalAttack == false and defenseResult >= attackResult)
 !mmm     
 !mmm     set defenseSuccess = true 
 !mmm
@@ -52,19 +55,16 @@
 !mmm     set defenseSuccess = false
 !mmm     
 !mmm   end if
-!rem
+!mmm   
+!mmm   set sender = cTargetID.name
+!mmm   
 !rem   // Verbose output
 !mmm   if cVerbose
-!mmm     set sender = cOwnID
 !mmm     combine chat
-!rem       // Check if script is run for an NPC (whisper data to GM only)
-!mmm       if cGMSilentMode
-!mmm         chat: /w GM 
-!mmm       end if
 !mmm       if defenseSuccess
 !mmm         chat: Der Gegenstand hat gewackelt aber ich konnte ihn festhalten.
 !mmm       else 
-!mmm         chat: Der Gegenstand löst sich aus den meinen Fingern und schwebt in Richtung ${m3mgdExchange.(m3mgdAttrAttackerID).name}.
+!mmm         chat: Der Gegenstand löst sich aus meinen Fingern und schwebt in Richtung ${attackerID.name}.
 !mmm       end if
 !mmm     end combine
 !mmm   end if
@@ -72,16 +72,16 @@
 !rem   // Data table
 !mmm   combine chat
 !rem     // Check if script is run for an NPC (whisper data to GM only)
-!mmm     if cGMSilentMode == 1
+!mmm     if cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
 !mmm     chat: ${"&"}{template:default} 
-!mmm     chat: {{name=${cOwnID.name}: Abwehr gegen Heranholen}} 
+!mmm     chat: {{name=${cTargetID.name}: Abwehr gegen Heranholen}} 
 !mmm     chat: {{Zaubererfolg=${attackResult}}}
 !mmm     if defenseSuccess
-!mmm       chat: {{Abwehrerfolg=${defenseResult}}}
+!mmm       chat: {{Abwehrerfolg=${defenseResult} (Wurf ${defenseRoll})}}
 !mmm     else 
-!mmm       chat: {{Abwehrmisserfolg=${defenseResult}}}
+!mmm       chat: {{Abwehrmisserfolg=${defenseResult} (Wurf ${defenseRoll})}}
 !mmm     end if
 !mmm   end combine
 !mmm

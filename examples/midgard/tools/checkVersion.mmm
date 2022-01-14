@@ -1,0 +1,4 @@
+!rem // Call this right before any script that outputs its version if cCheckVersion is true
+!mmm customize
+!mmm   set cCheckVersion = true
+!mmm end customize

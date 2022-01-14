@@ -2,26 +2,25 @@
 !rem // GM script: Remove a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.0.4 (2021-11-17)"
+!mmm   set scriptVersion = "earthBondRemove v1.0.5 (2022-01-14)"
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
-!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
 !rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
 !rem   //  cDeactivateGIF       GIF to play as the earth releases the foe
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
 !mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
-!mmm   set customizable cWeaponMagicMarker = "status_cobweb"
+!mmm   set customizable cWeaponToggleCost = 1
 !mmm   set customizable cDeactivateGIF = ""
 !mmm
 !mmm   if cCheckVersion
-!mmm     do whisperback("earthBondRemove v" & scriptVersion)
+!mmm     do whisperback(scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Init
-!mmm   set m3mgdAttrEarthBondTargetID = "m3mgd_earthBond_targetID"
+%{MacroSheetLibrary|libMidgardGlobal}
+%{MacroSheetLibrary|libMidgardFunctions}
 !mmm   
 !mmm   if not cWeaponWielder.name eq cWeaponWielder
 !mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")
@@ -32,36 +31,36 @@
 !mmm   set releaseMode = "?{Wie wird die Erdfessel entfernt? | Auf Wunsch des Schöpfers,releaseByCreator| Langsam und vorsichtig (5min/PW:Gw),escapeByPatience| Mit Gewalt (einmalig),escapeByForce}"
 !mmm
 !rem   // Retrieve target ID
-!mmm   set foe = cWeaponWielder.(m3mgdAttrEarthBondTargetID)
-!mmm   if not foe or isdenied(foe.token_id) or isunknown(foe.token_id) or isdenied(foe.(cWeaponMagicMarker))
-!mmm     do whisperback("Target given as token ID '" & foe & "' may not be a correct token ID, or does not allow access to attributes")
+!mmm   set foeID = cWeaponWielder.(m3mgdEarthBondPCAttrTargetID)
+!mmm   if not foeID or isdenied(foeID.token_id) or isunknown(foeID.token_id) or isdenied(foeID.(m3mgdEarthBondStatusMarker))
+!mmm     do whisperback("Target given as token ID '" & foeID & "' may not be a correct token ID, or does not allow access to attributes:" & getreason(foeID))
 !mmm     exit script
 !mmm   end if
 !mmm 
-!mmm   if foe.(cWeaponMagicMarker) ne "shown"
-!mmm     do whisperback("Token " & foe.name & " trägt aber keine Erdfessel oder " & cWeaponMagicMarker & " wurde schon entfernt.")
+!mmm   if foeID.(m3mgdEarthBondStatusMarker) ne "shown"
+!mmm     do whisperback("Token " & foeID.name & " trägt aber keine Erdfessel oder " & m3mgdEarthBondStatusMarker & " wurde schon entfernt.")
 !mmm     exit script
 !mmm   end if
 !mmm
 !mmm   if releaseMode eq "releaseByCreator"
-!mmm     do setattr(cWeaponWielder, "AP", cWeaponWielder.AP - 1)
-!mmm     chat: Die Erdfessel gibt ${foe.name} frei, und plötzlich sieht der Untergrund wieder aus wie vorher, als wäre nichts gewesen.
+!mmm     do m3mgdModifyEndurance(-1 * cWeaponToggleCost, cWeaponWielder.token_id, "AP")
+!mmm     chat: Die Erdfessel gibt ${foeID.name} frei, und plötzlich sieht der Untergrund wieder aus wie vorher, als wäre nichts gewesen.
 !mmm     if cDeactivateGIF ne ""
 !mmm       chat: [x](${cDeactivateGIF})
 !mmm     end if
 !mmm
 !mmm   else if releaseMode eq "escapeByPatience"
 !mmm     set dxRoll = roll("1d100")
-!mmm     if isunknown(foe.Gw)
-!mmm       chat: /w GM ${foe.name} erlaubt keinen Zugriff auf das Attribut **Gw**. **Bitte manuell würfeln (+/-0) und bei Erfolg die beiden Statusmarker entfernen.**
+!mmm     if isunknown(foeID.Gw)
+!mmm       chat: /w GM ${foeID.name} erlaubt keinen Zugriff auf das Attribut **Gw**. **Bitte manuell würfeln (+/-0) und bei Erfolg die beiden Statusmarker entfernen.**
 !mmm       exit script
-!mmm     else if dxRoll > foe.Gw
-!mmm       chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${foe.Gw}) ist mit ${dxRoll} **fehlgeschlagen.**
-!mmm       chat: ${foe.name} versucht sich allzu ruckartig von ${cWeaponWielder.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter! Und dafür hab ich 5 Minuten verschwendet.
+!mmm     else if dxRoll > foeID.Gw
+!mmm       chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${foeID.Gw}) ist mit ${dxRoll} **fehlgeschlagen.**
+!mmm       chat: ${foeID.name} versucht sich allzu ruckartig von ${cWeaponWielder.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter! Und dafür hab ich 5 Minuten verschwendet.
 !mmm       exit script
 !mmm     else
-!mmm       chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${foe.Gw}) ist mit ${dxRoll} **gelungen.**
-!mmm       chat: ${foe.name} befreit sich laaaaangsam, aber immerhin elegant von ${cWeaponWielder.name}s Erdfessel. Es kann so einfach sein -- das waren 5 gut investierte Minuten!
+!mmm       chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${foeID.Gw}) ist mit ${dxRoll} **gelungen.**
+!mmm       chat: ${foeID.name} befreit sich laaaaangsam, aber immerhin elegant von ${cWeaponWielder.name}s Erdfessel. Es kann so einfach sein -- das waren 5 gut investierte Minuten!
 !mmm       if cDeactivateGIF ne ""
 !mmm         chat: [x](${cDeactivateGIF})
 !mmm       end if
@@ -69,23 +68,25 @@
 !mmm
 !mmm   else if releaseMode eq "escapeByForce"
 !mmm     set stRoll = roll("1d100")
-!mmm     set foeActOfStrength = roll(foe.token_id, "@"&"{KraftaktW}")
+!mmm     set foeActOfStrength = roll(foeID.token_id, "@"&"{KraftaktW}")
 !mmm     if isunknown(foeActOfStrength)
-!mmm       chat: /w GM ${foe.name} erlaubt keinen Zugriff auf das Attribut **KraftaktW**. **Bitte manuell würfeln (+/-0) und bei Erfolg die beiden Statusmarker entfernen.**
+!mmm       chat: /w GM ${foeID.name} erlaubt keinen Zugriff auf das Attribut **KraftaktW**. **Bitte manuell würfeln (+/-0) und bei Erfolg die beiden Statusmarker entfernen.**
 !mmm       exit script
 !mmm     else if stRoll > foeActOfStrength
 !mmm       chat: /w GM **Ausbruch aus Erdfessel:** PW:KraftaktW(${foeActOfStrength}) ist mit ${stRoll} **fehlgeschlagen.**
-!mmm       chat: ${foe.name} versucht sich ruckartig von ${cWeaponWielder.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter!
+!mmm       chat: ${foeID.name} versucht sich ruckartig von ${cWeaponWielder.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter!
 !mmm       exit script
 !mmm     else
 !mmm       chat: /w GM **Ausbruch aus Erdfessel:** PW:KraftaktW(${foeActOfStrength}) ist mit ${stRoll} **gelungen.**
-!mmm       chat: ${foe.name} befreit sich elegant von ${cWeaponWielder.name}s Erdfessel. Es kann so einfach sein!
+!mmm       chat: ${foeID.name} befreit sich elegant von ${cWeaponWielder.name}s Erdfessel. Es kann so einfach sein!
 !mmm       if cDeactivateGIF ne "" 
 !mmm         chat: [x](${cDeactivateGIF})
 !mmm       end if
 !mmm     end if
 !mmm   end if
-!mmm   do setattr(foe, cWeaponMagicMarker, false)
-!mmm   do setattr(cWeaponWielder, cWeaponMagicMarker, false)
-!mmm   do setattr(cWeaponWielder, m3mgdAttrEarthBondTargetID, "")
+!mmm
+!mmm   do setattr(foeID, m3mgdEarthBondStatusMarker, false)
+!mmm   do setattr(cWeaponWielder, m3mgdEarthBondStatusMarker, false)
+!mmm   do setattr(cWeaponWielder, m3mgdEarthBondPCAttrTargetID, "")
+!mmm
 !mmm end script

@@ -1,0 +1,23 @@
+!rem // showXPLog for selected token's character
+!rem // 2022-01-14
+!mmm script
+!mmm
+!rem   // Initialize globals (mainly data exchange)
+%{MacroSheetLibrary|libMidgardGlobal}
+!rem   // including function libraries here to avoid breaking the link between customize and script blocks 
+%{MacroSheetLibrary|libMidgardFunctions}
+!mmm
+!mmm   if not selected or isunknown(selected.(m3mgdAttrXP)) or isunknown(selected.(m3mgdAttrXPLog))
+!mmm     do whisperback("showXPLog: no token selected or character does not have attributes " & m3mgdAttrXP & " and " & m3mgdAttrXPLog & " -- aborting.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   combine chat
+!mmm     chat: /w GM ${"&"}{template:default} {{name=EP-Sitzungsprotokoll für **${selected.name}** (${selected.(m3mgdAttrXP)} EP)}}
+!mmm     if selected.(m3mgdAttrXPLog) eq ""
+!mmm       chat: {{Keine Einträge}}
+!mmm     else 
+!mmm       chat: ${selected.(m3mgdAttrXPLog)}
+!mmm     end if
+!mmm   end combine
+!mmm end script

@@ -4,8 +4,9 @@
 !mmm   combine chat
 !mmm     chat: /w GM ${"&"}{template:default} {{name=EP-Übersicht}}
 !mmm     for char in "Yorric MacRathgar", "Titos Panathos", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn"
-!mmm       chat: {{${char.name}=${char.Erfahrungsschatz} }}
+!mmm       chat: {{${char.name}=${char.Erfahrungsschatz}}}
 !mmm     end for
-!mmm     chat: {{ EP löschen=[**LÖSCHEN**](~FlushXP) }}
+!mmm     chat: {{ EP-Protokoll=[📃](~MacroSheet|showXPLog) (Einzelnen Token auswählen!) }}
+!mmm     chat: {{ EP löschen=[**LÖSCHEN**](~MacroSheet|flushXP) }}
 !mmm   end combine
 !mmm end script

@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.13.0 (2022-01-13)"
+!mmm   set scriptVersion = "1.13.1 (2022-01-14)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -316,7 +316,7 @@
 !mmm
 !rem   // For magic weapons: Process optional endurance cost
 !mmm   if cMagicEnduranceCost > 0
-!mmm     do setattr(cOwnID, cEnduranceAttr, cOwnID.(cEnduranceAttr) - cMagicEnduranceCost)
+!mmm     do m3mgdModifyEndurance(-1 * cMagicEnduranceCost, cOwnID, cEnduranceAttr)
 !mmm     set modifierLog = modifierLog & "{{ " & cWeaponLabel & "=-" & cMagicEnduranceCost & " AP }}"
 !mmm   end if
 !rem
