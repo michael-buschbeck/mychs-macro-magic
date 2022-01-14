@@ -347,7 +347,7 @@
 !mmm
 !mmm   if maxEndurance == 0
 !mmm
-!mmm     do whisperback(tokenID.token_name & " ist kein Wesen, das Ausdauerpunkte gewinnen kann (AP.max=0).")
+!mmm     do whisperback(tokenID.token_name & " ist kein Wesen, das Ausdauerpunkte gewinnen oder verlieren kann (AP.max=0).")
 !mmm     return highlight(prvEndurance, "normal", "unverändert")
 !mmm
 !mmm   else
@@ -425,7 +425,7 @@
 !mmm
 !mmm   if maxHealth == 0
 !mmm
-!mmm     do whisperback(tokenID.token_name & " ist kein Lebewesen (LP=0), dass geheilt werden kann.")
+!mmm     do whisperback(tokenID.token_name & " ist kein Lebewesen (LP=0), dass geheilt oder verletzt werden kann.")
 !mmm     return highlight(prvHealth, "normal", "unverändert")
 !mmm
 !mmm   else
