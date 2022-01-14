@@ -3,7 +3,6 @@
 !mmm script
 !mmm   
 !rem   // Commands are set by config script, valid commands are "toggle-defense" and "wind-gust"
-!mmm   set customizable command = ""
 !mmm   set customizable command = "wind-gust"
 !mmm   set customizable cOwnID = "Yorric MacRathgar".token_id
 !mmm   
@@ -14,15 +13,11 @@
 !mmm     
 !mmm   end if 
 !mmm   
+%{MacroSheetLibrary|libMidgardFunctions}
+!mmm
 !rem   // Config (overwrite in a customize block called immediately before this script)
-!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
-!rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
-!rem   //  cWeaponType          The type of weapon for narration, the "sword" in "I'm swinging my sword Glamdring"
 !rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
 !rem   //  cWeaponToggleCost    Endurance cost (AP) to activating the weapon's magic
-!mmm   set customizable cWeaponLabel = "Wirbelwind (Langschwert)"
-!mmm   set customizable cWeaponName = "Wirbelwind"
-!mmm   set customizable cWeaponType = "Langschwert"
 !mmm   set customizable cWeaponMagicMarker = "status_half_haze"
 !mmm   set customizable cWeaponToggleCost = 1
 !mmm   set customizable cActivateGIF = "https://media.giphy.com/media/EeofceO0vyYKvqJKHH/giphy.gif"
@@ -45,9 +40,9 @@
 !mmm       do setattr(cOwnID, cWeaponMagicMarker, false)
 !mmm   
 !mmm       if cWeaponToggleCost > 0
-!mmm         set endurance = setattr(cOwnID, "AP", endurance - cWeaponToggleCost)
-!mmm         chat: /w "${ownName}" Das hat ${cWeaponToggleCost} AP gekostet.
-!mmm         chat: /GM ${ownName} hat die magischen Windböen seiner Runenklinge deaktiviert. Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen).
+!mmm         set endurance = m3mgdModifyEndurance(-1 * cWeaponToggleCost, cOwnID, "AP")
+!mmm         chat: /w "${ownName}" Das hat 10 Sekunden gedauert und ${cWeaponToggleCost} AP gekostet.
+!mmm         chat: /GM Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen).
 !mmm       end if
 !mmm   
 !mmm     else
@@ -57,9 +52,9 @@
 !mmm       do setattr(cOwnID, cWeaponMagicMarker, true)
 !mmm   
 !mmm       if cWeaponToggleCost > 0
-!mmm         set endurance = setattr(cOwnID, "AP", endurance - cWeaponToggleCost)
-!mmm         chat: /w "${ownName}" Das hat ${cWeaponToggleCost} AP gekostet.
-!mmm         chat: /GM ${ownName} hat die magischen Windböen seiner Runenklinge aktiviert. Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen). Alle Gegner haben nun -4 auf Angriff (wird automatisch berücksichtigt).
+!mmm         set endurance = m3mgdModifyEndurance(-1 * cWeaponToggleCost, cOwnID, "AP")
+!mmm         chat: /w "${ownName}" Das hat 10 Sekunden gedauert und ${cWeaponToggleCost} AP gekostet.
+!mmm         chat: /GM Dauer: 10s. Kosten: ${cWeaponToggleCost} AP (schon abgezogen). Alle Gegner haben nun -4 auf Angriff (wird automatisch berücksichtigt).
 !mmm       end if
 !mmm   
 !mmm     end if
