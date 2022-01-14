@@ -316,7 +316,7 @@
 !mmm
 !rem   // For magic weapons: Process optional endurance cost
 !mmm   if cMagicEnduranceCost > 0
-!mmm     do setattr(cOwnID, cEnduranceAttr, cOwnID.(cEnduranceAttr) - cMagicEnduranceCost)
+!mmm     do m3mgdModifyEndurance(-1 * cMagicEnduranceCost, cOwnID, cEnduranceAttr)
 !mmm     set modifierLog = modifierLog & "{{ " & cWeaponLabel & "=-" & cMagicEnduranceCost & " AP }}"
 !mmm   end if
 !rem
