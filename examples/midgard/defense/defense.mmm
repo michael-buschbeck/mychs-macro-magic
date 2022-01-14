@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.10.3 (2022-01-14)"
+!mmm   set scriptVersion = "defense 1.11.0 (2022-01-14)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -150,11 +150,16 @@
 !rem   // Collect defense modifiers
 !mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
-!rem   // 1. Defender exhausted
+!rem   // 1. Defender exhausted or magically encumbered (runeBladeEarthBond)
 !mmm   if cOwnID.(cEnduranceAttr).max > 0 and endurance <= 0
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Erschöpft=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
+!mmm   end if
+!mmm   if cOwnID.(m3mgdEarthBondStatusMarker) eq "shown"
+!mmm     set autoModifiers = autoModifiers - 2
+!mmm     set modifierLog = modifierLog & " {{Erdfessel=-2}} "
+!mmm     set modifierTooltip = modifierTooltip & " Erdfessel&nbsp;&nbsp;&nbsp;-2 "
 !mmm   end if
 !rem   // 2. Dropdown prompt: Focused defense, surprise
 !mmm   set semiManualModifiers = "?{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0 | Konzentrierte Abwehr +4,+4 | Ich greife überstürzt an -2,-2 | Ich bin überrascht -4,-4 }"
