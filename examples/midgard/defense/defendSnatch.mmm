@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Snatch ("Heranholen") spell, as defined in Arkanum:91
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendSnatch 1.1.2 (2022-01-14)"
+!mmm   set scriptVersion = "defendSnatch 1.1.3 (2022-01-14)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -14,12 +14,12 @@
 !mmm
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cGMSilentMode = false
-!mmm   if selected and sender.token_id ne selected
+!mmm   if selected and cOwnID.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
 !mmm     set customizable cEnduranceAttr = "bar2"
 !mmm   else 
-!mmm     set customizable cOwnID = sender.token_id
+!mmm     set customizable cOwnID = cOwnID.token_id
 !mmm     set customizable cHealthAttr = "LP"
 !mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
@@ -29,6 +29,7 @@
 !mmm     exit script
 !mmm   end if
 !mmm   
+!mmm   set attackerID = m3mgdExchange.(m3mgdAttrAttackerID)
 !mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
 !mmm   if isdenied(attackResult) or isunknown(attackResult)
 !mmm     do whisperback("Access to attack result value failed: " & getreason(attackResult))
@@ -41,9 +42,9 @@
 !mmm     set attackResult = highlight(attackResult, "normal")
 !mmm   end if 
 !mmm   
-!mmm   set defenseResult = roll("1d20+" & (targetID.Abwehr + round(cOwnID.St / 5)))
+!mmm   set defenseResult = roll("1d20+" & (cOwnID.Abwehr + round(cOwnID.St / 5)))
 !mmm   
-!mmm   if iscritical(defenseResult) or (m3mgdExchange.(m3mgdAttrAttackCriticalSuccess) == false and defenseResult >= attackResult)
+!mmm   if iscritical(defenseResult) or (criticalAttack == false and defenseResult >= attackResult)
 !mmm     
 !mmm     set defenseSuccess = true 
 !mmm
@@ -55,7 +56,7 @@
 !rem
 !rem   // Verbose output
 !mmm   if cVerbose
-!mmm     set sender = cOwnID
+!mmm     set cOwnID = cOwnID
 !mmm     combine chat
 !rem       // Check if script is run for an NPC (whisper data to GM only)
 !mmm       if cGMSilentMode
@@ -64,7 +65,7 @@
 !mmm       if defenseSuccess
 !mmm         chat: Der Gegenstand hat gewackelt aber ich konnte ihn festhalten.
 !mmm       else 
-!mmm         chat: Der Gegenstand löst sich aus den meinen Fingern und schwebt in Richtung ${m3mgdExchange.(m3mgdAttrAttackerID).name}.
+!mmm         chat: Der Gegenstand löst sich aus den meinen Fingern und schwebt in Richtung ${attackerID.name}.
 !mmm       end if
 !mmm     end combine
 !mmm   end if
