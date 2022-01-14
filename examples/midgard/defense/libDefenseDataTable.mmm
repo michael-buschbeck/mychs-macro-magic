@@ -21,7 +21,7 @@
 !rem
 !mmm   combine chat
 !mmm
-!mmm     if script.cGMSilentMode == 1
+!mmm     if script.cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
 !mmm

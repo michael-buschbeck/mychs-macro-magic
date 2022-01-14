@@ -72,7 +72,7 @@
 !rem   // Data table
 !mmm   combine chat
 !rem     // Check if script is run for an NPC (whisper data to GM only)
-!mmm     if cGMSilentMode == 1
+!mmm     if cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
 !mmm     chat: ${"&"}{template:default} 
