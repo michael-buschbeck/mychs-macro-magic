@@ -52,9 +52,6 @@
 !mmm   set customizable cGMSilentMode = false
 !mmm   set customizable cDefenseRoll = roll("1d20")
 !mmm
-!rem   // Constants
-!mmm
-!mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !rem
 !rem   // Initialize & collect data
 !rem

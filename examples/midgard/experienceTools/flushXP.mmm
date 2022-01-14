@@ -1,13 +1,18 @@
 !rem // flushXP
 !rem // 2021-12-16
 !mmm script
+!rem   // Initialize globals (mainly data exchange)
+%{MacroSheetLibrary|libMidgardGlobal}
 !mmm   set confirm = "?{Wirklich die EP aller Charaktere löschen?|nein,0|ja,1}"
 !mmm   if confirm == 1
 !mmm     combine chat
 !mmm       chat: /w GM ${"&"}{template:default} {{name=**EP gelöscht für:**}}
 !mmm       for char in "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
-!mmm         chat: {{${char.name}=${char.Erfahrungsschatz} -> 0 }}
-!mmm         do setattr(char, "Erfahrungsschatz", 0)
+!mmm         if setattr(char, m3mgdAttrXP, 0) == 0 and setattr(char, m3mgdAttrXPLog, "") eq ""
+!mmm           chat: {{${char.name}=${char.(m3mgdAttrXP)} -> 0, Log leer (${len(char.(m3mgdAttrXPLog))}) }}
+!mmm         else
+!mmm           chat: {{${char.name}=**FEHLER** (${char.(m3mgdAttrXP)}, Loglänge ${len(char.(m3mgdAttrXPLog))} }}
+!mmm         end if
 !mmm       end for
 !mmm     end combine
 !mmm   end if 

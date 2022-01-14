@@ -22,13 +22,13 @@
 !rem // 
 !rem // begin MMM fragment
 !mmm   set PARENT = CURRENT
-!mmm   set CURRENT = "libMidgardGlobal 1.2.0 (2021-12-29)"
+!mmm   set CURRENT = "libMidgardGlobal 1.3.0 (2022-01-14)"
 !mmm
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm 
 !mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
-!mmm     do whisperback("No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Aborting script " & PARENT & ".")
+!mmm     do whisperback(CURRENT & ": No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Aborting script " & PARENT & ".")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -55,6 +55,9 @@
 !mmm   set m3mgdParrySmallShieldEffectiveAgainst = "Einhandschlagwaffe", "Einhandschwert", "Fechtwaffe", "Kettenwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "waffenlos"
 !mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
 !mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln"
+!mmm
+!mmm   set m3mgdAttrXP = "Erfahrungsschatz"
+!mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
 !mmm   set CURRENT = PARENT
 !mmm   set PARENT = undef

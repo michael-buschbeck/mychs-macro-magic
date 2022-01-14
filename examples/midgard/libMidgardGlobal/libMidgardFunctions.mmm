@@ -752,9 +752,9 @@
 !mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
 !mmm end function
 !rem
-!rem // m3mgdProcessAttackXP(attackType, attackDamageRoll, attackerID, targetID)
+!rem // m3mgdProcessAttackXP(attackType, attackDamageRoll, [attackerID], [targetID])
 !rem //
-!rem //   Whispers chat buttons to foeID's player to launch defense
+!rem //   Processes experience gain from mundane attacks (attackType: melee or ranged).
 !rem //
 !mmm function m3mgdProcessAttackXP(attackType, attackDamageRoll, attackerID, targetID)
 !mmm
@@ -785,15 +785,15 @@
 !mmm   end if
 !mmm   
 !mmm   set xpGain = targetID.Grad + 3
-!mmm   set xpLog = targetID.Grad & "+3"
+!mmm   set xpTooltip = targetID.Grad & "[Grad]+3"
 !mmm   if attackType eq "ranged"
 !mmm     set xpGain = xpGain / 2
-!mmm     set xpLog = "(" & xpLog & ") / 2[FK]"
+!mmm     set xpTooltip = "(" & xpTooltip & ") /2[FK]"
 !mmm   end if
 !rem   // Devastating hits
 !mmm   if attackDamageRoll >= 8 and targetID.(script.cEnduranceAttr) >= 8
 !mmm     set xpGain = xpGain * 2
-!mmm     set xpLog = "(" & xpLog & ") x 2[verheerend]"
+!mmm     set xpTooltip = "(" & xpTooltip & ") x2[verheerend]"
 !mmm   end if
 !mmm   
 !mmm   set newXP = attackerID.(script.m3mgdAttrXP) + xpGain
@@ -806,6 +806,12 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   return highlight(xpGain, "normal", xpLog)
+!mmm   set xpLog = attackerID.(script.m3mgdAttrXP) & "(+" & xpGain & ")=Angriff (" & attackType & ", Wurf: " & attackDamageRoll & ") auf " & targetID.name & " (Grad: " & targetID.Grad & ") = " & xpTooltip
+!mmm   if isunknown(attackerID.(script.m3mgdAttrXPLog))
+!mmm     do setattr(attackerID, script.m3mgdAttrXPLog, "")
+!mmm   end if
+!mmm   do setattr(attackerID, script.m3mgdAttrXPLog, attackerID.(script.m3mgdAttrXPLog) & " {{" & xpLog & "}} ")
+!mmm
+!mmm   return highlight(xpGain, "normal", xpTooltip)
 !mmm
 !mmm end function
