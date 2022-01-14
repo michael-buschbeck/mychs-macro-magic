@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.10.2 (2022-01-13)"
+!mmm   set scriptVersion = "defense 1.10.3 (2022-01-14)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -33,7 +33,7 @@
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cHealthAttr          Override if character's/token's health is stored differently than usual
 !rem   //  cEnduranceAttr       Override if character's/token's endurance is stored differently than usual
-!rem   //  cGMSilentMode        0/1: override if GM operates this script and wants to keep it silent
+!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
 !rem   //  cDefenseRoll         Override by player to see beautifully animated 3D dice
 !rem   //
 !mmm   if selected and sender.token_id ne selected
@@ -49,7 +49,7 @@
 !mmm     set customizable cHealthAttr = "LP"
 !mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
-!mmm   set customizable cGMSilentMode = 0
+!mmm   set customizable cGMSilentMode = false
 !mmm   set customizable cDefenseRoll = roll("1d20")
 !mmm
 !rem   // Constants
@@ -261,31 +261,15 @@
 !mmm   set effHealthLoss = highlight(effHealthLoss, "info")
 !rem
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
-!mmm   set attacker = m3mgdExchange.(m3mgdAttrAttackerID)
-!mmm   if attacker.permission eq "control"
-!mmm     if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
-!mmm       set attackerXPGain = cOwnID.Grad + 3
-!mmm       set XPGainLog = "3+" & cOwnID.Grad
-!mmm       if m3mgdExchange.(m3mgdAttrAttackType) eq "ranged"
-!mmm         set attackerXPGain = attackerXPGain / 2
-!mmm         set XPGainLog = "(" & XPGainLog & ") / 2[FK]"
-!mmm       end if
-!rem       // Devastating hits
-!mmm       if attackDamageRoll >= 8 and endurance >= 8
-!mmm         set attackerXPGain = attackerXPGain * 2
-!mmm         set XPGainLog = "(" & XPGainLog & ") x 2[verheerend]"
-!mmm       end if
-!mmm       do setattr(attacker, m3mgdAttrXP, attacker.(m3mgdAttrXP) + attackerXPGain)
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=+" & attackerXPGain & " EP (= " & XPGainLog & ")}} "
-!mmm     else if cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(keine: ∞ AP, abgewehrt) }} "
-!mmm     else if cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(keine: Ziel erschöpft) }} "
-!mmm     else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(keine: kein AP-Verlust) }} "
-!mmm     end if
-!mmm   else
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung (" & attacker.name & ")=(**kein Zugriff**: " & getreason(attacker) & ") }} "
+!mmm   if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
+!mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackDamageRoll, m3mgdExchange.(m3mgdAttrAttackerID), cOwnID)
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": +" & xpGain & " EP}} "
+!mmm   else if cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (∞ AP, abgewehrt) }} "
+!mmm   else if cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (Ziel erschöpft) }} "
+!mmm   else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (kein AP-Verlust) }} "
 !mmm   end if
 !mmm
 !rem   // Add button for player to call special damage effects script
@@ -297,7 +281,7 @@
 !mmm   if cVerbose
 !mmm     combine chat
 !rem       // Check if script is run for an NPC (whisper data to GM only)
-!mmm       if cGMSilentMode == 1
+!mmm       if cGMSilentMode
 !mmm         chat: /w GM 
 !mmm       end if
 !mmm       if defenseSuccess
@@ -336,7 +320,9 @@
 !mmm
 !rem   // Output modifier log and PP reminder
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm   chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
+!mmm   if not cGMSilentMode
+!mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
+!mmm   end if
 !mmm   if parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)
 !mmm     chat: /w "${cOwnID.name}" ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM               ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)

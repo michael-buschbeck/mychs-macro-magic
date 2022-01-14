@@ -751,3 +751,61 @@
 !mmm function m3mgdSendDefenseChatButtons(foeID)
 !mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
 !mmm end function
+!rem
+!rem // m3mgdProcessAttackXP(attackType, attackDamageRoll, attackerID, targetID)
+!rem //
+!rem //   Whispers chat buttons to foeID's player to launch defense
+!rem //
+!mmm function m3mgdProcessAttackXP(attackType, attackDamageRoll, attackerID, targetID)
+!mmm
+!mmm   if isdefault(attackType) or not (attackType eq "melee" or attackType eq "ranged")
+!mmm     do whisperback("m3mgdProcessAttackXP(): no or invalid attackType parameter: " & attackType & " -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(attackDamageRoll) or attackDamageRoll <= 0
+!mmm     do whisperback("m3mgdProcessAttackXP(): no or invalid attackDamageRoll parameter: " & attackDamageRoll & " -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(attackerID)
+!mmm     set attackerID = script.m3mgdExchange.(script.m3mgdAttrAttackerID)
+!mmm   end if
+!mmm   if attackerID.permission ne "control"
+!mmm     do whisperback("m3mgdProcessAttackXP(): Unable to process experience for attack: no control over token '" & attackerID.name & "'")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isdefault(targetID)
+!mmm     set targetID = script.cOwnID
+!mmm   end if
+!mmm   if targetID.permission ne "view" and targetID.permission ne "control"
+!mmm     do whisperback("m3mgdProcessAttackXP(): Unable to process experience for attack: invalid target token or no view access to token '" & targetID.name & "'")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set xpGain = targetID.Grad + 3
+!mmm   set xpLog = targetID.Grad & "+3"
+!mmm   if attackType eq "ranged"
+!mmm     set xpGain = xpGain / 2
+!mmm     set xpLog = "(" & xpLog & ") / 2[FK]"
+!mmm   end if
+!rem   // Devastating hits
+!mmm   if attackDamageRoll >= 8 and targetID.(script.cEnduranceAttr) >= 8
+!mmm     set xpGain = xpGain * 2
+!mmm     set xpLog = "(" & xpLog & ") x 2[verheerend]"
+!mmm   end if
+!mmm   
+!mmm   set newXP = attackerID.(script.m3mgdAttrXP) + xpGain
+!mmm   if newXP <= 0 or not newXP
+!mmm     do whisperback("m3mgdProcessAttackXP(): Failure: new calculated XP likely undefined ('" & newXP & "') -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm   if setattr(attackerID, script.m3mgdAttrXP, newXP) != newXP
+!mmm     do whisperback("m3mgdProcessAttackXP(): Failure storing new experience total " & newXP & " in attribute '" & attackerID.name & "'." & script.m3mgdAttrXP)
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   return highlight(xpGain, "normal", xpLog)
+!mmm
+!mmm end function
