@@ -1,7 +1,7 @@
 !rem // earthBondApply
 !rem // GM script: Apply a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
 !mmm script
-!mmm   set scriptVersion = "1.0.2 (2021-11-17)"
+!mmm   set scriptVersion = "earthBondApply v1.0.3 (2022-01-14)"
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
@@ -17,37 +17,38 @@
 !mmm   set customizable cActivateGIF = ""
 !mmm
 !mmm   if cCheckVersion
-!mmm     do whisperback("earthBondApply v" & scriptVersion)
+!mmm     do whisperback(scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Init
-!mmm   set m3mgdAttrEarthBondTargetID = "m3mgd_earthBond_targetID"
-!mmm   
+%{MacroSheetLibrary|libMidgardGlobal}
+!mmm
 !rem   // Check with GM if ground conditions are present for the earthbond to work
-!mmm   set gmConfirmGroundCondition = ?{Ist der Boden aus Erde, Schlamm, Sand oder Staub?|Nein,0|Ja,1}
-!mmm   
+!mmm   set gmConfirmGroundCondition = (?{Ist der Boden aus Erde, Schlamm, Sand oder Staub?|Nein,0|Ja,1} == 1)
+!mmm
 !rem   // Retrieve target ID
-!mmm   set foe = cWeaponWielder.(m3mgdAttrEarthBondTargetID)
-!mmm   if not foe or isdenied(foe.token_id) or isunknown(foe.token_id) or isdenied(foe.(cWeaponMagicMarker))
-!mmm     do whisperback("Target given as token ID '" & foe & "' may not be a correct token ID, or does not allow access to attributes")
+!mmm   set foeID = m3mgdExchange.(m3mgdAttrAttackTargetID)
+!mmm   if not foeID or isdenied(foeID.token_id) or isunknown(foeID.token_id) or isdenied(foeID.(cWeaponMagicMarker))
+!mmm     do whisperback("Target given as token ID '" & foeID & "' may not be a correct token ID, or does not allow access to attributes")
 !mmm     exit script
 !mmm   end if
 !mmm 
-!mmm   if foe.(cWeaponMagicMarker) eq "shown"
-!mmm     do whisperback("Token " & foe.name & " ist bereits von einer Erdfessel gefangen oder hat den cobweb-Status.")
+!mmm   if foeID.(cWeaponMagicMarker) eq "shown"
+!mmm     do whisperback("Token " & foeID.name & " ist bereits von einer Erdfessel gefangen oder hat den Statusmarker '" & cWeaponMagicMarker & "'.")
 !mmm     exit script
-!mmm   else if gmConfirmGroundCondition == 0
-!mmm     do whisperback("Token " & foe.name & " steht nicht auf Erde, Schlamm, Sand oder Staub, d.h. die Erdfessel kann nicht erzeugt werden.")
+!mmm   else if gmConfirmGroundCondition == false
+!mmm     do whisperback("Token " & foeID.name & " steht nicht auf Erde, Schlamm, Sand oder Staub, d.h. die Erdfessel kann nicht erzeugt werden.")
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm   do setattr(foe.token_id, cWeaponMagicMarker, true)
+!mmm   do setattr(foeID.token_id, cWeaponMagicMarker, true)
 !mmm   do setattr(cWeaponWielder.token_id, cWeaponMagicMarker, true)
-!mmm   chat: Der Boden unter ${foe.name} wächst blitzschnell knöchelhoch an: das dürfte es deutlich schwerer machen, sich zu bewegen.
+!mmm   do setattr(cWeaponWielder.token_id, m3mgdEarthBondPCAttrTargetID, foeID.token_id)
+!mmm
+!mmm   chat: Der Boden unter ${foeID.name} wächst blitzschnell knöchelhoch an: das dürfte es deutlich schwerer machen, sich zu bewegen.
 !mmm   if cActivateGIF ne ""
 !mmm     chat: [x](${cActivateGIF})
 !mmm   end if 
 !mmm
-!mmm   chat: /w GM ${"&"}{template:default} {{name=Erdfessel}} {{ Opfer = ${foe.name}}} {{ Folge = Abwehr -2 }} {{ Option = [**ENTFERNEN**](~earthBondRemove) }}
+!mmm   chat: /w GM ${"&"}{template:default} {{name=Erdfessel}} {{ Opfer = ${foeID.name}}} {{ Folge = Abwehr -2 }} {{ Option = [**ENTFERNEN**](~earthBondRemove) }}
 !mmm end script
