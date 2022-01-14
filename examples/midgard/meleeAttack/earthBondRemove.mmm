@@ -6,13 +6,12 @@
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
-!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
 !rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
 !rem   //  cDeactivateGIF       GIF to play as the earth releases the foe
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
 !mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
-!mmm   set customizable cWeaponMagicMarker = "status_cobweb"
+!mmm   set customizable cWeaponToggleCost = 1
 !mmm   set customizable cDeactivateGIF = ""
 !mmm
 !mmm   if cCheckVersion
@@ -33,13 +32,13 @@
 !mmm
 !rem   // Retrieve target ID
 !mmm   set foeID = cWeaponWielder.(m3mgdEarthBondPCAttrTargetID)
-!mmm   if not foeID or isdenied(foeID.token_id) or isunknown(foeID.token_id) or isdenied(foeID.(cWeaponMagicMarker))
+!mmm   if not foeID or isdenied(foeID.token_id) or isunknown(foeID.token_id) or isdenied(foeID.(m3mgdEarthBondStatusMarker))
 !mmm     do whisperback("Target given as token ID '" & foeID & "' may not be a correct token ID, or does not allow access to attributes:" & getreason(foeID))
 !mmm     exit script
 !mmm   end if
 !mmm 
-!mmm   if foeID.(cWeaponMagicMarker) ne "shown"
-!mmm     do whisperback("Token " & foeID.name & " trägt aber keine Erdfessel oder " & cWeaponMagicMarker & " wurde schon entfernt.")
+!mmm   if foeID.(m3mgdEarthBondStatusMarker) ne "shown"
+!mmm     do whisperback("Token " & foeID.name & " trägt aber keine Erdfessel oder " & m3mgdEarthBondStatusMarker & " wurde schon entfernt.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -86,8 +85,8 @@
 !mmm     end if
 !mmm   end if
 !mmm
-!mmm   do setattr(foeID, cWeaponMagicMarker, false)
-!mmm   do setattr(cWeaponWielder, cWeaponMagicMarker, false)
+!mmm   do setattr(foeID, m3mgdEarthBondStatusMarker, false)
+!mmm   do setattr(cWeaponWielder, m3mgdEarthBondStatusMarker, false)
 !mmm   do setattr(cWeaponWielder, m3mgdEarthBondPCAttrTargetID, "")
 !mmm
 !mmm end script

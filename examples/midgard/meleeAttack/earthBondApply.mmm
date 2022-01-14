@@ -5,13 +5,11 @@
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
-!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
 !rem   //  cWeaponToggleCost    sender.AP cost (AP) to activating the weapon's magic
 !rem   //  cActivateGIF         GIF to play as the earth rises up to bind the foe's legs
 !mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cWeaponLabel = "Steinherz (Streitaxt)"
-!mmm   set customizable cWeaponMagicMarker = "status_cobweb"
 !mmm   set customizable cWeaponToggleCost = 1
 !mmm   set customizable cOwnID = sender.token_id
 !mmm   set customizable cActivateGIF = ""
@@ -28,21 +26,21 @@
 !mmm
 !rem   // Retrieve target ID
 !mmm   set foeID = m3mgdExchange.(m3mgdAttrAttackTargetID)
-!mmm   if not foeID or isdenied(foeID.token_id) or isunknown(foeID.token_id) or isdenied(foeID.(cWeaponMagicMarker))
+!mmm   if not foeID or isdenied(foeID.token_id) or isunknown(foeID.token_id) or isdenied(foeID.(m3mgdEarthBondStatusMarker))
 !mmm     do whisperback("Target given as token ID '" & foeID & "' may not be a correct token ID, or does not allow access to attributes")
 !mmm     exit script
 !mmm   end if
 !mmm 
-!mmm   if foeID.(cWeaponMagicMarker) eq "shown"
-!mmm     do whisperback("Token " & foeID.name & " ist bereits von einer Erdfessel gefangen oder hat den Statusmarker '" & cWeaponMagicMarker & "'.")
+!mmm   if foeID.(m3mgdEarthBondStatusMarker) eq "shown"
+!mmm     do whisperback("Token " & foeID.name & " ist bereits von einer Erdfessel gefangen oder hat den Statusmarker '" & m3mgdEarthBondStatusMarker & "'.")
 !mmm     exit script
 !mmm   else if gmConfirmGroundCondition == false
 !mmm     do whisperback("Token " & foeID.name & " steht nicht auf Erde, Schlamm, Sand oder Staub, d.h. die Erdfessel kann nicht erzeugt werden.")
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm   do setattr(foeID.token_id, cWeaponMagicMarker, true)
-!mmm   do setattr(cWeaponWielder.token_id, cWeaponMagicMarker, true)
+!mmm   do setattr(foeID.token_id, m3mgdEarthBondStatusMarker, true)
+!mmm   do setattr(cWeaponWielder.token_id, m3mgdEarthBondStatusMarker, true)
 !mmm   do setattr(cWeaponWielder.token_id, m3mgdEarthBondPCAttrTargetID, foeID.token_id)
 !mmm
 !mmm   chat: Der Boden unter ${foeID.name} wächst blitzschnell knöchelhoch an: das dürfte es deutlich schwerer machen, sich zu bewegen.
