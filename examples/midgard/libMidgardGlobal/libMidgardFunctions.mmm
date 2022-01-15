@@ -127,7 +127,104 @@
 !mmm   return flushedCounter
 !mmm 
 !mmm end function
+!rem 
+!rem // m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
 !rem // 
+!rem //   
+!rem //
+!mmm function m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(attrLabel) or isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
+!mmm     do whisperback("m3mgdSetAttrCeiling(): '" & attrLabel & "' is no valid attribute for token '" & tokenID.name & "'")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(ceilingValue)
+!mmm     set ceilingValue = tokenID.(attrLabel)
+!mmm   else if ceilingValue > tokenID.(attrLabel)
+!mmm     return tokenID.(attrLabel)
+!mmm   end if
+!mmm   
+!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   
+!mmm   set storageAttrLabel = "m3mgd_token" & tokenID & "_" & attrLabel
+!mmm   if setattr(dataExchangeID, storageAttrLabel, tokenID.(attrLabel)) == tokenID.(attrLabel)
+!rem     // the above assumes that attrLabel always refers to numbers, not strings
+!mmm     
+!mmm     do whisperback("m3mgdSetAttrCeiling(): Safely stored current value for '" & tokenID.name & "'." & attrLabel & " (" & tokenID.(attrLabel) & ").")
+!mmm     
+!mmm     if setattr(tokenID, attrLabel, ceilingValue) == ceilingValue
+!mmm     
+!mmm       do whisperback("m3mgdSetAttrCeiling(): Set current value for '" & tokenID.name & "'." & attrLabel & " as " & ceilingValue)
+!mmm       return ceilingValue
+!mmm     
+!mmm     else 
+!mmm     
+!mmm       do whisperback("m3mgdSetAttrCeiling(): Failure changing '" & tokenID.name & "'." & attrLabel & " to '" & ceilingValue & "'")
+!mmm       return false
+!mmm
+!mmm     end if
+!mmm     
+!mmm   else
+!mmm   
+!mmm     do whisperback("m3mgdSetAttrCeiling(): Failure saving current value for '" & tokenID.name & "'." & attrLabel & " (" & tokenID.(attrLabel) & ").")
+!mmm     return false
+!mmm
+!mmm   end if
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdReleaseAttrCeiling(tokenID, attrLabel)
+!rem // 
+!rem //   
+!rem //
+!mmm function m3mgdReleaseAttrCeiling(tokenID, attrLabel)
+!mmm   
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(attrLabel) or isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
+!mmm     do whisperback("m3mgdReleaseAttrCeiling(): '" & attrLabel & "' is no valid attribute for token '" & tokenID.name & "'")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   
+!mmm   set storageAttrLabel = "m3mgd_token" & tokenID & "_" & attrLabel
+!mmm   if isunknown(dataExchangeID.(storageAttrLabel))
+!mmm     do whisperback("m3mgdReleaseAttrCeiling(): '" & dataExchangeID & "'.'" & storageAttrLabel & "' is no valid attribute.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set originalValue = dataExchangeID.(storageAttrLabel)
+!mmm   if originalValue < 0 or (tokenID.(attrLabel).max > 0 and originalValue > tokenID.(attrLabel).max)
+!mmm     do whisperback("m3mgdReleaseAttrCeiling(): stored value for '" & tokenID.name & "'.'" & attrLabel & "' is '" & originalValue & "' which is smaller than 0 or greater than max.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set ceilingValue = tokenID.(attrLabel)
+!mmm   
+!mmm   if setattr(tokenID, attrLabel, originalValue) == originalValue
+!mmm   
+!mmm     do whisperback("m3mgdReleaseAttrCeiling(): Reset '" & tokenID.name & "'.'" & attrLabel & "' to its pre-ceiling value '" & originalValue & "'.")
+!mmm     return originalValue
+!mmm
+!mmm   else
+!mmm   
+!mmm     do whisperback("m3mgdReleaseAttrCeiling(): Failure trying to reset '" & tokenID.name & "'.'" & attrLabel & "' to its pre-ceiling value '" & originalValue & "'.")
+!mmm     return false
+!mmm
+!mmm   end if
+!mmm   
+!mmm end function
+!rem 
 !rem // m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
 !rem // 
 !mmm function m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
@@ -406,7 +503,7 @@
 !mmm   end if
 !mmm   
 !mmm end function
-!rem // 
+!rem 
 !rem // m3mgdModifyHealth(offset, [tokenID], [healthAttr])
 !rem // 
 !rem // Modifies [tokenID's] or script.cOwnID's health by offset points. For a loss, offset is negative.
@@ -493,7 +590,24 @@
 !mmm     end if
 !mmm   
 !mmm     if setattr(tokenID, healthAttr, newHealth) == newHealth
-!mmm   
+!mmm       
+!mmm       set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, default, "cEnduranceAttr")
+!mmm
+!mmm       if tokenID.(enduranceAttr).max > 0
+!mmm
+!mmm         if prvHealth > .5 * maxHealth and newHealth <= .5 * maxHealth
+!mmm         
+!mmm           set enduranceCeiling = round(.5 * tokenID.(enduranceAttr).max)
+!mmm           do m3mgdSetAttrCeiling(tokenID, enduranceAttr, enduranceCeiling)
+!mmm         
+!mmm         else if prvHealth <= .5 * maxHealth and newHealth > .5 * maxHealth
+!mmm         
+!mmm           do m3mgdReleaseAttrCeiling(tokenID, enduranceAttr)
+!mmm         
+!mmm         end if
+!mmm         
+!mmm       end if
+!mmm       
 !mmm       return newHealth
 !mmm     
 !mmm     else 

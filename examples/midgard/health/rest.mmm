@@ -2,13 +2,15 @@
 !rem //
 %{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "rest 1.0.1 (2022-01-12)"
+!mmm   set scriptVersion = "rest 1.0.2 (2022-01-15)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard script " & scriptVersion)
 !mmm     exit script
 !mmm   end if
+!mmm
+%{MacroSheetLibrary|libMidgardGlobal}
 !mmm
 !mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
