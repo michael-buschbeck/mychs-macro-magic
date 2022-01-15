@@ -11,14 +11,14 @@
 !mmm   end if
 !mmm 
 !mmm   if isunknown(id) or isdenied(id)
-!mmm     do whisperback("Token ID invalid: " & tokenID & " - " & getreason(id))
+!mmm     do whisperback("Token ID invalid: '" & tokenID & "' - " & getreason(id))
 !mmm     return false
 !mmm   end if
 !mmm 
 !mmm   return id 
 !mmm 
 !mmm end function
-!rem // 
+!rem
 !rem // m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
 !rem // 
 !rem //   Validates attrLabel or, if set to default, defaultAttrLabel, as a readable attribute of tokenID.
@@ -26,15 +26,22 @@
 !rem // 
 !mmm function m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
 !mmm 
-!mmm   if isdefault(attrLabel)
-!mmm     set attrLabel = script.(defaultAttrLabel) 
+!mmm   if isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
+!mmm     
+!mmm     if isdefault(defaultAttrLabel)
+!mmm       do whisperback("Attribute '" & attrLabel & "' unknown or denied for token '" & tokenID.name & "'/" & tokenID & ", no default attribute provided.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     if isunknown(tokenID.(script.(defaultAttrLabel))) or isdenied(tokenID.(script.(defaultAttrLabel)))
+!mmm       do whisperback("Attribute '" & attrLabel & "' AND default attribute 'script." & defaultAttrLabel & "' unknown or denied for token '" & tokenID.name & "'/" & tokenID & ".")
+!mmm       return false
+!mmm     else
+!mmm       return script.(defaultAttrLabel)
+!mmm     end if
+!mmm     
 !mmm   end if
 !mmm   
-!mmm   if isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
-!mmm     do whisperback("Attribute label " & attrLabel & " invalid for token " & tokenID.name & "/" & tokenID)
-!mmm     return false
-!mmm   end if
-!mmm
 !mmm   return attrLabel
 !mmm 
 !mmm end function
