@@ -2,7 +2,7 @@
 !rem // 
 !mmm script
 !mmm 
-!mmm   set scriptVersion = "showExchange 1.1.0 (2021-12-22)"
+!mmm   set scriptVersion = "showExchange 1.2.0 (2022-01-15)"
 !mmm
 !mmm   set CURRENT = scriptVersion
 %{MacroSheetLibrary|libMidgardGlobal}
@@ -15,7 +15,15 @@
 !mmm   combine chat
 !mmm     chat: /w "${user}" ${"&"}{template:default} {{name=m3mgd tools: showExchange}}
 !mmm     for attribute in m3mgdExchangeAttrList
-!mmm       chat: {{ ${attribute}=${m3mgdExchange.(attribute)} / ${m3mgdExchange.(attribute).max}}}
+!mmm       set showValue = m3mgdExchange.(attribute)
+!mmm       if showValue.name
+!mmm         set showValue = highlight(m3mgdExchange.(attribute).name, "normal", m3mgdExchange.(attribute))
+!mmm       end if
+!mmm       set showMaxValue = m3mgdExchange.(attribute).max
+!mmm       if showMaxValue.name
+!mmm         set showMaxValue = highlight(m3mgdExchange.(attribute).max.name, "normal", m3mgdExchange.(attribute).max)
+!mmm       end if
+!mmm       chat: {{ ${attribute}=${showValue} / ${showMaxValue} }}
 !mmm     end for
 !mmm   end combine
 !mmm end script
