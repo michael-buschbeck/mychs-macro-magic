@@ -130,7 +130,7 @@
 !rem 
 !rem // m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
 !rem // 
-!rem //   
+!rem //   Places a temporary ceiling ceilingValue on tokenID attribute attrLabel and saves its value to be restored by m3mgdReleaseAttrCeiling().
 !rem //
 !mmm function m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
 !mmm
@@ -181,7 +181,7 @@
 !rem
 !rem // m3mgdReleaseAttrCeiling(tokenID, attrLabel)
 !rem // 
-!rem //   
+!rem //   Releases a temporary ceiling placed on tokenID attribute attrLabel by m3mgdSetAttrCeiling() and restores the saved value for it.
 !rem //
 !mmm function m3mgdReleaseAttrCeiling(tokenID, attrLabel)
 !mmm   
@@ -199,8 +199,19 @@
 !mmm   
 !mmm   set storageAttrLabel = "m3mgd_token" & tokenID & "_" & attrLabel
 !mmm   if isunknown(dataExchangeID.(storageAttrLabel))
-!mmm     do whisperback("m3mgdReleaseAttrCeiling(): '" & dataExchangeID & "'.'" & storageAttrLabel & "' is no valid attribute.")
-!mmm     return false
+!rem     // Ugly workaround for endurance being stored in either "AP" or "bar2": try the other
+!mmm     if attrLabel eq "AP" or attrLabel eq "bar2"
+!mmm       if attrLabel eq "AP"
+!mmm         set attrLabel = "bar2"
+!mmm       else if attrLabel eq "bar2"
+!mmm         set attrLabel = "AP"
+!mmm       end if
+!mmm       set storageAttrLabel = "m3mgd_token" & tokenID & "_" & attrLabel
+!mmm     end if
+!mmm     if isunknown(dataExchangeID.(storageAttrLabel))
+!mmm       do whisperback("m3mgdReleaseAttrCeiling(): '" & dataExchangeID & "'.'" & storageAttrLabel & "' is no valid attribute.")
+!mmm       return false
+!mmm     end if
 !mmm   end if
 !mmm   
 !mmm   set originalValue = dataExchangeID.(storageAttrLabel)
