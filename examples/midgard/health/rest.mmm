@@ -2,7 +2,7 @@
 !rem //
 %{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "rest 1.0.2 (2022-01-15)"
+!mmm   set scriptVersion = "rest 1.1.0 (2022-01-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -83,13 +83,27 @@
 !mmm   end if
 !mmm
 !mmm   set newHealth = m3mgdModifyHealth(healthGain, cOwnID, cHealthAttr)
+!mmm
+!mmm   set prvEndurance = cOwnID.(cEnduranceAttr)
 !mmm   set newEndurance = m3mgdModifyEndurance(enduranceGain, cOwnID, cEnduranceAttr)
+!mmm   set effEnduranceGain = newEndurance - prvEndurance
+!mmm   set enduranceHighlight = "normal"
+!mmm   if effEnduranceGain < enduranceGain
+!mmm     set enduranceHighlight = "important"
+!mmm     if newEndurance == cOwnID.(cEnduranceAttr).max
+!mmm       set enduranceTooltip = enduranceTooltip & ", auf AP.max begrenzt"
+!mmm     else if newEndurance <= m3mgdAttrCeiling(cOwnID, cEnduranceAttr)
+!mmm       set enduranceTooltip = enduranceTooltip & ", auf " & m3mgdAttrCeiling(cOwnID, cEnduranceAttr) & " begrenzt"
+!mmm     else 
+!mmm       set enduranceTooltip = enduranceTooltip & ", begrenzt, aber warum. Fehler?"
+!mmm     end if
+!mmm   end if
 !mmm
 !mmm   if newHealth <= 0 and timeToDie == undef
 !mmm     set timeToDie = "(unbekannt)"
 !mmm   end if
 !mmm
-!mmm   set enduranceGain = highlight("+" & enduranceGain, "normal", enduranceTooltip)
+!mmm   set enduranceGain = highlight("+" & effEnduranceGain & "/" & enduranceGain, enduranceHighlight, enduranceTooltip)
 !mmm   set healthGain = highlight("+" & healthGain, "normal", "über Mitternacht: " & midnightPassage)
 !mmm   
 !mmm   combine chat
@@ -97,7 +111,7 @@
 !mmm     chat: /w "${user}" ${"&"}{template:default} 
 !mmm     chat: {{name=${m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr) & cOwnID.name}: Erholung}} 
 !mmm     
-!mmm     chat: {{${restLog}=${enduranceGain} **AP** / ${healthGain} **LP**}}
+!mmm     chat: {{${restLog}=${healthGain} **=>** ${newHealth} **LP** / ${enduranceGain} **=>** ${newEndurance} **AP**}}
 !mmm
 !mmm     if newHealth < 0 and timeToDie < 0
 !mmm     
@@ -105,7 +119,6 @@
 !mmm     
 !mmm     else
 !mmm     
-!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
 !mmm       chat: {{${m3mgdHealthStatusLabel(cOwnID, cHealthAttr)}=${m3mgdHealthStatusEffectsDesc(cOwnID, cHealthAttr)}}}
 !mmm       chat: {{${m3mgdEnduranceStatusLabel(cOwnID, cEnduranceAttr)}=${m3mgdEnduranceStatusEffectsDesc(cOwnID, cEnduranceAttr)}}}
 !mmm     

@@ -2,11 +2,11 @@
 !rem //
 %{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "applyHealing 1.0.1 (2022-01-12)"
+!mmm   set scriptVersion = "applyHealing 1.1.0 (2022-01-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
-!mmm     do whisperback("Midgard script " & scriptVersion)
+!mmm     do whisperback(scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -24,16 +24,32 @@
 !mmm     set user = cOwnID.name
 !mmm   end if
 !mmm   
-!mmm   if not (m3mgdExchange.(m3mgdAttrHealthGain) > 0 or m3mgdExchange.(m3mgdAttrEnduranceGain) > 0)
+!mmm   set maxEnduranceGain = m3mgdExchange.(m3mgdAttrEnduranceGain)
+!mmm   set maxHealthGain = m3mgdExchange.(m3mgdAttrHealthGain)
+!mmm   
+!mmm   if not (maxHealthGain > 0 or maxEnduranceGain > 0)
 !mmm   
 !mmm     chat: /w "${user}" [**Lebens-/Ausdauergewinn eingeben**](~MacroSheet|applyHealingDataEntry)
 !mmm     exit script
 !mmm
 !mmm   end if 
+!mmm
+!mmm   set newHealth = m3mgdModifyHealth(maxHealthGain, cOwnID, cHealthAttr)
 !mmm   
-!mmm   set newHealth = m3mgdModifyHealth(m3mgdExchange.(m3mgdAttrHealthGain), cOwnID, cHealthAttr)
-!mmm   
-!mmm   set newEndurance = m3mgdModifyEndurance(m3mgdExchange.(m3mgdAttrEnduranceGain), cOwnID, cEnduranceAttr)
+!mmm   set prvEndurance = cOwnID.(cEnduranceAttr)
+!mmm   set newEndurance = m3mgdModifyEndurance(maxEnduranceGain, cOwnID, cEnduranceAttr)
+!mmm   set effEnduranceGain = newEndurance - prvEndurance
+!mmm   set enduranceHighlight = "normal"
+!mmm   if effEnduranceGain < maxEnduranceGain
+!mmm     set enduranceHighlight = "important"
+!mmm     if newEndurance == cOwnID.(cEnduranceAttr).max
+!mmm       set enduranceLog = "Auf AP.max begrenzt"
+!mmm     else if newEndurance <= m3mgdAttrCeiling(cOwnID, cEnduranceAttr)
+!mmm       set enduranceLog = "Auf " & m3mgdAttrCeiling(cOwnID, cEnduranceAttr) & " begrenzt"
+!mmm     else 
+!mmm       set enduranceLog = "Fehler? Grund für reduzierten AP-Gewinn unbekannt"
+!mmm     end if
+!mmm   end if
 !mmm
 !mmm   if newHealth <= 0 and timeToDie == undef
 !mmm     set timeToDie = "(unbekannt)"
@@ -41,8 +57,11 @@
 !mmm
 !mmm   combine chat
 !mmm     
-!mmm     chat: ${"&"}{template:default} 
-!mmm     chat: {{name=${cOwnID.name}}} 
+!mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr) & cOwnID.name}: Heil-/Ausdauereffekte}} 
+!mmm     
+!mmm     chat: {{Heileffekt=${highlight("+" & maxHealthGain, "normal")} **=>** ${newHealth} **LP**}}
+!mmm
+!mmm     chat: {{Ausdauereffekt=${highlight("+" & effEnduranceGain & "/" & maxEnduranceGain, enduranceHighlight, enduranceLog)} **=>** ${newEndurance} **AP**}}
 !mmm     
 !mmm     if newHealth < 0 and timeToDie < 0
 !mmm     
@@ -50,7 +69,6 @@
 !mmm     
 !mmm     else
 !mmm     
-!mmm       chat: {{Zustand=${newHealth} **LP** / ${newEndurance} **AP**}}
 !mmm       chat: {{${m3mgdHealthStatusLabel(cOwnID, cHealthAttr)}=${m3mgdHealthStatusEffectsDesc(cOwnID, cHealthAttr)}}}
 !mmm       chat: {{${m3mgdEnduranceStatusLabel(cOwnID, cEnduranceAttr)}=${m3mgdEnduranceStatusEffectsDesc(cOwnID, cEnduranceAttr)}}}
 !mmm     
