@@ -6,7 +6,7 @@
 !rem
 !mmm   set prvEndurance = script.endurance
 !mmm   set prvHealth = script.health
-!mmm   set shapeMoji = m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr)
+!mmm   set shapeMoji = m3mgdShapeMoji(script.cOwnID, script.cHealthAttr, script.cEnduranceAttr)
 !mmm
 !mmm   if script.criticalAttack
 !mmm     set attackResult = highlight(script.attackResult, "good", "Kritisch erfolgreicher Angriff von " & script.m3mgdExchange.(m3mgdAttrAttackerID).name)

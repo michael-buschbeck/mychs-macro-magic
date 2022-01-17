@@ -127,7 +127,146 @@
 !mmm   return flushedCounter
 !mmm 
 !mmm end function
+!rem 
+!rem // m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
 !rem // 
+!rem //   Places a temporary ceiling ceilingValue on tokenID attribute attrLabel and saves its value to be restored by m3mgdReleaseAttrCeiling().
+!rem //   WORKS ONLY WITH NUMERICAL ATTRIBUTE VALUES!
+!rem //
+!mmm function m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(attrLabel) or isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
+!mmm     do whisperback("m3mgdSetAttrCeiling(): '" & attrLabel & "' is no valid attribute for token '" & tokenID.name & "'")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(ceilingValue)
+!mmm     set ceilingValue = tokenID.(attrLabel)
+!mmm   else if ceilingValue > tokenID.(attrLabel)
+!mmm     return tokenID.(attrLabel)
+!mmm   end if
+!mmm   
+!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   
+!mmm   set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
+!mmm   if setattr(dataExchangeID, storageAttrLabel, ceilingValue) == ceilingValue
+!rem     // the above assumes that attrLabel always refers to numbers, not strings
+!mmm     
+!mmm     do whisperback("m3mgdSetAttrCeiling(): Stored '" & ceilingValue & "' as ceiling for '" & tokenID.name & "'.'" & attrLabel & "'.")
+!mmm     
+!mmm     if setattr(tokenID, attrLabel, ceilingValue) == ceilingValue
+!mmm     
+!mmm       do whisperback("m3mgdSetAttrCeiling(): Set current value for '" & tokenID.name & "'.'" & attrLabel & "' as '" & ceilingValue & "'.")
+!mmm       return ceilingValue
+!mmm     
+!mmm     else 
+!mmm     
+!mmm       do whisperback("m3mgdSetAttrCeiling(): Failure changing '" & tokenID.name & "'.'" & attrLabel & "' to '" & ceilingValue & "'.")
+!mmm       return false
+!mmm
+!mmm     end if
+!mmm     
+!mmm   else
+!mmm   
+!mmm     do whisperback("m3mgdSetAttrCeiling(): Failure setting " & ceilingValue & " as ceiling for '" & tokenID.name & "'.'" & attrLabel & "'.")
+!mmm     return false
+!mmm
+!mmm   end if
+!mmm   
+!mmm end function
+!rem
+!rem // _m3mgdGetStoredAttr(dataExchangeID, tokenID, attrLabel, [flushStoredAttr])
+!rem // 
+!rem //   Pulls stored attribute attrLabel for tokenID from data exchange stack and guesses between alternative endurance attributes.
+!rem //   If flushStoredAttr == true, resets the stored attribute to "".
+!rem //
+!mmm function _m3mgdGetStoredAttr(dataExchangeID, tokenID, attrLabel, flushStoredAttr)
+!mmm   set paramAttrLabel = attrLabel
+!mmm   set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
+!mmm   if isunknown(dataExchangeID.(storageAttrLabel))
+!rem     // Ugly guess for endurance being stored in either "AP" or "bar2": try the other
+!mmm     if attrLabel eq "AP" or attrLabel eq "bar2"
+!mmm       if attrLabel eq "AP"
+!mmm         set attrLabel = "bar2"
+!mmm       else if attrLabel eq "bar2"
+!mmm         set attrLabel = "AP"
+!mmm       end if
+!mmm       set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
+!mmm     end if
+!mmm     if isunknown(dataExchangeID.(storageAttrLabel))
+!mmm       do whisperback("_m3mgdGetStoredAttr(): Found no valid stored attribute '" & paramAttrLabel &"' for token '" & tokenID.name & "'.")
+!mmm       return false
+!mmm     end if
+!mmm   end if
+!mmm   set payload = dataExchangeID.(storageAttrLabel)
+!mmm   if flushStoredAttr
+!mmm     do setattr(dataExchangeID, storageAttrLabel, "")
+!mmm   end if
+!mmm   return payload
+!mmm end function
+!rem
+!rem // m3mgdAttrCeiling(tokenID, attrLabel)
+!rem // 
+!rem //   Returns tokenID's temporary ceiling placed on attribute attrLabel, if present, otherwise false.
+!rem //
+!mmm function m3mgdAttrCeiling(tokenID, attrLabel)
+!mmm   
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(attrLabel) or isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
+!mmm     do whisperback("m3mgdAttrCeiling(): '" & attrLabel & "' is no valid attribute for token '" & tokenID.name & "'")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set attrCeiling = _m3mgdGetStoredAttr(script.m3mgdExchange, tokenID, attrLabel)
+!mmm   if attrCeiling > 0
+!mmm     return attrCeiling
+!mmm   else
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdReleaseAttrCeiling(tokenID, attrLabel)
+!rem // 
+!rem //   Releases a temporary ceiling placed on tokenID attribute attrLabel by m3mgdSetAttrCeiling() and restores the saved value for it.
+!rem //   WORKS ONLY WITH NUMERICAL ATTRIBUTE VALUES!
+!rem //
+!mmm function m3mgdReleaseAttrCeiling(tokenID, attrLabel)
+!mmm   
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(attrLabel) or isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
+!mmm     do whisperback("m3mgdReleaseAttrCeiling(): '" & attrLabel & "' is no valid attribute for token '" & tokenID.name & "'")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   
+!mmm   set flushStoredAttr = true
+!mmm   set ceilingValue = _m3mgdGetStoredAttr(dataExchangeID, tokenID, attrLabel, flushStoredAttr)
+!mmm   if ceilingValue == false or ceilingValue < 0 or (tokenID.(attrLabel).max > 0 and ceilingValue > tokenID.(attrLabel).max)
+!mmm   
+!mmm     do whisperback("m3mgdReleaseAttrCeiling(): ceiling for '" & tokenID.name & "'.'" & attrLabel & "' is missing or invalid ('" & ceilingValue & "').")
+!mmm     return false
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return true
+!mmm   
+!mmm end function
+!rem 
 !rem // m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
 !rem // 
 !mmm function m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
@@ -173,6 +312,10 @@
 !mmm   if tokenID.status_green eq "shown"
 !mmm     
 !mmm     return "🟢 -4 auf alles, max. Last reduziert"
+!mmm     
+!mmm   else if tokenID.status_yellow eq "shown" and m3mgdAttrCeiling(tokenID, enduranceAttr)
+!mmm     
+!mmm     return "🟡 Ausdauer begrenzt auf 50%"
 !mmm     
 !mmm   else
 !mmm     
@@ -346,67 +489,74 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!rem   // Check if character is actually alive
-!mmm
-!mmm   set prvEndurance = tokenID.(enduranceAttr)
 !mmm   set maxEndurance = tokenID.(enduranceAttr).max
-!mmm   set newEndurance = false
+!mmm
+!rem   // Check if character is actually alive
 !mmm
 !mmm   if maxEndurance == 0
 !mmm
 !mmm     do whisperback(tokenID.token_name & " ist kein Wesen, das Ausdauerpunkte gewinnen oder verlieren kann (AP.max=0).")
 !mmm     return highlight(prvEndurance, "normal", "unverändert")
 !mmm
+!mmm   end if
+!mmm
+!mmm   set currentCeiling = m3mgdAttrCeiling(tokenID, enduranceAttr)
+!mmm   set prvEndurance = tokenID.(enduranceAttr)
+!mmm   set newEndurance = false
+!mmm
+!rem   // Process change of endurance and applicable consequences 
+!mmm
+!mmm   if currentCeiling and prvEndurance + offset > currentCeiling
+!mmm     set effOffset = highlight(currentCeiling - prvEndurance, "important", "begrenzt auf " & currentCeiling)
+!mmm   else if prvEndurance + offset > maxEndurance
+!mmm     set effOffset = highlight(maxEndurance - prvEndurance, "important", "begrenzt auf Maximum")
+!mmm   else if prvEndurance + offset <= 0
+!mmm     set effOffset = highlight(0 - prvEndurance, "bad", "begrenzt auf Minimum 0")
 !mmm   else
-!mmm
-!rem     // Process change of endurance and applicable consequences 
-!mmm
-!mmm     if prvEndurance + offset > maxEndurance
-!mmm       set effOffset = highlight(maxEndurance - prvEndurance, "important", "begrenzt auf Maximum")
-!mmm     else if prvEndurance + offset <= 0
-!mmm       set effOffset = highlight(0 - prvEndurance, "bad", "begrenzt auf Minimum 0")
-!mmm     else
-!mmm       set effOffset = highlight(offset, "normal")
-!mmm     end if 
+!mmm     set effOffset = highlight(offset, "normal")
+!mmm   end if 
 !mmm   
-!mmm     set newEndurance = prvEndurance + effOffset
+!mmm   set newEndurance = prvEndurance + effOffset
 !mmm   
-!mmm     if effOffset >= 0
-!mmm       set effOffset = "+" & effOffset
-!mmm     end if
+!mmm   if effOffset >= 0
+!mmm     set effOffset = "+" & effOffset
+!mmm   end if
 !mmm   
-!mmm     if newEndurance == maxEndurance
+!mmm   if newEndurance == maxEndurance
 !mmm   
-!mmm       set newEndurance = highlight(newEndurance, "good", "Bin sowas von topfit! (= " & prvEndurance & effOffset & ")")
-!mmm       do setattr(tokenID, "status_green", false)
+!mmm     set newEndurance = highlight(newEndurance, "good", "Bin sowas von topfit! (= " & prvEndurance & effOffset & ")")
+!mmm     do setattr(tokenID, "status_green", false)
 !mmm   
-!mmm     else if newEndurance == 0
+!mmm   else if currentCeiling and newEndurance == currentCeiling and newEndurance > 0
 !mmm   
-!mmm       set newEndurance = highlight(newEndurance, "bad", "🟢 (= " & prvEndurance & effOffset & ")")
-!mmm       do setattr(tokenID, "status_green", true)
+!mmm     set newEndurance = highlight(newEndurance, "important", "🟡 (= " & prvEndurance & effOffset & ")")
+!mmm     do setattr(tokenID, "status_green", false)
 !mmm   
-!mmm     else
+!mmm   else if newEndurance == 0
 !mmm   
-!mmm       set newEndurance = highlight(newEndurance, "normal", "Och, das bisschen Schweiß! (= " & prvEndurance & effOffset & ")")
-!mmm       do setattr(tokenID, "status_green", false)
+!mmm     set newEndurance = highlight(newEndurance, "bad", "🟢 (= " & prvEndurance & effOffset & ")")
+!mmm     do setattr(tokenID, "status_green", true)
 !mmm   
-!mmm     end if
+!mmm   else
 !mmm   
-!mmm     if setattr(tokenID, enduranceAttr, newEndurance) == newEndurance
-!mmm   
-!mmm       return newEndurance
-!mmm     
-!mmm     else 
-!mmm     
-!mmm       do whisperback("Error writing changes to endurance (" & effOffset & ") into " & tokenID & "." & enduranceAttr)
-!mmm       return false
-!mmm     
-!mmm     end if
+!mmm     set newEndurance = highlight(newEndurance, "normal", "Och, das bisschen Schweiß! (= " & prvEndurance & effOffset & ")")
+!mmm     do setattr(tokenID, "status_green", false)
 !mmm   
 !mmm   end if
 !mmm   
+!mmm   if setattr(tokenID, enduranceAttr, newEndurance) == newEndurance
+!mmm   
+!mmm     return newEndurance
+!mmm     
+!mmm   else 
+!mmm     
+!mmm     do whisperback("Error writing changes to endurance (" & effOffset & ") into " & tokenID & "." & enduranceAttr)
+!mmm     return false
+!mmm     
+!mmm   end if
+!mmm   
 !mmm end function
-!rem // 
+!rem 
 !rem // m3mgdModifyHealth(offset, [tokenID], [healthAttr])
 !rem // 
 !rem // Modifies [tokenID's] or script.cOwnID's health by offset points. For a loss, offset is negative.
@@ -493,7 +643,24 @@
 !mmm     end if
 !mmm   
 !mmm     if setattr(tokenID, healthAttr, newHealth) == newHealth
-!mmm   
+!mmm       
+!mmm       set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, default, "cEnduranceAttr")
+!mmm
+!mmm       if tokenID.(enduranceAttr).max > 0
+!mmm
+!mmm         if prvHealth > .5 * maxHealth and newHealth <= .5 * maxHealth
+!mmm         
+!mmm           set enduranceCeiling = round(.5 * tokenID.(enduranceAttr).max)
+!mmm           do m3mgdSetAttrCeiling(tokenID, enduranceAttr, enduranceCeiling)
+!mmm         
+!mmm         else if prvHealth <= .5 * maxHealth and newHealth > .5 * maxHealth
+!mmm         
+!mmm           do m3mgdReleaseAttrCeiling(tokenID, enduranceAttr)
+!mmm         
+!mmm         end if
+!mmm         
+!mmm       end if
+!mmm       
 !mmm       return newHealth
 !mmm     
 !mmm     else 

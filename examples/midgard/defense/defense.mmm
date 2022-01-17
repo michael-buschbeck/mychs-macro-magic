@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.11.0 (2022-01-14)"
+!mmm   set scriptVersion = "defense 1.12.0 (2022-01-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -261,6 +261,11 @@
 !mmm     set timeToDie = roll("1d6-" & abs(newHealth)) 
 !mmm   end if
 !mmm   set effHealthLoss = highlight(effHealthLoss, "info")
+!mmm
+!rem   // Process or indicate if an endurance ceiling is in place (for serious injuries, health <= 50%)
+!mmm   if m3mgdAttrCeiling(cOwnID, cEnduranceAttr)
+!mmm     set newEndurance = highlight(cOwnID.(cEnduranceAttr), "important", "Schwächelnd bis der Heiler kommt (max. " & round(cOwnID.(cEnduranceAttr).max/2) & "=50%)")
+!mmm   end if
 !rem
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
 !mmm   if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
