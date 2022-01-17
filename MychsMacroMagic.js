@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.24.2";
+const MMM_VERSION = "1.24.3";
 
 on("chat:message", function(msg)
 {
@@ -1833,6 +1833,11 @@ class MychScriptContext extends MychProperties
 
             for (let [contextVariableName, contextVariableValue] of Object.entries(player.context))
             {
+                if (contextVariableName.startsWith("$"))
+                {
+                    continue;
+                }
+
                 if (staticContextVariableTests.hasOwnProperty(contextVariableName) &&
                     staticContextVariableTests[contextVariableName](contextVariableValue))
                 {
