@@ -1,10 +1,21 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.24.1";
+const MMM_VERSION = "1.24.2";
 
 on("chat:message", function(msg)
 {
+    if (msg.playerid == "API" && MychScriptContext.impersonation)
+    {
+        msg.playerid = MychScriptContext.impersonation.playerid;
+        msg.selected = MychScriptContext.impersonation.selected.map(id => findObjs({ id: id })).flat().map(obj => ({ _id: obj.get("id"), _type: obj.get("type") }));
+
+        if (msg.selected.length == 0)
+        {
+            msg.selected = undefined;
+        }
+    }
+
     let player = MychScriptContext.players[msg.playerid];
 
     if (!player)
@@ -63,17 +74,6 @@ on("chat:message", function(msg)
     if (msg.type != "api")
     {
         return;
-    }
-
-    if (msg.playerid == "API" && MychScriptContext.impersonation)
-    {
-        msg.playerid = MychScriptContext.impersonation.playerid;
-        msg.selected = MychScriptContext.impersonation.selected.map(id => findObjs({ id: id })).flat().map(obj => ({ _id: obj.get("id"), _type: obj.get("type") }));
-
-        if (msg.selected.length == 0)
-        {
-            msg.selected = undefined;
-        }
     }
 
     let statusSource = msg.content;
