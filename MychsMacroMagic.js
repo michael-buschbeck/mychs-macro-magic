@@ -3,7 +3,7 @@
 
 const MMM_VERSION = "1.24.5";
 
-const MMM_STARTUP_INSTANCE = new Date().toISOString();
+const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
 
 on("ready", function()
@@ -27,12 +27,12 @@ on("chat:message", function(msg)
 
             if (startupInstance == MMM_STARTUP_INSTANCE)
             {
-                log("MMM instance " + MMM_STARTUP_INSTANCE + " starting up");
+                log("MMM [" + MMM_STARTUP_INSTANCE + "] starting up");
                 MychScriptContext.running = true;
             }
             else
             {
-                log("MMM instance " + MMM_STARTUP_INSTANCE + " shutting down on startup of " + startupInstance);
+                log("MMM [" + MMM_STARTUP_INSTANCE + "] shutting down on startup of MMM [" + startupInstance + "]");
                 MychScriptContext.running = false;
             }
 
