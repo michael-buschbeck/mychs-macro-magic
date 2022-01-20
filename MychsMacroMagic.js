@@ -1,10 +1,50 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.24.3";
+const MMM_VERSION = "1.24.4";
+
+const MMM_STARTUP_INSTANCE = new Date().toISOString();
+const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
+
+on("ready", function()
+{
+    // activate this instance and shut down all lingering ones in previous sandbox instances
+    sendChat(MMM_STARTUP_SENDER, "!mmm startup " + MMM_STARTUP_INSTANCE, null, {noarchive: true});
+});
 
 on("chat:message", function(msg)
 {
+    if (msg.playerid == "API" && msg.who == MMM_STARTUP_SENDER)
+    {
+        let startupSource = msg.content;
+
+        let startupRegExp = /^(?<command>!mmm\s+startup\s*)(?<arguments>.+)?$/u;
+        let startupMatch = startupRegExp.exec(startupSource);
+    
+        if (startupMatch)
+        {
+            let startupInstance = startupMatch.groups.arguments;
+
+            if (startupInstance == MMM_STARTUP_INSTANCE)
+            {
+                log("MMM instance " + MMM_STARTUP_INSTANCE + " starting up");
+                MychScriptContext.running = true;
+            }
+            else
+            {
+                log("MMM instance " + MMM_STARTUP_INSTANCE + " shutting down on startup of " + startupInstance);
+                MychScriptContext.running = false;
+            }
+
+            return;
+        }
+    }
+
+    if (!MychScriptContext.running)
+    {
+        return;
+    }
+
     if (msg.playerid == "API" && MychScriptContext.impersonation)
     {
         msg.playerid = MychScriptContext.impersonation.playerid;
