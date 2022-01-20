@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.24.5";
+const MMM_VERSION = "1.25.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -10,6 +10,58 @@ on("ready", function()
 {
     // activate this instance and shut down all lingering ones in previous sandbox instances
     sendChat(MMM_STARTUP_SENDER, "!mmm startup " + MMM_STARTUP_INSTANCE, null, {noarchive: true});
+
+    let macros = [];
+    
+    for (let macroObj of findObjs({ type: "macro" }))
+    {
+        let macroName = macroObj.get("name");
+        let macroText = macroObj.get("action");
+
+        if (/^!mmm[-_]autorun/ui.test(macroName))
+        {
+            let playerid = macroObj.get("playerid");
+
+            let macro =
+            {
+                playerid: playerid,
+                privileged: playerIsGM(playerid),
+                name: macroName,
+                text: macroText,
+            };
+
+            macros.push(macro);
+        }
+    }
+
+    function compareMacros(macroA, macroB)
+    {
+        if (macroA.privileged != macroB.privileged)
+        {
+            return (macroA.privileged ? -1 : 0) - (macroB.privileged ? -1 : 0);
+        }
+
+        return (macroA.name < macroB.name) ? -1
+             : (macroA.name > macroB.name) ? +1 : 0;
+    }
+
+    macros.sort(compareMacros);
+
+    for (let macro of macros)
+    {
+        let playerObj = getObj("player", macro.playerid);
+        let playerName = playerObj ? playerObj.get("displayname") : macro.playerid;
+
+        log("MMM [" + MMM_STARTUP_INSTANCE + "] executing autorun macro: " + macro.name + " (owner: " + playerName + ", privileged: " + macro.privileged + ")");
+
+        let impersonation =
+        {
+            playerid: macro.playerid,
+            selected: [],
+        };
+
+        MychScriptContext.$sendChatWithImpersonation("player|" + macro.playerid, macro.text, impersonation);
+    }
 });
 
 on("chat:message", function(msg)
