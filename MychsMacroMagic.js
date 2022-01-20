@@ -835,6 +835,26 @@ class MychScriptContext extends MychProperties
         return "Mych's Macro Magic";
     }
 
+    static $sendChatWithImpersonation(sender, message, impersonation)
+    {
+        let prevImpersonation;
+
+        function startImpersonation()
+        {
+            prevImpersonation = MychScriptContext.impersonation;
+            MychScriptContext.impersonation = impersonation;
+        }
+
+        function stopImpersonation()
+        {
+            MychScriptContext.impersonation = prevImpersonation;
+        }
+
+        sendChat(sender, "/direct MMM starts impersonation of " + impersonation.playerid, startImpersonation)
+        sendChat(sender, message);
+        sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
+    }
+
     chat(nameOrId_or_message, message_if_nameOrId = undefined)
     {
         let nameOrId;
@@ -862,22 +882,7 @@ class MychScriptContext extends MychProperties
                 selected: this.selected,
             };
 
-            let prevImpersonation;
-
-            function startImpersonation()
-            {
-                prevImpersonation = MychScriptContext.impersonation;
-                MychScriptContext.impersonation = impersonation;
-            }
-
-            function stopImpersonation()
-            {
-                MychScriptContext.impersonation = prevImpersonation;
-            }
-
-            sendChat(sender, "/direct MMM starts impersonation of " + impersonation.playerid, startImpersonation)
-            sendChat(sender, messageString);
-            sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
+            MychScriptContext.$sendChatWithImpersonation(sender, messageString, impersonation);
         }
         else
         {
