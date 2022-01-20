@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.24.4";
+const MMM_VERSION = "1.24.5";
 
 const MMM_STARTUP_INSTANCE = new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -889,20 +889,29 @@ class MychScriptContext extends MychProperties
 
     whisperback(message)
     {
-        let recipient = getObj("player", this.playerid).get("displayname");
+        let playerObj = getObj("player", this.playerid);
 
-        // remove all tokens from first double-quote on (since we can't escape double-quotes)
-        recipient = recipient.replace(/\s*".*/u, "");
-
-        // enclose in double quotes, but only if there are actually spaces
-        if (recipient.match(/\s/u))
+        if (!playerObj)
         {
-            recipient = "\"" + recipient + "\"";
+            log("!mmm do whisperback() for player " + this.playerid + ": " + message);
         }
+        else
+        {
+            let recipient = playerObj.get("displayname");
 
-        let messageMarkup = MychExpression.coerceMarkup(message);
+            // remove all tokens from first double-quote on (since we can't escape double-quotes)
+            recipient = recipient.replace(/\s*".*/u, "");
 
-        sendChat("Mych's Macro Magic", "/w " + recipient + " <br/>" + messageMarkup, null, { noarchive: true });
+            // enclose in double quotes, but only if there are actually spaces
+            if (recipient.match(/\s/u))
+            {
+                recipient = "\"" + recipient + "\"";
+            }
+
+            let messageMarkup = MychExpression.coerceMarkup(message);
+
+            sendChat("Mych's Macro Magic", "/w " + recipient + " <br/>" + messageMarkup, null, { noarchive: true });
+        }
     }
 
     *delay(seconds)
