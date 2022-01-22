@@ -21,11 +21,12 @@ on("ready", function()
         if (/^!mmm[-_]autorun/ui.test(macroName))
         {
             let playerid = macroObj.get("playerid");
+            let playerIsPrivileged = MychScriptContext.$isPrivileged(playerid);
 
             let macro =
             {
                 playerid: playerid,
-                privileged: playerIsGM(playerid),
+                privileged: playerIsPrivileged,
                 name: macroName,
                 text: macroText,
             };
@@ -1248,6 +1249,11 @@ class MychScriptContext extends MychProperties
         return this.$setAttribute(nameOrId, attributeName, attributeValue, true);
     }
 
+    static $isPrivileged(playerid)
+    {
+        return playerIsGM(playerid);
+    }
+
     $canControl(obj)
     {
         if (!this.playerid || !obj || !obj.get)
@@ -1255,7 +1261,7 @@ class MychScriptContext extends MychProperties
             return false;
         }
 
-        if (playerIsGM(this.playerid))
+        if (MychScriptContext.$isPrivileged(this.playerid))
         {
             return true;
         }
