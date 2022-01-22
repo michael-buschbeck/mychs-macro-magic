@@ -15,7 +15,7 @@ You're here to yell at dice, not at macros, after all – right?
 
 ### Contents
 
-- [Scripts](#scripts) – [script commands](#mmm-script--end-script)
+- [Scripts](#scripts) – [script commands](#mmm-script--end-script), [autorun macros](#autorun-macros)
 - [Expressions](#expressions) – [literals](#literals), [variables](#variables), [lists](#lists), [attributes](#attributes), [operators](#operators), [functions](#functions)
 - [Recipes](#recipes)
 - [Frequently Asked Questions](#frequently-asked-questions)
@@ -604,6 +604,28 @@ Using **debug do** is most useful as a way to quickly get insight into the conte
 The effect of **debug do** is similar to putting a `???` debug operator (see [operators](#operators) below) in front of the expression of a regular **do** command. The difference between using one or the other is mostly one of convenience: Use `???` if you want to look into an expression that's integral part of your script's operation, and **debug do** if you plan on removing this debug output again once you're done debugging. It's just easier to keep track of what to keep and what to delete after a debugging session that way.
 
 
+### Autorun macros
+
+If you're using [global functions](#mmm-function-funcname--end-function), you need a place to define them before they're used.
+
+This place could simply be any old macro (or character ability) along with some emphatic guidance to players that they _must_ call this macro (just once) before they want to use your script. That works, but... you know, it's like that old joke about the [Portuguese computer virus](https://www.hanselman.com/blog/a-poor-mans-computer-virus).
+
+Fortunately, MMM's support for _autorun macros_ can help: Any macro whose name starts with `!mmm-autorun` or `!mmm_autorun` (uppercase or lowercase don't matter) will be run automatically by MMM as soon as your game's API sandbox has completed spinning up and loading your game.
+
+If there's more than just one macro matching this naming pattern, they're all executed one by one in the same order they show up in your macro list. MMM first looks for autorun macros across all players, then puts (all of) them in this order, and then runs them in that order. Macros defined by GMs are run first, then those defined by non-GM players.
+
+MMM runs every autorun macro impersonating its _owner_, so you can do and access in an autorun macro whatever you can normally do or access. You can even send messages to chat. (Whether there's anyone around to read them is a separate question.)
+
+Since autorun macros aren't run interactively (by a player clicking a button or sending a chat message), you're slightly limited in what non-MMM features are supported in them:
+
+- You _can_ use inline rolls `[[1d20]]`, execute `/roll` commands, and use the `roll()` function.
+- You _can_ reference attributes as `@{Finn|HP}` and abilities as `%{Finn|RollAttack}` but those references must specify the character they relate to explicitly.
+- You **_cannot_** do roll queries like `?{Bonus|0}` or select target tokens with `@{target|token_id}` – there's no one around to answer these queries.
+- You **_cannot_** reference other macros via `#MacroName`. (This may be changed in a future MMM version, but it'll require MMM to resolve those macros itself instead of Roll20.)
+
+One final wrinkle: If you mix direct chat in an autorun macro with `!mmm chat:` script commands, you'll find that the script's chat output will arrive in chat after _all_ of the macro's direct chat output.
+
+
 ## Expressions
 
 Expressions are used everywhere: in **set** and **do** commands; as the condition in **if** and **else if** commands; for the separator in the **combine chat using** command; and even inside ${...} placeholders in the message text for the **chat** command.
@@ -1017,6 +1039,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.25.0  | 2022-01-20 | Introduce `!mmm-autorun` macros that auto-run on startup
 | 1.24.0  | 2021-12-25 | Support `function` and `return` commands for custom functions
 | 1.23.0  | 2021-12-16 | Introduce `where` and `select` operators and `...` variable
 | 1.22.0  | 2021-12-15 | Add `delay(seconds)` to add delays in script execution

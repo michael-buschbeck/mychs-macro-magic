@@ -1,10 +1,102 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.24.3";
+const MMM_VERSION = "1.25.0";
+
+const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
+const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
+
+on("ready", function()
+{
+    // activate this instance and shut down all lingering ones in previous sandbox instances
+    sendChat(MMM_STARTUP_SENDER, "!mmm startup " + MMM_STARTUP_INSTANCE, null, {noarchive: true});
+
+    let macros = [];
+    
+    for (let macroObj of findObjs({ type: "macro" }))
+    {
+        let macroName = macroObj.get("name");
+        let macroText = macroObj.get("action");
+
+        if (/^!mmm[-_]autorun/ui.test(macroName))
+        {
+            let playerid = macroObj.get("playerid");
+
+            let macro =
+            {
+                playerid: playerid,
+                privileged: playerIsGM(playerid),
+                name: macroName,
+                text: macroText,
+            };
+
+            macros.push(macro);
+        }
+    }
+
+    function compareMacros(macroA, macroB)
+    {
+        if (macroA.privileged != macroB.privileged)
+        {
+            return (macroA.privileged ? -1 : 0) - (macroB.privileged ? -1 : 0);
+        }
+
+        return (macroA.name < macroB.name) ? -1
+             : (macroA.name > macroB.name) ? +1 : 0;
+    }
+
+    macros.sort(compareMacros);
+
+    for (let macro of macros)
+    {
+        let playerObj = getObj("player", macro.playerid);
+        let playerName = playerObj ? playerObj.get("displayname") : macro.playerid;
+
+        log("MMM [" + MMM_STARTUP_INSTANCE + "] executing autorun macro: " + macro.name + " (owner: " + playerName + ", privileged: " + macro.privileged + ")");
+
+        let impersonation =
+        {
+            playerid: macro.playerid,
+            selected: [],
+        };
+
+        MychScriptContext.$sendChatWithImpersonation("player|" + macro.playerid, macro.text, impersonation);
+    }
+});
 
 on("chat:message", function(msg)
 {
+    if (msg.playerid == "API" && msg.who == MMM_STARTUP_SENDER)
+    {
+        let startupSource = msg.content;
+
+        let startupRegExp = /^(?<command>!mmm\s+startup\s*)(?<arguments>.+)?$/u;
+        let startupMatch = startupRegExp.exec(startupSource);
+    
+        if (startupMatch)
+        {
+            let startupInstance = startupMatch.groups.arguments;
+
+            if (startupInstance == MMM_STARTUP_INSTANCE)
+            {
+                log("MMM [" + MMM_STARTUP_INSTANCE + "] starting up");
+                MychScriptContext.running = true;
+            }
+            else
+            {
+                log("MMM [" + MMM_STARTUP_INSTANCE + "] shutting down on startup of MMM [" + startupInstance + "]");
+                MychScriptContext.running = false;
+            }
+
+            return;
+        }
+    }
+
+    if (!MychScriptContext.running)
+    {
+        return;
+    }
+
     if (msg.playerid == "API" && MychScriptContext.impersonation)
     {
         msg.playerid = MychScriptContext.impersonation.playerid;
@@ -795,6 +887,26 @@ class MychScriptContext extends MychProperties
         return "Mych's Macro Magic";
     }
 
+    static $sendChatWithImpersonation(sender, message, impersonation)
+    {
+        let prevImpersonation;
+
+        function startImpersonation()
+        {
+            prevImpersonation = MychScriptContext.impersonation;
+            MychScriptContext.impersonation = impersonation;
+        }
+
+        function stopImpersonation()
+        {
+            MychScriptContext.impersonation = prevImpersonation;
+        }
+
+        sendChat(sender, "/direct MMM starts impersonation of " + impersonation.playerid, startImpersonation)
+        sendChat(sender, message);
+        sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
+    }
+
     chat(nameOrId_or_message, message_if_nameOrId = undefined)
     {
         let nameOrId;
@@ -822,22 +934,7 @@ class MychScriptContext extends MychProperties
                 selected: this.selected,
             };
 
-            let prevImpersonation;
-
-            function startImpersonation()
-            {
-                prevImpersonation = MychScriptContext.impersonation;
-                MychScriptContext.impersonation = impersonation;
-            }
-
-            function stopImpersonation()
-            {
-                MychScriptContext.impersonation = prevImpersonation;
-            }
-
-            sendChat(sender, "/direct MMM starts impersonation of " + impersonation.playerid, startImpersonation)
-            sendChat(sender, messageString);
-            sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
+            MychScriptContext.$sendChatWithImpersonation(sender, messageString, impersonation);
         }
         else
         {
@@ -849,20 +946,29 @@ class MychScriptContext extends MychProperties
 
     whisperback(message)
     {
-        let recipient = getObj("player", this.playerid).get("displayname");
+        let playerObj = getObj("player", this.playerid);
 
-        // remove all tokens from first double-quote on (since we can't escape double-quotes)
-        recipient = recipient.replace(/\s*".*/u, "");
-
-        // enclose in double quotes, but only if there are actually spaces
-        if (recipient.match(/\s/u))
+        if (!playerObj)
         {
-            recipient = "\"" + recipient + "\"";
+            log("!mmm do whisperback() for player " + this.playerid + ": " + message);
         }
+        else
+        {
+            let recipient = playerObj.get("displayname");
 
-        let messageMarkup = MychExpression.coerceMarkup(message);
+            // remove all tokens from first double-quote on (since we can't escape double-quotes)
+            recipient = recipient.replace(/\s*".*/u, "");
 
-        sendChat("Mych's Macro Magic", "/w " + recipient + " <br/>" + messageMarkup, null, { noarchive: true });
+            // enclose in double quotes, but only if there are actually spaces
+            if (recipient.match(/\s/u))
+            {
+                recipient = "\"" + recipient + "\"";
+            }
+
+            let messageMarkup = MychExpression.coerceMarkup(message);
+
+            sendChat("Mych's Macro Magic", "/w " + recipient + " <br/>" + messageMarkup, null, { noarchive: true });
+        }
     }
 
     *delay(seconds)
