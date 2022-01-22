@@ -931,6 +931,8 @@
         let numTestsSuccessful = 0;
         let testsFailed = [];
 
+        MychScriptContext.running = true;
+
         for (let expressionSourceIndex = 0; expressionSourceIndex < expressionSources.length; ++expressionSourceIndex)
         {
             if (includedExpressionSources.length > 0 && !includedExpressionSources.includes(expressionSourceIndex))

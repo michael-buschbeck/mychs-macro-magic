@@ -1772,6 +1772,8 @@
         let numTestsSuccessful = 0;
         let testsFailed = [];
 
+        MychScriptContext.running = true;
+
         for (let scriptSourceIndex = 0; scriptSourceIndex < scriptSources.length; ++scriptSourceIndex)
         {
             if (includedScriptSources.length > 0 && !includedScriptSources.includes(scriptSourceIndex))
