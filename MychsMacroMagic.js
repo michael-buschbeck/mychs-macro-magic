@@ -316,7 +316,7 @@ class MychProperties
 
     $isValidPropertyKey(key)
     {
-        return true;
+        return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
     }
 
     $getProperty(key, fallbackProperties = undefined)
@@ -381,7 +381,7 @@ class MychScriptContext extends MychProperties
 
     $isValidPropertyKey(key)
     {
-        return /^[\p{L}_][\p{L}\p{N}_]*$|\$\[\[\d+\]\]/u.test(key);
+        return super.$isValidPropertyKey(key) || /^\$\[\[\d+\]\]$/u.test(key);
     }
 
     version = MMM_VERSION;
@@ -2081,11 +2081,6 @@ class MychScriptVariables extends MychProperties
     {
         super(parent);
         this.$customizations = (parent && parent.$customizations) ? parent.$customizations : {};
-    }
-
-    $isValidPropertyKey(key)
-    {
-        return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
     }
 
     $getAnonymousVariable()
