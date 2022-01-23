@@ -1774,6 +1774,8 @@
 
         MychScriptContext.running = true;
 
+        let contextStatics = Object.fromEntries(Object.entries(MychScriptContext).filter(([key, value]) => !(value instanceof Function)));
+
         for (let scriptSourceIndex = 0; scriptSourceIndex < scriptSources.length; ++scriptSourceIndex)
         {
             if (includedScriptSources.length > 0 && !includedScriptSources.includes(scriptSourceIndex))
@@ -1787,7 +1789,20 @@
             document.write("<table>");
             document.write("<tr><td></td><td class='script-header'>test script " + scriptSourceIndex + "</td></tr>");
 
-            MychScriptContext.players = {};
+            for (let [contextStaticName, contextStaticValue] of Object.entries(contextStatics))
+            {
+                let contextStaticValueClone = contextStaticValue;
+
+                if (contextStaticValueClone instanceof Object)
+                {
+                    contextStaticValueClone = Object.create(Object.getPrototypeOf(contextStaticValue));
+                    Object.assign(contextStaticValueClone, contextStaticValue);
+                }
+
+                MychScriptContext[contextStaticName] = contextStaticValueClone;
+            }
+
+            let msgOverrides = {};
 
             let testSuccessful = true;
 
