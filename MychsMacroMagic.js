@@ -118,7 +118,7 @@ on("chat:message", function(msg)
             lastseen: undefined,
             context: new MychScriptContext(),
             script: undefined,
-            functions: new MychProperties(),
+            globals: new MychProperties(MychScriptContext.globals),
             customizations: undefined,
             exception: undefined,
         };
@@ -285,7 +285,7 @@ on("chat:message", function(msg)
                     script = scriptCustomizations;
                 }
 
-                let scriptVariables = new MychScriptVariables(player.functions);
+                let scriptVariables = new MychScriptVariables(player.globals);
 
                 if (script.type == "set")
                 {
@@ -300,7 +300,7 @@ on("chat:message", function(msg)
                     let functionName = script.definition.functionName;
                     let functionImpl = scriptVariables.$getProperty(functionName, undefined, false);
 
-                    player.functions.$setProperty(functionName, functionImpl);
+                    player.globals.$setProperty(functionName, functionImpl);
                 }
             }
         }
@@ -376,6 +376,7 @@ class MychProperties
 
 class MychScriptContext extends MychProperties
 {
+    static globals = new MychProperties();
     static players = {};
     static impersonation = undefined;
 
