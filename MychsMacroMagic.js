@@ -298,7 +298,7 @@ on("chat:message", function(msg)
                 if (script.type == "function")
                 {
                     let functionName = script.definition.functionName;
-                    let functionImpl = scriptVariables[functionName];
+                    let functionImpl = scriptVariables.$getProperty(functionName, undefined, false);
 
                     player.functions.$setProperty(functionName, functionImpl);
                 }
@@ -319,7 +319,7 @@ class MychProperties
         return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
     }
 
-    $getProperty(key, fallbackProperties = undefined)
+    $getProperty(key, fallbackProperties, bindFunctionToProperties)
     {
         for (let properties = this; properties; properties = properties.$parentProperties)
         {
@@ -327,7 +327,7 @@ class MychProperties
             {
                 let value = properties[key];
     
-                if (value instanceof Function && !value.hasBoundVariables)
+                if (bindFunctionToProperties && value instanceof Function && !value.hasBoundVariables)
                 {
                     let variables = this;
 
@@ -351,7 +351,7 @@ class MychProperties
 
         if (fallbackProperties)
         {
-            return fallbackProperties.$getProperty(key);
+            return fallbackProperties.$getProperty(key, undefined, bindFunctionToProperties);
         }
 
         return undefined;
@@ -3998,7 +3998,7 @@ class MychExpression
 
                         if (valueStruct && valueStruct.$getProperty instanceof Function)
                         {
-                            return valueStruct.$getProperty(valueKey);
+                            return valueStruct.$getProperty(valueKey, undefined, true);
                         }
 
                         return context.getprop(valueStruct, valueKey);
@@ -4117,7 +4117,7 @@ class MychExpression
             {
                 function* symbolLookupEvaluator(variables)
                 {
-                    return variables.$getProperty(token.value, context);
+                    return variables.$getProperty(token.value, context, true);
                 }
 
                 state.pushEvaluator(token, symbolLookupEvaluator);
