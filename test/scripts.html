@@ -1858,6 +1858,41 @@
                     inlinerolls: scriptSourceRolls,
                 };
 
+                Object.assign(msg, msgOverrides);
+
+                let testCommandRegExp = /^\/test\s+(?<command>\w+)\s+(?<args>.+?)\s*$/u;
+                let testCommandMatch = testCommandRegExp.exec(msg.content);
+
+                if (testCommandMatch)
+                {
+                    let testCommandName = testCommandMatch.groups.command;
+                    let testCommandArgs = testCommandMatch.groups.args;
+
+                    switch (testCommandName)
+                    {
+                        case "impersonate":
+                        {
+                            msgOverrides.playerid = testCommandArgs;
+                            processes.push(
+                            {
+                                type: "harness",
+                                message: "Impersonating " + msgOverrides.playerid,
+                            });
+                        }
+                        break;
+
+                        default:
+                        {
+                            processes.push(
+                            {
+                                type: "error",
+                                message: "Unknown test command: " + testCommandName,
+                            });
+                        }
+                        break;
+                    }
+                }
+
                 eventHandlers["chat:message"](msg);
 
                 while (processes.length > 0)
