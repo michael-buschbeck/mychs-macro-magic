@@ -1670,6 +1670,11 @@
             return this.$setAttribute(characterNameOrId, attributeName, attributeValue, true);
         }
 
+        function playerIsGM(playerid)
+        {
+            return /^gm/.test(playerid);
+        }
+
         function getObj(type, id)
         {
             return undefined;
