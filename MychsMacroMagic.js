@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.25.0";
+const MMM_VERSION = "1.26.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -2506,6 +2506,51 @@ class MychScript
                 }
 
                 return [customizationKey, customizationCommand];
+            },
+        },
+
+        publish:
+        {
+            tokens: [ "to", /(?<scope>sender|game)/u, ":", /(?<identifiers>([\p{L}_][\p{L}\p{N}_]*)(\s*,\s*([\p{L}_][\p{L}\p{N}_]*))*)/u ],
+        
+            parse: function(args)
+            {
+                this.definition.scope = args.scope.value;
+                this.definition.identifiers = args.identifiers.value.split(/\s*,\s*/);
+            
+                if (this.definition.scope == "game" && !MychScriptContext.$isPrivileged(this.context.playerid))
+                {
+                    throw new MychScriptError("parse", "publishing to game scope requires GM privileges", this.source, args.scope.offset);
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*(variables)
+            {
+                let scopeVariables;
+
+                switch (this.definition.scope)
+                {
+                    case "sender":
+                    {
+                        let player = MychScriptContext.players[this.context.playerid];
+                        scopeVariables = player.globals;
+                    }
+                    break;
+
+                    case "game":
+                    {
+                        scopeVariables = MychScriptContext.globals;
+                    }
+                    break;
+                }
+
+                for (let identifier of this.definition.identifiers)
+                {
+                    let value = variables.$getProperty(identifier, this.context, false);
+                    scopeVariables.$setProperty(identifier, value);
+                }
             },
         },
 
