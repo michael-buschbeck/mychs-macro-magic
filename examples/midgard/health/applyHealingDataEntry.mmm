@@ -1,12 +1,11 @@
 !rem // applyHealingDataEntry
 !mmm script
-!mmm   set scriptVersion = "applyHealingDataEntry 1.0.0 (2021-12-27)"
+!mmm   set scriptVersion = "applyHealingDataEntry 1.0.1 (2022-01-24)"
 !mmm
-!rem   // Initialize globals (mainly data exchange)
-!mmm
-!mmm   set CURRENT = scriptVersion
-!mmm
-%{MacroSheetLibrary|libMidgardGlobal}
+!mmm   if version < 1.26 or not m3mgdExchange
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Flush data structure
 !mmm
