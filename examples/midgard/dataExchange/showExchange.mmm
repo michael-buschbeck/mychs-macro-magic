@@ -2,11 +2,13 @@
 !rem // 
 !mmm script
 !mmm 
-!mmm   set scriptVersion = "showExchange 1.2.0 (2022-01-15)"
+!mmm   set scriptVersion = "showExchange 1.2.1 (2022-01-24)"
 !mmm
-!mmm   set CURRENT = scriptVersion
-%{MacroSheetLibrary|libMidgardGlobal}
-!mmm
+!mmm   if version < 1.26 or not m3mgdExchange or not m3mgdExchangeAttrList
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
+!mmm   
 !mmm   if isdenied(sender.name)
 !mmm     set user = "GM"
 !mmm   else

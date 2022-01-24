@@ -1,8 +1,11 @@
 !rem // flushXP
-!rem // 2021-12-16
+!rem // 2022-01-24
 !mmm script
-!rem   // Initialize globals (mainly data exchange)
-%{MacroSheetLibrary|libMidgardGlobal}
+!mmm   if version < 1.26 or not m3mgdExchange or not m3mgdExchangeAttrList
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
+!mmm
 !mmm   set confirm = "?{Wirklich die EP aller Charaktere löschen?|nein,0|ja,1}"
 !mmm   if confirm == 1
 !mmm     combine chat
