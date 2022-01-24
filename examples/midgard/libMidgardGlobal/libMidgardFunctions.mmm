@@ -1093,7 +1093,7 @@
 !mmm
 !mmm     if script.newHealth < 0 and script.timeToDie < 0
 !mmm     
-!mmm       chat: {{Zustand=**Sofortiger Tod &#10013;**}}
+!mmm       chat: {{&#10013;=${highlight("Sofortiger Tod", "bad", "Todeskampf: " & script.timeToDie-script.newHealth & "(🎲1d6)" & script.newHealth & "=" & script.timeToDie)}}}
 !mmm     
 !mmm     else
 !mmm     
