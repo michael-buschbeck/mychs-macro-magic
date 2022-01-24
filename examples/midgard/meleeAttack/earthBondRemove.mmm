@@ -2,7 +2,7 @@
 !rem // GM script: Remove a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
 !rem //
 !mmm script
-!mmm   set scriptVersion = "earthBondRemove v1.0.5 (2022-01-14)"
+!mmm   set scriptVersion = "earthBondRemove v1.0.6 (2022-01-24)"
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
@@ -19,8 +19,11 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-%{MacroSheetLibrary|libMidgardGlobal}
-!mmm   
+!mmm   if version < 1.26 or not m3mgdExchange
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
+!mmm
 !mmm   if not cWeaponWielder.name eq cWeaponWielder
 !mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")
 !mmm     exit script
