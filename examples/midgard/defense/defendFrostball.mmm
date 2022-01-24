@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.3.2 (2022-01-14)"
+!mmm   set scriptVersion = "defendFrostball 1.3.3 (2022-01-24)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -9,10 +9,10 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm   set CURRENT = scriptVersion
-%{MacroSheetLibrary|libMidgardGlobal}
-%{MacroSheetLibrary|libMidgardFunctions}
-%{MacroSheetLibrary|libDefenseDataTable}
+!mmm   if version < 1.26 or not m3mgdExchange
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cGMSilentMode = false

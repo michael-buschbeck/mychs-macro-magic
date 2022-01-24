@@ -1,13 +1,11 @@
 !rem // defenseDataEntry
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "defenseDataEntry 2.1.1 (2021-12-29)"
+!mmm   set scriptVersion = "defenseDataEntry 2.1.2 (2022-01-24)"
 !mmm
-!rem   // Initialize globals (mainly data exchange)
-!mmm
-!mmm   set CURRENT = scriptVersion
-!mmm
-%{MacroSheetLibrary|libMidgardGlobal}
+!mmm   if version < 1.26 or not m3mgdExchange
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Flush data structure
 !mmm

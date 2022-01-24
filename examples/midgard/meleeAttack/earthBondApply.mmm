@@ -1,7 +1,7 @@
 !rem // earthBondApply
 !rem // GM script: Apply a player-generated earthbond as a special ability of the magic rune blade "Stoneheart"
 !mmm script
-!mmm   set scriptVersion = "earthBondApply v1.0.3 (2022-01-14)"
+!mmm   set scriptVersion = "earthBondApply v1.0.4 (2022-01-24)"
 !mmm
 !rem   // Config (if script is used by more than one player, use config scripts to overwrite, otherwise just customize here)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
@@ -19,7 +19,10 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-%{MacroSheetLibrary|libMidgardGlobal}
+!mmm   if version < 1.26 or not m3mgdExchange
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Check with GM if ground conditions are present for the earthbond to work
 !mmm   set gmConfirmGroundCondition = (?{Ist der Boden aus Erde, Schlamm, Sand oder Staub?|Nein,0|Ja,1} == 1)

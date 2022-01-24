@@ -1,10 +1,6 @@
-!rem // libMidgardGlobal
+!rem // initGameGlobals
 !rem // 
-!rem // 
-!rem // defines global "constants" for use across Midgard scripts
-!rem // 
-!rem // Expects ("imports") variables:
-!rem //   CURRENT
+!rem //   defines game-global variables and loads global functions for use across Midgard scripts
 !rem // 
 !rem // Sets ("exports") variables:
 !rem //   m3mgdExchange                 Exchange data sheet ID. Use to access any attribute: m3mgdExchange.(m3mgdAttrAttackType)
@@ -20,15 +16,29 @@
 !rem //   m3mgdAttrHealthGain           Attribute label for the number of health points gained (e.g. through First Aid or a healing spell)
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
-!rem // begin MMM fragment
-!mmm   set PARENT = CURRENT
-!mmm   set CURRENT = "libMidgardGlobal 1.4.0 (2022-01-14)"
+!rem // TODO: Add publish commands
+!mmm script
+!mmm   set scriptVersion = "initGameGlobals 1.0.0 (2022-01-24)"
+!mmm
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback(scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   set mmmVersionReq = 1.26
+!mmm   if version < mmmVersionReq
+!mmm     do whisperback(scriptVersion & " - Abbruch: MMM-Version " & mmmVersionReq & ".0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm
 !mmm
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm 
 !mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
-!mmm     do whisperback(CURRENT & ": No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Aborting script " & PARENT & ".")
+!mmm     do whisperback(scriptVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Aborting.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -62,6 +72,14 @@
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
-!mmm   set CURRENT = PARENT
-!mmm   set PARENT = undef
-!rem // end MMM fragment
+!mmm   publish to game: m3mgdExchange
+!mmm   publish to game: m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
+!mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
+!mmm   publish to game: m3mgdExchangeAttrList
+!mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
+!mmm   publish to game: m3mgdArmorPiercingWeaponTypes
+!mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
+!mmm   publish to game: m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker
+!mmm   publish to game: m3mgdAttrXP, m3mgdAttrXPLog
+!mmm
+!mmm end script

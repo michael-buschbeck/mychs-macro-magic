@@ -1,11 +1,11 @@
 !rem // showXPLog for selected token's character
-!rem // 2022-01-14
+!rem // 2022-01-24
 !mmm script
 !mmm
-!rem   // Initialize globals (mainly data exchange)
-%{MacroSheetLibrary|libMidgardGlobal}
-!rem   // including function libraries here to avoid breaking the link between customize and script blocks 
-%{MacroSheetLibrary|libMidgardFunctions}
+!mmm   if version < 1.26 or not m3mgdExchange or not m3mgdExchangeAttrList
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !mmm   if not selected or isunknown(selected.(m3mgdAttrXP)) or isunknown(selected.(m3mgdAttrXPLog))
 !mmm     do whisperback("showXPLog: no token selected or character does not have attributes " & m3mgdAttrXP & " and " & m3mgdAttrXPLog & " -- aborting.")

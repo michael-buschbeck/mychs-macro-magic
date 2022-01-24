@@ -1,8 +1,7 @@
 !rem // rest: process health & endurance effects of rest or sleep
 !rem //
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "rest 1.1.0 (2022-01-16)"
+!mmm   set scriptVersion = "rest 1.1.1 (2022-01-24)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -10,7 +9,10 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-%{MacroSheetLibrary|libMidgardGlobal}
+!mmm   if version < 1.26 or not m3mgdExchange
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id

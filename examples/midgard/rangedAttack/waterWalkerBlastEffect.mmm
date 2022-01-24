@@ -1,7 +1,7 @@
 !rem // waterWalkerBlastEffect
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.1.0 (2021-12-31)"
+!mmm   set scriptVersion = "1.1.1 (2022-01-24)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -10,8 +10,13 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.24
-!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
+!mmm   if version < 1.26
+!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   if not m3mgdExchange
+!mmm     do whisperback("Game-global m3mgdExchange variables missing.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -19,11 +24,6 @@
 !mmm   set customizable cWeaponWielder = "Yerrick MacRothgar"
 !mmm   set customizable cWeaponLabel = "Wasserläufer (Wasserstrahl)"
 !mmm
-!rem // including global constants
-%{MacroSheetLibrary|libMidgardGlobal}
-!rem // including function library here to avoid breaking the link between customize and script blocks 
-%{MacroSheetLibrary|libMidgardFunctions}
-!mmm 
 !mmm   if not cWeaponWielder.name eq cWeaponWielder
 !mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")
 !mmm     exit script

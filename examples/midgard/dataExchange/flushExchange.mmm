@@ -1,12 +1,12 @@
 !rem // flushExchange: MMM-Midgard auxiliary tool to quickly delete current info from the exchange data structure
 !rem // 
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
-!mmm   set scriptVersion = "flushExchange 2.1.0 (2021-12-27)"
+!mmm   set scriptVersion = "flushExchange 2.1.1 (2022-01-24)"
 !mmm
-!rem   // Initialize globals (mainly data exchange)
-!mmm   set CURRENT = scriptVersion
-%{MacroSheetLibrary|libMidgardGlobal}
+!mmm   if version < 1.26 or not m3mgdExchange or not m3mgdExchangeAttrList
+!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
 !mmm
 !rem   // Flush data structure
 !mmm
