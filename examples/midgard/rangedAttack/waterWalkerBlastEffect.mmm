@@ -21,8 +21,6 @@
 !mmm
 !rem // including global constants
 %{MacroSheetLibrary|libMidgardGlobal}
-!rem // including function library here to avoid breaking the link between customize and script blocks 
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm 
 !mmm   if not cWeaponWielder.name eq cWeaponWielder
 !mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")

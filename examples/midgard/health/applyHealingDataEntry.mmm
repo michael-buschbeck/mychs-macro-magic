@@ -1,5 +1,4 @@
 !rem // applyHealingDataEntry
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
 !mmm   set scriptVersion = "applyHealingDataEntry 1.0.0 (2021-12-27)"
 !mmm

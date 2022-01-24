@@ -19,7 +19,6 @@
 !mmm   end if
 !mmm
 %{MacroSheetLibrary|libMidgardGlobal}
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm
 !rem   // Check if cOwnID points to a character I control
 !mmm   if isdenied(cOwnID.character_id) or cOwnID.permission ne "control"

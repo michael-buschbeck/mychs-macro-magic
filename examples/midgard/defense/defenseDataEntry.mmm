@@ -1,5 +1,4 @@
 !rem // defenseDataEntry
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
 !mmm   set scriptVersion = "defenseDataEntry 2.1.1 (2021-12-29)"
 !mmm

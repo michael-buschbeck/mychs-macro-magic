@@ -1,6 +1,5 @@
 !rem // applyHealing applies both healing and energy boosts (or either)
 !rem //
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
 !mmm   set scriptVersion = "applyHealing 1.1.0 (2022-01-16)"
 !mmm

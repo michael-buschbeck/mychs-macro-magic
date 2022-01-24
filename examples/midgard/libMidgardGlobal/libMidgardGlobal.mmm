@@ -1,7 +1,7 @@
 !rem // libMidgardGlobal
 !rem // 
 !rem // 
-!rem // defines global "constants" for use across Midgard scripts
+!rem // defines "constants" for use across Midgard scripts
 !rem // 
 !rem // Expects ("imports") variables:
 !rem //   CURRENT

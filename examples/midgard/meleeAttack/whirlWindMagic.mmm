@@ -13,8 +13,6 @@
 !mmm     
 !mmm   end if 
 !mmm   
-%{MacroSheetLibrary|libMidgardFunctions}
-!mmm
 !rem   // Config (overwrite in a customize block called immediately before this script)
 !rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
 !rem   //  cWeaponToggleCost    Endurance cost (AP) to activating the weapon's magic

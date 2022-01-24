@@ -17,10 +17,6 @@
 !mmm
 !rem   // Initialize globals (mainly data exchange)
 %{MacroSheetLibrary|libMidgardGlobal}
-!rem   // including function libraries here to avoid breaking the link between customize and script blocks 
-%{MacroSheetLibrary|libBasics}
-%{MacroSheetLibrary|libMidgardFunctions}
-%{MacroSheetLibrary|libDefenseDataTable}
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //

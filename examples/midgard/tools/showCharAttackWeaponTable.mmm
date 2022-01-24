@@ -1,0 +1,34 @@
+!mmm script
+!mmm   combine chat
+!mmm     chat: /w "${sender.name}" ${"&"}{template:default}
+!mmm     for weaponLabelAttr in findattr(sender, "Angriff", "Waffe")
+!mmm       
+!mmm       chat: {{ 
+!mmm       chat: ${sender.(weaponLabelAttr)}=
+!mmm       
+!mmm       for field in findattr(sender, "Angriff")
+!mmm         if field eq "WaffeRang"
+!mmm           do setattr(sender, findattr(sender, "Angriff", "Waffe", sender.(weaponLabelAttr), field), "0")
+!mmm         end if
+!mmm         if field ne "Waffe"
+!mmm           set attr = findattr(sender, "Angriff", "Waffe", sender.(weaponLabelAttr), field)
+!mmm           if isunknown(attr)
+!mmm             set value = ""
+!mmm           else
+!mmm             set value = sender.(attr)
+!mmm           end if
+!mmm           chat: ${field}:${value}
+!rem //          if isunknown(value)
+!rem //            chat: [${getreason(value)}/${findattr(sender, "Angriff", "Waffe", sender.(weaponLabelAttr), field)}]
+!rem //          end if
+!mmm           chat: | 
+!mmm           
+!mmm         end if
+!mmm           
+!mmm       end for
+!mmm       
+!mmm       chat: }}
+!mmm       
+!mmm     end for
+!mmm   end combine  
+!mmm end script

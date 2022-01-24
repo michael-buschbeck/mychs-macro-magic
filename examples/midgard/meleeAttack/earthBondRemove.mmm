@@ -20,7 +20,6 @@
 !mmm   end if
 !mmm
 %{MacroSheetLibrary|libMidgardGlobal}
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm   
 !mmm   if not cWeaponWielder.name eq cWeaponWielder
 !mmm     do whisperback("Character " & cWeaponWielder & " not accessible or something.")

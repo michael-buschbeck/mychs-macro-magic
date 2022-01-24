@@ -1,6 +1,5 @@
 !rem // rest: process health & endurance effects of rest or sleep
 !rem //
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
 !mmm   set scriptVersion = "rest 1.1.0 (2022-01-16)"
 !mmm

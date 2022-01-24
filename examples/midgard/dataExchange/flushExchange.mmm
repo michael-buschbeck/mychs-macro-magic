@@ -1,6 +1,5 @@
 !rem // flushExchange: MMM-Midgard auxiliary tool to quickly delete current info from the exchange data structure
 !rem // 
-%{MacroSheetLibrary|libMidgardFunctions}
 !mmm script
 !mmm   set scriptVersion = "flushExchange 2.1.0 (2021-12-27)"
 !mmm

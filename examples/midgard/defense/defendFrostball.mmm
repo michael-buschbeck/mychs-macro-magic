@@ -11,8 +11,6 @@
 !mmm
 !mmm   set CURRENT = scriptVersion
 %{MacroSheetLibrary|libMidgardGlobal}
-%{MacroSheetLibrary|libMidgardFunctions}
-%{MacroSheetLibrary|libDefenseDataTable}
 !mmm
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cGMSilentMode = false
