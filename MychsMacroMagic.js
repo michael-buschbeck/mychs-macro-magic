@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.25.0";
+const MMM_VERSION = "1.26.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -21,11 +21,12 @@ on("ready", function()
         if (/^!mmm[-_]autorun/ui.test(macroName))
         {
             let playerid = macroObj.get("playerid");
+            let playerIsPrivileged = MychScriptContext.$isPrivileged(playerid);
 
             let macro =
             {
                 playerid: playerid,
-                privileged: playerIsGM(playerid),
+                privileged: playerIsPrivileged,
                 name: macroName,
                 text: macroText,
             };
@@ -117,7 +118,7 @@ on("chat:message", function(msg)
             lastseen: undefined,
             context: new MychScriptContext(),
             script: undefined,
-            functions: new MychProperties(),
+            globals: new MychProperties(MychScriptContext.globals),
             customizations: undefined,
             exception: undefined,
         };
@@ -284,7 +285,7 @@ on("chat:message", function(msg)
                     script = scriptCustomizations;
                 }
 
-                let scriptVariables = new MychScriptVariables(player.functions);
+                let scriptVariables = new MychScriptVariables(player.globals);
 
                 if (script.type == "set")
                 {
@@ -297,9 +298,9 @@ on("chat:message", function(msg)
                 if (script.type == "function")
                 {
                     let functionName = script.definition.functionName;
-                    let functionImpl = scriptVariables[functionName];
+                    let functionImpl = scriptVariables.$getProperty(functionName, undefined, false);
 
-                    player.functions.$setProperty(functionName, functionImpl);
+                    player.globals.$setProperty(functionName, functionImpl);
                 }
             }
         }
@@ -315,10 +316,10 @@ class MychProperties
 
     $isValidPropertyKey(key)
     {
-        return true;
+        return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
     }
 
-    $getProperty(key, fallbackProperties = undefined)
+    $getProperty(key, fallbackProperties, bindFunctionToProperties)
     {
         for (let properties = this; properties; properties = properties.$parentProperties)
         {
@@ -326,7 +327,7 @@ class MychProperties
             {
                 let value = properties[key];
     
-                if (value instanceof Function && !value.hasBoundVariables)
+                if (bindFunctionToProperties && value instanceof Function && !value.hasBoundVariables)
                 {
                     let variables = this;
 
@@ -350,7 +351,7 @@ class MychProperties
 
         if (fallbackProperties)
         {
-            return fallbackProperties.$getProperty(key);
+            return fallbackProperties.$getProperty(key, undefined, bindFunctionToProperties);
         }
 
         return undefined;
@@ -375,12 +376,13 @@ class MychProperties
 
 class MychScriptContext extends MychProperties
 {
+    static globals = new MychProperties();
     static players = {};
     static impersonation = undefined;
 
     $isValidPropertyKey(key)
     {
-        return /^[\p{L}_][\p{L}\p{N}_]*$|\$\[\[\d+\]\]/u.test(key);
+        return super.$isValidPropertyKey(key) || /^\$\[\[\d+\]\]$/u.test(key);
     }
 
     version = MMM_VERSION;
@@ -1248,6 +1250,11 @@ class MychScriptContext extends MychProperties
         return this.$setAttribute(nameOrId, attributeName, attributeValue, true);
     }
 
+    static $isPrivileged(playerid)
+    {
+        return playerIsGM(playerid);
+    }
+
     $canControl(obj)
     {
         if (!this.playerid || !obj || !obj.get)
@@ -1255,7 +1262,7 @@ class MychScriptContext extends MychProperties
             return false;
         }
 
-        if (playerIsGM(this.playerid))
+        if (MychScriptContext.$isPrivileged(this.playerid))
         {
             return true;
         }
@@ -2077,11 +2084,6 @@ class MychScriptVariables extends MychProperties
         this.$customizations = (parent && parent.$customizations) ? parent.$customizations : {};
     }
 
-    $isValidPropertyKey(key)
-    {
-        return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
-    }
-
     $getAnonymousVariable()
     {
         return this["..."];
@@ -2504,6 +2506,51 @@ class MychScript
                 }
 
                 return [customizationKey, customizationCommand];
+            },
+        },
+
+        publish:
+        {
+            tokens: [ "to", /(?<scope>sender|game)/u, ":", /(?<identifiers>([\p{L}_][\p{L}\p{N}_]*)(\s*,\s*([\p{L}_][\p{L}\p{N}_]*))*)/u ],
+        
+            parse: function(args)
+            {
+                this.definition.scope = args.scope.value;
+                this.definition.identifiers = args.identifiers.value.split(/\s*,\s*/);
+            
+                if (this.definition.scope == "game" && !MychScriptContext.$isPrivileged(this.context.playerid))
+                {
+                    throw new MychScriptError("parse", "publishing to game scope requires GM privileges", this.source, args.scope.offset);
+                }
+
+                this.complete = true;
+            },
+
+            execute: function*(variables)
+            {
+                let scopeVariables;
+
+                switch (this.definition.scope)
+                {
+                    case "sender":
+                    {
+                        let player = MychScriptContext.players[this.context.playerid];
+                        scopeVariables = player.globals;
+                    }
+                    break;
+
+                    case "game":
+                    {
+                        scopeVariables = MychScriptContext.globals;
+                    }
+                    break;
+                }
+
+                for (let identifier of this.definition.identifiers)
+                {
+                    let value = variables.$getProperty(identifier, this.context, false);
+                    scopeVariables.$setProperty(identifier, value);
+                }
             },
         },
 
@@ -3997,7 +4044,7 @@ class MychExpression
 
                         if (valueStruct && valueStruct.$getProperty instanceof Function)
                         {
-                            return valueStruct.$getProperty(valueKey);
+                            return valueStruct.$getProperty(valueKey, undefined, true);
                         }
 
                         return context.getprop(valueStruct, valueKey);
@@ -4116,7 +4163,7 @@ class MychExpression
             {
                 function* symbolLookupEvaluator(variables)
                 {
-                    return variables.$getProperty(token.value, context);
+                    return variables.$getProperty(token.value, context, true);
                 }
 
                 state.pushEvaluator(token, symbolLookupEvaluator);

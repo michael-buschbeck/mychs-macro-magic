@@ -486,6 +486,63 @@ This command is how you can pass information back from within a function body to
 Notice that the `attack(sender.SwordSkill)` call only passes a value for the `skill` parameter but omits an argument for the `modifiers` parameter – so `modifiers` becomes the special `default` value in the function, which is interpreted as zero when it's added to the roll result.
 
 
+### _!mmm_ **publish to sender:** *variable*|*function*, *variable*|*function*, ...
+
+Makes the specified variables and/or functions available to all scripts that follow.
+
+- For functions, this works the same as when you simply use the [**function** command](#mmm-function-funcname--end-function) on top level outside of any **script** block to make a _global function_.
+
+- For variables, this copies the variable's current value and makes it available under the variable's name to all scripts that follow. The result is much like a _global variable_ except it's not really variable – though you can overwrite it, of course, by re-publishing another variable under the same name.
+
+In any script code that follows, you can access these published variables and/or functions without further ado just by their names like you'd access any of your script's variables.
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set** mood = "happy" | *(set script variable `mood` to "happy")*
+| 3    | _!mmm_     **publish to sender:** mood | *(copy "happy" to global variable named `mood`)*
+| 4    | _!mmm_     **set** mood = "gloomy" | *(set script variable `mood` to "gloomy")*
+| 5    | _!mmm_ **end script**
+| 6    | _!mmm_ **script** | *(start next script with new script variables)*
+| 7    | _!mmm_     **chat:** /me is ${mood} today! | ***Finn is happy today!***
+| 8    | _!mmm_ **end script**
+
+If you **set** a script variable of the same name as a **publish**-ed one or define a **function** of the same name, this _shadows_ (hides) their global versions and gives precedence to your script's definitions. Shadowing a variable or function doesn't affect its global counterpart for subsequent scripts. 
+
+
+### _!mmm_ **publish to game:** *variable*|*function*, *variable*|*function*, ...
+
+Like **publish to sender** except it makes the specified variables and/or functions available to all scripts that follow for ***all players*** in the game. This command ***requires GM privileges*** – if a normal player attempts to use it in a script, the entire script won't even run.
+
+Useful to share a suite of functions among all players in the game or to let the GM set and change values that can be used by players' scripts.
+
+If a GM uses **publish to game** with a custom **function**, a powerful feature is that the function executes with the GM's privileges even when called by a player: Most significantly, the GM's published function can access (and even update) any character's or NPC's attributes, not just the caller's.
+
+Of course this means you have to be careful what functions you publish to your players as a GM, but on the other hand it can also be used to very restrictively give players access to certain NPC properties without accidentally leaking more information than you care to let them know.
+
+For example, let's say that player characters get an extra attack bonus if their target's "constitution" stat has dropped below 25% of its maximum. You don't really want to tell your players any details about your NPC's current or maximum constitution, but you do want to let them know if they can apply this bonus to their next attack. So this is what you can do:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script** | *(script run by the GM once at game start)*
+| 2    | _!mmm_     **function** CanUseAttackBonus(target) | *(define function named `CanUseAttackBonus`)*
+| 3    | _!mmm_         **set** constitution = target.constitution | *(get current constitution)*
+| 4    | _!mmm_         **set** threshold = 0.25 * target.constitution.max | *(calculate threshold for attack bonus)*
+| 5    | _!mmm_         **return** constitution < threshold | *(return `true` if less than threshold, else `false`)*
+| 6    | _!mmm_     **end function**
+| 7    | _!mmm_     **publish to game:** CanUseAttackBonus | *(publish function `CanUseAttackBonus` to all players)*
+| 8    | _!mmm_ **end script**
+|      | 
+| 1    | _!mmm_ **script** | *(script run by a player)*
+| 2    | _!mmm_     **set** target = "@{target\|Target?\|token_id}" | *(let player select target on tabletop)*
+| 3    | _!mmm_     **if** CanUseAttackBonus(target) | *(call GM's function to check attack bonus)*
+| 4    | _!mmm_         **chat:** Attack with bonus: [[1d20+4]] | *(use attack bonus if applicable)*
+| 5    | _!mmm_     **else**
+| 6    | _!mmm_         **chat:** Normal attack: [[1d20]] | *(use normal attack if bonus not applicable)*
+| 7    | _!mmm_     **end if**
+| 8    | _!mmm_ **end script**
+
+
 ### _!mmm_ **customize** [...] **end customize**
 
 Placed before a **script** block to customize it. In a **customize** block, use **set** and **translate** commands to customize variables and chat messages in the script that follows.
@@ -1039,6 +1096,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.26.0  | 2022-01-23 | Introduce `publish to sender` and `publish to game` commands
 | 1.25.0  | 2022-01-20 | Introduce `!mmm-autorun` macros that auto-run on startup
 | 1.24.0  | 2021-12-25 | Support `function` and `return` commands for custom functions
 | 1.23.0  | 2021-12-16 | Introduce `where` and `select` operators and `...` variable
