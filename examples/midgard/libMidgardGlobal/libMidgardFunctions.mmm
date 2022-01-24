@@ -307,7 +307,7 @@
 !mmm     
 !mmm     return "🟢 -4 auf alles, max. Last reduziert"
 !mmm     
-!mmm   else if tokenID.status_yellow eq "shown" and m3mgdAttrCeiling(tokenID, enduranceAttr)
+!mmm   else if (tokenID.status_yellow eq "shown" or tokenID.status_red eq "shown" or tokenID.status_death_zone eq "shown") and m3mgdAttrCeiling(tokenID, enduranceAttr)
 !mmm     
 !mmm     return "🟡 Ausdauer begrenzt auf 50%"
 !mmm     
