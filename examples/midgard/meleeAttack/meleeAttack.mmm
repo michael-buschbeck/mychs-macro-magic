@@ -53,7 +53,7 @@
 !rem   // Refetch token_id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = cOwnID.token_id
 !mmm   if isdenied(cOwnID)
-!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & cOwnID) 
+!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & getreason(cOwnID)) 
 !mmm     exit script
 !mmm   end if
 !rem
