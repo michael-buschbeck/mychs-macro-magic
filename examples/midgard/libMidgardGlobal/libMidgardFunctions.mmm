@@ -131,7 +131,6 @@
 !rem // m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
 !rem // 
 !rem //   Places a temporary ceiling ceilingValue on tokenID attribute attrLabel and saves its value to be restored by m3mgdReleaseAttrCeiling().
-!rem //   WORKS ONLY WITH NUMERICAL ATTRIBUTE VALUES!
 !rem //
 !mmm function m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
 !mmm
@@ -154,14 +153,11 @@
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm   
 !mmm   set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
-!mmm   if setattr(dataExchangeID, storageAttrLabel, ceilingValue) == ceilingValue
-!rem     // the above assumes that attrLabel always refers to numbers, not strings
-!mmm     
-!mmm     do whisperback("m3mgdSetAttrCeiling(): Stored '" & ceilingValue & "' as ceiling for '" & tokenID.name & "'.'" & attrLabel & "'.")
+!mmm   if setattr(dataExchangeID, storageAttrLabel, ceilingValue) eq ceilingValue
+!rem     // Roll20 attributes are always strings, so string comparison theoretically allows for non-numerical "ceilings"
 !mmm     
 !mmm     if setattr(tokenID, attrLabel, ceilingValue) == ceilingValue
 !mmm     
-!mmm       do whisperback("m3mgdSetAttrCeiling(): Set current value for '" & tokenID.name & "'.'" & attrLabel & "' as '" & ceilingValue & "'.")
 !mmm       return ceilingValue
 !mmm     
 !mmm     else 
@@ -199,7 +195,6 @@
 !mmm       set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
 !mmm     end if
 !mmm     if isunknown(dataExchangeID.(storageAttrLabel))
-!mmm       do whisperback("_m3mgdGetStoredAttr(): Found no valid stored attribute '" & paramAttrLabel &"' for token '" & tokenID.name & "'.")
 !mmm       return false
 !mmm     end if
 !mmm   end if
@@ -238,7 +233,6 @@
 !rem // m3mgdReleaseAttrCeiling(tokenID, attrLabel)
 !rem // 
 !rem //   Releases a temporary ceiling placed on tokenID attribute attrLabel by m3mgdSetAttrCeiling() and restores the saved value for it.
-!rem //   WORKS ONLY WITH NUMERICAL ATTRIBUTE VALUES!
 !rem //
 !mmm function m3mgdReleaseAttrCeiling(tokenID, attrLabel)
 !mmm   
@@ -495,7 +489,7 @@
 !mmm
 !mmm   if maxEndurance == 0
 !mmm
-!mmm     do whisperback(tokenID.token_name & " ist kein Wesen, das Ausdauerpunkte gewinnen oder verlieren kann (AP.max=0).")
+!rem     // tokenID (AP.max=0) cannot win or lose endurance
 !mmm     return highlight(prvEndurance, "normal", "unverändert")
 !mmm
 !mmm   end if
@@ -582,7 +576,7 @@
 !mmm
 !mmm   if maxHealth == 0
 !mmm
-!mmm     do whisperback(tokenID.token_name & " ist kein Lebewesen (LP=0), dass geheilt oder verletzt werden kann.")
+!rem     // tokenID (LP.max=0) is not alive (possibly undead), so it cannot be healed or injured
 !mmm     return highlight(prvHealth, "normal", "unverändert")
 !mmm
 !mmm   else
