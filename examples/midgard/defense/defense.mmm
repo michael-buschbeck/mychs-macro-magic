@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.12.0 (2022-01-16)"
+!mmm   set scriptVersion = "defense 1.12.1 (2022-01-24)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -10,14 +10,16 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.24
-!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
+!mmm   if version < 1.26
+!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Initialize globals (mainly data exchange)
-%{MacroSheetLibrary|libMidgardGlobal}
-!rem
+!mmm   if not m3mgdExchange
+!mmm     do whisperback("Game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
+!mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
 !rem   //  cVerbose             Toggle narrative output: true for on, false for off 
