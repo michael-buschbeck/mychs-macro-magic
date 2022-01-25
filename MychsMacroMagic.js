@@ -1,13 +1,15 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.26.0";
+const MMM_VERSION = "1.26.1";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
 
 on("ready", function()
 {
+    let msecStart = new Date().getTime();
+
     // activate this instance and shut down all lingering ones in previous sandbox instances
     sendChat(MMM_STARTUP_SENDER, "!mmm startup " + MMM_STARTUP_INSTANCE, null, {noarchive: true});
 
@@ -53,7 +55,7 @@ on("ready", function()
         let playerObj = getObj("player", macro.playerid);
         let playerName = playerObj ? playerObj.get("displayname") : macro.playerid;
 
-        log("MMM [" + MMM_STARTUP_INSTANCE + "] executing autorun macro: " + macro.name + " (owner: " + playerName + ", privileged: " + macro.privileged + ")");
+        let macroDescription = macro.name + " (owner: " + playerName + ", privileged: " + macro.privileged + ")";
 
         let impersonation =
         {
@@ -61,7 +63,26 @@ on("ready", function()
             selected: [],
         };
 
-        MychScriptContext.$sendChatWithImpersonation("player|" + macro.playerid, macro.text, impersonation);
+        let sender = "player|" + macro.playerid;
+
+        let msecElapsed = new Date().getTime() - msecStart;
+        log("MMM [" + MMM_STARTUP_INSTANCE + "] (+" + msecElapsed + "ms) enqueued autorun macro: " + macroDescription);
+
+        function startAutorunMacro()
+        {
+            let msecElapsed = new Date().getTime() - msecStart;
+            log("MMM [" + MMM_STARTUP_INSTANCE + "] (+" + msecElapsed + "ms) started autorun macro: " + macroDescription);
+        }
+
+        function completeAutorunMacro()
+        {
+            let msecElapsed = new Date().getTime() - msecStart;
+            log("MMM [" + MMM_STARTUP_INSTANCE + "] (+" + msecElapsed + "ms) completed autorun macro: " + macroDescription);
+        }
+
+        sendChat(sender, "/direct MMM starts executing autorun macro: " + macroDescription, startAutorunMacro);
+        MychScriptContext.$sendChatWithImpersonation(sender, macro.text, impersonation);
+        sendChat(sender, "/direct MMM completes executing autorun macro: " + macroDescription, completeAutorunMacro);
     }
 });
 
