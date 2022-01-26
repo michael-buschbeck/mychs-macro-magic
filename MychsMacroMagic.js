@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.26.1";
+const MMM_VERSION = "1.26.2";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1006,7 +1006,7 @@ class MychScriptContext extends MychProperties
 
     error(exception)
     {
-        log(exception.stack);
+        log("MMM [" + MMM_STARTUP_INSTANCE + "] " + (exception.stack || exception));
         this.whisperback(this.literal(exception));
     }
 
