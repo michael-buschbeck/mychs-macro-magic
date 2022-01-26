@@ -2029,6 +2029,11 @@ class MychScriptContext extends MychProperties
                 let playerOnline = playerObj.get("online");
                 
                 playerDescription = playerName + " (" + (playerOnline ? "online" : "offline") + ")";
+
+                if (MychScriptContext.$isPrivileged(playerId))
+                {
+                    playerDescription += " (privileged)";
+                }
             }
 
             statusTableRows.push([ this.literal(playerDescription || playerId) ]);
