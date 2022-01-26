@@ -1051,7 +1051,7 @@
 !mmm       chat: {{name=${shapeMoji}${script.cOwnID.name}: Abwehr mit ${script.cWeaponLabel} }}
 !mmm     end if 
 !mmm
-!mmm     if script.armorProtection > 0 and script.armorPiercing == true and attackDamage > 3
+!mmm     if script.armorProtection > 3 and script.armorPiercing == true and attackDamage > 3
 !mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (Rüstungsschutz wg. Geschosstyp auf 3 begrenzt)}}
 !mmm     else if attackDamage & "" eq "0"
 !mmm       chat: {{Angriff=**${attackResult}&nbsp;/&nbsp;Sonderschaden**}}

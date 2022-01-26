@@ -16,7 +16,6 @@
 !rem //   m3mgdAttrHealthGain           Attribute label for the number of health points gained (e.g. through First Aid or a healing spell)
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
-!rem // TODO: Add publish commands
 !mmm script
 !mmm   set scriptVersion = "initGameGlobals 1.0.0 (2022-01-24)"
 !mmm
@@ -81,5 +80,23 @@
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
 !mmm   publish to game: m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker
 !mmm   publish to game: m3mgdAttrXP, m3mgdAttrXPLog
-!mmm
+!mmm   
+%{MacroSheetLibrary|libMidgardFunctions}
+!mmm   
+!mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute, m3mgdValidateAttackData, m3mgdFlushExchange
+!mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
+!mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc, m3mgdEnduranceStatusHighlight
+!mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc, m3mgdHealthStatusHighlight
+!mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth
+!mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
+!mmm   publish to game: m3mgdShapeMoji
+!mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
+!mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
+!mmm   publish to game: m3mgdSendDefenseChatButtons, m3mgdDefenseDataTable
+!mmm   publish to game: m3mgdProcessAttackXP
+!mmm   
+%{MacroSheetLibrary|libBasics}
+!mmm   
+!mmm   publish to game: count
+!mmm   
 !mmm end script
