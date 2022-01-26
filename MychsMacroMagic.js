@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.26.2";
+const MMM_VERSION = "1.26.3";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -84,6 +84,15 @@ on("ready", function()
         MychScriptContext.$sendChatWithImpersonation(sender, macro.text, impersonation);
         sendChat(sender, "/direct MMM completes executing autorun macro: " + macroDescription, completeAutorunMacro);
     }
+
+    // update cached player-privileged state at regular intervals
+    setInterval(MychScriptContext.$refreshPlayerIsPrivileged, 60*1000);
+});
+
+on("change:player", function(playerObj)
+{
+    // refresh cached player-privileged state on login, logout, and other occasions
+    MychScriptContext.$refreshPlayerIsPrivileged(playerObj.id);
 });
 
 on("chat:message", function(msg)
@@ -1271,9 +1280,71 @@ class MychScriptContext extends MychProperties
         return this.$setAttribute(nameOrId, attributeName, attributeValue, true);
     }
 
-    static $isPrivileged(playerid)
+    static $storePlayerIsPrivileged(playerId, playerIsPrivileged)
     {
-        return playerIsGM(playerid);
+        (undefined != globalThis.state) ||
+            (globalThis.state = {});
+        (undefined != globalThis.state.MychScriptContext) ||
+            (globalThis.state.MychScriptContext = {});
+        (undefined != globalThis.state.MychScriptContext.$isPrivileged) ||
+            (globalThis.state.MychScriptContext.$isPrivileged = {});
+        
+        globalThis.state.MychScriptContext.$isPrivileged[playerId] = playerIsPrivileged;
+    }
+
+    static $fetchPlayerIsPrivileged(playerId)
+    {
+        let playerIsPrivileged =
+            undefined != globalThis.state &&
+            undefined != globalThis.state.MychScriptContext &&
+            undefined != globalThis.state.MychScriptContext.$isPrivileged &&
+            Boolean(globalThis.state.MychScriptContext.$isPrivileged[playerId]);
+    
+        return playerIsPrivileged;
+    }
+
+    static $refreshPlayerIsPrivileged(playerId = undefined)
+    {
+        if (playerId)
+        {
+            MychScriptContext.$isPrivileged(playerId);
+        }
+        else
+        {
+            for (let playerObj of findObjs({ type: "player" }))
+            {
+                MychScriptContext.$isPrivileged(playerObj.id);
+            }
+        }
+    }
+
+    static $isPrivileged(playerId)
+    {
+        let playerIsPrivileged = playerIsGM(playerId);
+        
+        if (playerIsPrivileged)
+        {
+            // positive response is always reliable (player must be online)
+            MychScriptContext.$storePlayerIsPrivileged(playerId, true);
+        }
+        else
+        {
+            let playerObj = getObj("player", playerId);
+            let playerIsOnline = playerObj && playerObj.get("online");
+
+            if (playerIsOnline)
+            {
+                // negative response is only reliable when player is online
+                MychScriptContext.$storePlayerIsPrivileged(playerId, false);
+            }
+            else
+            {
+                // override negative response with cached response if player is offline
+                playerIsPrivileged = MychScriptContext.$fetchPlayerIsPrivileged(playerId);
+            }
+        }
+
+        return playerIsPrivileged;
     }
 
     $canControl(obj)
@@ -1958,6 +2029,11 @@ class MychScriptContext extends MychProperties
                 let playerOnline = playerObj.get("online");
                 
                 playerDescription = playerName + " (" + (playerOnline ? "online" : "offline") + ")";
+
+                if (MychScriptContext.$isPrivileged(playerId))
+                {
+                    playerDescription += " (privileged)";
+                }
             }
 
             statusTableRows.push([ this.literal(playerDescription || playerId) ]);
