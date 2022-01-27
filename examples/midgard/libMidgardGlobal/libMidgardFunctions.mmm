@@ -846,7 +846,6 @@
 !mmm function m3mgdExchangeStoreHealthBoost(healthGain, targetID)
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
-!mmm   do m3mgdFlushExchange(dataExchangeID)
 !mmm
 !mmm   if healthGain <= 0
 !mmm     do whisperback("Storing health gain <=0 makes no sense.")
@@ -873,7 +872,6 @@
 !mmm function m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
-!mmm   do m3mgdFlushExchange(dataExchangeID)
 !mmm
 !mmm   if enduranceGain <= 0
 !mmm     do whisperback("Storing endurance gain <=0 makes no sense.")
