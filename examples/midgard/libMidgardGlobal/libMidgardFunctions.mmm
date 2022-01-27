@@ -983,7 +983,7 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set logLine = "PP:" & weaponLabel & "=Kritisch erfolgreicher Angriff auf " & targetID.name & " (AP=" & targetID.(script.cEnduranceAttr) & ")"
+!mmm   set logLine = "PP:" & weaponLabel & "(" & newPP & ")=Kritisch erfolgreicher Angriff auf " & targetID.name & " (AP=" & targetID.(script.cEnduranceAttr) & ")"
 !mmm   if isunknown(attackerID.(script.m3mgdAttrXPLog))
 !mmm     do setattr(attackerID, script.m3mgdAttrXPLog, "")
 !mmm   end if
