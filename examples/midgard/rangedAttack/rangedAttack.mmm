@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.13.2 (2022-01-24)"
+!mmm   set scriptVersion = "1.14.0 (2022-01-27)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -391,6 +391,15 @@
 !mmm     set modifierLog = modifierLog & " {{Zauberschaden=" & damageResult & " }} "
 !mmm   end if
 !mmm
+!rem   // Register practice point, if applicable
+!mmm   if iscritical(cAttackRoll) and foeEndurance > 0
+!mmm     if m3mgdProcessAttackPP(cOwnID, cWeaponLabel, foeID)
+!mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
+!mmm     end if
+!mmm   else if iscritical(cAttackRoll)
+!mmm     set modifierLog = modifierLog & " {{Kein Praxispunkt=Gegner war schon erschöpft (AP=0)}} "
+!mmm   end if
+!mmm
 !rem   // Pull together a sensible guess at a default way of addressing the weapon for output
 !mmm   if cWeaponName eq ""
 !mmm     set outputWeaponLabel = cWeaponLabel
@@ -467,17 +476,14 @@
 !mmm       chat:    {{${ammoLabel}=${ammoCount}}}
 !mmm     end if
 !mmm   end combine
+!mmm
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   if not cGMSilentMode
 !mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
-!mmm   if iscritical(cAttackRoll) and foeEndurance > 0
-!mmm     chat: /w "${cOwnID.name}"  ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
-!mmm     chat: /w GM                ***Nicht vergessen: PP einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
-!mmm   else if iscritical(cAttackRoll)
-!mmm     chat: /w "${cOwnID.name}" Leider kein PP, da der Gegner erschöpft ist (AP <= 0).
-!mmm   end if
+!mmm
 !mmm   if attackResult >= 20
 !mmm     do m3mgdSendDefenseChatButtons(foeID)
 !mmm   end if
+!mmm
 !mmm end script
