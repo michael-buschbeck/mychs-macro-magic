@@ -947,7 +947,8 @@
 !rem //   Whispers chat buttons to foeID's player to launch defense
 !rem //
 !mmm function m3mgdSendDefenseChatButtons(foeID)
-!mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
+!mmm   set sender = script.sender
+!mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{name=Abwehr mit Standardwaffe}} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
 !mmm end function
 !rem
 !rem // m3mgdProcessAttackXP(attackType, attackDamageRoll, [attackerID], [targetID])
@@ -1032,6 +1033,8 @@
 !mmm   set attackDamage = highlight(script.m3mgdExchange.(m3mgdAttrAttackDamage), "info", script.m3mgdExchange.(m3mgdAttrAttackType))
 !mmm   set effEnduranceLoss = highlight(script.effEnduranceLoss, "normal")
 !mmm   set effHealthLoss = highlight(script.effHealthLoss, "normal")
+!mmm
+!mmm   set sender = script.sender
 !rem
 !rem   // Build data table
 !rem
