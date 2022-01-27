@@ -1,8 +1,8 @@
 # MMM-Angriffsskript (Fernkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.10.1 vom 2021-12-14,** erfordert MMM 1.21.0+.
+Aktuelle Version: **1.14.0 vom 2022-01-27,** erfordert MMM 1.26.0+.
 
-Das MMM-basierte Midgard-Fernkampfskript wickelt Fernkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben, im Detail an Spieler und GM geflüstert sowie in einer Datenstruktur für das Abwehrskript gespeichert.
+Das MMM-basierte Midgard-Fernkampfskript wickelt Fernkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben, im Detail an Spieler und GM geflüstert sowie in einer Datenstruktur für das Abwehrskript gespeichert. Gewonnene Praxispunkte werden ggf. automatisch im Charakterbogen gespeichert.
 
 ### Inhalt
 
@@ -57,14 +57,13 @@ Weitere `translate`-Zeilen gibt es für "In-Game-Fehler", also technisch korrekt
 
 Spezialfall für magische Munition: die Zeilen `AttackOpeningMagicDamage` und `AttackSuccessClosingMagic` werden beim Einsatz magischer Munition **statt** der normalen Start- und Schlusszeilen ausgegeben. Hier könnt ihr was Tolles erzählen oder mit einem GIF die besonderen Effekte der magischen Munition rüberbringen. 
 
-Die letzte Zeile `#RangeAttack` ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein (entweder beim Charakter oder beim GM).
+Die letzte Zeile (z.B. `%{MacroSheet|rangedAttack}`) ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein (entweder beim Charakter oder beim GM).
 
 ### Datenabfragen
 
 Das Skript fragt bei jedem Start neben dem Ziel des Angriffs (auf gegnerisches Token klicken) eine Reihe von Daten zum Angriff ab, ob relevant oder nicht:
 - *Standard-Abwehrmodifikatoren* werden in einem Baum abgefragt, der z.B. die Kombination von *spontan* (-4) oder *sorgfältig gezielt* (+4) mit *wehrloses Ziel* (+4) oder unterschiedlichen Größen des Ziels (-4..+4) ermöglicht.
 - *Weitere spezielle Abwehrmodifikatoren:* Zahlenwert, nach Bedarf -- hier kann alles ergänzt werden, was der automatische Baum nicht bietet oder was der GM ändern möchte.
-- **Nicht abgefragt** wird die Position und Entfernung des Angreifers zum Gegner. Ob ein *Angriff von hinten* erfolgt und ob die Reichweite der Waffe ausreicht, berechnet das Skript automatisch.
 
 
 ## Todo-Liste
@@ -91,6 +90,25 @@ Minimalbeispiel für ein Wurfmesser, ohne die Erzählerei zu verändern (Vorauss
 ```
 
 ## Changelog
+
+1.14.0 2022-01-27
+
+- Praxispunkte werden nun automatisch gespeichert und geloggt
+
+1.13.0 2022-01-13
+
+- Buttons zum Aufruf des Abwehrskripts mit Defaulteinstellungen
+- Interne Umbauten
+
+1.12.0 2022-01-01
+
+- Logik für magische Runenklinge Wasserläufer integriert
+- Automatischer Angriffswurf intern (für den Spielleitermodus)
+
+1.11.0 2021-12-18
+
+- Stiller Modus für Spielleiter (keine sichtbaren Ausgaben von Würfen an die Spieler)
+- Bugfix: keine negativen Schadenswürfe
 
 1.10.0 2021-12-13 (MMM 1.20.0+)
 
