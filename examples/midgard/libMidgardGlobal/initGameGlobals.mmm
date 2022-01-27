@@ -99,4 +99,7 @@
 !mmm   
 !mmm   publish to game: count
 !mmm   
+!mmm   set sender = "MacroSheetLibrary"
+!mmm   chat: /me (${scriptVersion}) loaded.
+!mmm   
 !mmm end script
