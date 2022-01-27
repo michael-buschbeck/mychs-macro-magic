@@ -92,11 +92,14 @@
 !mmm   publish to game: m3mgdShapeMoji
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
-!mmm   publish to game: m3mgdSendDefenseChatButtons, m3mgdDefenseDataTable
+!mmm   publish to game: m3mgdSendDefenseChatButtons, m3mgdDefenseDataTable, m3mgdInjuryFX
 !mmm   publish to game: m3mgdProcessAttackXP
 !mmm   
 %{MacroSheetLibrary|libBasics}
 !mmm   
 !mmm   publish to game: count
+!mmm   
+!mmm   set sender = "MacroSheetLibrary"
+!mmm   chat: /me (${scriptVersion}) loaded.
 !mmm   
 !mmm end script

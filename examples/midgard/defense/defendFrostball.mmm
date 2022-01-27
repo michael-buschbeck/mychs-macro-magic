@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.3.3 (2022-01-24)"
+!mmm   set scriptVersion = "defendFrostball 1.3.4 (2022-01-26)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -123,5 +123,10 @@
 !rem
 !rem   // Output data table using data table execution code from library
 !mmm   do m3mgdDefenseDataTable()
-!mmm
+!mmm   
+!rem   // Special effects
+!mmm   if effHealthLoss > 0 or effEnduranceLoss > 0
+!mmm     do m3mgdInjuryFX(cOwnID, effHealthLoss / maxHealth, effEnduranceLoss / cOwnID.(cEnduranceAttr).max)
+!mmm   end if
+!mmm   
 !mmm end script

@@ -1,7 +1,7 @@
 !rem // waterWalkerBlastEffect
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.1.1 (2022-01-24)"
+!mmm   set scriptVersion = "1.1.2 (2022-01-27)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -54,7 +54,7 @@
 !mmm       set blastBearing = m3mgdGetTokenDirection(cWeaponWielder, foe)
 !mmm       do setattr(foe, "left", foe.left - (sin(blastBearing) * blastDistance / distscale()))
 !mmm       do setattr(foe, "top", foe.top + (cos(blastBearing) * blastDistance / distscale()))
-!mmm       chat: Der harte Wasserstrahl spült ${foe.name} ${blastDistance} Meter nach hinten und auf den Hosenboden: PW:St(${foe.St}) = ${stRoll} / Strahlstärke: ${blastDistance}
+!mmm       chat: Der harte Wasserstrahl spült ${foe.name} ${blastDistance} Meter nach hinten und auf den Hosenboden: PW:St(${foe.St}) = ${stRoll} / Strahlstärke: ${blastDistance} [x](https://media.giphy.com/media/MZSBHPaa0Y7FMelPtN/giphy.gif)
 !mmm     end if
 !mmm   end if
 !mmm   

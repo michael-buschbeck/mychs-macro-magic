@@ -846,7 +846,6 @@
 !mmm function m3mgdExchangeStoreHealthBoost(healthGain, targetID)
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
-!mmm   do m3mgdFlushExchange(dataExchangeID)
 !mmm
 !mmm   if healthGain <= 0
 !mmm     do whisperback("Storing health gain <=0 makes no sense.")
@@ -873,7 +872,6 @@
 !mmm function m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
-!mmm   do m3mgdFlushExchange(dataExchangeID)
 !mmm
 !mmm   if enduranceGain <= 0
 !mmm     do whisperback("Storing endurance gain <=0 makes no sense.")
@@ -947,7 +945,8 @@
 !rem //   Whispers chat buttons to foeID's player to launch defense
 !rem //
 !mmm function m3mgdSendDefenseChatButtons(foeID)
-!mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
+!mmm   set sender = script.sender
+!mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{name=Abwehr mit Standardwaffe}} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
 !mmm end function
 !rem
 !rem // m3mgdProcessAttackXP(attackType, attackDamageRoll, [attackerID], [targetID])
@@ -1032,6 +1031,8 @@
 !mmm   set attackDamage = highlight(script.m3mgdExchange.(m3mgdAttrAttackDamage), "info", script.m3mgdExchange.(m3mgdAttrAttackType))
 !mmm   set effEnduranceLoss = highlight(script.effEnduranceLoss, "normal")
 !mmm   set effHealthLoss = highlight(script.effHealthLoss, "normal")
+!mmm
+!mmm   set sender = script.sender
 !rem
 !rem   // Build data table
 !rem
@@ -1077,14 +1078,6 @@
 !mmm       chat: {{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}}
 !mmm     end if
 !mmm
-!mmm     if effHealthLoss >= .2 * script.maxHealth
-!mmm       do spawnfx("nova-blood", script.cOwnID.left, script.cOwnID.top)
-!mmm     else if effHealthLoss > 0
-!mmm       do spawnfx("bubbling-blood", script.cOwnID.left, script.cOwnID.top)
-!mmm     else if effEnduranceLoss > 0
-!mmm       do spawnfx("bubbling-water", script.cOwnID.left, script.cOwnID.top)
-!mmm     end if
-!mmm
 !mmm     if script.criticalAttack == true and script.m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
 !mmm       chat: {{Kritischer Zaubererfolg=Zauber wirkt **doppelt so stark** oder ist **halb so teuer**: Nach Wahl des Zauberers umsetzen.}}
 !mmm     else if script.criticalAttack == true
@@ -1107,4 +1100,23 @@
 !mmm
 !mmm   return true
 !mmm   
+!mmm end function
+!rem
+!rem // m3mgdInjuryFX(tokenID, relativeHealthLoss, relativeEnduranceLoss)
+!rem //
+!mmm function m3mgdInjuryFX(tokenID, relativeHealthLoss, relativeEnduranceLoss)
+!mmm
+!mmm   if relativeHealthLoss >= .2
+!mmm     set fx = "nova-blood"
+!mmm   else if relativeHealthLoss > 0
+!mmm     set fx = "bubbling-blood"
+!mmm   else if relativeEnduranceLoss > 0
+!mmm     set fx = "bubbling-water"
+!mmm   end if
+!mmm   if fx ne ""
+!mmm     do delay(3)
+!mmm     do spawnfx(fx, tokenID.left, tokenID.top)
+!mmm     do delay(1)
+!mmm     do spawnfx(fx, tokenID.left, tokenID.top)
+!mmm   end if
 !mmm end function
