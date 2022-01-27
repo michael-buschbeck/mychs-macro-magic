@@ -1,8 +1,8 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.7.1 vom 2021-12-20,** erfordert MMM 1.23.0+.
+Aktuelle Version: **1.13.0 vom 2022-01-27,** erfordert MMM 1.26.0+.
 
-Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch, deren Daten automatisch von den Angriffsskripten übernommen werden oder, falls nicht auffindbar, manuell eingegeben werden müssen. Die üblichen Regeln werden automatisch angewendet. Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden.
+Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch, deren Daten automatisch von den Angriffsskripten übernommen werden oder, falls nicht auffindbar, manuell eingegeben werden müssen. Die üblichen Regeln werden automatisch angewendet. Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden. Gewonnene Praxispunkte für Schilde oder Parierwaffen werden ggf. automatisch im Charakterbogen gespeichert.
 
 ### Inhalt
 
@@ -20,7 +20,7 @@ Das Skript liest entweder die Daten eines aktuellen Angriffs auf den Bezugstoken
 
 #### Unterschiedliche Abwehrwaffen
 
-Wer nicht nur "Abwehr ohne Schild" kann, muss das Konfigskript benutzen und zumindest die Zeile `!mmm set cWeaponLabel = "Kleiner Schild"` mit dem Namen der benutzten Abwehrwaffe aus dem Abwehrblock des Kampfblatts setzen. Hierdurch erhält das Skript Zugriff auf die nötigen Fähigkeitswerte und Schadensmodifikatoren. Wer unterschiedliche Abwehrwaffen/Schilde nutzt, muss mehrere Konfigskripte anlegen und jeweils das gewünschte aufrufen (z.B. per Chatmenü, wie rechts im Screenshot oben abgebildet).
+Wer nicht nur "Abwehr ohne Schild" kann und mehr als eine Abwehrfertigkeit nutzt, muss das Konfigskript benutzen und zumindest die Zeile `!mmm set cWeaponLabel = "Kleiner Schild"` mit dem Namen der benutzten Abwehrwaffe aus dem Abwehrblock des Kampfblatts setzen. Hierdurch erhält das Skript Zugriff auf die nötigen Fähigkeitswerte und Schadensmodifikatoren. Wer unterschiedliche Abwehrwaffen/Schilde nutzt, muss mehrere Konfigskripte anlegen und jeweils das gewünschte aufrufen (z.B. per Chatmenü, wie rechts im Screenshot oben abgebildet). Findet das Skript nur eine Abwehrfertigkeit, wird diese genutzt. Gibt es mehrere, von denen eine "Abwehr ohne Schild" heißt, wird diese genutzt. Vorgaben per Konfigskript haben aber natürlich Priorität.
 
 Unterschiedliche Rüstungen werden demgegenüber so behandelt, wie im Charakterblatt: es zählt die Rüstung, die gerade als "getragen" markiert ist.
 
@@ -32,19 +32,14 @@ Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der 
 
 `cVerbose = [true|false]` schaltet die Geschichtenerzählerausgabe an/ab. Nur wer `cVerbose = true` setzt, braucht sich über die `!mmm translate [...]: ...`-Zeilen Gedanken zu machen.
 
-Die letzte Zeile `#defend` ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein (entweder beim Charakter oder beim GM).
+Die letzte Zeile ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein (entweder beim Charakter oder beim GM).
 
 ![Screenshot](mmm-defense-1.1-mit-chatmenue.png)
 ![Screenshot](mmm-defense-1.1-plattenruestung-neu.png)
 
 ### Datenabfragen
 
-Das Skript fragt bei jedem Start eine Reihe von Daten zum Angriff ab, ob relevant oder nicht:
-- *Angriffswert:* `EW:Angriff`, gegen den die Abwehr gelingen soll.
-- *Kritischer Erfolg beim Angriff:* Ja/Nein.
-- *Schaden laut Angreifer:* Ergebnis des Schadenswurfs, der abgewehrt oder durch Rüstungsschutz reduziert werden soll.
-- *Angriff mit Komposit-/Langbogen oder schwerer Armbrust:* Ja/Nein. (Für Träger von Plattenrüstungen, die gegen solche Geschosse nur bis max. 3 Punkte schützen.)
-- *Angriff mit Schild oder Parierwaffe parierbar:* Ja/Nein. (Wenn nein, wird Schild oder Parierwaffe ignoriert, z.B. bei Fernkampfangriffen. Waffenspezifische Regeln siehe *Kodex: 70*).
+Das Skript bekommt die Eckdaten das Angriffs intern übergeben und fragt nur noch Abwehrmodifikatoren ab:
 - *Standard-Abwehrmodifikatoren:*
   -  keine: *Normale Abwehr +/-0*
   - *Konzentrierte Abwehr +4*
@@ -54,9 +49,7 @@ Das Skript fragt bei jedem Start eine Reihe von Daten zum Angriff ab, ob relevan
 
 ## Todo-Liste
 
-- Sobald MMM Zugriff und Verarbeitung von Tabellen erlaubt, könnte das Skript alle verfügbaren Abwehrwaffen und Schilde zur Auswahl anbieten und, falls nur eine vorhanden ist, als Default komplett auf die Definition in einem Konfigurationsskript verzichten.
-- Die weiteren Konsequenzen schwerer Verwundungen könnten automatisch umgesetzt werden (reduzierte AP und Bewegungsweite wegen niedriger LP).
-- Ein Heilungsskript wäre gut, das die ganzen Zustandsmarker (rot, gelb, grün, Totenkopf) wieder automatisch entfernt und zeitweilige Einschränkungen von AP oder Bewegung rückgängig macht.
+- Sobald MMM Zugriff und Verarbeitung von Tabellen erlaubt, könnte das Skript alle verfügbaren Abwehrwaffen und Schilde zur Auswahl anbieten.
 - Es gibt noch zwei Sonderfälle für [Abwehrmodifikatoren](https://midgard.alienn.net/doku.php?id=abwehr_nahkampf_boni_und_malusse), die -- samt der dann notwendigen Verschachtelung unterschiedlicher Kombinationen -- noch nicht eingebaut sind (schwere Beinverletzung und vollständige Dunkelheit).
 
 ## Beispiel-Konfiguration
@@ -73,6 +66,12 @@ Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzu
 ```
 
 ## Changelog
+
+1.13.0 2022-01-27
+
+- Praxispunkte werden nun automatisch gespeichert und geloggt
+
+(...)
 
 1.7.1 2021-12-20
 
