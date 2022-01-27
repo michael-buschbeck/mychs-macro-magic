@@ -1,8 +1,8 @@
 # MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.10.1 vom 2021-12-14,** erfordert MMM 1.21.0+.
+Aktuelle Version: **1.14.0 vom 2022-01-27,** erfordert MMM 1.26.0+.
 
-Das MMM-basierte Midgard-Nahkampfskript wickelt Nahkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben sowie im Detail an Spieler und GM geflüstert sowie in einer gemeinsamen Datenstruktur für das Abwehrskript gespeichert.
+Das MMM-basierte Midgard-Nahkampfskript wickelt Nahkampfangriffe ab und muss pro Waffe konfiguriert werden. Dabei werden viele häufig benötigte Umstände wie die eigene Erschöpfung und die des Gegners (-4 bzw. +4 bei AP:0) automatisch und weitere Modifikatoren nach Benutzereingabe berücksichtigt. Alle angewandten Boni und Mali werden summarisch mit den Ergebnissen des Angriffs (Erfolg/Misserfolg, ggf. Schadenswurf) im Chat ausgegeben sowie im Detail an Spieler und GM geflüstert sowie in einer gemeinsamen Datenstruktur für das Abwehrskript gespeichert. Gewonnene Praxispunkte werden ggf. automatisch im Charakterbogen gespeichert.
 
 ### Inhalt
 
@@ -89,6 +89,24 @@ Minimalbeispiel für ein Kurzschwert, ohne die Erzählerei zu verändern (Voraus
 ```
 
 ## Changelog
+
+1.14.0 2022-01-27
+
+- Praxispunkte werden nun automatisch gespeichert und geloggt
+
+1.13.0 2022-01-13
+
+- Buttons zum Aufruf des Abwehrskripts mit Defaulteinstellungen
+- Interne Umbauten
+
+1.12.0 2021-12-31
+
+- Waffen-Default-Auswahl, wenn Charakter nur eine Nahkampfwaffe hat
+
+1.11.0 2021-12-18
+
+- Stiller Modus für Spielleiter (keine sichtbaren Ausgaben von Würfen an die Spieler)
+- Bugfix: keine negativen Schadenswürfe
 
 1.10.0 2021-12-13
 
