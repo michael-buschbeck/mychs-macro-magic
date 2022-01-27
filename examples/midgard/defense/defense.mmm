@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.12.1 (2022-01-24)"
+!mmm   set scriptVersion = "defense 1.12.2 (2022-01-26)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -332,4 +332,10 @@
 !mmm     chat: /w "${cOwnID.name}" ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm     chat: /w GM               ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   end if
+!mmm   
+!rem   // Special effects
+!mmm   if effHealthLoss > 0 or effEnduranceLoss > 0
+!mmm     do m3mgdInjuryFX(cOwnID, effHealthLoss / maxHealth, effEnduranceLoss / cOwnID.(cEnduranceAttr).max)
+!mmm   end if
+!mmm   
 !mmm end script
