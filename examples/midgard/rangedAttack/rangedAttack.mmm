@@ -393,7 +393,7 @@
 !mmm
 !rem   // Register practice point, if applicable
 !mmm   if iscritical(cAttackRoll) and foeEndurance > 0
-!mmm     if m3mgdProcessAttackPP(cOwnID, cWeaponLabel, foeID)
+!mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel, foeID)
 !mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
 !mmm     end if
 !mmm   else if iscritical(cAttackRoll)

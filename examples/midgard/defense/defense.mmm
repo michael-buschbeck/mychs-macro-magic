@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.12.2 (2022-01-26)"
+!mmm   set scriptVersion = "defense 1.13.0 (2022-01-27)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -277,6 +277,13 @@
 !mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (kein AP-Verlust) }} "
 !mmm   end if
 !mmm
+!rem   // Register practice point, if applicable
+!mmm   if parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)
+!mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel)
+!mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
+!mmm     end if
+!mmm   end if
+!mmm
 !rem   // Add button for player to call special damage effects script
 !mmm   if not defenseSuccess and attackWeaponSpecialEffectScript
 !mmm     set modifierLog = modifierLog & " {{ " & attackWeaponType & "=[**Sondereffekt**](~" & attackWeaponSpecialEffectScript & ") }}"
@@ -327,10 +334,6 @@
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   if not cGMSilentMode
 !mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
-!mmm   end if
-!mmm   if parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)
-!mmm     chat: /w "${cOwnID.name}" ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
-!mmm     chat: /w GM               ***Nicht vergessen: PP für ${cWeaponLabel} einstecken!*** [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)
 !mmm   end if
 !mmm   
 !rem   // Special effects

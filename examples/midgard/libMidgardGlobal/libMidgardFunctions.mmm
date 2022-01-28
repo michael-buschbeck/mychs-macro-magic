@@ -949,45 +949,58 @@
 !mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{name=Abwehr mit Standardwaffe}} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
 !mmm end function
 !rem
-!rem // m3mgdProcessAttackPP(attackerID, weaponLabel, targetID)
+!rem // m3mgdProcessCombatPP(ownID, weaponLabel, [targetID])
 !rem //
-!rem //   Processes gain of a practice point for attackerID's critically successful attack roll using weaponLabel to hit targetID.
+!rem //   Processes gain of a practice point for ownID's critically successful attack or defense roll using weaponLabel (in case of an attack, to hit targetID).
 !rem //
-!mmm function m3mgdProcessAttackPP(attackerID, weaponLabel, targetID)
+!mmm function m3mgdProcessCombatPP(ownID, weaponLabel, targetID)
 !mmm
-!mmm   if attackerID.permission ne "control"
-!mmm     do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: no control over token '" & attackerID.name & "'")
+!mmm   if ownID.permission ne "control"
+!mmm     do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: no control over token '" & ownID.name & "'")
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   if isdefault(weaponLabel) or not attackerID.(findattr(attackerID, "Angriff", "Waffe", weaponLabel, "WaffeEW"))
-!mmm     do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: weapon '" & weaponLabel & "' not found for token '" & attackerID.name & "'")
+!mmm   if isdefault(weaponLabel) or not ((isdefault(targetID) and ownID.(findattr(ownID, "Abwehr", "AbwWaffe", weaponLabel, "FWAbwWaffe"))) or (not isdefault(targetID) and ownID.(findattr(ownID, "Angriff", "Waffe", weaponLabel, "WaffeEW"))))
+!mmm     do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: weapon '" & weaponLabel & "' not found for token '" & ownID.name & "'")
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   if targetID.permission ne "view" and targetID.permission ne "control"
-!mmm     do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: invalid target token or no view access to token '" & targetID.name & "'")
-!mmm     return false
-!mmm   end if
+!mmm   if isdefault(targetID)
+!mmm
+!rem     // Defense critical success
+!mmm
+!mmm     set weaponPPattr = findattr(ownID, "Abwehr", "AbwWaffe", weaponLabel, "AbWWaffePP")
+!mmm
+!mmm   else
+!mmm
+!rem     // Attack critical success
+!mmm
+!mmm     if targetID.permission ne "view" and targetID.permission ne "control"
+!mmm       do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: invalid target token or no view access to token '" & targetID.name & "'")
+!mmm       return false
+!mmm     end if
 !mmm   
-!mmm   if targetID.(script.cEnduranceAttr) <= 0
-!mmm     do whisperback("m3mgdProcessAttackPP(): No practice point registered for critically successful attack on an exhausted target ('" & targetID.name & "')")
-!mmm     return false
-!mmm   end if
+!mmm     if targetID.(script.cEnduranceAttr) <= 0
+!mmm       do whisperback("m3mgdProcessAttackPP(): No practice point registered for critically successful attack on an exhausted target ('" & targetID.name & "')")
+!mmm       return false
+!mmm     end if
 !mmm   
-!mmm   set weaponPPattr = findattr(attackerID, "Angriff", "Waffe", weaponLabel, "WaffePP")
-!mmm   set oldPP = attackerID.(weaponPPattr)
+!mmm     set weaponPPattr = findattr(ownID, "Angriff", "Waffe", weaponLabel, "WaffePP")
+!mmm
+!mmm   end if
+!mmm
+!mmm   set oldPP = ownID.(weaponPPattr)
 !mmm   set newPP = oldPP + 1
-!mmm   if setattr(attackerID, weaponPPattr, newPP) != newPP
-!mmm     do whisperback("m3mgdProcessAttackPP(): Failure storing new practice points total " & newPP & " in attribute '" & attackerID.name & "'." & weaponPPattr)
+!mmm   if setattr(ownID, weaponPPattr, newPP) != newPP
+!mmm     do whisperback("m3mgdProcessAttackPP(): Failure storing new practice points total " & newPP & " in attribute '" & ownID.name & "'." & weaponPPattr)
 !mmm     return false
 !mmm   end if
 !mmm
 !mmm   set logLine = "PP:" & weaponLabel & "(" & newPP & ")=Kritisch erfolgreicher Angriff auf " & targetID.name & " (AP=" & targetID.(script.cEnduranceAttr) & ")"
-!mmm   if isunknown(attackerID.(script.m3mgdAttrXPLog))
-!mmm     do setattr(attackerID, script.m3mgdAttrXPLog, "")
+!mmm   if isunknown(ownID.(script.m3mgdAttrXPLog))
+!mmm     do setattr(ownID, script.m3mgdAttrXPLog, "")
 !mmm   end if
-!mmm   do setattr(attackerID, script.m3mgdAttrXPLog, attackerID.(script.m3mgdAttrXPLog) & " {{" & logLine & "}} ")
+!mmm   do setattr(ownID, script.m3mgdAttrXPLog, ownID.(script.m3mgdAttrXPLog) & " {{" & logLine & "}} ")
 !mmm
 !mmm   return true
 !mmm
