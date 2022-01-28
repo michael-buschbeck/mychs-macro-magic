@@ -2055,6 +2055,43 @@ class MychScriptContext extends MychProperties
             unknown:  v => this.isunknown(v),
         };
 
+        let context = this;
+
+        function getVariableValueMarkup(variableValue)
+        {
+            if (variableValue && variableValue.toMarkup)
+            {
+                return variableValue.toMarkup();
+            }
+            
+            return context.literal(MychExpression.literal(variableValue));
+        }
+
+        statusTableRows.push([ "Game" ]);
+
+        let publicsDescription = "";
+
+        for (let [publicVariableName, publicVariableValue] of Object.entries(MychScriptContext.globals))
+        {
+            if (!MychScriptContext.globals.$isValidPropertyKey(publicVariableName))
+            {
+                continue;
+            }
+
+            if (publicVariableValue instanceof Function &&
+                publicVariableName == (publicVariableValue.functionName || publicVariableValue.name))
+            {
+                publicsDescription += "<strong>function</strong> " + this.literal(MychExpression.literal(publicVariableValue)) + "<br/>";
+            }
+            else
+            {
+                let publicVariableMarkup = getVariableValueMarkup(publicVariableValue);
+                publicsDescription += "<strong>set</strong> " + this.literal(publicVariableName) + " = " + publicVariableMarkup + "<br/>";
+            }
+        }
+
+        statusTableRows.push([ "Publics", (publicsDescription || "none" )]);
+
         for (let [playerId, player] of Object.entries(MychScriptContext.players))
         {
             let playerObj = getObj("player", playerId);
@@ -2080,7 +2117,7 @@ class MychScriptContext extends MychProperties
 
             for (let [contextVariableName, contextVariableValue] of Object.entries(player.context))
             {
-                if (contextVariableName.startsWith("$"))
+                if (!player.context.$isValidPropertyKey(contextVariableName))
                 {
                     continue;
                 }
@@ -2091,11 +2128,34 @@ class MychScriptContext extends MychProperties
                     continue;
                 }
 
-                let contextVariableMarkup = (contextVariableValue && contextVariableValue.toMarkup ? contextVariableValue.toMarkup() : this.literal(JSON.stringify(contextVariableValue)));
-                contextDescription += this.literal(contextVariableName) + " = " + contextVariableMarkup + "<br/>";
+                let contextVariableMarkup = getVariableValueMarkup(contextVariableValue);
+                contextDescription += "<strong>set</strong> " + this.literal(contextVariableName) + " = " + contextVariableMarkup + "<br/>";
             }
 
             statusTableRows.push([ "Context", (contextDescription || "empty" )]);
+
+            let globalsDescription = "";
+
+            for (let [globalVariableName, globalVariableValue] of Object.entries(player.globals))
+            {
+                if (!player.globals.$isValidPropertyKey(globalVariableName))
+                {
+                    continue;
+                }
+
+                if (globalVariableValue instanceof Function &&
+                    globalVariableName == (globalVariableValue.functionName || globalVariableValue.name))
+                {
+                    globalsDescription += "<strong>function</strong> " + this.literal(MychExpression.literal(globalVariableValue)) + "<br/>";
+                }
+                else
+                {
+                    let globalVariableMarkup = getVariableValueMarkup(globalVariableValue);
+                    globalsDescription += "<strong>set</strong> " + this.literal(globalVariableName) + " = " + globalVariableMarkup + "<br/>";
+                }
+            }
+
+            statusTableRows.push([ "Globals", (globalsDescription || "none" )]);
 
             let scriptDescriptions = [];
 
