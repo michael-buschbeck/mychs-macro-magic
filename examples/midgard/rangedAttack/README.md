@@ -64,7 +64,7 @@ Weitere `translate`-Zeilen gibt es für "In-Game-Fehler", also technisch korrekt
 
 Spezialfall für magische Munition: die Zeilen `AttackOpeningMagicDamage` und `AttackSuccessClosingMagic` werden beim Einsatz magischer Munition **statt** der normalen Start- und Schlusszeilen ausgegeben. Hier könnt ihr was Tolles erzählen oder mit einem GIF die besonderen Effekte der magischen Munition rüberbringen. 
 
-Die letzte Zeile (z.B. `%{MacroSheet|rangedAttack}`) ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein (entweder beim Charakter oder beim GM).
+Die letzte Zeile (z.B. `%{MacroSheet|rangedAttack}`) ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein.
 
 
 ## Datenabfragen
@@ -86,6 +86,7 @@ Das Skript fragt bei jedem Start neben dem Ziel des Angriffs (auf gegnerisches T
 1.15.0 2022-01-29
 
 - Waffenauswahl und die Eigenschaften von Standardwaffen integriert
+- Abwehrbuttons neu mit automatischer Auswahl verwendbarer Waffen & Erkennung ob NPC oder Spieler-Charakter
 
 1.14.0 2022-01-27
 

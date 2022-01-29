@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.13.0 (2022-01-27)"
+!mmm   set scriptVersion = "defense 1.14.0 (2022-01-29)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -110,11 +110,8 @@
 !mmm       exit script
 !mmm     else if count(defenseWeaponList) == 1
 !mmm       set cWeaponLabel = cOwnID.(defenseWeaponList)
-!mmm     else if count(defenseWeaponList) > 1 and (defenseWeaponList where cOwnID.(...) eq "Abwehr ohne Schild")
-!mmm       set modifierLog = modifierLog & " {{Default=Abwehr ohne Schild}}"
-!mmm       set cWeaponLabel = "Abwehr ohne Schild"
 !mmm     else 
-!mmm       do whisperback("Fehler: " & cOwnID.name & " hat mehrere Abwehrfertigkeiten, aber nicht 'Abwehr ohne Schild'.")
+!mmm       do m3mgdWeaponSelectorChatMenu(cOwnID, "defense")
 !mmm       exit script
 !mmm     end if
 !mmm   end if
