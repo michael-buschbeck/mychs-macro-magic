@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.0.5 (2022-01-29)"
+!mmm   set scriptVersion = "initGameGlobals 1.1.0 (2022-01-29)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -32,7 +32,19 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm
+!mmm   set m3mgdPlayerCharacters = "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
+!mmm   for charName in m3mgdPlayerCharacters
+!mmm     if not isdenied(charName.character_id) and (isunknown(charName.PC) or charName.PC ne "1")
+!mmm       if setattr(charName.character_id, "PC", 1) == 1
+!mmm         do chat("MacroSheetLibrary", "Registered player status for " & charName)
+!mmm       else
+!mmm         do chat("MacroSheetLibrary", "ERROR: No access or write error to character sheet '" & charName & "' which misses a player flag. Aborting.")
+!mmm         exit script
+!mmm       end if 
+!mmm     end if
+!mmm   end for
+!mmm   publish to game: m3mgdPlayerCharacters
+!mmm   
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm 
