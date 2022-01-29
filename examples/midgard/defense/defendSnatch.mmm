@@ -5,7 +5,7 @@
 !mmm   set cTargetID = "@{target|Angriffsziel|token_id}"
 !mmm end customize
 !mmm script
-!mmm   set scriptVersion = "defendSnatch 1.2.1 (2022-01-24)"
+!mmm   set scriptVersion = "defendSnatch 1.2.2 (2022-01-29)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -58,7 +58,7 @@
 !mmm     
 !mmm   end if
 !mmm   
-!mmm   set sender = cTargetID.name
+!mmm   set sender = cTargetID.token_name
 !mmm   
 !rem   // Verbose output
 !mmm   if cVerbose

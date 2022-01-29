@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.3.4 (2022-01-26)"
+!mmm   set scriptVersion = "defendFrostball 1.3.5 (2022-01-29)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -95,7 +95,9 @@
 !mmm   end if
 !mmm   set effHealthLoss = highlight(effHealthLoss, "info")
 !mmm
-!mmm   set sender = cOwnID
+!mmm   if cOwnID.token_name ne sender
+!mmm     set sender = cOwnID.token_name
+!mmm   end if
 !mmm   
 !rem   // Verbose output
 !mmm   if cVerbose

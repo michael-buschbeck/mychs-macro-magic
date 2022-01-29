@@ -58,8 +58,8 @@
 !mmm   end if
 !rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
-!mmm   if cOwnID ne sender
-!mmm     set sender = cOwnID
+!mmm   if cOwnID.token_name ne sender
+!mmm     set sender = cOwnID.token_name
 !mmm   end if
 !rem
 !rem   // Constants

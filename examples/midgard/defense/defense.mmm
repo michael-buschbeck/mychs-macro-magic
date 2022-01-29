@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.14.0 (2022-01-29)"
+!mmm   set scriptVersion = "defense 1.15.0-pre (2022-01-29)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -61,8 +61,8 @@
 !mmm   end if
 !rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
-!mmm   if cOwnID ne sender
-!mmm     set sender = cOwnID
+!mmm   if cOwnID.token_name ne sender
+!mmm     set sender = cOwnID.token_name
 !mmm   end if
 !rem
 !rem   // Validate attack data and request manual entry if anything is amiss

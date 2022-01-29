@@ -1396,7 +1396,7 @@
 !mmm   set effEnduranceLoss = highlight(script.effEnduranceLoss, "normal")
 !mmm   set effHealthLoss = highlight(script.effHealthLoss, "normal")
 !mmm
-!mmm   set sender = script.sender
+!mmm   set sender = script.cOwnID.token_name
 !rem
 !rem   // Build data table
 !rem
