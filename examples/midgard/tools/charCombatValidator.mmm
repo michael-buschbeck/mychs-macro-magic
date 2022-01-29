@@ -1,7 +1,7 @@
 !mmm script
 !mmm   
 !rem
-!mmm function m3mgdBuildWeaponSelector(characterID, weaponsGroup)  
+!mmm function m3mgdCreateDropDownWeaponSelectorAttr(characterID, weaponsGroup)  
 !mmm   
 !mmm   if isdefault(characterID)
 !mmm     set characterID = sender.character_id
@@ -81,15 +81,28 @@
 !mmm     for weaponLabelAttr in findattr(charID, "Angriff", "Waffe")
 !mmm       
 !mmm       set weaponLabel = charID.(weaponLabelAttr)
+!mmm       set weaponProperties = unknown
+!mmm       set rangedWeaponAmmoLog = ""
 !mmm       
 !mmm       if charID.(findattr(charID, "Angriff", "Waffe", weaponLabel, "FkWaffe")) == 1
 !mmm         set weaponProperties = m3mgdRangedWeaponProperties(weaponLabel)
+!mmm         if not isunknown(weaponProperties) and count(weaponProperties) == 5
+!mmm           set rangedWeaponAmmoAttr = weaponProperties[4]
+!mmm           if isunknown(charID.(rangedWeaponAmmoAttr))
+!mmm             do setattr(charID, rangedWeaponAmmoAttr, 0)
+!mmm             set rangedWeaponAmmoLog = "Munition: **Standard-Attribut '" & rangedWeaponAmmoAttr & "' mit Wert '0' angelegt.**"
+!mmm           else
+!mmm             set rangedWeaponAmmoLog = "Munition: Standard-Attribut '" & rangedWeaponAmmoAttr & "' gefunden (Wert: '" & charID.(rangedWeaponAmmoAttr) & "')."
+!mmm           end if
+!mmm         else 
+!mmm           set rangedWeaponAmmoLog = "Munition: kein Standard-Attribut bekannt."
+!mmm         end if
 !mmm       else 
 !mmm         set weaponProperties = m3mgdMeleeWeaponType(weaponLabel)
 !mmm       end if
 !mmm     
 !mmm       if not isunknown(weaponProperties)
-!mmm         chat: *${weaponLabel}* als Standardwaffe erkannt.
+!mmm         chat: *${weaponLabel}* als Standardwaffe erkannt. ${rangedWeaponAmmoLog}
 !mmm       else 
 !mmm         set configCallAttr = "m3mgd_configCall_" & weaponLabel
 !mmm         if isunknown(charID.(configCallAttr))
@@ -97,9 +110,9 @@
 !mmm           set payload = payload & "!mmm set configCall&#x3D;&#x22;?" & "{Ability für " & literal(weaponLabel) & "&#x7C;}&#x22;&#13;"
 !mmm           set payload = payload & "!mmm do setattr(&#x22;" & charID.character_id & "&#x22;, &#x22;" & literal(configCallAttr) & "&#x22;, configCall&#x29;&#13;"
 !mmm           set payload = payload & "!mmm end script&#13;"
-!mmm           chat: *${weaponLabel}* **braucht ein Konfigskript.** [**Verknüpfen**](${payload})
+!mmm           chat: *${weaponLabel}* **braucht ein Konfigskript.** [**Verknüpfen**](${payload}) ${rangedWeaponAmmoLog}
 !mmm         else
-!mmm           chat: *${weaponLabel}* **braucht ein Konfigskript, und hat wohl eins.** [**Testen**](${"~"}${charID.token_name}|${charID.(configCallAttr)})
+!mmm           chat: *${weaponLabel}* **braucht ein Konfigskript, und hat wohl eins.** [**Testen**](${"~"}${charID.token_name}|${charID.(configCallAttr)})  ${rangedWeaponAmmoLog}
 !mmm         end if
 !mmm         set configScriptsRequired = configScriptsRequired + 1
 !mmm       end if
