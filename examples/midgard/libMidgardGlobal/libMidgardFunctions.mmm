@@ -1140,13 +1140,17 @@
 !mmm   
 !mmm   if weaponsGroup eq "defense"
 !mmm     set weaponsList = m3mgdListDefenseWeapons(tokenID)
-!mmm     set selectorPrompt = "Abwehrwaffe"
+!mmm     set selectorPrompt = "Auswahl: Abwehrwaffe"
 !mmm   else if weaponsGroup eq "melee"
 !mmm     set weaponsList = m3mgdListMeleeAttackWeapons(tokenID)
-!mmm     set selectorPrompt = "Nahkampfwaffe"
+!mmm     set selectorPrompt = "Auswahl: Nahkampfwaffe"
 !mmm   else if weaponsGroup eq "ranged"
 !mmm     set weaponsList = m3mgdListRangedAttackWeapons(tokenID)
-!mmm     set selectorPrompt = "Fernkampfwaffe"
+!mmm     set selectorPrompt = "Auswahl: Fernkampfwaffe"
+!mmm   end if
+!mmm
+!mmm   if isunknown(tokenID.PC)
+!mmm     set selectorPrompt = selectorPrompt & " (GM: 🤐)"
 !mmm   end if
 !mmm   
 !mmm   set chatMenu = ""
@@ -1215,15 +1219,6 @@
 !mmm   
 !mmm   return true
 !mmm   
-!mmm end function
-!rem
-!rem // m3mgdSendDefenseChatButtons(foeID)
-!rem //
-!rem //   Whispers chat buttons to foeID's player to launch defense
-!rem //
-!mmm function m3mgdSendDefenseChatButtons(foeID)
-!mmm   set sender = script.sender.token_name
-!mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{name=Abwehr mit Standardwaffe}} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
 !mmm end function
 !rem
 !rem // m3mgdProcessCombatPP(ownID, weaponLabel, [targetID])

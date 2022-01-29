@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.15.0-pre (2022-01-28)"
+!mmm   set scriptVersion = "v1.15.0-pre (2022-01-29)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -357,6 +357,6 @@
 !mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm   if attackResult >= 20
-!mmm     do m3mgdSendDefenseChatButtons(foeID)
+!mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense")
 !mmm   end if
 !mmm end script
