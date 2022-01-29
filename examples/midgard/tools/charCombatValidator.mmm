@@ -36,6 +36,60 @@
 !mmm   return selectorAttr
 !mmm end function
 !rem
+!mmm function m3mgdBuildWeaponSelectorChatMenu(characterID, weaponsGroup)  
+!mmm   
+!mmm   if isdefault(characterID)
+!mmm     set characterID = sender.character_id
+!mmm   end if
+!mmm   
+!mmm   if isdefault(weaponsGroup)
+!mmm     set weaponsGroup = "melee"
+!mmm   end if
+!mmm   
+!mmm   if weaponsGroup eq "defense"
+!mmm     set weaponsList = m3mgdListDefenseWeapons(characterID)
+!mmm     set selectorPrompt = "Abwehrwaffe"
+!mmm   else if weaponsGroup eq "melee"
+!mmm     set weaponsList = m3mgdListMeleeAttackWeapons(characterID)
+!mmm     set selectorPrompt = "Nahkampfwaffe"
+!mmm   else if weaponsGroup eq "ranged"
+!mmm     set weaponsList = m3mgdListRangedAttackWeapons(characterID)
+!mmm     set selectorPrompt = "Fernkampfwaffe"
+!mmm   end if
+!mmm   
+!mmm   set chatMenu = ""
+!mmm   set itemCounter = 0
+!mmm   for weaponLabelAttr in weaponsList
+!mmm     set weaponLabel = characterID.(weaponLabelAttr)
+!mmm     if weaponsGroup eq "defense"
+!mmm       set weaponType = m3mgdDefenseWeaponType(weaponLabel)
+!mmm       set scriptCommand = "&#x25;{MacroSheet|defense}"
+!mmm     else if weaponsGroup eq "melee"
+!mmm       set weaponType = m3mgdMeleeWeaponType(weaponLabel)
+!mmm       set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
+!mmm     else if weaponsGroup eq "ranged"
+!mmm       set weaponProps = m3mgdRangedWeaponProperties(weaponLabel)
+!mmm       set weaponType = weaponProps[0]
+!mmm       set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
+!mmm     end if
+!mmm     set payload = "!mmm customize&#13;!mmm set cWeaponLabel&#x3D;&#x22;" & "&#x40;" & "{" & characterID.name & "|" & weaponLabelAttr & "}" & "&#x22;&#13;!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;!mmm end customize&#13;" & scriptCommand
+!mmm     if itemCounter % 2 == 0
+!mmm       set chatMenu = chatMenu & "{{[" & weaponLabel & "](" & payload & ")="
+!mmm     else
+!mmm       set chatMenu = chatMenu & "[**" & weaponLabel & "**](" & payload & ")}}"
+!mmm     end if
+!mmm     set itemCounter = itemCounter + 1
+!mmm   end for
+!mmm   if itemCounter % 2 != 0
+!mmm     set chatMenu = chatMenu & "}}"
+!mmm   end if
+!mmm   set chatMenu = "&" & "{template:default} {{name=" & selectorPrompt & "}} " & chatMenu
+!mmm   
+!mmm   chat: /w "${characterID.name}" ${chatMenu}
+!mmm   return true
+!mmm end function
+!mmm
+!mmm
 !mmm   if selected
 !mmm     set charID = selected.character_id
 !mmm   else 
@@ -88,9 +142,9 @@
 !mmm     end for
 !mmm
 !mmm     chat: ------------
-!mmm     chat: Dropdown Verteidigungswaffen (Attribut '${m3mgdBuildWeaponSelector(charID, "defense")}') aktualisiert.
-!mmm     chat: Dropdown Nahkampfwaffen (Attribut '${m3mgdBuildWeaponSelector(charID, "melee")}') aktualisiert.
-!mmm     chat: Dropdown Fernkampfwaffen (Attribut '${m3mgdBuildWeaponSelector(charID, "ranged")}') aktualisiert.
+!mmm     do m3mgdBuildWeaponSelectorChatMenu(charID, "defense")
+!mmm     do m3mgdBuildWeaponSelectorChatMenu(charID, "melee")
+!mmm     do m3mgdBuildWeaponSelectorChatMenu(charID, "ranged")
 !mmm
 !mmm     chat: ------------
 !mmm     chat: **${charID.character_name}** braucht **${configScriptsRequired} Konfigskripte.**
