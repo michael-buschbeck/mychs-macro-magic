@@ -705,7 +705,42 @@
 !mmm   return round(max(absDistY, absDistX))
 !mmm
 !mmm end function
-!rem // 
+!rem
+!rem // m3mgdIsDefenseless(tokenID, [healthAttr], [enduranceAttr])
+!rem //
+!rem // Returns true if tokenID is defenseless, either because of zero endurance or close to zero health.
+!rem // If healthAttr/enduranceAttr are not provided, they default to script.cHealthAttr/cEnduranceAttr.
+!rem //
+!mmm function m3mgdIsDefenseless(tokenID, healthAttr, enduranceAttr)
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return unknown
+!mmm   end if
+!mmm   if isdefault(healthAttr)
+!mmm     if script.cHealthAttr
+!mmm       set healthAttr = script.cHealthAttr
+!mmm     else 
+!mmm       do whisperback("No health attribute provided as argument or at script level")
+!mmm       return unknown
+!mmm     end if
+!mmm   end if
+!mmm   if isdefault(enduranceAttr)
+!mmm     if script.cEnduranceAttr
+!mmm       set enduranceAttr = script.cEnduranceAttr
+!mmm     else
+!mmm       do whisperback("No endurance attribute provided as argument or at script level")
+!mmm       return unknown
+!mmm     end if
+!mmm   end if
+!mmm
+!mmm   if (not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3) or (not tokenID.(enduranceAttr).max == 0 and tokenID.(enduranceAttr) <= 0)
+!mmm     return true
+!mmm   else
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm end function
+!rem
 !rem // m3mgdShapeMoji(tokenID, [healthAttr], [enduranceAttr])
 !rem //
 !rem // Returns visual indicator of health and exhaustion or lack to access to health/endurance attributes.
