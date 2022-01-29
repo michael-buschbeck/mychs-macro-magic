@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.26.3";
+const MMM_VERSION = "1.26.4";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -13,24 +13,29 @@ on("ready", function()
     // activate this instance and shut down all lingering ones in previous sandbox instances
     sendChat(MMM_STARTUP_SENDER, "!mmm startup " + MMM_STARTUP_INSTANCE, null, {noarchive: true});
 
+    function isAutorunMacro(macroName)
+    {
+        return /^!mmm[-_]autorun/ui.test(macroName);
+    }
+
     let macros = [];
-    
+
     for (let macroObj of findObjs({ type: "macro" }))
     {
         let macroName = macroObj.get("name");
-        let macroText = macroObj.get("action");
 
-        if (/^!mmm[-_]autorun/ui.test(macroName))
+        if (isAutorunMacro(macroName))
         {
-            let playerid = macroObj.get("playerid");
-            let playerIsPrivileged = MychScriptContext.$isPrivileged(playerid);
+            let macroPlayerId = macroObj.get("playerid");
+            let macroText = macroObj.get("action");
+            let macroPrivileged = Boolean(MychScriptContext.persistentState.macroPrivileged[macroObj.id]);
 
             let macro =
             {
-                playerid: playerid,
-                privileged: playerIsPrivileged,
+                playerId: macroPlayerId,
                 name: macroName,
                 text: macroText,
+                privileged: macroPrivileged,
             };
 
             macros.push(macro);
@@ -52,18 +57,16 @@ on("ready", function()
 
     for (let macro of macros)
     {
-        let playerObj = getObj("player", macro.playerid);
-        let playerName = playerObj ? playerObj.get("displayname") : macro.playerid;
-
-        let macroDescription = macro.name + " (owner: " + playerName + ", privileged: " + macro.privileged + ")";
-
         let impersonation =
         {
-            playerid: macro.playerid,
+            playerid: macro.playerId,
+            privileged: macro.privileged,
             selected: [],
         };
 
-        let sender = "player|" + macro.playerid;
+        let macroPlayerObj = getObj("player", macro.playerId);
+        let macroPlayerName = macroPlayerObj ? macroPlayerObj.get("displayname") : macro.playerId;
+        let macroDescription = macro.name + " (owner: " + macroPlayerName + ", privileged: " + macro.privileged + ")";
 
         let msecElapsed = new Date().getTime() - msecStart;
         log("MMM [" + MMM_STARTUP_INSTANCE + "] (+" + msecElapsed + "ms) enqueued autorun macro: " + macroDescription);
@@ -80,19 +83,41 @@ on("ready", function()
             log("MMM [" + MMM_STARTUP_INSTANCE + "] (+" + msecElapsed + "ms) completed autorun macro: " + macroDescription);
         }
 
-        sendChat(sender, "/direct MMM starts executing autorun macro: " + macroDescription, startAutorunMacro);
-        MychScriptContext.$sendChatWithImpersonation(sender, macro.text, impersonation);
-        sendChat(sender, "/direct MMM completes executing autorun macro: " + macroDescription, completeAutorunMacro);
+        let macroSender = "player|" + macro.playerId;
+
+        sendChat(macroSender, "/direct MMM starts executing autorun macro: " + macroDescription, startAutorunMacro);
+        MychScriptContext.$sendChatWithImpersonation(macroSender, macro.text, impersonation);
+        sendChat(macroSender, "/direct MMM completes executing autorun macro: " + macroDescription, completeAutorunMacro);
     }
 
-    // update cached player-privileged state at regular intervals
-    setInterval(MychScriptContext.$refreshPlayerIsPrivileged, 60*1000);
-});
+    function updateMacroPrivileged(macroObj)
+    {
+        let macroPlayerId = macroObj.get("playerid");
+        let macroPrivileged = playerIsGM(macroPlayerId);
+    
+        MychScriptContext.persistentState.macroPrivileged[macroObj.id] = macroPrivileged;
+    }
 
-on("change:player", function(playerObj)
-{
-    // refresh cached player-privileged state on login, logout, and other occasions
-    MychScriptContext.$refreshPlayerIsPrivileged(playerObj.id);
+    on("add:macro", function(macroObj)
+    {
+        updateMacroPrivileged(macroObj);
+    });
+    
+    on("change:macro", function(macroObj)
+    {
+        updateMacroPrivileged(macroObj);
+    });
+    
+    on("destroy:macro", function(macroObj)
+    {
+        let knownMacroIds = Object.keys(MychScriptContext.persistentState.macroPrivileged);
+        let missingMacroIds = knownMacroIds.filter(macroId => macroId == macroObj.id || getObj("macro", macroId) == undefined);
+    
+        for (let missingMacroId of missingMacroIds)
+        {
+            delete MychScriptContext.persistentState.macroPrivileged[missingMacroId];
+        }
+    });
 });
 
 on("chat:message", function(msg)
@@ -128,6 +153,8 @@ on("chat:message", function(msg)
         return;
     }
 
+    let playerPrivileged = undefined;
+
     if (msg.playerid == "API" && MychScriptContext.impersonation)
     {
         msg.playerid = MychScriptContext.impersonation.playerid;
@@ -137,6 +164,13 @@ on("chat:message", function(msg)
         {
             msg.selected = undefined;
         }
+
+        playerPrivileged = MychScriptContext.impersonation.privileged;
+    }
+
+    if (playerPrivileged == undefined)
+    {
+        playerPrivileged = playerIsGM(msg.playerid);
     }
 
     let player = MychScriptContext.players[msg.playerid];
@@ -182,8 +216,9 @@ on("chat:message", function(msg)
 
     msgContext.sender = msg.who;
     msgContext.playerid = msg.playerid;
+    msgContext.privileged = playerPrivileged;
 
-    if (msgContextHasRolls || msgContext.sender != player.context.sender || String(msgContext.selected) != String(player.context.selected))
+    if (msgContextHasRolls || msgContext.sender != player.context.sender || msgContext.privileged != player.context.privileged || String(msgContext.selected) != String(player.context.selected))
     {
         if (!msgContextHasRolls)
         {
@@ -406,6 +441,60 @@ class MychProperties
 
 class MychScriptContext extends MychProperties
 {
+    static persistentState = MychScriptContext.initPersistentState(
+    {
+        macroPrivileged: {},
+    });
+
+    static initPersistentState(persistentStateTemplate)
+    {
+        if (globalThis.state == undefined)
+        {
+            globalThis.state = {};
+        }
+
+        let persistentStateContainer = globalThis.state.MychScriptContext;
+
+        if (persistentStateContainer == undefined)
+        {
+            persistentStateContainer = {};
+            globalThis.state.MychScriptContext = persistentStateContainer;
+        }
+
+        function establishTemplateStructure(container, template)
+        {
+            for (let containerKey of Object.getOwnPropertyNames(container))
+            {
+                if (!template.hasOwnProperty(containerKey))
+                {
+                    // delete keys absent from template
+                    delete container[containerKey];
+                }
+            }
+
+            for (let [templateKey, templateValue] of Object.entries(template))
+            {
+                if (container.hasOwnProperty(templateKey))
+                {
+                    if (Object.getPrototypeOf(templateValue) == Object.prototype && Object.keys(templateValue).length > 0)
+                    {
+                        let containerValue = container[templateKey];
+                        establishTemplateStructure(containerValue, templateValue)
+                    }
+                }
+                else
+                {
+                    // create key with template default value
+                    container[templateKey] = templateValue;
+                }
+            }
+        }
+
+        establishTemplateStructure(persistentStateContainer, persistentStateTemplate);
+        
+        return persistentStateContainer;
+    }
+
     static globals = new MychProperties();
     static players = {};
     static impersonation = undefined;
@@ -963,6 +1052,7 @@ class MychScriptContext extends MychProperties
             let impersonation =
             {
                 playerid: this.playerid,
+                privileged: this.privileged,
                 selected: this.selected,
             };
 
@@ -1280,73 +1370,6 @@ class MychScriptContext extends MychProperties
         return this.$setAttribute(nameOrId, attributeName, attributeValue, true);
     }
 
-    static $storePlayerIsPrivileged(playerId, playerIsPrivileged)
-    {
-        (undefined != globalThis.state) ||
-            (globalThis.state = {});
-        (undefined != globalThis.state.MychScriptContext) ||
-            (globalThis.state.MychScriptContext = {});
-        (undefined != globalThis.state.MychScriptContext.$isPrivileged) ||
-            (globalThis.state.MychScriptContext.$isPrivileged = {});
-        
-        globalThis.state.MychScriptContext.$isPrivileged[playerId] = playerIsPrivileged;
-    }
-
-    static $fetchPlayerIsPrivileged(playerId)
-    {
-        let playerIsPrivileged =
-            undefined != globalThis.state &&
-            undefined != globalThis.state.MychScriptContext &&
-            undefined != globalThis.state.MychScriptContext.$isPrivileged &&
-            Boolean(globalThis.state.MychScriptContext.$isPrivileged[playerId]);
-    
-        return playerIsPrivileged;
-    }
-
-    static $refreshPlayerIsPrivileged(playerId = undefined)
-    {
-        if (playerId)
-        {
-            MychScriptContext.$isPrivileged(playerId);
-        }
-        else
-        {
-            for (let playerObj of findObjs({ type: "player" }))
-            {
-                MychScriptContext.$isPrivileged(playerObj.id);
-            }
-        }
-    }
-
-    static $isPrivileged(playerId)
-    {
-        let playerIsPrivileged = playerIsGM(playerId);
-        
-        if (playerIsPrivileged)
-        {
-            // positive response is always reliable (player must be online)
-            MychScriptContext.$storePlayerIsPrivileged(playerId, true);
-        }
-        else
-        {
-            let playerObj = getObj("player", playerId);
-            let playerIsOnline = playerObj && playerObj.get("online");
-
-            if (playerIsOnline)
-            {
-                // negative response is only reliable when player is online
-                MychScriptContext.$storePlayerIsPrivileged(playerId, false);
-            }
-            else
-            {
-                // override negative response with cached response if player is offline
-                playerIsPrivileged = MychScriptContext.$fetchPlayerIsPrivileged(playerId);
-            }
-        }
-
-        return playerIsPrivileged;
-    }
-
     $canControl(obj)
     {
         if (!this.playerid || !obj || !obj.get)
@@ -1354,7 +1377,7 @@ class MychScriptContext extends MychProperties
             return false;
         }
 
-        if (MychScriptContext.$isPrivileged(this.playerid))
+        if (this.privileged)
         {
             return true;
         }
@@ -2030,7 +2053,7 @@ class MychScriptContext extends MychProperties
                 
                 playerDescription = playerName + " (" + (playerOnline ? "online" : "offline") + ")";
 
-                if (MychScriptContext.$isPrivileged(playerId))
+                if (player.privileged)
                 {
                     playerDescription += " (privileged)";
                 }
@@ -2615,7 +2638,7 @@ class MychScript
                 this.definition.scope = args.scope.value;
                 this.definition.identifiers = args.identifiers.value.split(/\s*,\s*/);
             
-                if (this.definition.scope == "game" && !MychScriptContext.$isPrivileged(this.context.playerid))
+                if (this.definition.scope == "game" && !this.context.privileged)
                 {
                     throw new MychScriptError("parse", "publishing to game scope requires GM privileges", this.source, args.scope.offset);
                 }
