@@ -733,16 +733,17 @@ You can use attribute calls like `@{Finn|HP}` as well, but keep in mind that the
 
 There are also a few special *context variables* that are pre-set for you:
 
-| Variable   | Example   | Description
-| ---------- | --------- | -----------
-| `playerid` |           | Player ID (not character ID!) of the player who sent the command
-| `sender`   | "Finn"    | Player or character name who sent the command – subject to the chat "As" drop-down box
-| `selected` |           | List of token IDs of the tokens currently selected by the player on the game board – may be empty
-| `version`  | "1.0.1"   | [Semantic version number](https://semver.org) of the MMM scripting engine
-| `pi`       | 3.141...  | [Ratio of a circle's circumference to its diameter](https://en.wikipedia.org/wiki/Pi) – useful for geometric calculations
-| `default`  | `default` | Special indicator value that makes `set customizable` apply the default expression
-| `denied`   | `denied`  | Special indicator value returned by `getattr()` and `setattr()` when accessing attributes without permission
-| `unknown`  | `unknown` | Special indicator value returned by a function when it is unable to produce a meaningful result given its arguments and/or the current state of the game
+| Variable     | Example   | Description
+| ------------ | --------- | -----------
+| `playerid`   |           | Player ID (not character ID!) of the player who sent the command
+| `privileged` | `false`   | Player has GM privileges – for [autorun macros](#autorun-macros), determined when the macro is saved
+| `sender`     | "Finn"    | Player or character name who sent the command – subject to the chat "As" drop-down box
+| `selected`   |           | List of token IDs of the tokens currently selected by the player on the game board – may be empty
+| `version`    | "1.0.1"   | [Semantic version number](https://semver.org) of the MMM scripting engine
+| `pi`         | 3.141...  | [Ratio of a circle's circumference to its diameter](https://en.wikipedia.org/wiki/Pi) – useful for geometric calculations
+| `default`    | `default` | Special indicator value that makes `set customizable` apply the default expression
+| `denied`     | `denied`  | Special indicator value returned by `getattr()` and `setattr()` when accessing attributes without permission
+| `unknown`    | `unknown` | Special indicator value returned by a function when it is unable to produce a meaningful result given its arguments and/or the current state of the game
 
 Don't attempt to use the `default`, `denied`, and `unknown` indicator values in comparisons: They're neither numbers nor strings, and when compared as such they'll compare equal to many completely benign values that are neither `default` nor `denied` nor `unknown` (like the number zero or an empty string). Use the `isdefault()`, `isdenied()`, and `isunknown()` functions to find out if something is one of these special indicator values.
 
