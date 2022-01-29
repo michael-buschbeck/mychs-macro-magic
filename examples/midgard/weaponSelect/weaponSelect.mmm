@@ -1,0 +1,39 @@
+!rem // Midgard combat weapon selector script
+!mmm customize
+!rem   // cWeaponGroups: any combination (one or more) of "defense", "melee", "ranged"
+!mmm   set cWeaponGroups = "melee"
+!mmm end customize
+!mmm script
+!mmm   set scriptVersion = "v1.0.0-pre (2022-01-29)"
+!rem
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Attack Weapon Selector Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.26
+!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm   
+!mmm   set customizable cWeaponGroups = "melee", "ranged"
+!mmm   set customizable cOwnID = sender.token_id
+!mmm   
+!rem   // Refetch token_id, just if customize block provided a name or character ID
+!mmm   set cOwnID = cOwnID.token_id
+!mmm   if isdenied(cOwnID)
+!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & getreason(cOwnID)) 
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // MAIN: Generate weapon selector menus for each weapon group requested 
+!mmm
+!mmm   for weaponGroup in cWeaponGroups
+!mmm     
+!mmm     do m3mgdWeaponSelectorChatMenu(cOwnID, weaponGroup)
+!mmm       
+!mmm   end for
+!mmm
+!mmm end script

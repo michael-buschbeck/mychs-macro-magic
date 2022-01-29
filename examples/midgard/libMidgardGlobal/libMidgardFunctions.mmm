@@ -1160,14 +1160,14 @@
 !mmm       if tokenID.PC
 !mmm         set scriptCommand = "&#x25;{MacroSheet|defense}"
 !mmm       else
-!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Abwehr_intern}"
+!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Abwehr}"
 !mmm       end if
 !mmm     else if weaponsGroup eq "melee"
 !mmm       set weaponType = m3mgdMeleeWeaponType(weaponLabel)
 !mmm       if tokenID.PC
 !mmm         set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
 !mmm       else
-!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Nahkampfangriff_intern}"
+!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Nahkampfangriff}"
 !mmm       end if
 !mmm     else if weaponsGroup eq "ranged"
 !mmm       set weaponProps = m3mgdRangedWeaponProperties(weaponLabel)
@@ -1175,7 +1175,7 @@
 !mmm       if tokenID.PC
 !mmm         set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
 !mmm       else
-!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Fernkampfangriff_intern}"
+!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Fernkampfangriff}"
 !mmm       end if
 !mmm     end if
 !mmm
@@ -1185,7 +1185,7 @@
 !mmm     set payload = payload & "!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;"
 !mmm     set payload = payload & "!mmm end customize&#13;"
 !mmm     set payload = payload & scriptCommand
-!mmm
+!mmm     
 !mmm     if itemCounter % 2 == 0
 !mmm       set chatMenu = chatMenu & "{{[" & weaponLabel & "](" & payload & ")="
 !mmm     else
@@ -1197,8 +1197,13 @@
 !mmm
 !mmm   if itemCounter % 2 != 0
 !mmm     set chatMenu = chatMenu & "}}"
+!mmm   else if itemCounter == 0
+!mmm     set chatMenu = chatMenu & "{{(keine)}}"
 !mmm   end if
 !mmm   set chatMenu = "&" & "{template:default} {{name=" & selectorPrompt & "}} " & chatMenu
+!rem
+!rem   // Override chat sender for characters unconnected to the player (usually NPCs)
+!mmm   set sender = tokenID.character_name
 !mmm   
 !mmm   chat: /w "${tokenID.character_name}" ${chatMenu}
 !mmm   

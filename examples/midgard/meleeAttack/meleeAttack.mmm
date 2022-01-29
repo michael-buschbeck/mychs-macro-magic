@@ -101,7 +101,7 @@
 !mmm
 !rem   // Initialize target token
 !mmm
-!mmm   set foeID = "@{target|Angriffsziel|token_id}"
+!mmm   set customizable foeID = "@{target|Angriffsziel|token_id}"
 !mmm   set foeName = foeID.name
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
