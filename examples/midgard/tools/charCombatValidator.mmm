@@ -1,4 +1,5 @@
 !mmm script
+!mmm   
 !rem
 !rem // m3mgdDefenseWeaponType(weaponLabel)
 !rem // 
@@ -86,13 +87,13 @@
 !mmm 
 !mmm end function
 !rem
-!rem // m3mgdRangedWeaponType(weaponLabel)
+!rem // m3mgdRangedWeaponProperties(weaponLabel)
 !rem // 
 !rem //   If weaponLabel is exactly one of a list of standard attack or defense arms, returns a list of weaponProperties. 
 !rem //   Otherwise returns unknown. 
 !rem //   weaponProperties := (weaponType, lowRangeUpperBound, midRangeUpperBound, farRangeUpperBound, ammoLabel)
 !rem // 
-!mmm function m3mgdRangedWeaponType(weaponLabel)
+!mmm function m3mgdRangedWeaponProperties(weaponLabel)
 !mmm 
 !mmm   set weaponProperties = unknown
 !mmm   
@@ -182,10 +183,100 @@
 !mmm 
 !mmm end function
 !rem
+!mmm function m3mgdBuildWeaponSelector(characterID, weaponsGroup)  
 !mmm   
-!mmm   set attackWeaponLabel = "@{selected|m3mgd_ranged_weapon_selector}"
-!mmm   set weaponProps = m3mgdRangedWeaponType(attackWeaponLabel)
+!mmm   if isdefault(characterID)
+!mmm     set characterID = sender.character_id
+!mmm   end if
 !mmm   
-!mmm   debug chat: ${attackWeaponLabel} ist ein(e) ${weaponProps[0]}, Reichweiten ${weaponProps[1]}/${weaponProps[2]}/${weaponProps[3]}, Munitionsattribut ${weaponProps[4]}
+!mmm   if isdefault(weaponsGroup)
+!mmm     set weaponsGroup = "melee"
+!mmm   end if
 !mmm   
+!mmm   if weaponsGroup eq "defense"
+!mmm     set weaponsList = m3mgdListDefenseWeapons(characterID)
+!mmm     set selectorPrompt = "Abwehrwaffe"
+!mmm   else if weaponsGroup eq "melee"
+!mmm     set weaponsList = m3mgdListMeleeAttackWeapons(characterID)
+!mmm     set selectorPrompt = "Nahkampfwaffe"
+!mmm   else if weaponsGroup eq "ranged"
+!mmm     set weaponsList = m3mgdListRangedAttackWeapons(characterID)
+!mmm     set selectorPrompt = "Fernkampfwaffe"
+!mmm   end if
+!mmm   
+!mmm   set r20SelectorCode = ""
+!mmm   for weaponLabelAttr in weaponsList
+!mmm     if r20SelectorCode ne ""
+!mmm       set r20SelectorCode = r20SelectorCode & "|"
+!mmm     end if
+!mmm     set r20SelectorCode = r20SelectorCode & characterID.(weaponLabelAttr)
+!mmm   end for
+!mmm   set r20SelectorCode = "?" & "{" & selectorPrompt & "|" & r20SelectorCode & "}"
+!mmm   
+!mmm   set selectorAttr = "m3mgd_" & weaponsGroup & "_weapon_selector"
+!mmm   do setattr(characterID, selectorAttr, r20SelectorCode)
+!mmm   return selectorAttr
+!mmm end function
+!rem
+!mmm   if selected
+!mmm     set charID = selected.character_id
+!mmm   else 
+!mmm     set charID = sender.character_id
+!mmm   end if
+!mmm   
+!mmm   set configScriptsRequired = 0
+!mmm
+!mmm   combine chat using "<" & "br>"
+!mmm
+!mmm     chat: ============
+!mmm     chat: Charakterbogen: **${charID.character_name}**
+!mmm     chat: ------------
+!mmm     chat: Verteidigungswaffen
+!mmm   
+!mmm     for weaponLabelAttr in m3mgdListDefenseWeapons(charID)
+!mmm       
+!mmm       set weaponLabel = charID.(weaponLabelAttr)
+!mmm       set weaponProperties = m3mgdDefenseWeaponType(weaponLabel)
+!mmm     
+!mmm       if not isunknown(weaponProperties)
+!mmm         chat: *${weaponLabel}* als Standardwaffe erkannt.
+!mmm       else 
+!mmm         chat: *${weaponLabel}* **braucht ein Konfigskript.**
+!mmm       end if
+!mmm     
+!mmm     end for
+!mmm
+!mmm     chat: ------------
+!mmm     chat: Angriffswaffen
+!mmm
+!mmm     for weaponLabelAttr in findattr(charID, "Angriff", "Waffe")
+!mmm       
+!mmm       set weaponLabel = charID.(weaponLabelAttr)
+!mmm       
+!mmm       if charID.(findattr(charID, "Angriff", "Waffe", weaponLabel, "FkWaffe")) == 1
+!mmm         set weaponProperties = m3mgdRangedWeaponProperties(weaponLabel)
+!mmm       else 
+!mmm         set weaponProperties = m3mgdMeleeWeaponType(weaponLabel)
+!mmm       end if
+!mmm     
+!mmm       if not isunknown(weaponProperties)
+!mmm         chat: *${weaponLabel}* als Standardwaffe erkannt.
+!mmm       else 
+!mmm         chat: *${weaponLabel}* **braucht ein Konfigskript.**
+!mmm         set configScriptsRequired = configScriptsRequired + 1
+!mmm       end if
+!mmm     
+!mmm     end for
+!mmm
+!mmm     chat: ------------
+!mmm     chat: Dropdown Verteidigungswaffen (Attribut '${m3mgdBuildWeaponSelector(charID, "defense")}') aktualisiert.
+!mmm     chat: Dropdown Nahkampfwaffen (Attribut '${m3mgdBuildWeaponSelector(charID, "melee")}') aktualisiert.
+!mmm     chat: Dropdown Fernkampfwaffen (Attribut '${m3mgdBuildWeaponSelector(charID, "ranged")}') aktualisiert.
+!mmm
+!mmm     chat: ------------
+!mmm     chat: **${charID.character_name}** braucht **${configScriptsRequired} Konfigskripte.**
+!mmm     chat: ============
+!mmm
+!mmm   end combine
+!mmm
 !mmm end script
