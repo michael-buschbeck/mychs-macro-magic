@@ -63,14 +63,26 @@
 !mmm     set weaponLabel = characterID.(weaponLabelAttr)
 !mmm     if weaponsGroup eq "defense"
 !mmm       set weaponType = m3mgdDefenseWeaponType(weaponLabel)
-!mmm       set scriptCommand = "&#x25;{MacroSheet|defense}"
+!mmm       if characterID.PC
+!mmm         set scriptCommand = "&#x25;{MacroSheet|defense}"
+!mmm       else
+!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Abwehr}"
+!mmm       end if
 !mmm     else if weaponsGroup eq "melee"
 !mmm       set weaponType = m3mgdMeleeWeaponType(weaponLabel)
-!mmm       set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
+!mmm       if characterID.PC
+!mmm         set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
+!mmm       else
+!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Nahkampfangriff}"
+!mmm       end if
 !mmm     else if weaponsGroup eq "ranged"
 !mmm       set weaponProps = m3mgdRangedWeaponProperties(weaponLabel)
 !mmm       set weaponType = weaponProps[0]
-!mmm       set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
+!mmm       if characterID.PC
+!mmm         set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
+!mmm       else
+!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Fernkampfangriff}"
+!mmm       end if
 !mmm     end if
 !mmm     set payload = "!mmm customize&#13;!mmm set cWeaponLabel&#x3D;&#x22;" & "&#x40;" & "{" & characterID.name & "|" & weaponLabelAttr & "}" & "&#x22;&#13;!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;!mmm end customize&#13;" & scriptCommand
 !mmm     if itemCounter % 2 == 0
