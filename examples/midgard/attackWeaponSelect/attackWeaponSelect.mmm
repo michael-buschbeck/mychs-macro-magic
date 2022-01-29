@@ -1,0 +1,71 @@
+!rem // Midgard combat attack weapon selector script
+!mmm script
+!mmm   set scriptVersion = "v1.0.0-pre (2022-01-28)"
+!rem
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback("Midgard Melee Attack Script " & scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.26
+!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm   
+!mmm   set customizable cOwnID = sender.token_id
+!mmm
+!rem   // Refetch token_id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = cOwnID.token_id
+!mmm   if isdenied(cOwnID)
+!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & getreason(cOwnID)) 
+!mmm     exit script
+!mmm   end if
+!rem
+!rem   // Override chat sender for characters unconnected to the player (usually NPCs)
+!mmm   if cOwnID ne sender
+!mmm     set sender = cOwnID
+!mmm   end if
+!mmm
+!rem   // Check for available attack weapons and request manual entry if selection is missing
+!mmm   
+!mmm   set meleeWeaponsList = m3mgdListMeleeAttackWeapons(cOwnID)
+!mmm   set rangedWeaponsList = m3mgdListRangedAttackWeapons(cOwnID)
+!mmm   set weaponsList = meleeWeaponsList, rangedWeaponsList
+!mmm   
+!mmm   if not weaponsList
+!mmm   
+!mmm     do whisperback(cOwnID.name & " hat keine Angriffswaffen bzw. -fähigkeiten.")
+!mmm     exit script
+!mmm   
+!mmm   else if count(weaponsList) == 1
+!mmm
+!mmm     set weaponLabel = cOwnID.(weaponsList)
+!mmm   
+!mmm     if meleeWeaponsList where ... eq cWeaponLabel
+!mmm       set attackScriptCommand = "%" & "{MacroSheet|meleeAttack}"
+!mmm       set weaponType = m3mgdMeleeWeaponType(weaponLabel)
+!mmm     else
+!mmm       set attackScriptCommand = "%" & "{MacroSheet|rangedAttack}"
+!mmm       set weaponProps = m3mgdRangedWeaponProperties(weaponLabel)
+!mmm       set weaponType = weaponProps[0]
+!mmm     end if
+!mmm 
+!mmm     combine chat
+!mmm       chat: !mmm customize
+!mmm       chat: !mmm   set cOwnID = "${cOwnID}"
+!mmm       chat: !mmm   set cWeaponLabel = "${weaponLabel}"
+!mmm       chat: !mmm   set cWeaponType = "${weaponType}"
+!mmm       chat: !mmm end customize
+!mmm       chat: ${attackScriptCommand}
+!mmm     end combine
+!mmm   
+!mmm   else 
+!mmm   
+!mmm     do m3mgdWeaponSelectorChatMenu(cOwnID, "melee")
+!mmm     do m3mgdWeaponSelectorChatMenu(cOwnID, "ranged")
+!mmm     
+!mmm   end if
+!mmm
+!mmm end script

@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.14.0 (2022-01-27)"
+!mmm   set scriptVersion = "v1.15.0-pre (2022-01-28)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -83,7 +83,7 @@
 !mmm       do whisperback("Fehler: " & cOwnID.name & " hat keine Nahkampfwaffe " & cWeaponLabel & ".")
 !mmm       exit script
 !mmm     else 
-!mmm       do whisperback("Fehler: " & cOwnID.name & " hat mehrere Nahkampfwaffen. Bitte per Konfigskript auswählen.")
+!mmm       do m3mgdWeaponSelectorChatMenu(cOwnID, "melee")
 !mmm       exit script
 !mmm     end if
 !mmm   end if
