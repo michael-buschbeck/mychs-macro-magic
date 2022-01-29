@@ -55,10 +55,19 @@
 !mmm     for weaponLabelAttr in m3mgdListDefenseWeapons(charID)
 !mmm       
 !mmm       set weaponLabel = charID.(weaponLabelAttr)
-!mmm       set weaponProperties = m3mgdDefenseWeaponType(weaponLabel)
+!mmm       set weaponType = m3mgdDefenseWeaponType(weaponLabel)
 !mmm     
-!mmm       if not isunknown(weaponProperties)
-!mmm         chat: *${weaponLabel}* als Standardwaffe erkannt.
+!mmm       if not isunknown(weaponType)
+!mmm         if (weaponLabel eq "Abwehr ohne Schild") or (weaponLabel eq "ohne Schild") or (m3mgdParryLargeShieldTypes where ... eq weaponLabel)
+!mmm           set utilityStatement = "gegen alle Angriffe"
+!mmm         else if m3mgdParryStandardTypes where ... eq weaponLabel
+!mmm           set utilityStatement = "gegen " & m3mgdParryStandardEffectiveAgainst
+!mmm         else if m3mgdParrySmallShieldTypes where ... eq weaponLabel
+!mmm           set utilityStatement = "gegen " & m3mgdParrySmallShieldEffectiveAgainst
+!mmm         else
+!mmm           set utilityStatement = "gegen keinerlei Angriffe (**unbekannter Waffentyp:** in initGameGlobals ergänzen!)"
+!mmm         end if
+!mmm         chat: *${weaponLabel}* als Standardwaffe erkannt, anwendbar ${utilityStatement}.
 !mmm       else 
 !mmm         chat: *${weaponLabel}* **braucht ein Konfigskript.**
 !mmm         set configScriptsRequired = configScriptsRequired + 1
