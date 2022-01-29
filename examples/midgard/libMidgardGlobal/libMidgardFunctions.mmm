@@ -1122,13 +1122,13 @@
 !mmm 
 !mmm end function
 !rem
-!rem // m3mgdWeaponSelectorChatMenu(tokenID, weaponsGroup)  
+!rem // m3mgdWeaponSelectorChatMenu([tokenID], [weaponsGroup], [attackWeaponType])  
 !rem //
 !rem //   Whispers a chat menu for tokenID to its player to select among weaponsGroup ("defense", "melee" or "ranged").
 !rem //   Buttons execute a customize block to hand over the chosen weapon to the relevant script. 
 !rem //   Scripts called differ between player characters (identified by the attribute "PC" evaluating as true) and NPCs.
 !rem //
-!mmm function m3mgdWeaponSelectorChatMenu(tokenID, weaponsGroup)  
+!mmm function m3mgdWeaponSelectorChatMenu(tokenID, weaponsGroup, attackWeaponType)  
 !mmm   
 !mmm   if isdefault(tokenID)
 !mmm     set tokenID = sender.token_id
@@ -1136,6 +1136,10 @@
 !mmm   
 !mmm   if isdefault(weaponsGroup)
 !mmm     set weaponsGroup = "melee"
+!mmm   end if
+!mmm
+!mmm   if weaponsGroup eq "defense" and isdefault(attackWeaponType)
+!mmm     set attackWeaponType = ""
 !mmm   end if
 !mmm   
 !mmm   if weaponsGroup eq "defense"
@@ -1161,51 +1165,78 @@
 !mmm   set itemCounter = 0
 !mmm
 !mmm   for weaponLabelAttr in weaponsList
-!mmm
+!mmm     
 !mmm     set weaponLabel = tokenID.(weaponLabelAttr)
+!mmm     
 !mmm     if weaponsGroup eq "defense"
+!mmm     
 !mmm       set weaponType = m3mgdDefenseWeaponType(weaponLabel)
+!mmm     
+!rem       // Check if weaponType may not help against attackWeaponType 
+!mmm       if weaponLabel eq "Abwehr ohne Schild" or weaponLabel eq "ohne Schild"
+!mmm         set weaponUsable = true
+!mmm       else
+!mmm         set weaponUsable = false
+!mmm         if m3mgdParryLargeShieldTypes where ... eq weaponLabel 
+!mmm           set weaponUsable = true
+!mmm         else if (m3mgdParrySmallShieldTypes where ... eq weaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
+!mmm           set weaponUsable = true
+!mmm         else if (m3mgdParryStandardTypes where ... eq weaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackWeaponType)
+!mmm           set weaponUsable = true
+!mmm         end if
+!mmm       end if
 !mmm       if tokenID.PC
 !mmm         set scriptCommand = "&#x25;{MacroSheet|defense}"
 !mmm       else
 !mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Abwehr}"
 !mmm       end if
+!mmm     
 !mmm     else if weaponsGroup eq "melee"
+!mmm     
 !mmm       set weaponType = m3mgdMeleeWeaponType(weaponLabel)
+!mmm       set weaponUsable = true
 !mmm       if tokenID.PC
 !mmm         set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
 !mmm       else
 !mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Nahkampfangriff}"
 !mmm       end if
+!mmm     
 !mmm     else if weaponsGroup eq "ranged"
+!mmm     
 !mmm       set weaponProps = m3mgdRangedWeaponProperties(weaponLabel)
 !mmm       set weaponType = weaponProps[0]
+!mmm       set weaponUsable = true
 !mmm       if tokenID.PC
 !mmm         set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
 !mmm       else
 !mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Fernkampfangriff}"
 !mmm       end if
-!mmm     end if
-!mmm
-!rem     // Overwrite scriptCommand if there is a custom config script registered in character sheet
-!mmm     set customCall = tokenID.("m3mgd_configCall_" & weaponLabel)
-!mmm     if not isunknown(customCall)
-!mmm       set scriptCommand = "&#x25;{" & tokenID.character_name & "|" & customCall & "}"
-!mmm     end if
-!mmm
-!mmm     set payload = "!mmm customize&#13;"
-!mmm     set payload = payload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
-!mmm     set payload = payload & "!mmm set cWeaponLabel&#x3D;&#x22;" & "&#x40;" & "{" & tokenID.character_name & "|" & weaponLabelAttr & "}" & "&#x22;&#13;"
-!mmm     set payload = payload & "!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;"
-!mmm     set payload = payload & "!mmm end customize&#13;"
-!mmm     set payload = payload & scriptCommand
 !mmm     
-!mmm     if itemCounter % 2 == 0
-!mmm       set chatMenu = chatMenu & "{{[" & weaponLabel & "](" & payload & ")="
-!mmm     else
-!mmm       set chatMenu = chatMenu & "[**" & weaponLabel & "**](" & payload & ")}}"
 !mmm     end if
-!mmm     set itemCounter = itemCounter + 1
+!mmm
+!mmm     if weaponUsable
+!mmm
+!rem       // Overwrite scriptCommand if there is a custom config script registered in character sheet
+!mmm       set customCall = tokenID.("m3mgd_configCall_" & weaponLabel)
+!mmm       if not isunknown(customCall)
+!mmm         set scriptCommand = "&#x25;{" & tokenID.character_name & "|" & customCall & "}"
+!mmm       end if
+!mmm
+!mmm       set payload = "!mmm customize&#13;"
+!mmm       set payload = payload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
+!mmm       set payload = payload & "!mmm set cWeaponLabel&#x3D;&#x22;" & "&#x40;" & "{" & tokenID.character_name & "|" & weaponLabelAttr & "}" & "&#x22;&#13;"
+!mmm       set payload = payload & "!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;"
+!mmm       set payload = payload & "!mmm end customize&#13;"
+!mmm       set payload = payload & scriptCommand
+!mmm     
+!mmm       if itemCounter % 2 == 0
+!mmm         set chatMenu = chatMenu & "{{[" & weaponLabel & "](" & payload & ")="
+!mmm       else
+!mmm         set chatMenu = chatMenu & "[**" & weaponLabel & "**](" & payload & ")}}"
+!mmm       end if
+!mmm       set itemCounter = itemCounter + 1
+!mmm
+!mmm     end if
 !mmm
 !mmm   end for
 !mmm

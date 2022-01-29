@@ -357,6 +357,6 @@
 !mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm   if attackResult >= 20
-!mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense")
+!mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense", cWeaponType)
 !mmm   end if
 !mmm end script

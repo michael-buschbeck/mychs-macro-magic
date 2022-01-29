@@ -522,7 +522,7 @@
 !mmm   end if
 !mmm
 !mmm   if attackResult >= 20
-!mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense")
+!mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense", cWeaponType)
 !mmm   end if
 !mmm
 !mmm end script
