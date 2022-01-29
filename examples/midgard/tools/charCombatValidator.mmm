@@ -37,11 +37,11 @@
 !mmm 
 !mmm   set weaponType = unknown
 !mmm   
-!mmm   if ("Handaxt", "Keule", "Kriegshammer", "Schlachtbeil", "Streitaxt", "Streitkolben") where ... eq weaponLabel
+!mmm   if ("Handaxt", "Keule", "Kriegshammer", "Schlachtbeil", "Steinhammer", "Streitaxt", "Streitkolben") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "Einhandschlagwaffe"
 !mmm   
-!mmm   else if ("Anderthalbhänder", "Krummschwert", "Langschwert") where ... eq weaponLabel
+!mmm   else if ("Anderthalbhänder", "Krummschwert", "Langschwert", "Krummsäbel", "Säbel") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "Einhandschwert"
 !mmm   
@@ -77,7 +77,7 @@
 !mmm   
 !mmm     set weaponType = "Zweihandschwert"
 !mmm   
-!mmm   else if ("waffenloser Kampf", "Faustkampf", "Ringen (ohne Rüstung)", "Ringen (mit Rüstung)") where ... eq weaponLabel
+!mmm   else if ("waffenloser Kampf", "Faust", "Faustkampf", "Ringen (ohne Rüstung)", "Ringen (mit Rüstung)", "Tatze", "Klaue", "Tentakel", "Biss", "Horn", "Berührung") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "waffenlos"
 !mmm   
