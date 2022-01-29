@@ -1148,6 +1148,10 @@
 !mmm     set weaponsList = m3mgdListRangedAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Fernkampfwaffe"
 !mmm   end if
+!mmm   if not weaponsList
+!rem     // tokenID does not have any weapons (skills) in weaponsGroup
+!mmm     return false
+!mmm   end if
 !mmm
 !mmm   if isunknown(tokenID.PC)
 !mmm     set selectorPrompt = selectorPrompt & " (GM: 🤐)"
