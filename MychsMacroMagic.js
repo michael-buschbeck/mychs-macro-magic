@@ -96,6 +96,14 @@ on("ready", function()
         let macroPrivileged = playerIsGM(macroPlayerId);
     
         MychScriptContext.persistentState.macroPrivileged[macroObj.id] = macroPrivileged;
+
+        let macroName = macroObj.get("name");
+        
+        if (isAutorunMacro(macroName))
+        {
+            let context = new MychScriptContext(macroPlayerId);
+            context.whisperback("Macro <strong>" + context.literal(macroName) + "</strong> will be run " + (macroPrivileged ? "<strong>privileged</strong>" : "unprivileged") + " at sandbox startup on your behalf.")
+        }
     }
 
     on("add:macro", function(macroObj)
@@ -180,7 +188,7 @@ on("chat:message", function(msg)
         player =
         {
             lastseen: undefined,
-            context: new MychScriptContext(),
+            context: new MychScriptContext(msg.playerid),
             script: undefined,
             globals: new MychProperties(MychScriptContext.globals),
             customizations: undefined,
@@ -190,7 +198,7 @@ on("chat:message", function(msg)
         MychScriptContext.players[msg.playerid] = player;
     }
 
-    let msgContext = new MychScriptContext();
+    let msgContext = new MychScriptContext(msg.playerid);
     let msgContextHasRolls = false;
 
     player.lastseen = new Date();
@@ -215,7 +223,6 @@ on("chat:message", function(msg)
     msgContext.selected = msg.selected ? msg.selected.map(entry => entry._id) : [];
 
     msgContext.sender = msg.who;
-    msgContext.playerid = msg.playerid;
     msgContext.privileged = playerPrivileged;
 
     if (msgContextHasRolls || msgContext.sender != player.context.sender || msgContext.privileged != player.context.privileged || String(msgContext.selected) != String(player.context.selected))
@@ -499,15 +506,22 @@ class MychScriptContext extends MychProperties
     static players = {};
     static impersonation = undefined;
 
+    version = MMM_VERSION;
+
+    constructor(playerid)
+    {
+        super();
+
+        this.playerid = playerid;
+        this.privileged = undefined;
+        this.sender = undefined;
+        this.selected = [];
+    }
+
     $isValidPropertyKey(key)
     {
         return super.$isValidPropertyKey(key) || /^\$\[\[\d+\]\]$/u.test(key);
     }
-
-    version = MMM_VERSION;
-    playerid = undefined;
-    sender = undefined;
-    selected = [];
 
     pi = Math.PI;
 
