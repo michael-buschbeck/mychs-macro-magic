@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.0.2 (2022-01-27)"
+!mmm   set scriptVersion = "initGameGlobals 1.0.3 (2022-01-28)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -91,7 +91,7 @@
 !mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
 !mmm   publish to game: m3mgdShapeMoji
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
-!mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
+!mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons, m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
 !mmm   publish to game: m3mgdSendDefenseChatButtons, m3mgdDefenseDataTable, m3mgdInjuryFX
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm   
