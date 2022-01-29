@@ -6,7 +6,7 @@
 !rem // count(list) counts the number of items in list
 !rem // 
 !mmm function count(list)
-!mmm   if not list
+!mmm   if isdefault(list)
 !mmm     return false
 !mmm   end if
 !mmm   set count = 0
