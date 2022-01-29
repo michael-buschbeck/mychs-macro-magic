@@ -82,16 +82,20 @@
 !mmm       if not isunknown(weaponProperties)
 !mmm         chat: *${weaponLabel}* als Standardwaffe erkannt.
 !mmm       else 
-!mmm         chat: *${weaponLabel}* **braucht ein Konfigskript.**
+!mmm         set configCallAttr = "m3mgd_configCall_" & weaponLabel
+!mmm         if isunknown(charID.(configCallAttr))
+!mmm           set payload = "!mmm script&#13;"
+!mmm           set payload = payload & "!mmm set configCall&#x3D;&#x22;?" & "{Ability für " & literal(weaponLabel) & "&#x7C;}&#x22;&#13;"
+!mmm           set payload = payload & "!mmm do setattr(&#x22;" & charID.character_id & "&#x22;, &#x22;" & literal(configCallAttr) & "&#x22;, configCall&#x29;&#13;"
+!mmm           set payload = payload & "!mmm end script&#13;"
+!mmm           chat: *${weaponLabel}* **braucht ein Konfigskript.** [**Verknüpfen**](${payload})
+!mmm         else
+!mmm           chat: *${weaponLabel}* **braucht ein Konfigskript, und hat wohl eins.** [**Testen**](${"~"}${charID.token_name}|${charID.(configCallAttr)})
+!mmm         end if
 !mmm         set configScriptsRequired = configScriptsRequired + 1
 !mmm       end if
 !mmm     
 !mmm     end for
-!mmm
-!mmm     chat: ------------
-!mmm     do m3mgdBuildWeaponSelectorChatMenu(charID, "defense")
-!mmm     do m3mgdBuildWeaponSelectorChatMenu(charID, "melee")
-!mmm     do m3mgdBuildWeaponSelectorChatMenu(charID, "ranged")
 !mmm
 !mmm     chat: ------------
 !mmm     chat: **${charID.character_name}** braucht **${configScriptsRequired} Konfigskripte.**

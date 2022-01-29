@@ -1179,6 +1179,12 @@
 !mmm       end if
 !mmm     end if
 !mmm
+!rem     // Overwrite scriptCommand if there is a custom config script registered in character sheet
+!mmm     set customCall = tokenID.("m3mgd_configCall_" & weaponLabel)
+!mmm     if not isunknown(customCall)
+!mmm       set scriptCommand = "&#x25;{" & tokenID.character_name & "|" & customCall & "}"
+!mmm     end if
+!mmm
 !mmm     set payload = "!mmm customize&#13;"
 !mmm     set payload = payload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
 !mmm     set payload = payload & "!mmm set cWeaponLabel&#x3D;&#x22;" & "&#x40;" & "{" & tokenID.character_name & "|" & weaponLabelAttr & "}" & "&#x22;&#13;"
@@ -1203,7 +1209,7 @@
 !mmm   set chatMenu = "&" & "{template:default} {{name=" & selectorPrompt & "}} " & chatMenu
 !rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
-!mmm   set sender = tokenID.character_name
+!mmm   set sender = tokenID.token_name
 !mmm   
 !mmm   chat: /w "${tokenID.character_name}" ${chatMenu}
 !mmm   
@@ -1216,7 +1222,7 @@
 !rem //   Whispers chat buttons to foeID's player to launch defense
 !rem //
 !mmm function m3mgdSendDefenseChatButtons(foeID)
-!mmm   set sender = script.sender
+!mmm   set sender = script.sender.token_name
 !mmm   chat: /w "${foeID.character_name}" ${"&"}{template:default} {{name=Abwehr mit Standardwaffe}} {{[**Abwehr offen**](~MacroSheet|defense)=[**Abwehr geheim**](~MacroSheet|npcDefense)}}
 !mmm end function
 !rem

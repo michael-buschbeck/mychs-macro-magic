@@ -1,10 +1,6 @@
 !rem // Midgard combat weapon selector script
-!mmm customize
-!rem   // cWeaponGroups: any combination (one or more) of "defense", "melee", "ranged"
-!mmm   set cWeaponGroups = "melee"
-!mmm end customize
 !mmm script
-!mmm   set scriptVersion = "v1.0.0-pre (2022-01-29)"
+!mmm   set scriptVersion = "v1.0.0 (2022-01-29)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
