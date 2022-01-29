@@ -28,10 +28,16 @@
 !mmm   set customizable cVerbose = true
 !mmm   set customizable cWeaponLabel = ""
 !rem
+!rem   // User input
+!rem   //  cSemiManualModifiers 
+!rem   //  
+!mmm   set customizable cSemiManualModifiers = 0
+!rem
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cHealthAttr          Override if character's/token's health is stored differently than usual
 !rem   //  cEnduranceAttr       Override if character's/token's endurance is stored differently than usual
 !rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
+!rem   //  cNoDefense           true/false: flag for defenseless attacks (surprises, ambushes etc.)
 !rem   //  cDefenseRoll         Override by player to see beautifully animated 3D dice
 !rem   //
 !mmm   if selected and sender.token_id ne selected
@@ -48,6 +54,7 @@
 !mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
 !mmm   set customizable cGMSilentMode = false
+!mmm   set customizable cNoDefense = false
 !mmm   set customizable cDefenseRoll = roll("1d20")
 !mmm
 !rem
@@ -84,6 +91,10 @@
 !mmm   if m3mgdExchange.(m3mgdAttrAttackWeaponType).max ne ""
 !mmm     set attackWeaponSpecialEffectScript = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
 !mmm   end if
+!rem   // Check for armor piercing projectiles
+!mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
+!mmm
+!mmm   set cNoDefense = (cNoDefense eq "true") or m3mgdIsDefenseless(cOwnID)
 !mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
@@ -101,110 +112,116 @@
 !rem   // Initialize modifier log to collect rule effects as applied by the script for user output
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
-!rem
-!rem   // Validate defense weapon and request manual entry if selection is missing
-!mmm   if cWeaponLabel eq ""
-!mmm     set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
-!mmm     if not defenseWeaponList
-!mmm       do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
-!mmm       exit script
-!mmm     else if count(defenseWeaponList) == 1
-!mmm       set cWeaponLabel = cOwnID.(defenseWeaponList)
-!mmm     else 
-!mmm       do m3mgdWeaponSelectorChatMenu(cOwnID, "defense")
-!mmm       exit script
-!mmm     end if
-!mmm   end if
-!rem
-!rem   // If user wants to use a parry weapon/shield, validate
-!mmm   set parryWeaponUsable = false
-!mmm   set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
-!mmm   if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
-!mmm     set parryWeaponUsable = true
-!mmm   else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
-!mmm     set parryWeaponUsable = true
-!mmm   else if (m3mgdParryStandardTypes where ... eq cWeaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackWeaponType)
-!mmm     set parryWeaponUsable = true
-!mmm   end if
-!rem   // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
-!mmm   if (cOwnID.(cEnduranceAttr).max > 0 and endurance > 0 and parryWeapon and parryWeaponUsable) or (cOwnID.(cEnduranceAttr).max == 0 and parryWeapon and parryWeaponUsable)
-!mmm     set effParryWeaponSkill = cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) + cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "WaffeAbwB"))
-!rem     // Endurance protection: reverse sign for more logical handling (modifier is stored as negative in character sheet)
-!mmm     set parryWeaponEnduranceProtection = -1 * cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
-!mmm     set effDefense = effDefense + effParryWeaponSkill
-!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW inkl. +" & effParryWeaponSkill & ", AP-Verlust (leichte Treffer) -" & parryWeaponEnduranceProtection & "}}"
-!mmm   else if parryWeapon and not parryWeaponUsable
-!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackWeaponType & "}}"
-!mmm   else if parryWeapon
-!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos: bin erschöpft (AP=0)}}"
-!mmm   end if
-!rem
-!rem   // Check for armor piercing projectiles
-!mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
 !mmm
-!rem   // Collect defense modifiers
-!mmm   set modifiers = 0
-!mmm   set autoModifiers = 0
-!rem   // 1. Defender exhausted or magically encumbered (runeBladeEarthBond)
-!mmm   if cOwnID.(cEnduranceAttr).max > 0 and endurance <= 0
-!mmm     set autoModifiers = autoModifiers - 4
-!mmm     set modifierLog = modifierLog & " {{Erschöpft=-4}} "
-!mmm     set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
-!mmm   end if
-!mmm   if cOwnID.(m3mgdEarthBondStatusMarker) eq "shown"
-!mmm     set autoModifiers = autoModifiers - 2
-!mmm     set modifierLog = modifierLog & " {{Erdfessel=-2}} "
-!mmm     set modifierTooltip = modifierTooltip & " Erdfessel&nbsp;&nbsp;&nbsp;-2 "
-!mmm   end if
-!rem   // 2. Dropdown prompt: Focused defense, surprise
-!mmm   set semiManualModifiers = "?{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0 | Konzentrierte Abwehr +4,+4 | Ich greife überstürzt an -2,-2 | Ich bin überrascht -4,-4 }"
-!mmm   if semiManualModifiers == 4
-!mmm     set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
-!mmm     set modifierTooltip = modifierTooltip & " Konzentrierte&nbsp;Abwehr&nbsp;&nbsp;&nbsp;+4 "
-!mmm   else if semiManualModifiers == -2
-!mmm     set modifierLog = modifierLog & " {{Überstürzter eigener Angriff=-2}} "
-!mmm     set modifierTooltip = modifierTooltip & " Überstürzter&nbsp;eigener&nbsp;Angriff&nbsp;&nbsp;&nbsp;-2 "
-!mmm   else if semiManualModifiers == -4
-!mmm     set modifierLog = modifierLog & " {{Überraschender Angriff=-4}} "
-!mmm     set modifierTooltip = modifierTooltip & " Überraschender&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
-!mmm   end if
-!rem   // Add manual modifiers from user input
-!mmm   set manualModifiers = "?{Weitere spezielle Abwehrmodifikatoren|0}"
-!mmm   set modifiers = modifiers + autoModifiers + semiManualModifiers + manualModifiers
-!mmm   if manualModifiers != 0
-!mmm     if manualModifiers > 0
-!mmm       set manualModifiers = "+" & (manualModifiers * 1)
-!mmm     end if
-!mmm     set modifierLog = modifierLog & " {{Manuelle Modifikatoren=" & manualModifiers & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " Manuelle&nbsp;Modifikatoren&nbsp;&nbsp;&nbsp;" & manualModifiers & " "
-!mmm   end if
-!mmm   if modifierLog eq ""
-!mmm     set modifierLog = " {{Boni/Mali=keine}} "
-!mmm     set modifierTooltip = " Boni/Mali&nbsp;&nbsp;&nbsp;keine "
-!mmm   end if
-!rem
-!rem   // Run & format rolls
-!rem
-!mmm   set defenseResult = cDefenseRoll + effDefense + modifiers
-!mmm   if modifiers == 0
-!mmm     set modifiers = "+/-0"
-!mmm   else if modifiers > 0
-!mmm     set modifiers = "+" & modifiers
-!mmm   end if
-!mmm   set defenseResultLog = defenseResult & " = (1d20:" & cDefenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
-!mmm   set modifiers = highlight(modifiers, "info")
-!mmm   if iscritical(cDefenseRoll)
-!mmm     set defenseResult = highlight(defenseResult, "good", defenseResultLog)
-!mmm   else if isfumble(cDefenseRoll)
-!mmm     set defenseResult = highlight(defenseResult, "bad", defenseResultLog)
+!mmm   if cNoDefense
+!mmm
+!mmm     set modifierLog = modifierLog & " {{Wehrlos=keine Abwehr möglich}} "
+!mmm
 !mmm   else
-!mmm     set defenseResult = highlight(defenseResult, "normal", defenseResultLog)
+!mmm
+!rem     // Not helpless, so let's prep for the big defense!
+!rem
+!rem     // Validate defense weapon and request manual entry if selection is missing
+!mmm     if cWeaponLabel eq ""
+!mmm       set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
+!mmm       if not defenseWeaponList
+!mmm         do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
+!mmm         exit script
+!mmm       else if count(defenseWeaponList) == 1
+!mmm         set cWeaponLabel = cOwnID.(defenseWeaponList)
+!mmm       else 
+!mmm         do m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)
+!mmm         exit script
+!mmm       end if
+!mmm     end if
+!rem
+!rem     // If user wants to use a parry weapon/shield, validate
+!mmm     set parryWeaponUsable = false
+!mmm     set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
+!mmm     if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
+!mmm       set parryWeaponUsable = true
+!mmm     else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
+!mmm       set parryWeaponUsable = true
+!mmm     else if (m3mgdParryStandardTypes where ... eq cWeaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackWeaponType)
+!mmm       set parryWeaponUsable = true
+!mmm     end if
+!rem     // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
+!mmm     if (cOwnID.(cEnduranceAttr).max > 0 and endurance > 0 and parryWeapon and parryWeaponUsable) or (cOwnID.(cEnduranceAttr).max == 0 and parryWeapon and parryWeaponUsable)
+!mmm       set effParryWeaponSkill = cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) + cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "WaffeAbwB"))
+!rem       // Endurance protection: reverse sign for more logical handling (modifier is stored as negative in character sheet)
+!mmm       set parryWeaponEnduranceProtection = -1 * cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
+!mmm       set effDefense = effDefense + effParryWeaponSkill
+!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW inkl. +" & effParryWeaponSkill & ", AP-Verlust (leichte Treffer) -" & parryWeaponEnduranceProtection & "}}"
+!mmm     else if parryWeapon and not parryWeaponUsable
+!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackWeaponType & "}}"
+!mmm     else if parryWeapon
+!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos: bin erschöpft (AP=0)}}"
+!mmm     end if
+!mmm
+!rem     // Collect defense modifiers
+!mmm     set modifiers = 0
+!mmm     set autoModifiers = 0
+!rem     // 1. Defender exhausted or magically encumbered (runeBladeEarthBond)
+!mmm     if cOwnID.(cEnduranceAttr).max > 0 and endurance <= 0
+!mmm       set autoModifiers = autoModifiers - 4
+!mmm       set modifierLog = modifierLog & " {{Erschöpft=-4}} "
+!mmm       set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
+!mmm     end if
+!mmm     if cOwnID.(m3mgdEarthBondStatusMarker) eq "shown"
+!mmm       set autoModifiers = autoModifiers - 2
+!mmm       set modifierLog = modifierLog & " {{Erdfessel=-2}} "
+!mmm       set modifierTooltip = modifierTooltip & " Erdfessel&nbsp;&nbsp;&nbsp;-2 "
+!mmm     end if
+!rem     // 2. Dropdown prompt: Focused defense, surprise (taken from prior user input customize block)
+!mmm     if cSemiManualModifiers == 4
+!mmm       set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
+!mmm       set modifierTooltip = modifierTooltip & " Konzentrierte&nbsp;Abwehr&nbsp;&nbsp;&nbsp;+4 "
+!mmm     else if cSemiManualModifiers == -2
+!mmm       set modifierLog = modifierLog & " {{Überstürzter eigener Angriff=-2}} "
+!mmm       set modifierTooltip = modifierTooltip & " Überstürzter&nbsp;eigener&nbsp;Angriff&nbsp;&nbsp;&nbsp;-2 "
+!mmm     else if cSemiManualModifiers == -4
+!mmm       set modifierLog = modifierLog & " {{Überraschender Angriff=-4}} "
+!mmm       set modifierTooltip = modifierTooltip & " Überraschender&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
+!mmm     end if
+!rem     // Sum up all the modifiers (taking manual modifiers from prior user input customize block)
+!mmm     set modifiers = modifiers + autoModifiers + cSemiManualModifiers + cManualModifiers
+!mmm     if cManualModifiers != 0
+!mmm       if cManualModifiers > 0
+!mmm         set cManualModifiers = "+" & (cManualModifiers * 1)
+!mmm       end if
+!mmm       set modifierLog = modifierLog & " {{Manuelle Modifikatoren=" & cManualModifiers & "}} "
+!mmm       set modifierTooltip = modifierTooltip & " Manuelle&nbsp;Modifikatoren&nbsp;&nbsp;&nbsp;" & cManualModifiers & " "
+!mmm     end if
+!mmm     if modifierLog eq ""
+!mmm       set modifierLog = " {{Boni/Mali=keine}} "
+!mmm       set modifierTooltip = " Boni/Mali&nbsp;&nbsp;&nbsp;keine "
+!mmm     end if
+!mmm
+!rem     // Run & format rolls
+!rem
+!mmm     set defenseResult = cDefenseRoll + effDefense + modifiers
+!mmm     if modifiers == 0
+!mmm       set modifiers = "+/-0"
+!mmm     else if modifiers > 0
+!mmm       set modifiers = "+" & modifiers
+!mmm     end if
+!mmm     set defenseResultLog = defenseResult & " = (1d20:" & cDefenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
+!mmm     set modifiers = highlight(modifiers, "info")
+!mmm     if iscritical(cDefenseRoll)
+!mmm       set defenseResult = highlight(defenseResult, "good", defenseResultLog)
+!mmm     else if isfumble(cDefenseRoll)
+!mmm       set defenseResult = highlight(defenseResult, "bad", defenseResultLog)
+!mmm     else
+!mmm       set defenseResult = highlight(defenseResult, "normal", defenseResultLog)
+!mmm     end if
+!mmm
 !mmm   end if
 !mmm
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
 !mmm
-!mmm   if (not criticalAttack and (defenseResult >= attackResult or iscritical(cDefenseRoll))) or (criticalAttack and iscritical(cDefenseRoll))
+!mmm   if not cNoDefense and ((not criticalAttack and (defenseResult >= attackResult or iscritical(cDefenseRoll))) or (criticalAttack and iscritical(cDefenseRoll)))
+!mmm
 !rem     // Defense successful
 !mmm     set defenseSuccess = true
 !mmm
@@ -219,7 +236,8 @@
 !mmm     end if
 !mmm
 !mmm   else 
-!rem     // Defense failed
+!mmm
+!rem     // Defense failed (or there was no defense)
 !mmm     set defenseSuccess = false
 !mmm
 !rem     // Defender loses full hit points worth of endurance regardless of armor, if not an undead creature with unlimited endurance
@@ -263,19 +281,19 @@
 !mmm   end if
 !rem
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
-!mmm   if (cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0)
+!mmm   if not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
 !mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackDamageRoll, m3mgdExchange.(m3mgdAttrAttackerID), cOwnID)
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": +" & xpGain & " EP}} "
-!mmm   else if cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
+!mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (∞ AP, abgewehrt) }} "
-!mmm   else if cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (Ziel erschöpft) }} "
+!mmm   else if cNoDefense or (cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0)
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (Ziel erschöpft/wehrlos) }} "
 !mmm   else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
 !mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (kein AP-Verlust) }} "
 !mmm   end if
 !mmm
 !rem   // Register practice point, if applicable
-!mmm   if parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)
+!mmm   if not cNoDefense and parryWeapon and parryWeaponUsable and iscritical(cDefenseRoll)
 !mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel)
 !mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
 !mmm     end if
@@ -300,9 +318,9 @@
 !mmm         end if
 !mmm       else
 !mmm         if criticalAttack
-!mmm           chat     [DefenseFailureCritDamage]: Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer **kritischer Treffer**.
+!mmm           chat     [DefenseFailureCritDamage]: Mich erwischt ein schwerer **kritischer Treffer**.
 !mmm         else 
-!mmm           chat     [DefenseFailureRegDamage]:  Ich winde mich, strecke mich, versuche mich zu wehren, aber es reicht einfach nicht: mich erwischt ein schwerer Treffer.
+!mmm           chat     [DefenseFailureRegDamage]:  Mich erwischt ein schwerer Treffer.
 !mmm         end if
 !mmm         if effHealthLoss > 0.33 * maxHealth
 !mmm           chat     [DefenseFailureHugeHit]:    AAAAAAARRG! Blut spritzt, Knochen brechen, solche Treffer halte ich nicht viele aus!

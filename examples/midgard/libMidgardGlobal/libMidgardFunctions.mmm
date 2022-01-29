@@ -706,12 +706,12 @@
 !mmm
 !mmm end function
 !rem
-!rem // m3mgdIsDefenseless(tokenID, [healthAttr], [enduranceAttr])
+!rem // m3mgdIsDefenseless(tokenID, [healthAttr])
 !rem //
-!rem // Returns true if tokenID is defenseless, either because of zero endurance or close to zero health.
-!rem // If healthAttr/enduranceAttr are not provided, they default to script.cHealthAttr/cEnduranceAttr.
+!rem // Returns true if tokenID is defenseless because of close to zero health.
+!rem // If healthAttr is not provided, the check defaults to script.cHealthAttr.
 !rem //
-!mmm function m3mgdIsDefenseless(tokenID, healthAttr, enduranceAttr)
+!mmm function m3mgdIsDefenseless(tokenID, healthAttr)
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return unknown
@@ -724,21 +724,11 @@
 !mmm       return unknown
 !mmm     end if
 !mmm   end if
-!mmm   if isdefault(enduranceAttr)
-!mmm     if script.cEnduranceAttr
-!mmm       set enduranceAttr = script.cEnduranceAttr
-!mmm     else
-!mmm       do whisperback("No endurance attribute provided as argument or at script level")
-!mmm       return unknown
-!mmm     end if
-!mmm   end if
-!mmm
-!mmm   if (not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3) or (not tokenID.(enduranceAttr).max == 0 and tokenID.(enduranceAttr) <= 0)
+!mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3
 !mmm     return true
 !mmm   else
 !mmm     return false
 !mmm   end if
-!mmm
 !mmm end function
 !rem
 !rem // m3mgdShapeMoji(tokenID, [healthAttr], [enduranceAttr])
@@ -933,7 +923,9 @@
 !rem //   Returns a list of tokenID's defense weapons (attribute names), or false if there are none or none accessible.
 !rem // 
 !mmm function m3mgdListDefenseWeapons(tokenID)
-!mmm   set defenseWeaponsList = findattr(tokenID, "Abwehr", "AbwWaffe")
+!mmm   for weaponsAttr in findattr(tokenID, "Abwehr", "AbwWaffe")
+!mmm     set defenseWeaponsList = defenseWeaponsList, weaponsAttr
+!mmm   end for
 !mmm   if isunknown(defenseWeaponsList) or isdenied(defenseWeaponsList)
 !mmm     return false
 !mmm   else 
@@ -1174,28 +1166,52 @@
 !mmm   end if
 !mmm
 !mmm   if weaponsGroup eq "defense" and isdefault(attackWeaponType)
-!mmm     set attackWeaponType = ""
+!mmm     do whisperback("m3mgdWeaponSelectorChatMenu(): called for defense weapons without attackWeaponType. Aborting.")
+!mmm     return false
 !mmm   end if
 !mmm   
 !mmm   if weaponsGroup eq "defense"
-!mmm     set weaponsList = m3mgdListDefenseWeapons(tokenID)
+!rem     // Will show "no-defense" option in any case; add defense options only if we don't already know that the token is a defenseless target
+!mmm     if not m3mgdIsDefenseless(tokenID)
+!mmm       set weaponsList = m3mgdListDefenseWeapons(tokenID)
+!mmm     end if
 !mmm     set selectorPrompt = "Auswahl: Abwehrwaffe"
+!mmm     if tokenID.PC
+!mmm       set scriptCommand = "&#x25;{MacroSheet|defense}"
+!mmm     else
+!mmm       set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Abwehr}"
+!mmm     end if
 !mmm   else if weaponsGroup eq "melee"
 !mmm     set weaponsList = m3mgdListMeleeAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Nahkampfwaffe"
+!mmm     if tokenID.PC
+!mmm       set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
+!mmm     else
+!mmm       set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Nahkampfangriff}"
+!mmm     end if
 !mmm   else if weaponsGroup eq "ranged"
 !mmm     set weaponsList = m3mgdListRangedAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Fernkampfwaffe"
-!mmm   end if
-!mmm   if not weaponsList
-!rem     // tokenID does not have any weapons (skills) in weaponsGroup
-!mmm     return false
-!mmm   end if
-!mmm
-!mmm   if isunknown(tokenID.PC)
-!mmm     set selectorPrompt = selectorPrompt & " (GM: 🤐)"
+!mmm     if tokenID.PC
+!mmm       set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
+!mmm     else
+!mmm       set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Fernkampfangriff}"
+!mmm     end if
 !mmm   end if
 !mmm   
+!mmm   if isunknown(tokenID.PC)
+!mmm     set selectorPrompt = selectorPrompt & " (🤐) "
+!mmm   end if
+!mmm
+!mmm   if weaponsGroup eq "defense"
+!mmm     set noDefensePayload = "!mmm customize&#13;"
+!mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
+!mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
+!mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
+!mmm     set noDefensePayload = noDefensePayload & "&#x25;{MacroSheet|defenseMain}"
+!mmm     set selectorPrompt = selectorPrompt & " [Wehrlos](" & noDefensePayload & ") "
+!mmm   end if
+!mmm
 !mmm   set chatMenu = ""
 !mmm   set itemCounter = 0
 !mmm
@@ -1204,7 +1220,7 @@
 !mmm     set weaponLabel = tokenID.(weaponLabelAttr)
 !mmm     
 !mmm     if weaponsGroup eq "defense"
-!mmm     
+!mmm       
 !mmm       set weaponType = m3mgdDefenseWeaponType(weaponLabel)
 !mmm     
 !rem       // Check if weaponType may not help against attackWeaponType 
@@ -1220,37 +1236,22 @@
 !mmm           set weaponUsable = true
 !mmm         end if
 !mmm       end if
-!mmm       if tokenID.PC
-!mmm         set scriptCommand = "&#x25;{MacroSheet|defense}"
-!mmm       else
-!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Abwehr}"
-!mmm       end if
-!mmm     
+!mmm       
 !mmm     else if weaponsGroup eq "melee"
 !mmm     
 !mmm       set weaponType = m3mgdMeleeWeaponType(weaponLabel)
 !mmm       set weaponUsable = true
-!mmm       if tokenID.PC
-!mmm         set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
-!mmm       else
-!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Nahkampfangriff}"
-!mmm       end if
 !mmm     
 !mmm     else if weaponsGroup eq "ranged"
 !mmm     
 !mmm       set weaponProps = m3mgdRangedWeaponProperties(weaponLabel)
 !mmm       set weaponType = weaponProps[0]
 !mmm       set weaponUsable = true
-!mmm       if tokenID.PC
-!mmm         set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
-!mmm       else
-!mmm         set scriptCommand = "&#x25;{GM_NPC_Makros|NPC_Fernkampfangriff}"
-!mmm       end if
 !mmm     
 !mmm     end if
 !mmm
 !mmm     if weaponUsable
-!mmm
+!mmm       
 !rem       // Overwrite scriptCommand if there is a custom config script registered in character sheet
 !mmm       set customCall = tokenID.("m3mgd_configCall_" & weaponLabel)
 !mmm       if not isunknown(customCall)
@@ -1261,6 +1262,7 @@
 !mmm       set payload = payload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
 !mmm       set payload = payload & "!mmm set cWeaponLabel&#x3D;&#x22;" & "&#x40;" & "{" & tokenID.character_name & "|" & weaponLabelAttr & "}" & "&#x22;&#13;"
 !mmm       set payload = payload & "!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;"
+!mmm       set payload = payload & "!mmm set cNoDefense&#x3D;&#x22;false&#x22;&#13;"
 !mmm       set payload = payload & "!mmm end customize&#13;"
 !mmm       set payload = payload & scriptCommand
 !mmm     
@@ -1443,7 +1445,9 @@
 !mmm
 !mmm     chat: ${"&"}{template:default} 
 !mmm
-!mmm     if script.m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
+!mmm     if script.cNoDefense
+!mmm       chat: {{name=${shapeMoji}${script.cOwnID.name}: Keine Abwehr (wehrlos) }}
+!mmm     else if script.m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
 !mmm       chat: {{name=${shapeMoji}${script.cOwnID.name}: Abwehr gegen ${script.m3mgdExchange.(m3mgdAttrAttackType).max} }}
 !mmm     else if script.cWeaponLabel eq "Abwehr ohne Schild"
 !mmm       chat: {{name=${shapeMoji}${script.cOwnID.name}: Abwehr ohne Schild }}
@@ -1462,11 +1466,11 @@
 !mmm     end if
 !mmm
 !mmm     if script.defenseSuccess
-!mmm       chat: {{Abwehr=${script.defenseResult} **Leichter Treffer**}}
+!mmm       chat: {{Ergebnis=${script.defenseResult} **Leichter Treffer**}}
 !mmm     else if script.criticalAttack == true
-!mmm       chat: {{Abwehr=${script.defenseResult} **Schwerer kritischer Treffer**}}
+!mmm       chat: {{Ergebnis=${script.defenseResult} **Schwerer kritischer Treffer**}}
 !mmm     else 
-!mmm       chat: {{Abwehr=${script.defenseResult} **Schwerer Treffer**}}
+!mmm       chat: {{Ergebnis=${script.defenseResult} **Schwerer Treffer**}}
 !mmm     end if
 !mmm
 !mmm     if script.defenseSuccess and effEnduranceLoss > 0
