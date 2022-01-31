@@ -1,0 +1,28 @@
+!rem // Dieses Skript gilt für ALLE NPC-Fernkampfangriffe.
+!rem // Es sorgt dafür, dass das Fernkampfskript die richtigen
+!rem // Tokens & Attribute benutzt, und keine Geheimnisse
+!rem // ausplaudert.
+!mmm customize
+!mmm    if selected
+!mmm      set cOwnID = selected.token_id
+!mmm    end if
+!mmm    set cGMSilentMode = true
+!mmm    set customizable cHealthAttr = "bar3"
+!mmm    set customizable cEnduranceAttr = "bar2"
+!mmm    translate [OutOfAmmo]:                  Keine Munition mehr.
+!mmm    translate [OutsideFieldOfVision]: 	    ... $[targetName] ist außerhalb meines Blickfeldes ($[viewAngle]°). Schade.
+!mmm    translate [OutsideStrikeDistance]: 	    ... $[targetName] ist zu weit entfernt für mein $[weaponLabel] ($[maxRange]). Schade.
+!mmm    translate [AttackOpening]: 		        Sssssssst: Ein $[ammoLabel] rast durch die Luft in Richtung $[targetName] in $[range]
+!mmm    translate [AttackOpeningMagicDamage]: 	Sssssssst: Ein $[ammoLabel] rast durch die Luft in Richtung $[targetName] in $[range]
+!mmm    translate [AttackIsCriticalSuccess]: 	und **trifft kritisch**.
+!mmm    translate [AttackIsCriticalFailure]: 	und wird ein **grausamer Patzer**. Hab ich mir vielleicht auch noch wehgetan?
+!mmm    translate [AttackSucceedsWell]: 	    und scheint solide im Ziel zu landen.
+!mmm    translate [AttackSucceedsBarely]: 	    und trudelt gerade so im Zielgebiet ein.
+!mmm    translate [AttackFailsBarely]: 		    und verfehlt das Ziel knapp.
+!mmm    translate [AttackFailsClearly]: 	    und verfehlt das Ziel. 
+!mmm    translate [AttackSuccessSharpshooting]: Der wird wehtun: die vielen, vielen Stunden mit der Zielscheibe haben sich mal wieder ausgezahlt.
+!mmm    translate [AttackSuccessClosing]: 	    Vorsicht, $[targetName]: das könnte wehtun, wenn deine Abwehr schiefgeht!
+!mmm    translate [AttackSuccessClosingMagic]: 	Vorsicht, $[targetName]: das könnte wehtun, wenn deine Abwehr schiefgeht!
+!mmm    translate [AttackFailureClosing]: 	    $[targetName] grinst vielleicht ein kleines bisschen: so wirklich gefährlich war das nicht.
+!mmm end customize
+%{MacroSheet|rangedAttackMain}

@@ -1,0 +1,8 @@
+!mmm customize
+!mmm   if selected
+!mmm     set cOwnID = selected.token_id
+!mmm   end if
+!rem   // cWeaponGroups: any combination (one or more) of "defense", "melee", "ranged"
+!mmm   set cWeaponGroups = "melee", "ranged"
+!mmm end customize
+%{MacroSheet|weaponSelector}

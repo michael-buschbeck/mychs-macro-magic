@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.14.0 (2022-01-27)"
+!mmm   set scriptVersion = "1.15.0-pre (2022-01-29)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -36,14 +36,14 @@
 !rem   //  cFoeNameDefault      Output label for targets without names
 !rem   //
 !mmm   set customizable cVerbose = true
-!mmm   set customizable cWeaponLabel = "Bogen"
+!mmm   set customizable cWeaponLabel = default
 !mmm   set customizable cWeaponName = ""
-!mmm   set customizable cWeaponType = "Bogen"
-!mmm   set customizable cRangeUpperBoundClose = 30
-!mmm   set customizable cRangeUpperBoundMid = 100
-!mmm   set customizable cRangeUpperBoundFar = 180
+!mmm   set customizable cWeaponType = default
+!mmm   set customizable cRangeUpperBoundClose = default
+!mmm   set customizable cRangeUpperBoundMid = default
+!mmm   set customizable cRangeUpperBoundFar = default
 !mmm   set customizable cWeaponMagicSkillBonus = ""
-!mmm   set customizable cAmmoLabel = "Pfeile"
+!mmm   set customizable cAmmoLabel = default
 !mmm   set customizable cAmmoWarnThreshold = 0.25
 !mmm   set customizable cAmmoMagic = false
 !mmm   set customizable cAmmoMagicLabel = ""
@@ -71,8 +71,8 @@
 !mmm   end if
 !rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
-!mmm   if cOwnID ne sender
-!mmm     set sender = cOwnID
+!mmm   if cOwnID.token_name ne sender
+!mmm     set sender = cOwnID.token_name
 !mmm   end if
 !rem
 !rem   // Init
@@ -84,6 +84,45 @@
 !mmm   set emojiKnife = "🔪"
 !mmm
 !mmm   set whirlWindMagicMarker = "status_half_haze"
+!mmm
+!rem   // - Validate attack weapon and request manual entry if selection is missing
+!mmm
+!mmm   if cWeaponLabel eq "" or not cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
+!mmm     set weaponsList = m3mgdListRangedAttackWeapons(cOwnID)
+!mmm     if not weaponsList
+!mmm       do whisperback(cOwnID.name & " hat keine Fernkampfwaffen bzw. -fähigkeiten.")
+!mmm       exit script
+!mmm     else if count(weaponsList) == 1
+!mmm       set cWeaponLabel = cOwnID.(weaponsList)
+!mmm     else if cWeaponLabel ne ""
+!mmm       do whisperback("Fehler: " & cOwnID.name & " hat keine Fernkampfwaffe " & cWeaponLabel & ".")
+!mmm       exit script
+!mmm     else 
+!mmm       do m3mgdWeaponSelectorChatMenu(cOwnID, "ranged")
+!mmm       exit script
+!mmm     end if
+!mmm   end if
+!mmm
+!rem   // - Pull missing weapon properties for chosen attack weapon (works only for standard weapons)
+!mmm
+!mmm   set weaponProperties = m3mgdRangedWeaponProperties(cWeaponLabel)
+!mmm   if not isunknown(weaponProperties)
+!mmm     if isdefault(cWeaponType)
+!mmm       set cWeaponType = weaponProperties[0]
+!mmm     end if
+!mmm     if isdefault(cRangeUpperBoundClose)
+!mmm       set cRangeUpperBoundClose = weaponProperties[1]
+!mmm     end if
+!mmm     if isdefault(cRangeUpperBoundMid)
+!mmm       set cRangeUpperBoundMid = weaponProperties[2]
+!mmm     end if
+!mmm     if isdefault(cRangeUpperBoundFar)
+!mmm       set cRangeUpperBoundFar = weaponProperties[3]
+!mmm     end if
+!mmm     if isdefault(cAmmoLabel)
+!mmm       set cAmmoLabel = weaponProperties[4]
+!mmm     end if
+!mmm   end if
 !mmm
 !rem   // - Fetch character (attacker) data
 !rem
@@ -127,7 +166,7 @@
 !mmm   if cAmmoMagic
 !mmm     set magicAmmoCount = cOwnID.(cAmmoMagicLabel)
 !mmm     if isunknown(magicAmmoCount)
-!mmm       do whisperback("Abbruch: " & cOwnID.name & " fehlt ein Attribut für die magische Munition " & cAmmoMagicLabel & ".")
+!mmm       do whisperback("Abbruch: " & cOwnID.character_name & " fehlt ein Attribut für die magische Munition " & cAmmoMagicLabel & ".")
 !mmm       exit script
 !mmm     end if
 !mmm     set ammoCount = magicAmmoCount
@@ -483,7 +522,7 @@
 !mmm   end if
 !mmm
 !mmm   if attackResult >= 20
-!mmm     do m3mgdSendDefenseChatButtons(foeID)
+!mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense", cWeaponType)
 !mmm   end if
 !mmm
 !mmm end script

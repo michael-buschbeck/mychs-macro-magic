@@ -2,5 +2,7 @@
 !mmm customize
 &{template:none} [[1d20]] {{}}
 !mmm   set cDefenseRoll = $[[0]]
+!mmm   set cSemiManualModifiers = "?{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0 | Konzentrierte Abwehr +4,+4 | Ich greife überstürzt an -2,-2 | Ich bin überrascht -4,-4 }"
+!mmm   set cManualModifiers = "?{Weitere spezielle Abwehrmodifikatoren|0}"
 !mmm end customize
 %{MacroSheet|defenseMain}

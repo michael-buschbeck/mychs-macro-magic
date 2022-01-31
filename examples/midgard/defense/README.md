@@ -1,43 +1,49 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.13.0 vom 2022-01-27,** erfordert MMM 1.26.0+.
+Aktuelle Version: **1.14.0 vom 2022-01-27,** erfordert MMM 1.26.0+.
 
-Das MMM-basierte Midgard-Abwehrskript führt die Abwehr von Angriffen durch, deren Daten automatisch von den Angriffsskripten übernommen werden oder, falls nicht auffindbar, manuell eingegeben werden müssen. Die üblichen Regeln werden automatisch angewendet. Optional lassen sich in einem kurzen Konfigurationsskript die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. Hier kann auch der Zugriff auf AP- und LP-Attribute für generische NPCs (die nur als Tokens individuell sind) angepasst werden. Gewonnene Praxispunkte für Schilde oder Parierwaffen werden ggf. automatisch im Charakterbogen gespeichert.
+Das MMM-Abwehrskript wickelt die Abwehr eines Angriffs ab. Es erhält die Angriffsdaten automatisch; wenn sie fehlen, wird der Spieler zur Eingabe aufgefordert. Die üblichen Regeln werden automatisch angewendet. Optional lassen sich in einem kurzen [Konfigskript](#konfigskript) die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. 
+
+Die Folgen für Ausdauer und Gesundheit werden direkt umgesetzt und im Chat dokumentiert. Für generische NPCs werden automatisch die Token-Balken benutzt. Gewonnene Praxispunkte für Schilde oder Parierwaffen werden ggf. automatisch im Charakterbogen gespeichert.
 
 ### Inhalt
 
-- [Features & Anwendung](#features--anwendung)
+- [Konfigskript](#konfigskript)
 - [Todo-Liste](#todo-liste)
-- [Beispiel-Konfiguration](#beispiel-konfiguration)
 - [What's new?](#changelog)
 
 
-## Features & Anwendung
+## Konfigskript
 
-Das Skript liest entweder die Daten eines aktuellen Angriffs auf den Bezugstoken automatisch ein oder gibt einen Prompt aus, der den Benutzer zum Skript `defenseDataEntry` schickt, um alle wichtigen [Daten über den Angriff](#datenabfragen) zu erhalten. Daraus berechnet und erwürfelt das Skript die Ergebnisse des Abwehrversuchs und gibt sie aus. Ein Aufruf muss sich auf genau eine Abwehrtechnik (Standardwaffe/waffenlos/eine bestimmte Abwehrwaffe) beziehen. All diese Optionen können per [Konfigskripts](#konfig-skript-optional) gesetzt werden, das Abwehrskript funktioniert aber auch ohne Konfigskript und wendet dann die Standardabwehrtechnik des Charakterbogens an.
+Ein MMM-Konfigskript hat grundsätzlich die Form
 
-### Konfig-Skript (optional)
+```javascript
+!mmm customize
+!mmm   set myParameter = "value"
+!mmm end customize
+call_to_script
+```
 
-#### Unterschiedliche Abwehrwaffen
+### Unterschiedliche Abwehrwaffen
 
-Wer nicht nur "Abwehr ohne Schild" kann und mehr als eine Abwehrfertigkeit nutzt, muss das Konfigskript benutzen und zumindest die Zeile `!mmm set cWeaponLabel = "Kleiner Schild"` mit dem Namen der benutzten Abwehrwaffe aus dem Abwehrblock des Kampfblatts setzen. Hierdurch erhält das Skript Zugriff auf die nötigen Fähigkeitswerte und Schadensmodifikatoren. Wer unterschiedliche Abwehrwaffen/Schilde nutzt, muss mehrere Konfigskripte anlegen und jeweils das gewünschte aufrufen (z.B. per Chatmenü, wie rechts im Screenshot oben abgebildet). Findet das Skript nur eine Abwehrfertigkeit, wird diese genutzt. Gibt es mehrere, von denen eine "Abwehr ohne Schild" heißt, wird diese genutzt. Vorgaben per Konfigskript haben aber natürlich Priorität.
+Wer nicht nur "Abwehr ohne Schild" kann und mehr als eine Abwehrfertigkeit nutzt, erhält von den Angriffsskripten automatisch ein Menü im Chat, das alle **für den Typ der Angriffswaffe anwendbaren (!)** Abwehroptionen zur Auswahl anbietet. Hier wird z.B. ein Parierdolch aussortiert, wenn der Angriff mit einer Fernkampfwaffe oder einer Streitaxt erfolgt. Standard-Abwehrwaffen werden automatisch erkannt und verarbeitet.
 
-Unterschiedliche Rüstungen werden demgegenüber so behandelt, wie im Charakterblatt: es zählt die Rüstung, die gerade als "getragen" markiert ist.
+Besondere Abwehrwaffen können bei gleichem Namen andere Werte haben als üblich. Vollkommen neue Abwehrwaffen müssten im Verhältnis zu den Angriffswaffen, gegen die sie verwendbar sind, in den spielglobalen Variablen in `initGameGlobals` ergänzt werden, um als gültig erkannt zur werden.
 
-#### Unterschiedliche Charaktere/NPCs
+Unterschiedliche Rüstungen werden so behandelt wie im Charakterblatt: es zählt die Rüstung, die gerade als "getragen" markiert ist.
 
-Wer das Skript z.B. als Spielleiter nicht immer für den Charakter aufruft, der als Absender im Chatfenster steht, kann das jeweilige Bezugstoken anklicken; erkennt das Skript ein ausgewähltes Token, dann nutzt es dieses als Bezug. Für Spieler bietet sich demgegenüber an, pro Charakter das Konfigskript jeweils als Ability anzulegen und darin `!mmm set cOwnID = "@{character_id}"` zu setzen. Damit wird der Bezugscharakter jeweils fest gesetzt, egal wer gerade im Chat als Absender steht und welches Token angeklickt ist.
+### Unterschiedliche Charaktere/NPCs
 
-#### Geschichtenerzählerausgabe
+Das Skript operiert immer für den aktuell angeklickten Token; wenn kein Token angeklickt ist, für den Akteur, der im Chat-Dropdown steht oder der zuletzt angegriffen wurde (wenn der ausführende Spieler auf dieses Token Zugriff hat). Wer davon unabhängig sein will, definiert ein Konfigskript und setzt dort `!mmm set cOwnID = "@{character_id}"`. 
+
+### Geschichtenerzählerausgabe
 
 `cVerbose = [true|false]` schaltet die Geschichtenerzählerausgabe an/ab. Nur wer `cVerbose = true` setzt, braucht sich über die `!mmm translate [...]: ...`-Zeilen Gedanken zu machen.
 
-Die letzte Zeile ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein (entweder beim Charakter oder beim GM).
+Die letzte Zeile ruft das eigentliche Skript auf, das muss dann unter dem hier genannten Namen angelegt sein.
 
-![Screenshot](mmm-defense-1.1-mit-chatmenue.png)
-![Screenshot](mmm-defense-1.1-plattenruestung-neu.png)
 
-### Datenabfragen
+## Datenabfragen
 
 Das Skript bekommt die Eckdaten das Angriffs intern übergeben und fragt nur noch Abwehrmodifikatoren ab:
 - *Standard-Abwehrmodifikatoren:*
@@ -47,25 +53,17 @@ Das Skript bekommt die Eckdaten das Angriffs intern übergeben und fragt nur noc
   - *Ich bin überrascht -4*
 - *Weitere spezielle Abwehrmodifikatoren:* Zahlenwert, nach Bedarf.
 
+
 ## Todo-Liste
 
-- Sobald MMM Zugriff und Verarbeitung von Tabellen erlaubt, könnte das Skript alle verfügbaren Abwehrwaffen und Schilde zur Auswahl anbieten.
-- Es gibt noch zwei Sonderfälle für [Abwehrmodifikatoren](https://midgard.alienn.net/doku.php?id=abwehr_nahkampf_boni_und_malusse), die -- samt der dann notwendigen Verschachtelung unterschiedlicher Kombinationen -- noch nicht eingebaut sind (schwere Beinverletzung und vollständige Dunkelheit).
+- Es gibt noch zwei Sonderfälle für [Abwehrmodifikatoren](https://midgard.alienn.net/doku.php?id=abwehr_nahkampf_boni_und_malusse), die -- samt der dann notwendigen Verschachtelung unterschiedlicher Kombinationen -- nicht eingebaut sind (schwere Beinverletzung und vollständige Dunkelheit).
 
-## Beispiel-Konfiguration
-
-Beispiel für einen Parierdolch, ohne die Erzählerei zu verändern (Voraussetzung ist, dass das Hauptskript als Makro `defend` angelegt ist, bzw. der Name des Makros in der letzten Zeile angepasst wird -- Aufruf mit # für Makros, % für Abilities):
-
-```javascript
-!mmm customize
-!mmm    set cVerbose = true
-!mmm    set cWeaponLabel = "Parierdolch"
-!mmm    set cOwnID = "@{token_id}"
-!mmm end customize
-#defense
-```
 
 ## Changelog
+
+1.14.0 2022-01-29
+
+- Waffenauswahl und die Eigenschaften von Standardwaffen integriert
 
 1.13.0 2022-01-27
 
