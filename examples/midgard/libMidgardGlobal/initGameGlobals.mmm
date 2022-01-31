@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.1.0 (2022-01-29)"
+!mmm   set scriptVersion = "initGameGlobals 1.1.0-pre (2022-01-31)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -93,6 +93,9 @@
 !mmm   publish to game: m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker
 !mmm   publish to game: m3mgdAttrXP, m3mgdAttrXPLog
 !mmm   
+!mmm   set cssTableHeaderButton = "\" style=\"border:1px solid #FFFFFF;float:right; background-color:#ce0f69;margin:0px 0px 0px 8px;padding:3px;font-style:normal;font-size:12px;line-height:12px;vertical-align:sub; color:#FFFFFF;text-decoration:none;text-transform:uppercase"
+!mmm   publish to game: cssTableHeaderButton
+!mmm
 %{MacroSheetLibrary|libMidgardFunctions}
 !mmm   
 !mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute, m3mgdValidateAttackData, m3mgdFlushExchange
@@ -112,6 +115,6 @@
 !mmm   publish to game: count
 !mmm   
 !mmm   set sender = "MacroSheetLibrary"
-!mmm   chat: /me (${scriptVersion}) loaded.
+!mmm   chat: /me loaded: ${scriptVersion}
 !mmm   
 !mmm end script

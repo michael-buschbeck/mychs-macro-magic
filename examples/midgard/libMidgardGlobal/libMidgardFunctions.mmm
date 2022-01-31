@@ -1209,7 +1209,7 @@
 !mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "&#x25;{MacroSheet|defenseMain}"
-!mmm     set selectorPrompt = selectorPrompt & " [Wehrlos](" & noDefensePayload & ") "
+!mmm     set selectorPrompt = selectorPrompt & " [Wehrlos](" & noDefensePayload & cssTableHeaderButton & ") "
 !mmm   end if
 !mmm
 !mmm   set chatMenu = ""

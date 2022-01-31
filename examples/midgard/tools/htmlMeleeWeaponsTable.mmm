@@ -1,0 +1,56 @@
+!mmm script
+!mmm   
+!mmm   if selected
+!mmm     set tokenID = selected.token_id
+!mmm   else
+!mmm     set tokenID = sender.token_id
+!mmm   end if
+!mmm   
+!mmm   set chatMenu = ""
+!mmm   set itemCounter = 0
+!mmm   
+!mmm   set htmlTableOpen = "<" & "table style=\"background-color:#ffffff;\">"
+!mmm   set htmlTableClose = "<" & "/table>"
+!mmm   set htmlCaptionOpen = "<" & "caption style=\"border:1px solid #ffffff; display: table-caption; background-color:#702082; margin:0px; padding:5px; font-style:bold; font-size:15px; color:#FFFFFF;\">"
+!mmm   set htmlCaptionClose = "<" & "/caption>"
+!mmm   set htmlTROpen = "<" & "tr>"
+!mmm   set htmlTRClose = "<" & "/tr>"
+!mmm   set htmlTDOpen = "<" & "td>"
+!mmm   set htmlTDClose = "<" & "/td>"
+!mmm   
+!mmm   set selectorPrompt = "Auswahl: Nahkampfwaffen"
+!mmm   for weaponLabelAttr in m3mgdListMeleeAttackWeapons(tokenID)
+!mmm     
+!mmm     set weaponLabel = tokenID.(weaponLabelAttr)
+!mmm     set weaponType = m3mgdMeleeWeaponType(weaponLabel)
+!mmm     
+!mmm       set payload = "!mmm customize&#13;"
+!mmm       set payload = payload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
+!mmm       set payload = payload & "!mmm set cWeaponLabel&#x3D;&#x22;" & "&#x40;" & "{" & tokenID.character_name & "|" & weaponLabelAttr & "}" & "&#x22;&#13;"
+!mmm       set payload = payload & "!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;"
+!mmm       set payload = payload & "!mmm set cNoDefense&#x3D;&#x22;false&#x22;&#13;"
+!mmm       set payload = payload & "!mmm end customize&#13;"
+!mmm       set payload = payload & "&#x25;{MacroSheet|meleeAttack}"
+!mmm     
+!mmm       if itemCounter % 2 == 0
+!mmm         set chatMenu = chatMenu & htmlTROpen & htmlTDOpen & "[" & weaponLabel & "](" & payload & ")" & htmlTDClose
+!mmm       else
+!mmm         set chatMenu = chatMenu & htmlTDOpen & "[" & weaponLabel & "](" & payload & ")" & htmlTDClose & htmlTRClose
+!mmm       end if
+!mmm       set itemCounter = itemCounter + 1
+!mmm
+!mmm   end for
+!mmm
+!mmm   if itemCounter % 2 != 0
+!mmm     set chatMenu = chatMenu & htmlCloseTR
+!mmm   else if itemCounter == 0
+!mmm     set chatMenu = chatMenu & "{{(keine)}}"
+!mmm   end if
+!mmm   set chatMenu = htmlTableOpen & htmlCaptionOpen & selectorPrompt & htmlCaptionClose & chatMenu
+!rem
+!rem   // Override chat sender for characters unconnected to the player (usually NPCs)
+!mmm   set sender = tokenID.token_name
+!mmm   
+!mmm   chat: /w "${tokenID.character_name}" ${chatMenu}
+!mmm   
+!mmm end script
