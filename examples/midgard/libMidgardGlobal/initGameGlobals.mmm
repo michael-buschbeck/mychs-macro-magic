@@ -42,6 +42,7 @@
 !mmm         exit script
 !mmm       end if 
 !mmm     end if
+!mmm     chat: ${charName} is player char: ${(charName.PC eq "1")}
 !mmm   end for
 !mmm   publish to game: m3mgdPlayerCharacters
 !mmm   
