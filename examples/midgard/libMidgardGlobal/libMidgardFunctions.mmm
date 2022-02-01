@@ -146,8 +146,6 @@
 !mmm   
 !mmm   if isdefault(ceilingValue)
 !mmm     set ceilingValue = tokenID.(attrLabel)
-!mmm   else if ceilingValue > tokenID.(attrLabel)
-!mmm     return tokenID.(attrLabel)
 !mmm   end if
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
