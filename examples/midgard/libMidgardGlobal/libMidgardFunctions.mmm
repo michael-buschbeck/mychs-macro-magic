@@ -976,7 +976,7 @@
 !mmm 
 !mmm   set weaponType = unknown
 !mmm   
-!mmm   if ("Buckler", "großer Schild", "kleiner Schild") where ... eq weaponLabel
+!mmm   if ("Buckler", "großer Schild", "Großer Schild", "kleiner Schild", "Kleiner Schild") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "Schild"
 !mmm   
@@ -1003,7 +1003,7 @@
 !mmm 
 !mmm   set weaponType = unknown
 !mmm   
-!mmm   if ("Handaxt", "Keule", "Kriegshammer", "Schlachtbeil", "Steinhammer", "Streitaxt", "Streitkolben") where ... eq weaponLabel
+!mmm   if ("Handaxt", "Keule", "Kriegshammer", "Schlachtbeil einhändig", "Steinhammer", "Streitaxt", "Streitkolben") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "Einhandschlagwaffe"
 !mmm   
@@ -1035,7 +1035,7 @@
 !mmm   
 !mmm     set weaponType = "Zauberstab"
 !mmm   
-!mmm   else if ("Barbarenstreitaxt", "Gleffe", "Hellebarde", "Ogerhammer", "Schlachtbeil", "Stabkeule", "Stielhammer") where ... eq weaponLabel
+!mmm   else if ("Barbarenstreitaxt", "Gleffe", "Hellebarde", "Ogerhammer", "Schlachtbeil zweihändig", "Stabkeule", "Stielhammer") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "Zweihandschlagwaffe"
 !mmm   
