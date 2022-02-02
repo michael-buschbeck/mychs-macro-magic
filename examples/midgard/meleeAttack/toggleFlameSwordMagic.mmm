@@ -1,6 +1,6 @@
 !rem // Magische Runenklinge "Feuer" (Langschwert)
 !rem // Aktivierungs- und Deaktivierungsskript für Midgard und MMM
-!rem // v1.3 2022-01-14 phr
+!rem // v1.4.0 2022-02-02 phr
 !mmm script
 !rem   // Config (overwrite in a customize block called immediately before this script)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
