@@ -866,14 +866,13 @@
 !rem
 !rem // m3mgdExchangeStoreHealthBoost(healthGain, targetID)
 !rem //
+!rem //   Allows for positive AND negative values of healthGain, since critical failures of First Aid etc. result in damage.
+!rem //
 !mmm function m3mgdExchangeStoreHealthBoost(healthGain, targetID)
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm
-!mmm   if healthGain <= 0
-!mmm     do whisperback("Storing health gain <=0 makes no sense.")
-!mmm     return false
-!mmm   else if isdefault(targetID) and script.cOwnID ne ""
+!mmm   if isdefault(targetID) and script.cOwnID ne ""
 !mmm     set targetID = script.cOwnID
 !mmm   else if isdefault(targetID)
 !mmm     set targetID = sender.token_id
@@ -892,14 +891,13 @@
 !rem
 !rem // m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
 !rem //
+!rem //   Allows for positive AND negative values of enduranceGain, since critical failures of First Aid etc. result in damage.
+!rem //
 !mmm function m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm
-!mmm   if enduranceGain <= 0
-!mmm     do whisperback("Storing endurance gain <=0 makes no sense.")
-!mmm     return false
-!mmm   else if isdefault(targetID) and script.cOwnID ne ""
+!mmm   if isdefault(targetID) and script.cOwnID ne ""
 !mmm     set targetID = script.cOwnID
 !mmm   else if isdefault(targetID)
 !mmm     set targetID = sender.token_id
