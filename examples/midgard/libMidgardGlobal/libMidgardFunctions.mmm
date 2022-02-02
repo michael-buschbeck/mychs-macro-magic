@@ -1248,10 +1248,11 @@
 !mmm
 !mmm     if weaponUsable
 !mmm       
-!rem       // Overwrite scriptCommand if there is a custom config script registered in character sheet
+!mmm       set weaponScriptCommand = scriptCommand
+!rem       // Overwrite weaponScriptCommand if there is a custom config script registered in character sheet
 !mmm       set customCall = tokenID.("m3mgd_configCall_" & weaponLabel)
 !mmm       if not isunknown(customCall)
-!mmm         set scriptCommand = "&#x25;{" & tokenID.character_name & "|" & customCall & "}"
+!mmm         set weaponScriptCommand = "&#x25;{" & tokenID.character_name & "|" & customCall & "}"
 !mmm       end if
 !mmm
 !mmm       set payload = "!mmm customize&#13;"
@@ -1260,7 +1261,7 @@
 !mmm       set payload = payload & "!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;"
 !mmm       set payload = payload & "!mmm set cNoDefense&#x3D;&#x22;false&#x22;&#13;"
 !mmm       set payload = payload & "!mmm end customize&#13;"
-!mmm       set payload = payload & scriptCommand
+!mmm       set payload = payload & weaponScriptCommand
 !mmm     
 !mmm       if itemCounter % 2 == 0
 !mmm         set chatMenu = chatMenu & "{\{[" & weaponLabel & "](" & payload & ")="
