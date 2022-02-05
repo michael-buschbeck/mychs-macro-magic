@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.1.0 (2022-02-01)"
+!mmm   set scriptVersion = "initGameGlobals 1.1.1 (2022-02-05)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -114,7 +114,7 @@
 !mmm   
 %{MacroSheetLibrary|libBasics}
 !mmm   
-!mmm   publish to game: count
+!mmm   publish to game: count, sign
 !mmm   
 !mmm   chat: /me loaded: ${scriptVersion}
 !mmm   

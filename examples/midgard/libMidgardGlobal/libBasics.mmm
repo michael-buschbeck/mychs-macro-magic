@@ -15,3 +15,20 @@
 !mmm   end for
 !mmm   return count
 !mmm end function
+!rem
+!rem // sign(val, [zero]) signs a value for display
+!rem //
+!rem //   If true, [zero] signs a "0" as "+/-0", otherwise only positives are signed as "+X" and "0" left without a sign.
+!rem //
+!mmm function sign(val, zero)
+!mmm   if isdefault(val)
+!mmm     return false
+!mmm   end if
+!mmm   if val > 0
+!mmm     return "+" & val
+!mmm   else if val == 0 and zero
+!mmm     return "+/-" & val
+!mmm   else
+!mmm     return val
+!mmm   end if
+!mmm end function
