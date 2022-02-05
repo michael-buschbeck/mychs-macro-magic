@@ -354,7 +354,7 @@
 !mmm   end combine
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   if not cGMSilentMode
-!mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm   if attackResult >= 20
 !mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense", cWeaponType)

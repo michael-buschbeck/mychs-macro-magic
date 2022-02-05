@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.15.0-pre (2022-01-29)"
+!mmm   set scriptVersion = "defense 1.15.0-pre (2022-02-05)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -348,7 +348,7 @@
 !rem   // Output modifier log and PP reminder
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm   if not cGMSilentMode
-!mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} ${modifierLog}
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm   
 !rem   // Special effects
