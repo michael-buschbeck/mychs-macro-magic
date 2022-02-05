@@ -872,10 +872,12 @@
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm
-!mmm   if isdefault(targetID) and script.cOwnID ne ""
-!mmm     set targetID = script.cOwnID
-!mmm   else if isdefault(targetID)
-!mmm     set targetID = sender.token_id
+!mmm   if isdefault(healthGain) or not healthGain
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isdefault(targetID) and not isunknown(script.cOwnID)
+!mmm     return false
 !mmm   end if
 !mmm 
 !mmm   set storeCounter = 0
@@ -897,10 +899,12 @@
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm
-!mmm   if isdefault(targetID) and script.cOwnID ne ""
-!mmm     set targetID = script.cOwnID
-!mmm   else if isdefault(targetID)
-!mmm     set targetID = sender.token_id
+!mmm   if isdefault(enduranceGain) or not enduranceGain
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isdefault(targetID) and not isunknown(script.cOwnID)
+!mmm     return false
 !mmm   end if
 !mmm 
 !mmm   set storeCounter = 0
@@ -1285,6 +1289,7 @@
 !mmm   set sender = tokenID.token_name
 !mmm   
 !mmm   chat: /w "${tokenID.character_name}" ${chatMenu}
+!rem //  chat: ${chatMenu}
 !mmm   
 !mmm   return true
 !mmm   
