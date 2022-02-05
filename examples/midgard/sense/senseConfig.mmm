@@ -70,7 +70,7 @@
 !rem
 !mmm   set cSense = "Hören"
 !mmm   set cSenseModifier = ?{Die ausgewählten sind... | normal unterwegs (-8),-8 | absolut wachsam (-0),0 | Manuelle Eingabe,?{Modifikator&#124;&#125; }
-!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Irgendwo hörst du was!}"
+!mmm   set cSuccessMessage = "?{Hört ihr was? Nachricht für Aufmerksame|Irgendwo hörst du was!}"
 !mmm   set cRegularFailureMessage = "Du hörst nichts besonderes hier."
 !mmm   set cCriticalFailureMessage = "?{Nachricht bei Patzern|Du hörst nichts besonderes hier.}"
 !mmm   set cTokenList = selected
@@ -83,7 +83,7 @@
 !rem
 !mmm   set cSense = "Hören"
 !mmm   set cSenseModifier = -8
-!mmm   set cSuccessMessage = "?{Seht ihr was? Nachricht für Aufmerksame|Irgendwo hörst du was!}"
+!mmm   set cSuccessMessage = "?{Hört ihr was? Nachricht für Aufmerksame|Irgendwo hörst du was!}"
 !mmm   set cRegularFailureMessage = "Du hörst nichts besonderes hier."
 !mmm   set cCriticalFailureMessage = "?{Nachricht bei Patzern|Du hörst nichts besonderes hier.}"
 !mmm   set cTokenList = "-MFXIKG9zCxQLxsEZ6PW", "-MF0on5H-EnbMJQxQDhQ", "-MF0l4ve_sPrzpbctzUM", "-MFMpuvq2hfA-Y3i4EAe", "-MEnkmmvHcco4HHxg8R0", "-MGKyDWy10K_y3FS4VKi"

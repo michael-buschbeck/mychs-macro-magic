@@ -1,15 +1,110 @@
 !rem // Midgard Multi-Sense Script 
 !rem //
-!rem // senseMainLogic -- must be called from a config script
+!rem // If called without a config script, sends a menu of sense options to the chat.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.1.3 (2021-12-03)"
+!mmm   set scriptVersion = "2.0.0-pre (2022-02-05)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.19
 !mmm     do whisperback("Abbruch: MMM-Version 1.19.1 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
+!rem
+!rem   // FUNCTIONS
+!rem   //
+!mmm   function stringify(list)
+!mmm     set string = ""
+!mmm     for item in list
+!mmm       if string ne ""
+!mmm         set string = string & ","
+!mmm       end if
+!mmm       set string = string & "\"" & item & "\""
+!mmm     end for
+!mmm     return string
+!mmm   end function
+!mmm   function senseOrgan(senseLabel)
+!mmm     if senseLabel eq "Sehen" or senseLabel eq "Nachtsicht"
+!mmm       return "Augen"
+!mmm     else if senseLabel eq "Hören"
+!mmm       return "Ohren"
+!mmm     else if senseLabel eq "Riechen"
+!mmm       return "Geruchsknospen"
+!mmm     else if senseLabel eq "Schmecken"
+!mmm       return "Geschmacksknospen"
+!mmm     else 
+!mmm       return "mysteriösen unbekannten Sinnesorganen"
+!mmm     end if
+!mmm   end function
+!mmm   function senseMenu()
+!mmm   
+!mmm     set scriptCommand = "&#x25;{MacroSheet|senseLogic}"
+!mmm     set manualModifierQuery = literal("?" & "{" & "Modifikator|-8" & "}")
+!mmm
+!mmm     set selectModifierQuery = literal("?" & "{" & "Die ausgewählten sind... ")
+!mmm     set selectModifierQuery = selectModifierQuery & literal("| normal unterwegs -8,-8")
+!mmm     set selectModifierQuery = selectModifierQuery & literal("| absolut wachsam -0,0")
+!mmm     set selectModifierQuery = selectModifierQuery & literal("}")
+!mmm     
+!mmm     set autoModifier = -8
+!mmm     set autoTokenList = "-MFXIKG9zCxQLxsEZ6PW", "-MF0on5H-EnbMJQxQDhQ", "-MF0l4ve_sPrzpbctzUM", "-MFMpuvq2hfA-Y3i4EAe", "-MEnkmmvHcco4HHxg8R0", "-MGKyDWy10K_y3FS4VKi"
+!mmm     
+!mmm     
+!mmm     set menuCode = "&" & "{template:default}" & "{{name=Wahrnehmung}} "
+!mmm
+!mmm     for senseGroupLabel in "Sechster Sinn", "Sehen", "Nachtsicht", "Hören", "Riechen", "Schmecken"
+!mmm     
+!mmm       set successMessageQuery = literal("\"?" & "{" & senseGroupLabel & " - Nachricht für Aufmerksame|}\"")
+!mmm       set noMessage = literal("\"\"")
+!mmm       if senseGroupLabel eq "Sechster Sinn"
+!mmm         set failureMessage = noMessage
+!mmm         set critFailMessageQuery = noMessage
+!mmm       else
+!mmm         set failureMessage = literal("\"Deinen " & senseOrgan(senseGroupLabel) & " fällt nichts besonderes auf.\"")
+!mmm         set critFailMessageQuery = literal("\"?" & "{" & senseGroupLabel & " - Nachricht für Patzer|Deinen " & senseOrgan(senseGroupLabel) & " fällt nichts besonderes auf.}\"")
+!mmm       end if
+!mmm
+!mmm       set menuCode = menuCode & "{{ " & senseGroupLabel & " }} "
+!mmm       if senseGroupLabel eq "Riechen" or senseGroupLabel eq "Schmecken" 
+!mmm         set senseGroupLabel = "Riechen/Schmecken"
+!mmm       end if
+!mmm       set menuCode = menuCode & "{{ "
+!mmm       set menuCode = menuCode & "[" & "Manuell" & "]("
+!mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSense=\"" & senseGroupLabel & "\"") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSenseModifier=") & manualModifierQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cTokenList=selected") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSuccessMessage=") & successMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cRegularFailureMessage=") & failureMessage & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cCriticalFailureMessage=") & critFailMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & " &nbsp; "
+!mmm       set menuCode = menuCode & "[" & "Auswahl" & "]("
+!mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSense=\"" & senseGroupLabel & "\"") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSenseModifier=") & selectModifierQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cTokenList=selected") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSuccessMessage=") & successMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cRegularFailureMessage=") & failureMessage & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cCriticalFailureMessage=") & critFailMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & " &nbsp; "
+!mmm       set menuCode = menuCode & "[" & "Auto" & "]("
+!mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSense=\"" & senseGroupLabel & "\"") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSenseModifier=") & autoModifier & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cTokenList=" & stringify(autoTokenList)) & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSuccessMessage=") & successMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cRegularFailureMessage=") & failureMessage & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cCriticalFailureMessage=") & critFailMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & "}} "
+!mmm       
+!mmm     end for
+!mmm     
+!mmm     do whisperback(menuCode)
+!mmm   
+!mmm   end function
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
@@ -22,21 +117,28 @@
 !rem   //  cTokenList               List of valid token_id values for characters that get the sense rolls. Duplicates are ignored.
 !rem   //
 !mmm   set customizable cCheckVersion = false
-!mmm   set customizable cSense = "Sehen"
+!mmm   set customizable cSense = default
 !mmm   set customizable cSenseModifier = 0
 !mmm   set customizable cSuccessMessage = "Einer deiner Sinne hat etwas wahrgenommen. Herzlichen Glückwunsch!"
 !mmm   set customizable cRegularFailureMessage = "Nichts besonderes hier."
 !mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier. Wirklich nicht!"
-!mmm   set customizable cTokenList = false
+!mmm   set customizable cTokenList = default
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Multi Sense Script " & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem   // Called without proper config -> output menu
+!rem   //
+!mmm   if isdefault(cSense)
+!mmm     do senseMenu()
+!mmm     exit script
+!mmm   end if
+!mmm   
 !rem   // Initialize 
 !rem   //
-!mmm   if not cTokenList and selected
+!mmm   if isdefault(cTokenList) and selected
 !mmm     set cTokenList = selected
 !mmm   end if
 !mmm
