@@ -151,18 +151,27 @@
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm   
 !mmm   set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
+!rem   // Roll20 attributes are always strings, so string comparison theoretically allows for non-numerical "ceilings"
 !mmm   if setattr(dataExchangeID, storageAttrLabel, ceilingValue) eq ceilingValue
-!rem     // Roll20 attributes are always strings, so string comparison theoretically allows for non-numerical "ceilings"
 !mmm     
-!mmm     if setattr(tokenID, attrLabel, ceilingValue) == ceilingValue
+!rem     // If current attribute value exceeds the ceiling, bring it down
+!mmm     if tokenID.(attrLabel) > ceilingValue
+!mmm     
+!mmm       if setattr(tokenID, attrLabel, ceilingValue) == ceilingValue
+!mmm     
+!mmm         return ceilingValue
+!mmm     
+!mmm       else 
+!mmm     
+!mmm         do whisperback("m3mgdSetAttrCeiling(): Failure changing '" & tokenID.name & "'.'" & attrLabel & "' to '" & ceilingValue & "'.")
+!mmm         return false
+!mmm
+!mmm       end if
+!mmm
+!mmm     else 
 !mmm     
 !mmm       return ceilingValue
 !mmm     
-!mmm     else 
-!mmm     
-!mmm       do whisperback("m3mgdSetAttrCeiling(): Failure changing '" & tokenID.name & "'.'" & attrLabel & "' to '" & ceilingValue & "'.")
-!mmm       return false
-!mmm
 !mmm     end if
 !mmm     
 !mmm   else
@@ -553,6 +562,10 @@
 !rem //
 !mmm function m3mgdModifyHealth(offset, tokenID, healthAttr)
 !mmm
+!mmm   if isdefault(offset)
+!mmm     return false
+!mmm   end if
+!mmm
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return false
@@ -578,18 +591,14 @@
 !rem     // Process health gain and applicable consequences 
 !mmm
 !mmm     if prvHealth + offset > maxHealth
-!mmm       set effOffset = highlight(maxHealth - prvHealth, "important", "begrenzt auf Maximum")
+!mmm       set effOffset = highlight(sign(maxHealth - prvHealth, true), "important", "begrenzt auf Maximum")
 !mmm     else if prvHealth + offset <= 0
-!mmm       set effOffset = highlight(offset, "bad")
+!mmm       set effOffset = highlight(sign(offset, true), "bad")
 !mmm     else
-!mmm       set effOffset = highlight(offset, "normal")
+!mmm       set effOffset = highlight(sign(offset, true), "normal")
 !mmm     end if 
 !mmm   
 !mmm     set newHealth = prvHealth + effOffset
-!mmm   
-!mmm     if effOffset >= 0
-!mmm       set effOffset = "+" & effOffset
-!mmm     end if
 !mmm   
 !mmm     if newHealth == maxHealth
 !mmm   
