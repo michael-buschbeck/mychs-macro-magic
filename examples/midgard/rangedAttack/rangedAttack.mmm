@@ -397,7 +397,13 @@
 !mmm       set sharpExtraRoll = roll("1d20")
 !mmm       set sharpExtraResult = sharpExtraRoll + effAttack + modifiers - 4 + sharpshootingSkill
 !mmm       set sharpExtraTooltip = sharpExtraResult & " = (1d20 = " & sharpExtraRoll & ") + (EW = " & effAttack & ") + " & modifiers - 4 & " + (FW:Scharfschießen = " & sharpshootingSkill & ")"
-!mmm       set sharpExtraResult = highlight(sharpExtraResult, "normal", sharpExtraTooltip)
+!mmm       if iscritical(sharpExtraRoll)
+!mmm         set sharpExtraResult = highlight(sharpExtraResult, "good", sharpExtraTooltip)
+!mmm       else if isfumble(sharpExtraRoll)
+!mmm         set sharpExtraResult = highlight(sharpExtraResult, "bad", sharpExtraTooltip)
+!mmm       else
+!mmm         set sharpExtraResult = highlight(sharpExtraResult, "normal", sharpExtraTooltip)
+!mmm       end if
 !mmm       if sharpExtraResult >= 20
 !mmm         set sharpExtraDamage = round(sharpExtraResult * .1)
 !mmm         set damageResult = damageResult + sharpExtraDamage
