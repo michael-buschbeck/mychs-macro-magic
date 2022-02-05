@@ -146,25 +146,32 @@
 !mmm   
 !mmm   if isdefault(ceilingValue)
 !mmm     set ceilingValue = tokenID.(attrLabel)
-!mmm   else if ceilingValue > tokenID.(attrLabel)
-!mmm     return tokenID.(attrLabel)
 !mmm   end if
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm   
 !mmm   set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
+!rem   // Roll20 attributes are always strings, so string comparison theoretically allows for non-numerical "ceilings"
 !mmm   if setattr(dataExchangeID, storageAttrLabel, ceilingValue) eq ceilingValue
-!rem     // Roll20 attributes are always strings, so string comparison theoretically allows for non-numerical "ceilings"
 !mmm     
-!mmm     if setattr(tokenID, attrLabel, ceilingValue) == ceilingValue
+!rem     // If current attribute value exceeds the ceiling, bring it down
+!mmm     if tokenID.(attrLabel) > ceilingValue
+!mmm     
+!mmm       if setattr(tokenID, attrLabel, ceilingValue) == ceilingValue
+!mmm     
+!mmm         return ceilingValue
+!mmm     
+!mmm       else 
+!mmm     
+!mmm         do whisperback("m3mgdSetAttrCeiling(): Failure changing '" & tokenID.name & "'.'" & attrLabel & "' to '" & ceilingValue & "'.")
+!mmm         return false
+!mmm
+!mmm       end if
+!mmm
+!mmm     else 
 !mmm     
 !mmm       return ceilingValue
 !mmm     
-!mmm     else 
-!mmm     
-!mmm       do whisperback("m3mgdSetAttrCeiling(): Failure changing '" & tokenID.name & "'.'" & attrLabel & "' to '" & ceilingValue & "'.")
-!mmm       return false
-!mmm
 !mmm     end if
 !mmm     
 !mmm   else
@@ -483,6 +490,7 @@
 !mmm     return false
 !mmm   end if
 !mmm   
+!mmm   set prvEndurance = tokenID.(enduranceAttr)
 !mmm   set maxEndurance = tokenID.(enduranceAttr).max
 !mmm
 !rem   // Check if character is actually alive
@@ -495,26 +503,21 @@
 !mmm   end if
 !mmm
 !mmm   set currentCeiling = m3mgdAttrCeiling(tokenID, enduranceAttr)
-!mmm   set prvEndurance = tokenID.(enduranceAttr)
 !mmm   set newEndurance = false
 !mmm
 !rem   // Process change of endurance and applicable consequences 
 !mmm
 !mmm   if currentCeiling and prvEndurance + offset > currentCeiling
-!mmm     set effOffset = highlight(currentCeiling - prvEndurance, "important", "begrenzt auf " & currentCeiling)
+!mmm     set effOffset = highlight(sign(currentCeiling - prvEndurance, true), "important", "begrenzt auf " & currentCeiling)
 !mmm   else if prvEndurance + offset > maxEndurance
-!mmm     set effOffset = highlight(maxEndurance - prvEndurance, "important", "begrenzt auf Maximum")
+!mmm     set effOffset = highlight(sign(maxEndurance - prvEndurance, true), "important", "begrenzt auf Maximum")
 !mmm   else if prvEndurance + offset <= 0
-!mmm     set effOffset = highlight(0 - prvEndurance, "bad", "begrenzt auf Minimum 0")
+!mmm     set effOffset = highlight(sign(0 - prvEndurance, true), "bad", "begrenzt auf Minimum 0")
 !mmm   else
-!mmm     set effOffset = highlight(offset, "normal")
+!mmm     set effOffset = highlight(sign(offset), "normal")
 !mmm   end if 
 !mmm   
 !mmm   set newEndurance = prvEndurance + effOffset
-!mmm   
-!mmm   if effOffset >= 0
-!mmm     set effOffset = "+" & effOffset
-!mmm   end if
 !mmm   
 !mmm   if newEndurance == maxEndurance
 !mmm   
@@ -559,6 +562,10 @@
 !rem //
 !mmm function m3mgdModifyHealth(offset, tokenID, healthAttr)
 !mmm
+!mmm   if isdefault(offset)
+!mmm     return false
+!mmm   end if
+!mmm
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return false
@@ -584,18 +591,14 @@
 !rem     // Process health gain and applicable consequences 
 !mmm
 !mmm     if prvHealth + offset > maxHealth
-!mmm       set effOffset = highlight(maxHealth - prvHealth, "important", "begrenzt auf Maximum")
+!mmm       set effOffset = highlight(sign(maxHealth - prvHealth, true), "important", "begrenzt auf Maximum")
 !mmm     else if prvHealth + offset <= 0
-!mmm       set effOffset = highlight(offset, "bad")
+!mmm       set effOffset = highlight(sign(offset, true), "bad")
 !mmm     else
-!mmm       set effOffset = highlight(offset, "normal")
+!mmm       set effOffset = highlight(sign(offset, true), "normal")
 !mmm     end if 
 !mmm   
 !mmm     set newHealth = prvHealth + effOffset
-!mmm   
-!mmm     if effOffset >= 0
-!mmm       set effOffset = "+" & effOffset
-!mmm     end if
 !mmm   
 !mmm     if newHealth == maxHealth
 !mmm   
@@ -868,17 +871,18 @@
 !rem
 !rem // m3mgdExchangeStoreHealthBoost(healthGain, targetID)
 !rem //
+!rem //   Allows for positive AND negative values of healthGain, since critical failures of First Aid etc. result in damage.
+!rem //
 !mmm function m3mgdExchangeStoreHealthBoost(healthGain, targetID)
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm
-!mmm   if healthGain <= 0
-!mmm     do whisperback("Storing health gain <=0 makes no sense.")
+!mmm   if isdefault(healthGain) or not healthGain
 !mmm     return false
-!mmm   else if isdefault(targetID) and script.cOwnID ne ""
-!mmm     set targetID = script.cOwnID
-!mmm   else if isdefault(targetID)
-!mmm     set targetID = sender.token_id
+!mmm   end if
+!mmm
+!mmm   if isdefault(targetID) and not isunknown(script.cOwnID)
+!mmm     return false
 !mmm   end if
 !mmm 
 !mmm   set storeCounter = 0
@@ -894,17 +898,18 @@
 !rem
 !rem // m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
 !rem //
+!rem //   Allows for positive AND negative values of enduranceGain, since critical failures of First Aid etc. result in damage.
+!rem //
 !mmm function m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
 !mmm   
 !mmm   set dataExchangeID = script.m3mgdExchange
 !mmm
-!mmm   if enduranceGain <= 0
-!mmm     do whisperback("Storing endurance gain <=0 makes no sense.")
+!mmm   if isdefault(enduranceGain) or not enduranceGain
 !mmm     return false
-!mmm   else if isdefault(targetID) and script.cOwnID ne ""
-!mmm     set targetID = script.cOwnID
-!mmm   else if isdefault(targetID)
-!mmm     set targetID = sender.token_id
+!mmm   end if
+!mmm
+!mmm   if isdefault(targetID) and not isunknown(script.cOwnID)
+!mmm     return false
 !mmm   end if
 !mmm 
 !mmm   set storeCounter = 0
@@ -976,7 +981,7 @@
 !mmm 
 !mmm   set weaponType = unknown
 !mmm   
-!mmm   if ("Buckler", "großer Schild", "kleiner Schild") where ... eq weaponLabel
+!mmm   if ("Buckler", "großer Schild", "Großer Schild", "kleiner Schild", "Kleiner Schild") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "Schild"
 !mmm   
@@ -1003,7 +1008,7 @@
 !mmm 
 !mmm   set weaponType = unknown
 !mmm   
-!mmm   if ("Handaxt", "Keule", "Kriegshammer", "Schlachtbeil", "Steinhammer", "Streitaxt", "Streitkolben") where ... eq weaponLabel
+!mmm   if ("Handaxt", "Keule", "Kriegshammer", "Schlachtbeil einhändig", "Steinhammer", "Streitaxt", "Streitkolben") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "Einhandschlagwaffe"
 !mmm   
@@ -1035,7 +1040,7 @@
 !mmm   
 !mmm     set weaponType = "Zauberstab"
 !mmm   
-!mmm   else if ("Barbarenstreitaxt", "Gleffe", "Hellebarde", "Ogerhammer", "Schlachtbeil", "Stabkeule", "Stielhammer") where ... eq weaponLabel
+!mmm   else if ("Barbarenstreitaxt", "Gleffe", "Hellebarde", "Ogerhammer", "Schlachtbeil zweihändig", "Stabkeule", "Stielhammer") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "Zweihandschlagwaffe"
 !mmm   
@@ -1252,10 +1257,11 @@
 !mmm
 !mmm     if weaponUsable
 !mmm       
-!rem       // Overwrite scriptCommand if there is a custom config script registered in character sheet
+!mmm       set weaponScriptCommand = scriptCommand
+!rem       // Overwrite weaponScriptCommand if there is a custom config script registered in character sheet
 !mmm       set customCall = tokenID.("m3mgd_configCall_" & weaponLabel)
 !mmm       if not isunknown(customCall)
-!mmm         set scriptCommand = "&#x25;{" & tokenID.character_name & "|" & customCall & "}"
+!mmm         set weaponScriptCommand = "&#x25;{" & tokenID.character_name & "|" & customCall & "}"
 !mmm       end if
 !mmm
 !mmm       set payload = "!mmm customize&#13;"
@@ -1264,7 +1270,7 @@
 !mmm       set payload = payload & "!mmm set cWeaponType&#x3D;&#x22;" & weaponType & "&#x22;&#13;"
 !mmm       set payload = payload & "!mmm set cNoDefense&#x3D;&#x22;false&#x22;&#13;"
 !mmm       set payload = payload & "!mmm end customize&#13;"
-!mmm       set payload = payload & scriptCommand
+!mmm       set payload = payload & weaponScriptCommand
 !mmm     
 !mmm       if itemCounter % 2 == 0
 !mmm         set chatMenu = chatMenu & "{\{[" & weaponLabel & "](" & payload & ")="
@@ -1288,6 +1294,7 @@
 !mmm   set sender = tokenID.token_name
 !mmm   
 !mmm   chat: /w "${tokenID.character_name}" ${chatMenu}
+!rem //  chat: ${chatMenu}
 !mmm   
 !mmm   return true
 !mmm   

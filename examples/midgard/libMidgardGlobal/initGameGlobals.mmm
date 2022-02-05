@@ -17,7 +17,8 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.1.0-pre (2022-01-31)"
+!mmm   set scriptVersion = "initGameGlobals 1.1.1 (2022-02-05)"
+!mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -72,8 +73,8 @@
 !mmm
 !mmm   set m3mgdArmorPiercingWeaponTypes = "Langbogen", "Kompositbogen", "schwere Armbrust", "Schwere Armbrust"
 !mmm
-!mmm   set m3mgdParryLargeShieldTypes = "Großer Schild"
-!mmm   set m3mgdParrySmallShieldTypes = "Kleiner Schild"
+!mmm   set m3mgdParryLargeShieldTypes = "großer Schild", "Großer Schild"
+!mmm   set m3mgdParrySmallShieldTypes = "kleiner Schild", "Kleiner Schild"
 !mmm   set m3mgdParrySmallShieldEffectiveAgainst = "Einhandschlagwaffe", "Einhandschwert", "Fechtwaffe", "Kettenwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "waffenlos"
 !mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
 !mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln"
@@ -113,9 +114,8 @@
 !mmm   
 %{MacroSheetLibrary|libBasics}
 !mmm   
-!mmm   publish to game: count
+!mmm   publish to game: count, sign
 !mmm   
-!mmm   set sender = "MacroSheetLibrary"
 !mmm   chat: /me loaded: ${scriptVersion}
 !mmm   
 !mmm end script

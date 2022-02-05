@@ -86,7 +86,8 @@
 !mmm       
 !mmm       if charID.(findattr(charID, "Angriff", "Waffe", weaponLabel, "FkWaffe")) == 1
 !mmm         set weaponProperties = m3mgdRangedWeaponProperties(weaponLabel)
-!mmm         if not isunknown(weaponProperties) and count(weaponProperties) == 5
+!mmm         if not isunknown(weaponProperties) and weaponProperties[4]
+!rem //and count(weaponProperties) == 5
 !mmm           set rangedWeaponAmmoAttr = weaponProperties[4]
 !mmm           if isunknown(charID.(rangedWeaponAmmoAttr))
 !mmm             do setattr(charID, rangedWeaponAmmoAttr, 0)
@@ -95,7 +96,8 @@
 !mmm             set rangedWeaponAmmoLog = "Munition: Standard-Attribut '" & rangedWeaponAmmoAttr & "' gefunden (Wert: '" & charID.(rangedWeaponAmmoAttr) & "')."
 !mmm           end if
 !mmm         else 
-!mmm           set rangedWeaponAmmoLog = "Munition: kein Standard-Attribut bekannt."
+!mmm           set rangedWeaponAmmoLog = "Munition: **kein Standard-Attribut bekannt.**"
+!mmm           set weaponProperties = unknown
 !mmm         end if
 !mmm       else 
 !mmm         set weaponProperties = m3mgdMeleeWeaponType(weaponLabel)

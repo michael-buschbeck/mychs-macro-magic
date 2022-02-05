@@ -1,7 +1,7 @@
 !rem // applyHealing applies both healing and energy boosts (or either)
 !rem //
 !mmm script
-!mmm   set scriptVersion = "applyHealing 1.1.1 (2022-01-24)"
+!mmm   set scriptVersion = "applyHealing 1.1.2 (2022-02-01)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -18,12 +18,10 @@
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
 !mmm     set customizable cEnduranceAttr = "bar2"
-!mmm     set user = "GM"
 !mmm   else 
 !mmm     set customizable cOwnID = sender.token_id
 !mmm     set customizable cHealthAttr = "LP"
 !mmm     set customizable cEnduranceAttr = "AP"
-!mmm     set user = cOwnID.name
 !mmm   end if
 !mmm   
 !mmm   set maxEnduranceGain = m3mgdExchange.(m3mgdAttrEnduranceGain)
@@ -31,7 +29,7 @@
 !mmm   
 !mmm   if not (maxHealthGain > 0 or maxEnduranceGain > 0)
 !mmm   
-!mmm     chat: /w "${user}" [**Lebens-/Ausdauergewinn eingeben**](~MacroSheet|applyHealingDataEntry)
+!mmm     chat: /w "${cOwnID.character_name}" [**Lebens-/Ausdauergewinn eingeben**](~MacroSheet|applyHealingDataEntry)
 !mmm     exit script
 !mmm
 !mmm   end if 
@@ -59,7 +57,7 @@
 !mmm
 !mmm   combine chat
 !mmm     
-!mmm     chat: /w "${cOwnID.name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr) & cOwnID.name}: Heil-/Ausdauereffekte}} 
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr) & cOwnID.name}: Heil-/Ausdauereffekte}} 
 !mmm     
 !mmm     chat: {{Heileffekt=${highlight("+" & maxHealthGain, "normal")} **=>** ${newHealth} **LP**}}
 !mmm
