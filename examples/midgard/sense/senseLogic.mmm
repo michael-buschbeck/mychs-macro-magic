@@ -3,7 +3,7 @@
 !rem // If called without a config script, sends a menu of sense options to the chat.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2022-02-06)"
+!mmm   set scriptVersion = "2.0.0 (2022-02-06)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24

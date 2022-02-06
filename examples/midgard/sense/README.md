@@ -1,12 +1,12 @@
 # MMM-Wahrnehmungsskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.1.0 vom 2021-05-18,** erfordert MMM 1.19.1+.
+Aktuelle Version: **2.0.0 vom 2022-02-06,** erfordert MMM 1.24.0+.
 
 Aufruf: 
-- Hauptspiel ("Midgard"): ``#Die_Sinne`` 
-- Testspiel ("TEST"): ``#senseMenu``
+- Hauptspiel ("Midgard"): ``%{MacroSheet|senseLogic}`` 
+- Testspiel ("TEST"): ``%{MacroSheet|senseLogic}``
 
-Das MMM-basierte Midgard-Wahrnehmungsskript wickelt Wahrnehmungswürfe ab. Mittels Konfigskripten lassen sich unterschiedliche Sinne, unterschiedliche Auswahlmöglichkeiten (z.B. nur ein Spielercharakter, eine Gruppe von bis zu sechs Charakteren, oder alle aus einer Liste von bis zu sechs voreingestellten Charakteren) und situationsabhängige oder standardisierte Nachrichten für Erfolg, Misserfolg und kritischen Misserfolg nutzen. 
+Das Midgard-Wahrnehmungsskript wickelt Wahrnehmungswürfe ab. Ohne Konfigskript aufgerufen, wird ein Menü im Chat ausgegeben, das unterschiedliche Sinne und Testmodi anbietet: Manuelle Eingabe des Schwierigkeitsmodifikators, Auswahl aus Standardoptionen (beide werden jeweils für alle ausgewählten Tokens ausgeführt) und einen Auto-Modus, der für die vordefinierte Gruppe würfelt. (Miss-)Erfolgsmeldungen werden in Dialogen abgefragt. 
 
 ### Inhalt
 
@@ -26,6 +26,12 @@ Das MMM-basierte Midgard-Wahrnehmungsskript wickelt Wahrnehmungswürfe ab. Mitte
 
 
 ## Changelog
+
+2.0.0 2022-02-06 (MMM 1.24.0)
+
+- Keine statischen Konfigskripte mehr nötig, diese werden dynamisch erzeugt und in die Menübuttons integriert
+- Viele Umbauten unter der Haube
+- Bugfixes für NPCs
 
 1.1.0 2021-05-18 (erfordert MMM 1.19.1)
 - Umfangreicher Umbau: Auswahl einer flexiblen Zahl von Tokens, keine limitierten Modi mehr
