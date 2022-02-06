@@ -144,7 +144,7 @@
 !mmm       else
 !mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos: bin erschöpft (AP=0)}}"
 !mmm       end if
-!mmm     else 
+!mmm     else if not (cWeaponLabel eq cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWaffe")))
 !rem       // Script was called for a parry weapon that was not found in the character sheet
 !mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nicht im Charakterblatt}}"
 !mmm       set cWeaponLabel = ""
