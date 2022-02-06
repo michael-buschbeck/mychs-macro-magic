@@ -1307,12 +1307,12 @@
 !mmm function m3mgdProcessCombatPP(ownID, weaponLabel, targetID)
 !mmm
 !mmm   if ownID.permission ne "control"
-!mmm     do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: no control over token '" & ownID.name & "'")
+!mmm     do whisperback("m3mgdProcessCombatPP(): Unable to register practice point for critically successful attack: no control over token '" & ownID.name & "'")
 !mmm     return false
 !mmm   end if
 !mmm   
 !mmm   if isdefault(weaponLabel) or not ((isdefault(targetID) and ownID.(findattr(ownID, "Abwehr", "AbwWaffe", weaponLabel, "FWAbwWaffe"))) or (not isdefault(targetID) and ownID.(findattr(ownID, "Angriff", "Waffe", weaponLabel, "WaffeEW"))))
-!mmm     do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: weapon '" & weaponLabel & "' not found for token '" & ownID.name & "'")
+!mmm     do whisperback("m3mgdProcessCombatPP(): Unable to register practice point for critically successful attack: weapon '" & weaponLabel & "' not found for token '" & ownID.name & "'")
 !mmm     return false
 !mmm   end if
 !mmm
@@ -1327,12 +1327,12 @@
 !rem     // Attack critical success
 !mmm
 !mmm     if targetID.permission ne "view" and targetID.permission ne "control"
-!mmm       do whisperback("m3mgdProcessAttackPP(): Unable to register practice point for critically successful attack: invalid target token or no view access to token '" & targetID.name & "'")
+!mmm       do whisperback("m3mgdProcessCombatPP(): Unable to register practice point for critically successful attack: invalid target token or no view access to token '" & targetID.name & "'")
 !mmm       return false
 !mmm     end if
 !mmm   
 !mmm     if targetID.(script.cEnduranceAttr) <= 0
-!mmm       do whisperback("m3mgdProcessAttackPP(): No practice point registered for critically successful attack on an exhausted target ('" & targetID.name & "')")
+!mmm       do whisperback("m3mgdProcessCombatPP(): No practice point registered for critically successful attack on an exhausted target ('" & targetID.name & "')")
 !mmm       return false
 !mmm     end if
 !mmm   
@@ -1340,10 +1340,18 @@
 !mmm
 !mmm   end if
 !mmm
+!rem   // Roll20 stores only attributes that have been touched at least once, so if the attribute is missing, it needs to be created first
+!mmm   if not weaponPPattr
+!mmm     set weaponPPattr = findattr(ownID, "Angriff", "Waffe", weaponLabel, "Waffe") & "PP"
+!mmm     if setattr(ownID, weaponPPattr, 0) != 0
+!mmm       do whisperback("m3mgdProcessCombatPP(): Failure initializing unused practice points attribute '" & ownID.name & "'." & weaponPPattr)
+!mmm       return false
+!mmm     end if
+!mmm   end if
 !mmm   set oldPP = ownID.(weaponPPattr)
 !mmm   set newPP = oldPP + 1
 !mmm   if setattr(ownID, weaponPPattr, newPP) != newPP
-!mmm     do whisperback("m3mgdProcessAttackPP(): Failure storing new practice points total " & newPP & " in attribute '" & ownID.name & "'." & weaponPPattr)
+!mmm     do whisperback("m3mgdProcessCombatPP(): Failure storing new practice points total " & newPP & " in attribute '" & ownID.name & "'." & weaponPPattr)
 !mmm     return false
 !mmm   end if
 !mmm
