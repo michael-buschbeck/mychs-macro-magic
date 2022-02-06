@@ -3,11 +3,11 @@
 !rem // If called without a config script, sends a menu of sense options to the chat.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2022-02-05)"
+!mmm   set scriptVersion = "2.0.0-pre (2022-02-06)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.19
-!mmm     do whisperback("Abbruch: MMM-Version 1.19.1 oder höher erforderlich.")
+!mmm   if version < 1.24
+!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !rem
@@ -23,6 +23,7 @@
 !mmm     end for
 !mmm     return string
 !mmm   end function
+!rem
 !mmm   function senseOrgan(senseLabel)
 !mmm     if senseLabel eq "Sehen" or senseLabel eq "Nachtsicht"
 !mmm       return "Augen"
@@ -36,6 +37,7 @@
 !mmm       return "mysteriösen unbekannten Sinnesorganen"
 !mmm     end if
 !mmm   end function
+!rem
 !mmm   function senseMenu()
 !mmm   
 !mmm     set scriptCommand = "&#x25;{MacroSheet|senseLogic}"
@@ -170,18 +172,18 @@
 !mmm     for id in trimmedTokenList
 !mmm
 !rem       // Initialize: refetch character ID and get name and skills
-!mmm       set tokenId = getattr(id, "token_id")
-!mmm       set charName = getattr(tokenId, "character_name")
-!mmm       set charEffectiveSkill = getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
+!mmm       set tokenID = id.token_id
+!mmm       set charName = tokenID.character_name
+!mmm       set charEffectiveSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "FW2")) + tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
 !mmm       set charSenseModifier = cSenseModifier
 !mmm       if cSense eq "Nachtsicht" and not charEffectiveSkill
 !rem         // For characters without night vision, substitute Vision without a bonus & slap -2 on the modifier
-!mmm         set charEffectiveSkill = getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", "Sehen", "FW2"))
+!mmm         set charEffectiveSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
 !mmm         set charSenseModifier = charSenseModifier - 2
 !mmm       end if
 !mmm
 !rem       // Error handling
-!mmm       if isdenied(tokenId) or isunknown(tokenId)
+!mmm       if isdenied(tokenID) or isunknown(tokenID)
 !mmm         set skippedList = skippedList, ("Token '" & id & "': no/inaccessible character")
 !mmm       else if not charEffectiveSkill
 !mmm         set skippedList = skippedList, ("Character '" & charName & "': '" & cSense & "' inaccessible or does not exist") 
