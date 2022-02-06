@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.15.0-pre (2022-02-05)"
+!mmm   set scriptVersion = "defense 1.15.0-pre (2022-02-06)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -121,6 +121,35 @@
 !mmm
 !rem     // Not helpless, so let's prep for the big defense!
 !rem
+!rem     // If user wants to use a parry weapon/shield, validate
+!mmm     set parryWeaponUsable = false
+!mmm     set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
+!mmm     if parryWeapon
+!mmm       if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
+!mmm         set parryWeaponUsable = true
+!mmm       else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
+!mmm         set parryWeaponUsable = true
+!mmm       else if (m3mgdParryStandardTypes where ... eq cWeaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackWeaponType)
+!mmm         set parryWeaponUsable = true
+!mmm       end if
+!rem       // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
+!mmm       if (cOwnID.(cEnduranceAttr).max > 0 and endurance > 0 and parryWeaponUsable) or (cOwnID.(cEnduranceAttr).max == 0 and parryWeaponUsable)
+!mmm         set effParryWeaponSkill = cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) + cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "WaffeAbwB"))
+!rem         // Endurance protection: reverse sign for more logical handling (modifier is stored as negative in character sheet)
+!mmm         set parryWeaponEnduranceProtection = -1 * cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
+!mmm         set effDefense = effDefense + effParryWeaponSkill
+!mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW inkl. +" & effParryWeaponSkill & ", AP-Verlust (leichte Treffer) -" & parryWeaponEnduranceProtection & "}}"
+!mmm       else if not parryWeaponUsable
+!mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackWeaponType & "}}"
+!mmm       else
+!mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos: bin erschöpft (AP=0)}}"
+!mmm       end if
+!mmm     else 
+!rem       // Script was called for a parry weapon that was not found in the character sheet
+!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nicht im Charakterblatt}}"
+!mmm       set cWeaponLabel = ""
+!mmm     end if
+!rem
 !rem     // Validate defense weapon and request manual entry if selection is missing
 !mmm     if cWeaponLabel eq ""
 !mmm       set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
@@ -133,29 +162,6 @@
 !mmm         do m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)
 !mmm         exit script
 !mmm       end if
-!mmm     end if
-!rem
-!rem     // If user wants to use a parry weapon/shield, validate
-!mmm     set parryWeaponUsable = false
-!mmm     set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
-!mmm     if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
-!mmm       set parryWeaponUsable = true
-!mmm     else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
-!mmm       set parryWeaponUsable = true
-!mmm     else if (m3mgdParryStandardTypes where ... eq cWeaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackWeaponType)
-!mmm       set parryWeaponUsable = true
-!mmm     end if
-!rem     // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
-!mmm     if (cOwnID.(cEnduranceAttr).max > 0 and endurance > 0 and parryWeapon and parryWeaponUsable) or (cOwnID.(cEnduranceAttr).max == 0 and parryWeapon and parryWeaponUsable)
-!mmm       set effParryWeaponSkill = cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) + cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "WaffeAbwB"))
-!rem       // Endurance protection: reverse sign for more logical handling (modifier is stored as negative in character sheet)
-!mmm       set parryWeaponEnduranceProtection = -1 * cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWAP"))
-!mmm       set effDefense = effDefense + effParryWeaponSkill
-!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW inkl. +" & effParryWeaponSkill & ", AP-Verlust (leichte Treffer) -" & parryWeaponEnduranceProtection & "}}"
-!mmm     else if parryWeapon and not parryWeaponUsable
-!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackWeaponType & "}}"
-!mmm     else if parryWeapon
-!mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos: bin erschöpft (AP=0)}}"
 !mmm     end if
 !mmm
 !rem     // Collect defense modifiers
