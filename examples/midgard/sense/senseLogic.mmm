@@ -1,15 +1,101 @@
 !rem // Midgard Multi-Sense Script 
 !rem //
-!rem // senseMainLogic -- must be called from a config script
+!rem // If called without a config script, sends a menu of sense options to the chat.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.1.3 (2021-12-03)"
+!mmm   set scriptVersion = "2.0.0 (2022-02-06)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.19
-!mmm     do whisperback("Abbruch: MMM-Version 1.19.1 oder höher erforderlich.")
+!mmm   if version < 1.24
+!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
+!rem
+!rem   // FUNCTIONS
+!rem   //
+!mmm   function senseOrgan(senseLabel)
+!mmm     if senseLabel eq "Sehen" or senseLabel eq "Nachtsicht"
+!mmm       return "Augen"
+!mmm     else if senseLabel eq "Hören"
+!mmm       return "Ohren"
+!mmm     else if senseLabel eq "Riechen"
+!mmm       return "Geruchsknospen"
+!mmm     else if senseLabel eq "Schmecken"
+!mmm       return "Geschmacksknospen"
+!mmm     else 
+!mmm       return "mysteriösen unbekannten Sinnesorganen"
+!mmm     end if
+!mmm   end function
+!rem
+!mmm   function senseMenu()
+!mmm   
+!mmm     set scriptCommand = "&#x25;{MacroSheet|senseLogic}"
+!mmm     set manualModifierQuery = literal("?" & "{" & "Modifikator|-8" & "}")
+!mmm
+!mmm     set selectModifierQuery = literal("?" & "{" & "Die ausgewählten sind... ")
+!mmm     set selectModifierQuery = selectModifierQuery & literal("| normal unterwegs -8,-8")
+!mmm     set selectModifierQuery = selectModifierQuery & literal("| absolut wachsam -0,0")
+!mmm     set selectModifierQuery = selectModifierQuery & literal("}")
+!mmm     
+!mmm     set autoModifier = -8
+!mmm     set autoTokenList = "-MFXIKG9zCxQLxsEZ6PW", "-MF0on5H-EnbMJQxQDhQ", "-MF0l4ve_sPrzpbctzUM", "-MFMpuvq2hfA-Y3i4EAe", "-MEnkmmvHcco4HHxg8R0", "-MGKyDWy10K_y3FS4VKi"
+!mmm     
+!mmm     
+!mmm     set menuCode = "&" & "{template:default}" & "{{name=Wahrnehmung}} "
+!mmm
+!mmm     for senseGroupLabel in "Sechster Sinn", "Sehen", "Nachtsicht", "Hören", "Riechen", "Schmecken"
+!mmm     
+!mmm       set successMessageQuery = literal("\"?" & "{" & senseGroupLabel & " - Nachricht für Aufmerksame|}\"")
+!mmm       set noMessage = literal("\"\"")
+!mmm       if senseGroupLabel eq "Sechster Sinn"
+!mmm         set failureMessage = noMessage
+!mmm         set critFailMessageQuery = noMessage
+!mmm       else
+!mmm         set failureMessage = literal("\"Deinen " & senseOrgan(senseGroupLabel) & " fällt nichts besonderes auf.\"")
+!mmm         set critFailMessageQuery = literal("\"?" & "{" & senseGroupLabel & " - Nachricht für Patzer|Deinen " & senseOrgan(senseGroupLabel) & " fällt nichts besonderes auf.}\"")
+!mmm       end if
+!mmm
+!mmm       set menuCode = menuCode & "{{ " & senseGroupLabel & " }} "
+!mmm       if senseGroupLabel eq "Riechen" or senseGroupLabel eq "Schmecken" 
+!mmm         set senseGroupLabel = "Riechen/Schmecken"
+!mmm       end if
+!mmm       set menuCode = menuCode & "{{ "
+!mmm       set menuCode = menuCode & "[" & "Manuell" & "]("
+!mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSense=\"" & senseGroupLabel & "\"") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSenseModifier=") & manualModifierQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cTokenList=selected") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSuccessMessage=") & successMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cRegularFailureMessage=") & failureMessage & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cCriticalFailureMessage=") & critFailMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & " &nbsp; "
+!mmm       set menuCode = menuCode & "[" & "Auswahl" & "]("
+!mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSense=\"" & senseGroupLabel & "\"") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSenseModifier=") & selectModifierQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cTokenList=selected") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSuccessMessage=") & successMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cRegularFailureMessage=") & failureMessage & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cCriticalFailureMessage=") & critFailMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & " &nbsp; "
+!mmm       set menuCode = menuCode & "[" & "Auto" & "]("
+!mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSense=\"" & senseGroupLabel & "\"") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSenseModifier=") & autoModifier & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cTokenList=" & stringify(autoTokenList)) & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSuccessMessage=") & successMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cRegularFailureMessage=") & failureMessage & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cCriticalFailureMessage=") & critFailMessageQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & "}} "
+!mmm       
+!mmm     end for
+!mmm     
+!mmm     do whisperback(menuCode)
+!mmm   
+!mmm   end function
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
@@ -22,21 +108,28 @@
 !rem   //  cTokenList               List of valid token_id values for characters that get the sense rolls. Duplicates are ignored.
 !rem   //
 !mmm   set customizable cCheckVersion = false
-!mmm   set customizable cSense = "Sehen"
-!mmm   set customizable cSenseModifier = 0
-!mmm   set customizable cSuccessMessage = "Einer deiner Sinne hat etwas wahrgenommen. Herzlichen Glückwunsch!"
+!mmm   set customizable cSense = default
+!mmm   set customizable cSenseModifier = default
+!mmm   set customizable cSuccessMessage = default
 !mmm   set customizable cRegularFailureMessage = "Nichts besonderes hier."
-!mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier. Wirklich nicht!"
-!mmm   set customizable cTokenList = false
+!mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier."
+!mmm   set customizable cTokenList = default
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback("Midgard Multi Sense Script " & scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem   // Called without proper config -> show menu
+!rem   //
+!mmm   if isdefault(cSense)
+!mmm     do senseMenu()
+!mmm     exit script
+!mmm   end if
+!mmm   
 !rem   // Initialize 
 !rem   //
-!mmm   if not cTokenList and selected
+!mmm   if isdefault(cTokenList) and selected
 !mmm     set cTokenList = selected
 !mmm   end if
 !mmm
@@ -67,48 +160,41 @@
 !rem     // Run through selected characters
 !mmm     for id in trimmedTokenList
 !mmm
-!rem       // Initialize: refetch character ID and get name and skills
-!mmm       set tokenId = getattr(id, "token_id")
-!mmm       set charName = getattr(tokenId, "character_name")
-!mmm       set charEffectiveSkill = getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", cSense, "FW2")) + getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
-!mmm       set charSenseModifier = cSenseModifier
-!mmm       if cSense eq "Nachtsicht" and not charEffectiveSkill
+!rem       // Initialize: refetch token ID and get name and skills
+!mmm       set tokenID = id.token_id
+!mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "FW2")) + tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
+!mmm       set tokenSenseModifier = cSenseModifier
+!mmm       if cSense eq "Nachtsicht" and not tokenEffSkill
 !rem         // For characters without night vision, substitute Vision without a bonus & slap -2 on the modifier
-!mmm         set charEffectiveSkill = getattr(tokenId, findattr(tokenId, "sinne", "Fertigkeit2", "Sehen", "FW2"))
-!mmm         set charSenseModifier = charSenseModifier - 2
+!mmm         set tokenEffSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
+!mmm         set tokenSenseModifier = tokenSenseModifier - 2
 !mmm       end if
 !mmm
 !rem       // Error handling
-!mmm       if isdenied(tokenId) or isunknown(tokenId)
-!mmm         set skippedList = skippedList, ("Token '" & id & "': no/inaccessible character")
-!mmm       else if not charEffectiveSkill
-!mmm         set skippedList = skippedList, ("Character '" & charName & "': '" & cSense & "' inaccessible or does not exist") 
+!mmm       if isdenied(tokenID) or isunknown(tokenID)
+!mmm         set skippedList = skippedList, ("Token '" & tokenID & "': no/inaccessible character")
+!mmm       else if not tokenEffSkill
+!mmm         set skippedList = skippedList, ("Token '" & tokenID.token_name & "': '" & cSense & "' inaccessible or does not exist") 
 !rem       // And if everything is ready...
 !mmm       else
 !rem         // Execute sense rolls 
-!mmm         set effModifier = charEffectiveSkill + charSenseModifier
-!mmm         if effModifier >= 0 
-!mmm           set effModifier = "+" & effModifier
-!mmm         end if
+!mmm         set effModifier = sign(tokenEffSkill + tokenSenseModifier, "math")
 !mmm         set senseRoll = roll("1d20" & effModifier)
 !rem         // Overwrite tooltip to break down components
-!mmm         if charSenseModifier >= 0
-!mmm           set charSenseModifier = "+" & (charSenseModifier * 1)
-!mmm         end if
-!mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - effModifier) & ") + (EW = " & charEffectiveSkill & ") " & charSenseModifier
+!mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - effModifier) & ") + (EW = " & tokenEffSkill & ") " & sign(tokenSenseModifier, "display")
 !mmm         set senseResult = highlight(senseRoll, default, senseResultTooltip)
 !mmm         
 !rem         // Compose output table row for GM
 !mmm         set playerMessage = ""
-!mmm         chat: [${charName} ${senseResult}](${cssGMTableSection})
+!mmm         chat: [${tokenID.token_name} ${senseResult}](${cssGMTableSection})
 !mmm         if senseResult >= 20 or iscritical(senseRoll)
-!mmm           set playerMessage = "/w \"" & charName & "\" " & cSuccessMessage
+!mmm           set playerMessage = "/w \"" & tokenID.character_name & "\" " & cSuccessMessage
 !mmm           chat: [${playerMsgEmoji} *${cSuccessMessage}*](${cssGMTableItemSuccess})
 !mmm         else if (cSense ne "Sechster Sinn" and isfumble(senseResult))
-!mmm           set playerMessage = "/w \"" & charName & "\" " & cCriticalFailureMessage
+!mmm           set playerMessage = "/w \"" & tokenID.character_name & "\" " & cCriticalFailureMessage
 !mmm           chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
 !mmm         else if (cSense ne "Sechster Sinn") and (cRegularFailureMessage ne "")
-!mmm           set playerMessage = "/w \"" & charName & "\" " & cRegularFailureMessage
+!mmm           set playerMessage = "/w \"" & tokenID.character_name & "\" " & cRegularFailureMessage
 !mmm           chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
 !mmm         else
 !mmm           chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})

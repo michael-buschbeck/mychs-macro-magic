@@ -18,7 +18,8 @@
 !rem
 !rem // sign(val, [zero]) signs a value for display
 !rem //
-!rem //   If true, [zero] signs a "0" as "+/-0", otherwise only positives are signed as "+X" and "0" left without a sign.
+!rem //   If [zero] is omitted, only positives are signed as "+X" and "0" is left without a sign.
+!rem //   For "math", signs a "0" as "+0" for use within a math expression. For "display", signs a "0" as "+/-0". 
 !rem //
 !mmm function sign(val, zero)
 !mmm   if isdefault(val)
@@ -26,9 +27,25 @@
 !mmm   end if
 !mmm   if val > 0
 !mmm     return "+" & val
-!mmm   else if val == 0 and zero
-!mmm     return "+/-" & val
+!mmm   else if val == 0 and zero eq "display"
+!mmm     return "+/-0"
+!mmm   else if val == 0 and zero eq "math"
+!mmm     return "+0"
 !mmm   else
 !mmm     return val
 !mmm   end if
+!mmm end function
+!rem
+!rem // stringify(list) rebuilds list as a list definition string: "item1", "item2", "item3" and so on. 
+!rem // All elements are treated as strings themselves.
+!rem //
+!mmm function stringify(list)
+!mmm   set string = ""
+!mmm   for item in list
+!mmm     if string ne ""
+!mmm       set string = string & ","
+!mmm     end if
+!mmm     set string = string & "\"" & item & "\""
+!mmm   end for
+!mmm   return string
 !mmm end function

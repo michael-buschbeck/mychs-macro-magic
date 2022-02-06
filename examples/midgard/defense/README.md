@@ -1,6 +1,6 @@
 # MMM-Abwehrskript für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.14.0 vom 2022-01-27,** erfordert MMM 1.26.0+.
+Aktuelle Version: **1.15.0 vom 2022-02-06,** erfordert MMM 1.26.0+.
 
 Das MMM-Abwehrskript wickelt die Abwehr eines Angriffs ab. Es erhält die Angriffsdaten automatisch; wenn sie fehlen, wird der Spieler zur Eingabe aufgefordert. Die üblichen Regeln werden automatisch angewendet. Optional lassen sich in einem kurzen [Konfigskript](#konfigskript) die Auswahl der Abwehrwaffe (Schild/Parierwaffe) und die Textausgaben anpassen. 
 
@@ -23,6 +23,10 @@ Ein MMM-Konfigskript hat grundsätzlich die Form
 !mmm end customize
 call_to_script
 ```
+
+### Wehrlose Opfer: keine Abwehr, nur Schaden & Folgen
+
+Ab 1.15 kann das Abwehrskript auch nur den Schaden und seine Folgen abwickeln, ohne eine Abwehr zu versuchen. Das geschieht, wenn im Konfigskript das Flag `cNoDefense=true` gesetzt ist.
 
 ### Unterschiedliche Abwehrwaffen
 
@@ -60,6 +64,12 @@ Das Skript bekommt die Eckdaten das Angriffs intern übergeben und fragt nur noc
 
 
 ## Changelog
+
+1.15.0 2022-02-06
+
+- Neuer Wehrlos-Modus: keine Abwehr, nur Schaden und Folgen => alle Eingaben wurden in ein Wrapper-Skript ausgelagert
+- Bugfix: bei Ausführung für NPCs wird nun das Modifikatorenprotokoll an den richtigen NPC geschickt
+- Fälschlich per Konfigskript angegebene Parierwaffen werden nun abgefangen
 
 1.14.0 2022-01-29
 

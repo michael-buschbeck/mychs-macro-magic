@@ -1,0 +1,16 @@
+!rem // Midgard defense wrapper for faking a critical success
+!mmm customize
+!mmm   set cWeaponLabel = "Parierdolch"
+!mmm   combine chat using " "
+!mmm     chat: /w "${sender}" Rolling 
+!mmm     for r in [[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]],[[1d20]]
+!mmm       chat: ${r},
+!mmm       exit for if iscritical(r)
+!mmm     end for
+!mmm   end combine
+!mmm   if not iscritical(r)
+!mmm     debug chat: no critical roll found, rerun script
+!mmm   end if
+!mmm   set cDefenseRoll = r
+!mmm end customize
+%{MacroSheet|defenseMain}
