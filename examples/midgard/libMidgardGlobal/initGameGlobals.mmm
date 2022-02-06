@@ -114,7 +114,7 @@
 !mmm   
 %{MacroSheetLibrary|libBasics}
 !mmm   
-!mmm   publish to game: count, sign
+!mmm   publish to game: count, sign, stringify
 !mmm   
 !mmm   chat: /me loaded: ${scriptVersion}
 !mmm   

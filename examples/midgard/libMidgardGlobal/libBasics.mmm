@@ -35,3 +35,17 @@
 !mmm     return val
 !mmm   end if
 !mmm end function
+!rem
+!rem // stringify(list) rebuilds list as a list definition string: "item1", "item2", "item3" and so on. 
+!rem // All elements are treated as strings themselves.
+!rem //
+!mmm function stringify(list)
+!mmm   set string = ""
+!mmm   for item in list
+!mmm     if string ne ""
+!mmm       set string = string & ","
+!mmm     end if
+!mmm     set string = string & "\"" & item & "\""
+!mmm   end for
+!mmm   return string
+!mmm end function

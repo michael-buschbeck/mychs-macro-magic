@@ -13,17 +13,6 @@
 !rem
 !rem   // FUNCTIONS
 !rem   //
-!mmm   function stringify(list)
-!mmm     set string = ""
-!mmm     for item in list
-!mmm       if string ne ""
-!mmm         set string = string & ","
-!mmm       end if
-!mmm       set string = string & "\"" & item & "\""
-!mmm     end for
-!mmm     return string
-!mmm   end function
-!rem
 !mmm   function senseOrgan(senseLabel)
 !mmm     if senseLabel eq "Sehen" or senseLabel eq "Nachtsicht"
 !mmm       return "Augen"
@@ -120,10 +109,10 @@
 !rem   //
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cSense = default
-!mmm   set customizable cSenseModifier = 0
-!mmm   set customizable cSuccessMessage = "Einer deiner Sinne hat etwas wahrgenommen. Herzlichen Glückwunsch!"
+!mmm   set customizable cSenseModifier = default
+!mmm   set customizable cSuccessMessage = default
 !mmm   set customizable cRegularFailureMessage = "Nichts besonderes hier."
-!mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier. Wirklich nicht!"
+!mmm   set customizable cCriticalFailureMessage = "Nichts besonderes hier."
 !mmm   set customizable cTokenList = default
 !mmm
 !mmm   if cCheckVersion
@@ -131,7 +120,7 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Called without proper config -> output menu
+!rem   // Called without proper config -> show menu
 !rem   //
 !mmm   if isdefault(cSense)
 !mmm     do senseMenu()
