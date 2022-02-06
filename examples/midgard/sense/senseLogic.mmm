@@ -171,48 +171,41 @@
 !rem     // Run through selected characters
 !mmm     for id in trimmedTokenList
 !mmm
-!rem       // Initialize: refetch character ID and get name and skills
+!rem       // Initialize: refetch token ID and get name and skills
 !mmm       set tokenID = id.token_id
-!mmm       set charName = tokenID.character_name
-!mmm       set charEffectiveSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "FW2")) + tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
-!mmm       set charSenseModifier = cSenseModifier
-!mmm       if cSense eq "Nachtsicht" and not charEffectiveSkill
+!mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "FW2")) + tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
+!mmm       set tokenSenseModifier = cSenseModifier
+!mmm       if cSense eq "Nachtsicht" and not tokenEffSkill
 !rem         // For characters without night vision, substitute Vision without a bonus & slap -2 on the modifier
-!mmm         set charEffectiveSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
-!mmm         set charSenseModifier = charSenseModifier - 2
+!mmm         set tokenEffSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", "Sehen", "FW2"))
+!mmm         set tokenSenseModifier = tokenSenseModifier - 2
 !mmm       end if
 !mmm
 !rem       // Error handling
 !mmm       if isdenied(tokenID) or isunknown(tokenID)
-!mmm         set skippedList = skippedList, ("Token '" & id & "': no/inaccessible character")
-!mmm       else if not charEffectiveSkill
-!mmm         set skippedList = skippedList, ("Character '" & charName & "': '" & cSense & "' inaccessible or does not exist") 
+!mmm         set skippedList = skippedList, ("Token '" & tokenID & "': no/inaccessible character")
+!mmm       else if not tokenEffSkill
+!mmm         set skippedList = skippedList, ("Token '" & tokenID.token_name & "': '" & cSense & "' inaccessible or does not exist") 
 !rem       // And if everything is ready...
 !mmm       else
 !rem         // Execute sense rolls 
-!mmm         set effModifier = charEffectiveSkill + charSenseModifier
-!mmm         if effModifier >= 0 
-!mmm           set effModifier = "+" & effModifier
-!mmm         end if
+!mmm         set effModifier = sign(tokenEffSkill + tokenSenseModifier, "math")
 !mmm         set senseRoll = roll("1d20" & effModifier)
 !rem         // Overwrite tooltip to break down components
-!mmm         if charSenseModifier >= 0
-!mmm           set charSenseModifier = "+" & (charSenseModifier * 1)
-!mmm         end if
-!mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - effModifier) & ") + (EW = " & charEffectiveSkill & ") " & charSenseModifier
+!mmm         set senseResultTooltip = senseRoll & " = (1d20 = " & (senseRoll - effModifier) & ") + (EW = " & tokenEffSkill & ") " & sign(tokenSenseModifier, "display")
 !mmm         set senseResult = highlight(senseRoll, default, senseResultTooltip)
 !mmm         
 !rem         // Compose output table row for GM
 !mmm         set playerMessage = ""
-!mmm         chat: [${charName} ${senseResult}](${cssGMTableSection})
+!mmm         chat: [${tokenID.token_name} ${senseResult}](${cssGMTableSection})
 !mmm         if senseResult >= 20 or iscritical(senseRoll)
-!mmm           set playerMessage = "/w \"" & charName & "\" " & cSuccessMessage
+!mmm           set playerMessage = "/w \"" & tokenID.character_name & "\" " & cSuccessMessage
 !mmm           chat: [${playerMsgEmoji} *${cSuccessMessage}*](${cssGMTableItemSuccess})
 !mmm         else if (cSense ne "Sechster Sinn" and isfumble(senseResult))
-!mmm           set playerMessage = "/w \"" & charName & "\" " & cCriticalFailureMessage
+!mmm           set playerMessage = "/w \"" & tokenID.character_name & "\" " & cCriticalFailureMessage
 !mmm           chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
 !mmm         else if (cSense ne "Sechster Sinn") and (cRegularFailureMessage ne "")
-!mmm           set playerMessage = "/w \"" & charName & "\" " & cRegularFailureMessage
+!mmm           set playerMessage = "/w \"" & tokenID.character_name & "\" " & cRegularFailureMessage
 !mmm           chat: [${playerMsgEmoji} *${cRegularFailureMessage}*](${cssGMTableItem})
 !mmm         else
 !mmm           chat: [*(Keine Nachricht an Spieler)*](${cssGMTableItem})

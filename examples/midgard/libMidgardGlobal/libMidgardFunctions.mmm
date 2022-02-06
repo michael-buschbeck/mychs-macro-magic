@@ -508,11 +508,11 @@
 !rem   // Process change of endurance and applicable consequences 
 !mmm
 !mmm   if currentCeiling and prvEndurance + offset > currentCeiling
-!mmm     set effOffset = highlight(sign(currentCeiling - prvEndurance, true), "important", "begrenzt auf " & currentCeiling)
+!mmm     set effOffset = highlight(sign(currentCeiling - prvEndurance, "display"), "important", "begrenzt auf " & currentCeiling)
 !mmm   else if prvEndurance + offset > maxEndurance
-!mmm     set effOffset = highlight(sign(maxEndurance - prvEndurance, true), "important", "begrenzt auf Maximum")
+!mmm     set effOffset = highlight(sign(maxEndurance - prvEndurance, "display"), "important", "begrenzt auf Maximum")
 !mmm   else if prvEndurance + offset <= 0
-!mmm     set effOffset = highlight(sign(0 - prvEndurance, true), "bad", "begrenzt auf Minimum 0")
+!mmm     set effOffset = highlight(sign(0 - prvEndurance, "display"), "bad", "begrenzt auf Minimum 0")
 !mmm   else
 !mmm     set effOffset = highlight(sign(offset), "normal")
 !mmm   end if 
@@ -591,11 +591,11 @@
 !rem     // Process health gain and applicable consequences 
 !mmm
 !mmm     if prvHealth + offset > maxHealth
-!mmm       set effOffset = highlight(sign(maxHealth - prvHealth, true), "important", "begrenzt auf Maximum")
+!mmm       set effOffset = highlight(sign(maxHealth - prvHealth, "display"), "important", "begrenzt auf Maximum")
 !mmm     else if prvHealth + offset <= 0
-!mmm       set effOffset = highlight(sign(offset, true), "bad")
+!mmm       set effOffset = highlight(sign(offset, "display"), "bad")
 !mmm     else
-!mmm       set effOffset = highlight(sign(offset, true), "normal")
+!mmm       set effOffset = highlight(sign(offset, "display"), "normal")
 !mmm     end if 
 !mmm   
 !mmm     set newHealth = prvHealth + effOffset
