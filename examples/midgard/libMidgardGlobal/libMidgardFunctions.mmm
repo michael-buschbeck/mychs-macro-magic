@@ -1170,7 +1170,7 @@
 !mmm     set weaponsGroup = "melee"
 !mmm   end if
 !mmm
-!mmm   if weaponsGroup eq "defense" and isdefault(attackWeaponType)
+!mmm   if weaponsGroup eq "defense" and (isdefault(attackWeaponType) or isunknown(attackWeaponType))
 !mmm     do whisperback("m3mgdWeaponSelectorChatMenu(): called for defense weapons without attackWeaponType. Aborting.")
 !mmm     return false
 !mmm   end if
