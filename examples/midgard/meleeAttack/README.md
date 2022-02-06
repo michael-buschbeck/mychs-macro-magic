@@ -1,6 +1,6 @@
 # MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.15.0 vom 2022-01-29,** erfordert MMM 1.26.0+.
+Aktuelle Version: **1.15.0 vom 2022-02-06,** erfordert MMM 1.26.0+.
 
 Das MMM-Nahkampfskript wickelt einen Nahkampfangriff ab. Es erwartet als Parameter (per [Konfigskript](#konfigskript)) die Angabe der Waffenbezeichnung entsprechend des Kampfblattes im Charakterbogen. Für Standardwaffen aus dem Kodex wird der Waffentyp automatisch ermittelt. Für besondere Waffen können zusätzliche Eigenschaften im Konfigskript übergeben werden, wie auch ein 3D-Würfelwurf und Text für die Geschichtenerzähler-Ausgabe.
 
@@ -28,9 +28,9 @@ call_to_script
 
 ### Unterschiedliche Waffen und Waffenfähigkeiten
 
-Mindestens muss ein Konfigskript eine der vom Charakter geführten Waffen deklarieren, d.h. die Variable `cWeaponLabel` so setzen, dass der Wert exakt der Bezeichnung im Kampfblatt entspricht, z.B. so: `!mmm set cWeaponLabel = "Langschwert"`. Statt lauter Konfig-Skripte von Hand zu pflegen, übernimmt diese Aufgabe für Standardwaffen das Skript `weaponSelect`, das Menüs der Waffen des ausgewählten Tokens erzeugt.
+Mindestens muss ein Konfigskript eine der vom Charakter geführten Waffen deklarieren, d.h. die Variable `cWeaponLabel` so setzen, dass der Wert exakt der Bezeichnung im Kampfblatt entspricht, z.B. so: `!mmm set cWeaponLabel = "Langschwert"`. Statt lauter Konfig-Skripte von Hand zu pflegen, erzeugt das Skript bei fehlender Waffenübergabe automatisch ein Menü.
 
-Wer allerdings Unikate (z.B. magische Waffen) nutzt, muss pro Spezialwaffe ein Konfigskript anlegen und zum Angriff jeweils das gewünschte aufrufen. **Damit das automatisch von `weaponSelect` erzeugte Menü diese eigenen Konfigskripte im Menü verlinkt, müssen sie noch verknüpft werden:** das erledigt am einfachsten ein Aufruf von `%{MacroSheet|charCombatValidator}` (Token anklicken).
+Wer allerdings Unikate (z.B. magische Waffen) nutzt, muss pro Spezialwaffe ein Konfigskript anlegen und zum Angriff jeweils das gewünschte aufrufen. **Damit das automatisch erzeugte Menü diese eigenen Konfigskripte im Menü verlinkt, müssen sie noch verknüpft werden:** das erledigt am einfachsten ein Aufruf von `%{MacroSheet|charCombatValidator}` (Token anklicken).
 
 **Notwendig** ist für Spezialwaffen nur der Parameter
 
@@ -87,10 +87,13 @@ Das Skript fragt bei jedem Start neben dem Ziel des Angriffs (auf gegnerisches T
 
 ## Changelog
 
-1.15.0 2022-01-29
+1.15.0 2022-02-06
 
 - Waffenauswahl und die Eigenschaften von Standardwaffen integriert
+- Fehlender Waffentyp von Standard-Angriffswaffen wird erraten
 - Abwehrbuttons neu mit automatischer Auswahl verwendbarer Waffen & Erkennung ob NPC oder Spieler-Charakter
+- Bugfix: Modifikatorenprotokoll wird auch für NPCs an den korrekten Spieler geschickt
+- Per Default werden nun die Attribute bar2/bar3 für AP/LP verwendet, damit ist der Default robuster
 
 1.14.0 2022-01-27
 

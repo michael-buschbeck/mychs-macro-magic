@@ -1,6 +1,6 @@
 # MMM-Angriffsskript (Fernkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.15.0 vom 2022-01-29,** erfordert MMM 1.26.0+.
+Aktuelle Version: **1.15.0 vom 2022-02-06,** erfordert MMM 1.26.0+.
 
 Das MMM-Fernkampfskript wickelt einen Fernkampfangriff ab. Es erwartet als Parameter (per [Konfigskript](#konfigskript)) die Angabe der Waffenbezeichnung entsprechend des Kampfblattes im Charakterbogen. Für Standardwaffen aus dem Kodex werden die weiteren Angaben automatisch ermittelt. Das funktioniert, soweit im Charakterbogen das Munitionsattribut standardgemäß gesetzt wurde ("`Pfeile`" für die Waffe "Bogen" usw.). Für besondere Waffen können zusätzliche Eigenschaften im Konfigskript übergeben werden, wie auch ein 3D-Würfelwurf und Text für die Geschichtenerzähler-Ausgabe.
 
@@ -83,10 +83,14 @@ Das Skript fragt bei jedem Start neben dem Ziel des Angriffs (auf gegnerisches T
 
 ## Changelog
 
-1.15.0 2022-01-29
+1.15.0 2022-02-06
 
 - Waffenauswahl und die Eigenschaften von Standardwaffen integriert
+- Fehlender Waffentyp von Standard-Angriffswaffen wird erraten
 - Abwehrbuttons neu mit automatischer Auswahl verwendbarer Waffen & Erkennung ob NPC oder Spieler-Charakter
+- Bugfix: Modifikatorenprotokoll wird auch für NPCs an den korrekten Spieler geschickt
+- Bugfix: kritische Erfolge/Patzer beim Scharfschießen werden farbig umrandet
+- Per Default werden nun die Attribute bar2/bar3 für AP/LP verwendet, damit ist der Default robuster
 
 1.14.0 2022-01-27
 

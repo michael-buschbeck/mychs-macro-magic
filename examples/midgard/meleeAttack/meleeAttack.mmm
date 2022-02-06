@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.15.0-pre (2022-02-06)"
+!mmm   set scriptVersion = "v1.15.0 (2022-02-06)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
