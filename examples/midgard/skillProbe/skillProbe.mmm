@@ -1,0 +1,167 @@
+!rem // skillProbe
+!rem //
+!mmm script
+!mmm   set scriptVersion = "skillProbe 1.0.0-pre (2022-02-07)"
+!rem
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.24
+!mmm     do whisperback("Abbruch: MMM-Version 1.24.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!rem
+!rem   // FUNCTIONS
+!rem   //
+!mmm   function skillsMenu()
+!mmm   
+!mmm     set scriptCommand = "&#x25;{MacroSheet|skillProbe}"
+!mmm     set manualModifierQuery = literal("?" & "{" & "Modifikator|0" & "}")
+!mmm
+!mmm     for charName in m3mgdPlayerCharacters
+!mmm       set autoTokenList = autoTokenList, charName.character_id
+!mmm     end for
+!mmm     
+!mmm     set menuCode = "&" & "{template:default}" & "{{name=Gruppenwurf für Fertigkeiten}} "
+!mmm
+!mmm     for skillLabel in "Fallen entdecken", "Fallenmechanik", "Schleichen", "Spurensuche", "Tarnen"
+!mmm     
+!mmm       set menuCode = menuCode & "{{ " & skillLabel & " }} "
+!mmm       set menuCode = menuCode & "{{ "
+!mmm       set menuCode = menuCode & "[" & "Ausgewählte Token" & "]("
+!mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSkill=\"" & skillLabel & "\"") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cModifier=") & manualModifierQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cTokenList=selected") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & " &nbsp; "
+!mmm       set menuCode = menuCode & "[" & "Gruppe" & "]("
+!mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cSkill=\"" & skillLabel & "\"") & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cModifier=") & manualModifierQuery & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cTokenList=" & stringify(autoTokenList)) & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & "}} "
+!mmm       
+!mmm     end for
+!mmm     
+!mmm     do whisperback(menuCode)
+!mmm   
+!mmm   end function
+!mmm
+!rem   // Config: set defaults for customizable variables
+!rem   //
+!rem   //  cCheckVersion    Toggle version check
+!rem   //  cSkill           A skill as listed in the character sheet (column "Fertigkeit" [or "Fertigkeit2"?])
+!rem   //  cModifier        Modifier to the skill roll
+!rem   //  cTokenList       List of valid token_id or character_id values for characters that get the sense rolls. Duplicates are ignored.
+!rem   //
+!mmm   set customizable cCheckVersion = false
+!mmm   set customizable cSkill = default
+!mmm   set customizable cModifier = default
+!mmm   set customizable cTokenList = default
+!mmm
+!mmm   if cCheckVersion
+!mmm     do whisperback(scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Called without proper config -> show menu
+!rem   //
+!mmm   if isdefault(cSkill)
+!mmm     do skillsMenu()
+!mmm     exit script
+!mmm   end if
+!mmm   
+!rem   // Initialize 
+!rem   //
+!mmm   if isdefault(cTokenList) and selected
+!mmm     set cTokenList = selected
+!mmm   end if
+!mmm
+!rem   // Output formatting constants
+!mmm   set playerMsgEmoji = "💬"
+!mmm   set cssGMTableHead = "#\" style=\"border: 1px solid #000000; display:block;background-color:#702082;margin:0px;padding:5px;font-size:1.05em;font-style:normal;font-weight:bold;color:#FFFFFF;text-decoration:none;"
+!mmm   set cssGMTableSection = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000; display:block;background-color:#FFFFFF;margin:0px;padding:5px;font-size:1.05em;font-style:normal;font-weight:bold;color:#000000;text-decoration:none;"
+!mmm   set cssGMTableItem = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#f0f0f0;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
+!mmm   set cssGMTableItemSuccess = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#cdde87;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
+!mmm   set cssGMTableItemFailure = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#ffccaa;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
+!mmm   set cssGMTableItemCriticalFailure = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#f06560;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
+!rem
+!rem   // Due diligence: weed out duplicate tokens, in case cTokenList was populated manually or via {target}
+!mmm   for id in cTokenList
+!mmm     set dupeFound = false
+!mmm     for trimmedId in trimmedTokenList
+!mmm       if trimmedId eq id
+!mmm         set dupeFound = true
+!mmm       end if
+!mmm     end for
+!mmm     if not dupeFound
+!mmm       set trimmedTokenList = trimmedTokenList, id
+!mmm     end if
+!mmm   end for
+!rem
+!mmm   combine chat
+!mmm     
+!mmm     chat: /w GM [${cSkill}](${cssGMTableHead})
+!mmm     chat: [Würfe für...](${cssGMTableSection})
+!mmm     
+!rem     // Run through selected characters
+!mmm     for id in trimmedTokenList
+!mmm
+!rem       // Initialize: refetch token ID and get name and skills
+!mmm       set tokenID = id.token_id
+!mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cSkill, "FW")) + tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cSkill, "Fertigkeitsbonus"))
+!mmm       set tokenModifier = cModifier
+!mmm
+!rem       // Error handling
+!mmm       if isdenied(tokenID) or isunknown(tokenID)
+!mmm         
+!mmm         set skippedList = skippedList, ("Token '" & tokenID & "': kein Charakterbogen?")
+!mmm         
+!mmm       else if not tokenEffSkill
+!mmm         
+!mmm         set skippedList = skippedList, (tokenID.token_name & ": '" & cSkill & "'❌") 
+!mmm         
+!rem       // And if everything is ready...
+!mmm       else
+!mmm         
+!rem         // Execute skill roll
+!mmm         set effModifier = sign(tokenEffSkill + tokenModifier, "math")
+!mmm         set tokenRoll = roll("1d20" & effModifier)
+!mmm         
+!rem         // Overwrite tooltip to break down components
+!mmm         set tokenResultTooltip = tokenRoll & " = (1d20 = " & (tokenRoll - effModifier) & ") + (EW = " & tokenEffSkill & ") " & sign(tokenModifier, "display")
+!mmm         set tokenResult = highlight(tokenRoll, default, tokenResultTooltip)
+!mmm         
+!rem         // Compose output table row for GM
+!mmm         if tokenResult >= 20
+!mmm           chat: [${tokenID.token_name} ${tokenResult}](${cssGMTableItemSuccess})
+!mmm         else if isfumble(tokenRoll)
+!mmm           chat: [${tokenID.token_name} ${tokenResult}](${cssGMTableItemFailure})
+!mmm         else 
+!mmm           chat: [${tokenID.token_name} ${tokenResult}](${cssGMTableItemFailure})
+!mmm         end if
+!mmm
+!mmm       end if
+!mmm       
+!mmm     end for
+!mmm
+!rem     // Tell GM which selected characters were skipped
+!mmm     if skippedList
+!mmm         
+!mmm       chat: [Keine Würfe für...](${cssGMTableSection})
+!mmm         
+!mmm       for skippedItem in skippedList
+!mmm         
+!mmm         if skippedItem
+!mmm         
+!mmm           chat: [${skippedItem}](${cssGMTableItem})
+!mmm         
+!mmm         end if
+!mmm         
+!mmm       end for
+!mmm         
+!mmm     end if
+!mmm         
+!mmm   end combine
+!mmm
+!mmm end script
