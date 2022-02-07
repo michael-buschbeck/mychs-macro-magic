@@ -3,7 +3,7 @@
 !rem // If called without a config script, sends a menu of sense options to the chat.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0 (2022-02-06)"
+!mmm   set scriptVersion = "2.0.1 (2022-02-07)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -190,7 +190,7 @@
 !mmm         if senseResult >= 20 or iscritical(senseRoll)
 !mmm           set playerMessage = "/w \"" & tokenID.character_name & "\" " & cSuccessMessage
 !mmm           chat: [${playerMsgEmoji} *${cSuccessMessage}*](${cssGMTableItemSuccess})
-!mmm         else if (cSense ne "Sechster Sinn" and isfumble(senseResult))
+!mmm         else if (cSense ne "Sechster Sinn" and isfumble(senseRoll))
 !mmm           set playerMessage = "/w \"" & tokenID.character_name & "\" " & cCriticalFailureMessage
 !mmm           chat: [${playerMsgEmoji} *${cCriticalFailureMessage}*](${cssGMTableItemCriticalFailure})
 !mmm         else if (cSense ne "Sechster Sinn") and (cRegularFailureMessage ne "")
