@@ -1,7 +1,7 @@
 !rem // skillProbe
 !rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.0.0-pre (2022-02-07)"
+!mmm   set scriptVersion = "skillProbe 1.0.0-pre (2022-02-10)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -111,13 +111,24 @@
 !mmm       set tokenID = id.token_id
 !mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cSkill, "FW")) + tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cSkill, "Fertigkeitsbonus"))
 !mmm       set tokenModifier = cModifier
+!mmm       set fallBack = ""
 !mmm
+!rem       // If skill is missing, try to default to the unlearned version
+!mmm       if not tokenEffSkill and not isunknown(tokenID) and not isdenied(tokenID)
+!mmm       
+!mmm         set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cSkill & " (Ungelernt)", "FW2"))
+!mmm         if not isunknown(tokenEffSkill) and tokenEffSkill > 0
+!mmm           set fallBack = " (ungelernt)"
+!mmm         end if
+!mmm       
+!mmm       end if
+!mmm       
 !rem       // Error handling
 !mmm       if isdenied(tokenID) or isunknown(tokenID)
 !mmm         
 !mmm         set skippedList = skippedList, ("Token '" & tokenID & "': kein Charakterbogen?")
 !mmm         
-!mmm       else if not tokenEffSkill
+!mmm       else if not tokenEffSkill or tokenEffSkill == 0
 !mmm         
 !mmm         set skippedList = skippedList, (tokenID.token_name & ": '" & cSkill & "'❌") 
 !mmm         
@@ -134,11 +145,11 @@
 !mmm         
 !rem         // Compose output table row for GM
 !mmm         if tokenResult >= 20
-!mmm           chat: [${tokenID.token_name} ${tokenResult}](${cssGMTableItemSuccess})
+!mmm           chat: [${tokenID.token_name}${fallBack} ${tokenResult}](${cssGMTableItemSuccess})
 !mmm         else if isfumble(tokenRoll)
-!mmm           chat: [${tokenID.token_name} ${tokenResult}](${cssGMTableItemFailure})
+!mmm           chat: [${tokenID.token_name}${fallBack} ${tokenResult}](${cssGMTableItemFailure})
 !mmm         else 
-!mmm           chat: [${tokenID.token_name} ${tokenResult}](${cssGMTableItemFailure})
+!mmm           chat: [${tokenID.token_name}${fallBack} ${tokenResult}](${cssGMTableItemFailure})
 !mmm         end if
 !mmm
 !mmm       end if
