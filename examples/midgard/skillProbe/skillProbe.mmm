@@ -1,7 +1,7 @@
 !rem // skillProbe
 !rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.0.0-pre (2022-02-10)"
+!mmm   set scriptVersion = "skillProbe 1.0.0 (2022-02-11)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -17,7 +17,7 @@
 !mmm     set manualModifierQuery = literal("?" & "{" & "Modifikator|0" & "}")
 !mmm
 !mmm     for charName in m3mgdPlayerCharacters
-!mmm       set autoTokenList = autoTokenList, charName.character_id
+!mmm       set autoTokenList = autoTokenList, charName
 !mmm     end for
 !mmm     
 !mmm     set menuCode = "&" & "{template:default}" & "{{name=Gruppenwurf für Fertigkeiten}} "
@@ -87,7 +87,16 @@
 !mmm   set cssGMTableItemCriticalFailure = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#f06560;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
 !rem
 !rem   // Due diligence: weed out duplicate tokens, in case cTokenList was populated manually or via {target}
-!mmm   for id in cTokenList
+!mmm   for item in cTokenList
+!mmm 
+!mmm     if not isunknown(item.token_id) and not isdenied(item.token_id)
+!mmm       set id = item.token_id
+!mmm     else
+!mmm       if not isdenied(item.character_name)
+!mmm         set item = item.character_name
+!mmm       end if
+!mmm       set id = "'" & item & "' (kein Token)"
+!mmm     end if
 !mmm     set dupeFound = false
 !mmm     for trimmedId in trimmedTokenList
 !mmm       if trimmedId eq id
@@ -126,7 +135,7 @@
 !rem       // Error handling
 !mmm       if isdenied(tokenID) or isunknown(tokenID)
 !mmm         
-!mmm         set skippedList = skippedList, ("Token '" & tokenID & "': kein Charakterbogen?")
+!mmm         set skippedList = skippedList, id
 !mmm         
 !mmm       else if not tokenEffSkill or tokenEffSkill == 0
 !mmm         
