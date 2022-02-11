@@ -533,6 +533,7 @@
 !mmm   
 !mmm     set newEndurance = highlight(newEndurance, "bad", "🟢 (= " & prvEndurance & effOffset & ")")
 !mmm     do setattr(tokenID, "status_green", true)
+!mmm     
 !mmm   
 !mmm   else
 !mmm   

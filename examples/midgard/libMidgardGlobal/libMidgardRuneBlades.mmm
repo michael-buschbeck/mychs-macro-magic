@@ -1,0 +1,126 @@
+!rem
+!rem // m3mgdRuneEffectEarthBond(weaponWielderID, weaponLabel, command, [targetID])
+!rem // 
+!rem //   CURRENTLY ONLY ALLOWS FOR RELEASE COMMANDS
+!rem //   Executes command on weaponWielderID's earth bond capability (from the rune blade weaponLabel) against the stored target or [targetID]
+!rem // 
+!mmm function m3mgdRuneEffectEarthBond(weaponWielderID, weaponLabel, command, targetID)
+!mmm   
+!mmm   set earthBondToggleCost = 1
+!mmm   set deactivateGIF = ""
+!mmm
+!mmm   set sender = weaponWielderID.character_name
+!mmm
+!mmm   if isdefault(targetID)
+!mmm     
+!rem     // Retrieve target ID
+!mmm     set targetID = weaponWielderID.(m3mgdEarthBondPCAttrTargetID)
+!mmm     if isunknown(targetID) or isdenied(targetID) or isdenied(targetID.token_id) or isunknown(targetID.token_id) or isdenied(targetID.(m3mgdEarthBondStatusMarker))
+!mmm       do whisperback("Target token '" & targetID & "' not a token ID, or does not allow access to attributes:" & getreason(targetID))
+!mmm       return false
+!mmm     end if
+!mmm 
+!mmm     if targetID.(m3mgdEarthBondStatusMarker) ne "shown"
+!mmm       do whisperback(targetID.name & " trägt aber keine Erdfessel oder '" & m3mgdEarthBondStatusMarker & "' wurde schon entfernt.")
+!mmm       return false
+!mmm     end if
+!mmm
+!mmm   end if
+!mmm
+!mmm   if command eq "releaseByCreator" or command eq "releaseByExhaustion"
+!mmm
+!mmm     if command eq "releaseByCreator"
+!mmm       do m3mgdModifyEndurance(-1 * earthBondToggleCost, weaponWielderID.token_id, "AP")
+!mmm     end if
+!mmm     combine chat
+!mmm       chat: Die Erdfessel gibt ${targetID.name} frei, und plötzlich sieht der Untergrund wieder aus wie vorher, als wäre nichts gewesen.
+!mmm       if deactivateGIF ne ""
+!mmm         chat: [x](${deactivateGIF})
+!mmm       end if
+!mmm     end combine
+!mmm
+!mmm   else if command eq "escapeByPatience"
+!mmm     
+!mmm     set sender = targetID.token_name
+!mmm     set dxRoll = roll("1d100")
+!mmm     
+!mmm     if dxRoll > targetID.Gw
+!mmm     
+!mmm       chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${targetID.Gw}) ist mit ${dxRoll} **fehlgeschlagen.**
+!mmm       chat: ${targetID.name} versucht sich allzu ruckartig von ${weaponWielderID.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter! Und dafür hab ich 5 Minuten verschwendet.
+!mmm       return false
+!mmm     
+!mmm     else
+!mmm     
+!mmm       combine chat
+!mmm         chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${targetID.Gw}) ist mit ${dxRoll} **gelungen.**
+!mmm         chat: ${targetID.name} befreit sich laaaaangsam, aber immerhin elegant von ${weaponWielderID.name}s Erdfessel. Es kann so einfach sein -- das waren 5 gut investierte Minuten!
+!mmm         if deactivateGIF ne ""
+!mmm           chat: [x](${deactivateGIF})
+!mmm         end if
+!mmm       end combine
+!mmm     
+!mmm     end if
+!mmm
+!mmm   else if command eq "escapeByForce"
+!mmm
+!mmm     set sender = targetID.token_name
+!mmm     set stRoll = roll("1d100")
+!mmm     set foeActOfStrength = roll(targetID.token_id, "@"&"{KraftaktW}")
+!mmm     
+!mmm     if stRoll > foeActOfStrength
+!mmm     
+!mmm       chat: /w GM **Ausbruch aus Erdfessel:** PW:KraftaktW(${foeActOfStrength}) ist mit ${stRoll} **fehlgeschlagen.**
+!mmm       chat: ${targetID.name} versucht sich mit einem schier übermensch*lichen Kraftakt von ${weaponWielderID.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter!
+!mmm       return false
+!mmm     
+!mmm     else
+!mmm     
+!mmm       combine chat
+!mmm         chat: /w GM **Ausbruch aus Erdfessel:** PW:KraftaktW(${foeActOfStrength}) ist mit ${stRoll} **gelungen.**
+!mmm         chat: ${targetID.name} bricht mit einem übermensch*lichen Kraftakt aus ${weaponWielderID.name}s Erdfessel aus. Muckis, Baby!
+!mmm         if deactivateGIF ne "" 
+!mmm           chat: [x](${deactivateGIF})
+!mmm         end if
+!mmm       end combine
+!mmm     
+!mmm     end if
+!mmm
+!mmm   end if
+!mmm
+!mmm   do setattr(targetID, m3mgdEarthBondStatusMarker, false)
+!mmm   do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, false)
+!mmm   do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, "")
+!mmm
+!mmm   return true
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdCancelRuneEffects(weaponWielderID)
+!rem // 
+!rem //   Stops any active rune effects originating with weaponWielderID
+!rem // 
+!mmm function m3mgdCancelRuneEffects(weaponWielderID)
+!mmm   
+!mmm   if isdefault(weaponWielderID)
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if weaponWielderID.(m3mgdEarthBondStatusMarker)
+!mmm   
+!mmm     if runeEffectEarthBond(weaponWielderID, default, "releaseByExhaustion")
+!mmm   
+!mmm       return true
+!mmm   
+!mmm     else
+!mmm   
+!mmm       do whisperback("cancelRuneEffects(): call to runeEffectEarthBond() failed.")
+!mmm       return false
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return true
+!mmm
+!mmm end function
