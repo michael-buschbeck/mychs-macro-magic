@@ -1,4 +1,56 @@
 !rem
+!rem // m3mgdRuneEffectFireMole(tokenID, weaponLabel, command)
+!rem // 
+!rem //   Executes command on tokenID's rune blade Firemole (registered in character sheet as weaponLabel).
+!rem //   Known commands: "toggle-first", "start-first", "end-first" (regarding the first rune effect)
+!rem // 
+!mmm function m3mgdRuneEffectFireMole(tokenID, weaponLabel, command)
+!mmm 
+!mmm   set weaponMagicMarker = "status_all_for_one"
+!mmm   set weaponToggleCost = 1
+!mmm   set activateGIF = "https://media.giphy.com/media/3og0IDCumL5GLx7zag/giphy.gif"
+!mmm   set deactivateGIF = "https://media.giphy.com/media/hSvQn8tqv16bkzCGYI/giphy.gif"
+!mmm
+!mmm   set sender = tokenID.character_name
+!mmm
+!mmm   if tokenID.(script.cEnduranceAttr) <= 0
+!mmm
+!mmm     return false
+!mmm     
+!mmm   else if (command eq "toggle-first" or command eq "start-first") and not tokenID.(weaponMagicMarker) eq "shown"
+!mmm     
+!rem     // First rune effect, command "toggle"/"start", state "not active": Spark magic flames around the blade
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Flammen um meine Runenklinge *Feuermal* zu züngeln. [x](${activateGIF})
+!mmm     
+!mmm     if not setattr(tokenID, weaponMagicMarker, true) eq "shown"
+!mmm       do whisperback("runeEffectFireMole(" & command & "): Failure setting status marker '" & weaponMagicMarker & "' to shown.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.(cEnduranceAttr))
+!mmm     chat: /w "${tokenID.character_name}" Das hat ${weaponToggleCost} AP gekostet.
+!mmm     chat: /w GM ${tokenID.character_name} hat die magischen Flammen seiner Runenklinge aktiviert. Dauer: 10s. Kosten: ${weaponToggleCost} AP (schon abgezogen). 
+!mmm     
+!mmm   else if (command eq "toggle-first" or command eq "end-first") and tokenID.(weaponMagicMarker) eq "shown"
+!mmm     
+!rem     // First rune effect, command "toggle"/"end", state "active": Douse magic flames around the blade
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und die Flammen um meine Runenklinge *Feuermal* erlöschen. [x](${deactivateGIF})
+!mmm     
+!mmm     if not setattr(tokenID, weaponMagicMarker, false) eq "false"
+!mmm       do whisperback("runeEffectFireMole(" & command & "): Failure setting status marker '" & weaponMagicMarker & "' to false.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.(cEnduranceAttr))
+!mmm     chat: /w "${tokenID.character_name}" Das hat ${weaponToggleCost} AP gekostet.
+!mmm     chat: /w GM ${tokenID.character_name} hat die magischen Flammen seiner Runenklinge gelöscht. Dauer: 10s. Kosten: ${weaponToggleCost} AP (schon abgezogen).
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return true
+!mmm   
+!mmm end function
+!rem
 !rem // m3mgdRuneEffectEarthBond(weaponWielderID, weaponLabel, command, [targetID])
 !rem // 
 !rem //   CURRENTLY ONLY ALLOWS FOR RELEASE COMMANDS

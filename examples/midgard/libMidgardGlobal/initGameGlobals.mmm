@@ -118,7 +118,7 @@
 !mmm   
 %{MacroSheetLibrary|libMidgardRuneBlades}
 !mmm   
-!mmm   publish to game: m3mgdRuneEffectEarthBond, m3mgdCancelRuneEffects
+!mmm   publish to game: m3mgdRuneEffectFireMole, m3mgdRuneEffectEarthBond, m3mgdCancelRuneEffects
 !mmm   
 !mmm   chat: /me loaded: ${scriptVersion}
 !mmm   
