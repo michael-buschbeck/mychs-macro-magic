@@ -1,5 +1,5 @@
 !rem // whirlWindMagic executes magic features of Finn's longsword "Whirlwind"
-!rem // v1.1.0 2022-02-02
+!rem // v1.2.0 2022-02-11
 !mmm script
 !mmm   
 !rem   // Commands are set by config script, valid commands are "toggle-defense" and "wind-gust"
@@ -13,83 +13,6 @@
 !mmm     
 !mmm   end if 
 !mmm   
-!mmm
-!rem // runeEffectWhirlWind(tokenID, weaponLabel, command)
-!rem // 
-!rem //   Executes command on tokenID's rune blade Whirlwind (registered in character sheet as weaponLabel).
-!rem //   Known commands: "toggle-first", "start-first", "end-first" (regarding the first rune effect)
-!rem // 
-!mmm function runeEffectWhirlWind(tokenID, weaponLabel, command)
-!mmm 
-!mmm   set weaponMagicMarker = "status_half_haze"
-!mmm   set weaponToggleCost = 1
-!mmm   set activateGIF = "https://media.giphy.com/media/EeofceO0vyYKvqJKHH/giphy.gif"
-!mmm   set deactivateGIF = "https://media.giphy.com/media/kiCXF8mL3j6Oe0vAm9/giphy.gif"
-!mmm
-!mmm   set ownName = tokenID.name
-!mmm   
-!mmm   if tokenID.(script.cEnduranceAttr) <= 0
-!mmm
-!rem     // CLARIFY: IS WIND-GUST ACTUALLY COST-FREE (NO TOGGLE COST???)
-!mmm     return false
-!mmm     
-!mmm   else if (command eq "toggle-defense" or command eq "start-defense") and not tokenID.(weaponMagicMarker) eq "shown"
-!mmm   
-!mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Windböen um mich zu wehen. [x](${activateGIF})
-!mmm   
-!mmm     do setattr(tokenID, weaponMagicMarker, true)
-!mmm   
-!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.cEnduranceAttr)
-!mmm     chat: /w "${ownName}" Das hat 10 Sekunden gedauert und ${weaponToggleCost} AP gekostet.
-!mmm     chat: /GM Dauer: 10s. Kosten: ${weaponToggleCost} AP (schon abgezogen). Alle Gegner haben nun -4 auf Angriff (wird automatisch berücksichtigt).
-!mmm   
-!mmm   else if (command eq "toggle-defense" or command eq "end-defense") and tokenID.(weaponMagicMarker) eq "shown"
-!mmm   
-!mmm     chat: Ich konzentriere mich für 10 Sekunden, und die Windböen um mich herum kommen zum erliegen. [x](${deactivateGIF})
-!mmm   
-!mmm     do setattr(tokenID, weaponMagicMarker, false)
-!mmm   
-!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.cEnduranceAttr)
-!mmm     chat: /w "${ownName}" Das hat 10 Sekunden gedauert und ${weaponToggleCost} AP gekostet.
-!mmm     chat: /GM Dauer: 10s. Kosten: ${weaponToggleCost} AP (schon abgezogen).
-!mmm   
-!mmm   else if command eq "wind-gust"
-!mmm     
-!mmm     set ownRotation = round(tokenID.rotation) % 360
-!mmm     
-!mmm     if ownRotation > 270
-!mmm       set angle = ownRotation - 270
-!mmm       set xOffset = 1
-!mmm       set yOffset = 1
-!mmm     else if ownRotation > 180
-!mmm       set angle = ownRotation - 180
-!mmm       set xOffset = 1
-!mmm       set yOffset = -1
-!mmm     else if ownRotation > 90
-!mmm       set angle = ownRotation - 90
-!mmm       set xOffset = -1
-!mmm       set yOffset = -1
-!mmm     else 
-!mmm       set angle = ownRotation
-!mmm       set xOffset = -1
-!mmm       set yOffset = 1
-!mmm     end if
-!mmm     set reach = 30 * distsnap()
-!mmm     set xOffset = xOffset * (reach * sin(angle))
-!mmm     set yOffset = yOffset * ((reach**2 - xOffset**2) ** 0.5)
-!mmm     
-!mmm     do spawnfx("beam-smoke", tokenID.left, tokenID.top, tokenID.left + xOffset, tokenID.top + yOffset)
-!mmm     
-!mmm     if roll("1d6") >= 4
-!mmm       set torches = "und Fackeln"
-!mmm     else
-!mmm       set torches = ""
-!mmm     end if
-!mmm     chat: ${tokenID.name}s Windstoß löscht alle Kerzen ${torches} auf 30m Entfernung; Nebel, Rauch oder Gas werden weggeweht.
-!mmm     
-!mmm   end if
-!mmm end function
-!mmm
 !mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
 !mmm     set customizable cHealthAttr = "bar3"
@@ -100,11 +23,10 @@
 !mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
 !mmm   
-!mmm   
 !mmm   if cOwnID.(cEnduranceAttr) <= 0 
 !mmm     do whisperback("Nichts passiert: bin zu erschöpft, um mich zu konzentrieren.")
 !mmm   else
-!mmm     do runeEffectWhirlWind(cOwnID, cWeaponLabel, command)
+!mmm     do m3mgdRuneEffectWhirlWind(cOwnID, cWeaponLabel, command)
 !mmm   end if
 !mmm
 !mmm   if cOwnID.(cEnduranceAttr) <= 0 

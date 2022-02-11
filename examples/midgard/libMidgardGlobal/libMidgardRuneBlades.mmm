@@ -1,6 +1,6 @@
 !rem // _libMidgardRuneBlades()
 !rem // 
-!rem //   Initializer / publisher function. Call once from autorun.
+!rem //   Initializer and publisher function. Call once from autorun.
 !rem //
 !mmm function _libMidgardRuneBlades()
 !mmm   
@@ -12,14 +12,15 @@
 !mmm   set m3mgdFireMoleActiveMarker = "status_all_for_one"
 !mmm   set m3mgdEarthBondStatusMarker = "status_cobweb"
 !mmm   set m3mgdEarthBondPCAttrTargetID = "m3mgd_earthBond_targetID"
+!mmm   set m3mgdWhirlWindActiveMarker = "status_half_haze"
 !mmm
-!mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker
+!mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker, m3mgdWhirlWindActiveMarker
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: m3mgdRuneEffectFireMole, m3mgdRuneEffectEarthBond, m3mgdCancelRuneEffects
+!mmm   publish to game: m3mgdRuneEffectFireMole, m3mgdRuneEffectEarthBond, m3mgdRuneEffectWhirlWind, m3mgdCancelRuneEffects
 !mmm
-!mmm   do chat(libVersion & " loaded.")
+!mmm   chat: ${libVersion} loaded.
 !mmm   
 !mmm end function
 !rem
@@ -188,6 +189,102 @@
 !mmm
 !mmm end function
 !rem
+!rem // m3mgdRuneEffectWhirlWind(tokenID, weaponLabel, command)
+!rem // 
+!rem //   Executes command on tokenID's rune blade Whirlwind (registered in character sheet as weaponLabel).
+!rem //   Known commands: "wind-gust", "toggle|start|end|cancel-defense" (regarding the first rune effect)
+!rem // 
+!mmm function m3mgdRuneEffectWhirlWind(tokenID, weaponLabel, command)
+!mmm 
+!mmm   set weaponToggleCost = 1
+!mmm   set activateGIF = "https://media.giphy.com/media/EeofceO0vyYKvqJKHH/giphy.gif"
+!mmm   set deactivateGIF = "https://media.giphy.com/media/kiCXF8mL3j6Oe0vAm9/giphy.gif"
+!mmm
+!mmm   if not (tokenID.character_name eq "Finn MacRathgar" or tokenID.character_name eq "Yorric MacRathgar")
+!mmm     do whisperback("*Feuermal* ist an Finn MacRathgar gebunden und reagiert nicht auf " & tokenID.name)
+!mmm     return false
+!mmm   end if
+!mmm   set sender = tokenID.character_name
+!mmm   set ownName = tokenID.name
+!mmm   
+!rem   // "wind-gust" or "cancel-defense" do not require endurance
+!mmm   if command eq "wind-gust"
+!mmm     
+!mmm     set ownRotation = round(tokenID.rotation) % 360
+!mmm     
+!mmm     if ownRotation > 270
+!mmm       set angle = ownRotation - 270
+!mmm       set xOffset = 1
+!mmm       set yOffset = 1
+!mmm     else if ownRotation > 180
+!mmm       set angle = ownRotation - 180
+!mmm       set xOffset = 1
+!mmm       set yOffset = -1
+!mmm     else if ownRotation > 90
+!mmm       set angle = ownRotation - 90
+!mmm       set xOffset = -1
+!mmm       set yOffset = -1
+!mmm     else 
+!mmm       set angle = ownRotation
+!mmm       set xOffset = -1
+!mmm       set yOffset = 1
+!mmm     end if
+!mmm     set reach = 30 * distsnap()
+!mmm     set xOffset = xOffset * (reach * sin(angle))
+!mmm     set yOffset = yOffset * ((reach**2 - xOffset**2) ** 0.5)
+!mmm     
+!mmm     do spawnfx("beam-smoke", tokenID.left, tokenID.top, tokenID.left + xOffset, tokenID.top + yOffset)
+!mmm     
+!mmm     if roll("1d6") >= 4
+!mmm       set torches = "und Fackeln"
+!mmm     else
+!mmm       set torches = ""
+!mmm     end if
+!mmm     chat: ${tokenID.name}s Windstoß löscht alle Kerzen ${torches} auf 30m Entfernung; Nebel, Rauch oder Gas werden weggeweht.
+!mmm
+!mmm     return true
+!mmm
+!mmm   else if command eq "cancel-defense" and tokenID.(m3mgdWhirlWindActiveMarker) eq "shown"
+!mmm   
+!mmm     chat: Plötzlich kommen die Windböen um mich herum zum erliegen. [x](${deactivateGIF})
+!mmm   
+!mmm     do setattr(tokenID, m3mgdWhirlWindActiveMarker, false)
+!mmm   
+!mmm     chat: /w "${ownName}" Du bist erschöpft, dadurch ist der Wirbelwind-Effekt sofort beendet.
+!mmm     chat: /GM ${ownName} ist erschöpft, die Winde sind sofort weg. Keine AP-Kosten.
+!mmm   
+!mmm     return true
+!mmm
+!mmm   end if
+!mmm     
+!rem   // The other commands all cost endurance, so they do not work if exhausted
+!mmm   if tokenID.(script.cEnduranceAttr) <= 0
+!mmm
+!mmm     return false
+!mmm     
+!mmm   else if (command eq "toggle-defense" or command eq "start-defense") and not tokenID.(m3mgdWhirlWindActiveMarker) eq "shown"
+!mmm   
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Windböen um mich zu wehen. [x](${activateGIF})
+!mmm   
+!mmm     do setattr(tokenID, m3mgdWhirlWindActiveMarker, true)
+!mmm   
+!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.cEnduranceAttr)
+!mmm     chat: /w "${ownName}" Das hat 10 Sekunden gedauert und ${weaponToggleCost} AP gekostet.
+!mmm     chat: /GM **Dauer: 10s.** Kosten: ${weaponToggleCost} AP (schon abgezogen). Alle Gegner haben nun -4 auf Angriff (wird automatisch berücksichtigt).
+!mmm   
+!mmm   else if (command eq "toggle-defense" or command eq "end-defense") and tokenID.(m3mgdWhirlWindActiveMarker) eq "shown"
+!mmm   
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und die Windböen um mich herum kommen zum erliegen. [x](${deactivateGIF})
+!mmm   
+!mmm     do setattr(tokenID, m3mgdWhirlWindActiveMarker, false)
+!mmm   
+!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.cEnduranceAttr)
+!mmm     chat: /w "${ownName}" Das hat 10 Sekunden gedauert und ${weaponToggleCost} AP gekostet.
+!mmm     chat: /GM **Dauer: 10s.** Kosten: ${weaponToggleCost} AP (schon abgezogen).
+!mmm   
+!mmm   end if
+!mmm end function
+!rem
 !rem // m3mgdCancelRuneEffects(weaponWielderID)
 !rem // 
 !rem //   Stops any active rune effects originating with weaponWielderID
@@ -220,6 +317,19 @@
 !mmm     else
 !mmm   
 !mmm       do whisperback("cancelRuneEffects(): call to runeEffectEarthBond(releaseByExhaustion) failed.")
+!mmm       return false
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   else if weaponWielderID.(m3mgdWhirlWindActiveMarker)
+!mmm   
+!mmm     if m3mgdRuneEffectWhirlWind(weaponWielderID, default, "cancel-defense")
+!mmm   
+!mmm       return true
+!mmm   
+!mmm     else
+!mmm   
+!mmm       do whisperback("cancelRuneEffects(): call to m3mgdRuneEffectWhirlWind(cancel-defense) failed.")
 !mmm       return false
 !mmm   
 !mmm     end if
