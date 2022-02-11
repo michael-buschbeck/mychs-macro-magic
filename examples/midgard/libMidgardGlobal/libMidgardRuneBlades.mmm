@@ -1,49 +1,89 @@
+!rem // _libMidgardRuneBlades()
+!rem // 
+!rem //   Initializer / publisher function. Call once from autorun.
+!rem //
+!mmm function _libMidgardRuneBlades()
+!mmm   
+!mmm   set libVersion = "libMidgardRuneBlades v1.0.0-pre (2022-02-11)"
+!mmm   set sender = "MacroSheetLibrary"
+!mmm
+!rem   // Game-global constants for publication
+!rem
+!mmm   set m3mgdFireMoleActiveMarker = "status_all_for_one"
+!mmm   set m3mgdEarthBondStatusMarker = "status_cobweb"
+!mmm   set m3mgdEarthBondPCAttrTargetID = "m3mgd_earthBond_targetID"
+!mmm
+!mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker
+!mmm
+!rem   // Publish game-global functions defined below
+!rem
+!mmm   publish to game: m3mgdRuneEffectFireMole, m3mgdRuneEffectEarthBond, m3mgdCancelRuneEffects
+!mmm
+!mmm   do chat(libVersion & " loaded.")
+!mmm   
+!mmm end function
 !rem
 !rem // m3mgdRuneEffectFireMole(tokenID, weaponLabel, command)
 !rem // 
 !rem //   Executes command on tokenID's rune blade Firemole (registered in character sheet as weaponLabel).
-!rem //   Known commands: "toggle-first", "start-first", "end-first" (regarding the first rune effect)
+!rem //   Known commands: "toggle-first", "start-first", "end-first", "cancel-first" (regarding the first rune effect)
 !rem // 
 !mmm function m3mgdRuneEffectFireMole(tokenID, weaponLabel, command)
 !mmm 
-!mmm   set weaponMagicMarker = "status_all_for_one"
 !mmm   set weaponToggleCost = 1
 !mmm   set activateGIF = "https://media.giphy.com/media/3og0IDCumL5GLx7zag/giphy.gif"
 !mmm   set deactivateGIF = "https://media.giphy.com/media/hSvQn8tqv16bkzCGYI/giphy.gif"
 !mmm
+!mmm   if tokenID.character_name ne "Yorric MacRathgar"
+!mmm     do whisperback("*Feuermal* ist an Yorric MacRathgar gebunden und reagiert nicht auf " & tokenID.name)
+!mmm     return false
+!mmm   end if
 !mmm   set sender = tokenID.character_name
 !mmm
 !mmm   if tokenID.(script.cEnduranceAttr) <= 0
 !mmm
 !mmm     return false
 !mmm     
-!mmm   else if (command eq "toggle-first" or command eq "start-first") and not tokenID.(weaponMagicMarker) eq "shown"
+!mmm   else if (command eq "toggle-first" or command eq "start-first") and not tokenID.(m3mgdFireMoleActiveMarker) eq "shown"
 !mmm     
 !rem     // First rune effect, command "toggle"/"start", state "not active": Spark magic flames around the blade
 !mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Flammen um meine Runenklinge *Feuermal* zu züngeln. [x](${activateGIF})
 !mmm     
-!mmm     if not setattr(tokenID, weaponMagicMarker, true) eq "shown"
-!mmm       do whisperback("runeEffectFireMole(" & command & "): Failure setting status marker '" & weaponMagicMarker & "' to shown.")
+!mmm     if not setattr(tokenID, m3mgdFireMoleActiveMarker, true) eq "shown"
+!mmm       do whisperback("m3mgdRuneEffectFireMole(" & command & "): Failure setting status marker '" & m3mgdFireMoleActiveMarker & "' to shown.")
 !mmm       return false
 !mmm     end if
 !mmm     
 !mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.(cEnduranceAttr))
 !mmm     chat: /w "${tokenID.character_name}" Das hat ${weaponToggleCost} AP gekostet.
-!mmm     chat: /w GM ${tokenID.character_name} hat die magischen Flammen seiner Runenklinge aktiviert. Dauer: 10s. Kosten: ${weaponToggleCost} AP (schon abgezogen). 
+!mmm     chat: /w GM ${tokenID.character_name} hat die magischen Flammen seiner Runenklinge aktiviert. **Dauer: 10s.** Kosten: ${weaponToggleCost} AP (schon abgezogen). 
 !mmm     
-!mmm   else if (command eq "toggle-first" or command eq "end-first") and tokenID.(weaponMagicMarker) eq "shown"
+!mmm   else if (command eq "toggle-first" or command eq "end-first") and tokenID.(m3mgdFireMoleActiveMarker) eq "shown"
 !mmm     
 !rem     // First rune effect, command "toggle"/"end", state "active": Douse magic flames around the blade
 !mmm     chat: Ich konzentriere mich für 10 Sekunden, und die Flammen um meine Runenklinge *Feuermal* erlöschen. [x](${deactivateGIF})
 !mmm     
-!mmm     if not setattr(tokenID, weaponMagicMarker, false) eq "false"
-!mmm       do whisperback("runeEffectFireMole(" & command & "): Failure setting status marker '" & weaponMagicMarker & "' to false.")
+!mmm     if not setattr(tokenID, m3mgdFireMoleActiveMarker, false) eq "false"
+!mmm       do whisperback("m3mgdRuneEffectFireMole(" & command & "): Failure setting status marker '" & m3mgdFireMoleActiveMarker & "' to false.")
 !mmm       return false
 !mmm     end if
 !mmm     
 !mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.(cEnduranceAttr))
 !mmm     chat: /w "${tokenID.character_name}" Das hat ${weaponToggleCost} AP gekostet.
-!mmm     chat: /w GM ${tokenID.character_name} hat die magischen Flammen seiner Runenklinge gelöscht. Dauer: 10s. Kosten: ${weaponToggleCost} AP (schon abgezogen).
+!mmm     chat: /w GM ${tokenID.character_name} hat die magischen Flammen seiner Runenklinge gelöscht. **Dauer: 10s.** Kosten: ${weaponToggleCost} AP (schon abgezogen).
+!mmm   
+!mmm   else if (command eq "cancel-first") and tokenID.(m3mgdFireMoleActiveMarker) eq "shown"
+!mmm     
+!rem     // First rune effect, command "cancel", state "active": Abruptly douse magic flames around the blade, no endurance cost
+!mmm     chat: Plötzlich erlöschen die Flammen um meine Runenklinge *Feuermal*. [x](${deactivateGIF})
+!mmm     
+!mmm     if not setattr(tokenID, m3mgdFireMoleActiveMarker, false) eq "false"
+!mmm       do whisperback("m3mgdRuneEffectFireMole(" & command & "): Failure setting status marker '" & m3mgdFireMoleActiveMarker & "' to false.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     chat: /w "${tokenID.character_name}" Du bist erschöpft, die magischen Flammen sind von selbst erloschen.
+!mmm     chat: /w GM ${tokenID.character_name} ist erschöpft, die magischen Flammen seiner Runenklinge sind sofort erloschen. Keine AP-Kosten.
 !mmm   
 !mmm   end if
 !mmm   
@@ -158,15 +198,28 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   if weaponWielderID.(m3mgdEarthBondStatusMarker)
+!mmm   if weaponWielderID.(m3mgdFireMoleActiveMarker)
 !mmm   
-!mmm     if runeEffectEarthBond(weaponWielderID, default, "releaseByExhaustion")
+!mmm     if m3mgdRuneEffectFireMole(weaponWielderID, default, "cancel-first")
 !mmm   
 !mmm       return true
 !mmm   
 !mmm     else
 !mmm   
-!mmm       do whisperback("cancelRuneEffects(): call to runeEffectEarthBond() failed.")
+!mmm       do whisperback("cancelRuneEffects(): call to m3mgdRuneEffectFireMole(cancel-first) failed.")
+!mmm       return false
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   else if weaponWielderID.(m3mgdEarthBondStatusMarker)
+!mmm   
+!mmm     if m3mgdRuneEffectEarthBond(weaponWielderID, default, "releaseByExhaustion")
+!mmm   
+!mmm       return true
+!mmm   
+!mmm     else
+!mmm   
+!mmm       do whisperback("cancelRuneEffects(): call to runeEffectEarthBond(releaseByExhaustion) failed.")
 !mmm       return false
 !mmm   
 !mmm     end if

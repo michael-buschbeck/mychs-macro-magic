@@ -83,9 +83,6 @@
 !mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
 !mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln", "waffenlos"
 !mmm
-!mmm   set m3mgdEarthBondPCAttrTargetID = "m3mgd_earthBond_targetID"
-!mmm   set m3mgdEarthBondStatusMarker = "status_cobweb"
-!mmm
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
@@ -96,7 +93,6 @@
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
-!mmm   publish to game: m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker
 !mmm   publish to game: m3mgdAttrXP, m3mgdAttrXPLog
 !mmm   
 !mmm   set cssTableHeaderButton = "\" style=\"border:1px solid #FFFFFF;float:right; background-color:#ce0f69;margin:0px 0px 0px 8px;padding:3px;font-style:normal;font-size:12px;line-height:12px;vertical-align:sub; color:#FFFFFF;text-decoration:none;text-transform:uppercase"
@@ -117,8 +113,7 @@
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm   
 %{MacroSheetLibrary|libMidgardRuneBlades}
-!mmm   
-!mmm   publish to game: m3mgdRuneEffectFireMole, m3mgdRuneEffectEarthBond, m3mgdCancelRuneEffects
+!mmm   do _libMidgardRuneBlades()
 !mmm   
 !mmm   chat: /me loaded: ${scriptVersion}
 !mmm   
