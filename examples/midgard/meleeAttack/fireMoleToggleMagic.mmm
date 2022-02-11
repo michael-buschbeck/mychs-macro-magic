@@ -74,7 +74,7 @@
 !mmm   if cOwnID.(cEnduranceAttr) <= 0 
 !mmm     do whisperback("Nichts passiert: bin zu erschöpft, um mich zu konzentrieren.")
 !mmm   else
-!mmm     do runeEffectFireMole(cOwnID, cWeaponLabel, cWeaponName, "toggle-first")
+!mmm     do runeEffectFireMole(cOwnID, cWeaponLabel, "toggle-first")
 !mmm   end if
 !mmm
 !mmm   if cOwnID.(cEnduranceAttr) <= 0 
