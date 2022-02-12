@@ -18,7 +18,7 @@
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: m3mgdRuneEffectFireMole, m3mgdRuneEffectEarthBond, m3mgdRuneEffectWhirlWind, m3mgdCancelRuneEffects
+!mmm   publish to game: m3mgdRuneEffectFireMole, m3mgdRuneEffectEarthBond, m3mgdRuneEffectWaterWalker, m3mgdRuneEffectWhirlWind, m3mgdCancelRuneEffects
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -287,6 +287,63 @@
 !mmm
 !mmm   return true
 !mmm
+!mmm end function
+!rem
+!rem // m3mgdRuneEffectWaterWalker(tokenID, weaponLabel, command, [targetID])
+!rem // 
+!rem //   Executes command on tokenID's rune blade Waterwalker (registered in character sheet as weaponLabel).
+!rem //   Known commands: "water-blast"
+!rem // 
+!mmm function m3mgdRuneEffectWaterWalker(tokenID, weaponLabel, command, targetID)
+!mmm 
+!mmm   if isdefault(targetID)
+!mmm     set targetID = m3mgdExchange.(m3mgdAttrAttackTargetID)
+!mmm   end if
+!mmm   if isunknown(targetID) or isdenied(targetID) or targetID.permission ne "control"
+!mmm     do whisperback("Target given as token ID '" & targetID & "' may not be a correct token ID, or does not allow control of attributes")
+!mmm     return false
+!mmm   end if
+!mmm
+!rem   // Execute command
+!mmm
+!mmm   if command eq "water-blast"
+!mmm
+!rem     // Dazzle players with special effects
+!mmm     do spawnfx("beam-water", tokenID.left, tokenID.top, targetID.left, targetID.top)
+!mmm   
+!mmm     set stRoll = roll("1d100")
+!mmm   
+!mmm     if stRoll <= 0.5 * targetID.St
+!mmm   
+!mmm       chat: Der Wasserstrahl mag gezwickt haben, aber ${targetID.name} verzieht ansonsten keine Wimper. PW:St(${targetID.St}) = ${stRoll}
+!mmm   
+!mmm     else if stRoll <= 0.8 * targetID.St
+!mmm   
+!mmm       chat: ${targetID.name} zuckt überrascht, als der Wasserstrahl trifft, aber wirklich aus der Ruhe bringt ihn/sie der nicht: PW:St(${targetID.St}) = ${stRoll}
+!mmm   
+!mmm     else if stRoll <= targetID.St
+!mmm   
+!mmm       chat: ${targetID.name} spannt gerade noch rechtzeitig den Körper an, stellt sich dem Strahl entgegen und schafft es stehen zu bleiben: PW:St(${targetID.St}) = ${stRoll}
+!mmm   
+!mmm     else
+!mmm   
+!mmm       set blastDistance = roll("1d6-1")
+!mmm   
+!mmm       if blastDistance == 0
+!mmm         chat: Der harte Strahl lässt ${targetID.name} auf der Stelle stolpern und stürzen: PW:St(${targetID.St}) = ${stRoll} / Strahlstärke: ${blastDistance}
+!mmm       else 
+!mmm         set blastBearing = m3mgdGetTokenDirection(tokenID, targetID)
+!mmm         do setattr(targetID, "left", targetID.left - (sin(blastBearing) * blastDistance / distscale()))
+!mmm         do setattr(targetID, "top", targetID.top + (cos(blastBearing) * blastDistance / distscale()))
+!mmm         chat: Der harte Wasserstrahl spült ${targetID.name} ${blastDistance} Meter nach hinten und auf den Hosenboden: PW:St(${targetID.St}) = ${stRoll} / Strahlstärke: ${blastDistance} [x](https://media.giphy.com/media/MZSBHPaa0Y7FMelPtN/giphy.gif)
+!mmm       end if
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return true
+!mmm   
 !mmm end function
 !rem
 !rem // m3mgdRuneEffectWhirlWind(tokenID, weaponLabel, command)
