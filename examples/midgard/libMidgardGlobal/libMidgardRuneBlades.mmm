@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgardRuneBlades()
 !mmm   
-!mmm   set libVersion = "libMidgardRuneBlades v1.0.0-pre (2022-02-11)"
+!mmm   set libVersion = "libMidgardRuneBlades v1.0.0-pre (2022-02-12)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Game-global constants for publication
@@ -94,17 +94,31 @@
 !rem
 !rem // m3mgdRuneEffectEarthBond(weaponWielderID, weaponLabel, command, [targetID])
 !rem // 
-!rem //   CURRENTLY ONLY ALLOWS FOR RELEASE COMMANDS
-!rem //   Executes command on weaponWielderID's earth bond capability (from the rune blade weaponLabel) against the stored target or [targetID]
+!rem //   Known commands: "create", "apply", "releaseByCreator", "releaseByExhaustion", "escapeByPatience", "escapeByForce".
+!rem //   Executes command on weaponWielderID's earth bond capability (from the rune blade weaponLabel) against the stored target or [targetID].
+!rem //   Returns true if given command was successfully executed (e.g. escape from the bond succeeded), otherwise (in case of errors or failures) false.
 !rem // 
 !mmm function m3mgdRuneEffectEarthBond(weaponWielderID, weaponLabel, command, targetID)
 !mmm   
 !mmm   set earthBondToggleCost = 1
+!mmm   set activateGIF = ""
 !mmm   set deactivateGIF = ""
 !mmm
 !mmm   set sender = weaponWielderID.character_name
 !mmm
-!mmm   if isdefault(targetID)
+!rem   // Validate input and permissions
+!mmm
+!mmm   if not findattr(weaponWielderID, "Angriff", "Waffe", weaponLabel, "WaffeEW")
+!mmm     do whisperback("WO IST DIE ERDKLINGE?! Ich scheine sie jedenfalls nicht zu führen.")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if command eq "create" and isdefault(targetID)
+!mmm
+!mmm     do whisperback("Argument targetID required to create new earth bond.")
+!mmm     return false
+!mmm     
+!mmm   else if isdefault(targetID)
 !mmm     
 !rem     // Retrieve target ID
 !mmm     set targetID = weaponWielderID.(m3mgdEarthBondPCAttrTargetID)
@@ -113,17 +127,93 @@
 !mmm       return false
 !mmm     end if
 !mmm 
-!mmm     if targetID.(m3mgdEarthBondStatusMarker) ne "shown"
+!mmm     if command ne "apply" and targetID.(m3mgdEarthBondStatusMarker) ne "shown"
 !mmm       do whisperback(targetID.name & " trägt aber keine Erdfessel oder '" & m3mgdEarthBondStatusMarker & "' wurde schon entfernt.")
 !mmm       return false
 !mmm     end if
-!mmm
+!mmm     
 !mmm   end if
 !mmm
-!mmm   if command eq "releaseByCreator" or command eq "releaseByExhaustion"
+!mmm   if command eq "apply" and targetID.permission ne "control"
+!mmm     
+!mmm       do whisperback("m3mgdRuneEffectEarthBond(command=apply) requires GM permissions")
+!mmm       return false
+!mmm     
+!mmm   end if
+!mmm
+!mmm     
+!rem   // Execute command
+!mmm
+!mmm     
+!mmm   if command eq "create"
+!mmm     
+!rem     // Check if conditions apply
+!mmm     
+!mmm     set distance = m3mgdGetDistance(weaponWielderID, targetID)
+!mmm     if distance > 0
+!mmm       do whisperback(targetID.name & " ist zu weit entfernt, um eine Erdfessel auszulösen (max. 1m). Schade.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     set myViewAngle = m3mgdGetViewAngle(weaponWielderID, targetID)
+!mmm     if (myViewAngle < -90) or (myViewAngle > 90)
+!mmm       do whisperback(targetID.name & " ist außerhalb meines Blickfeldes (" & myViewAngle & "°). Schade.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     if earthBondToggleCost > 0 and weaponWielderID.AP <= 0
+!mmm       do whisperback("Nur ein einsamer Schweißtropfen rollt mein Haupt hinunter (erschöpft).")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     if weaponWielderID.(m3mgdEarthBondStatusMarker) eq "shown"
+!mmm       do whisperback("Nichts passiert. Ich hab ja noch eine andere aktive Erdfessel, ich Dussel!")
+!mmm       return false
+!mmm     end if
+!mmm     
+!rem     // Set up new earth bond on targetID
+!mmm     
+!mmm     chat: Ich richte *Steinherz* auf den Boden vor ${targetID.name}.
+!mmm   
+!mmm     if earthBondToggleCost > 0
+!mmm       do m3mgdModifyEndurance(-1 * earthBondToggleCost, weaponWielderID, "AP")
+!mmm       chat: /w "${weaponWielderID.character_name}" Das hat ${earthBondToggleCost} AP gekostet.
+!mmm     end if
+!mmm   
+!rem     // Store target for "apply" and "remove*" commands
+!mmm   
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, targetID.token_id)
+!mmm   
+!rem     // Confirm creation to GM and player
+!mmm   
+!mmm     combine chat
+!mmm       chat: /w GM ${weaponWielderID.name} möchte eine magische Erdfessel gegen **${targetID.name}** erzeugen. (${earthBondToggleCost} AP abgezogen.)
+!mmm       chat: Die Erdfessel wirkt nur, wenn der Boden aus Erde, Schlamm, Sand oder Staub besteht. Wenn ja, klick [**ANWENDEN**](~MacroSheet|earthBondApply).
+!mmm     end combine
+!mmm     
+!mmm     chat: /w "${weaponWielderID.character_name}" Die Erdfessel gegen **${foeID.name}** wartet auf Bestätigung des Spielleiters.
+!mmm     
+!mmm     
+!mmm   else if command eq "apply" 
+!mmm     
+!rem     // Show the earth bond icon & confirm effects to player and GM
+!mmm
+!mmm     do setattr(targetID, m3mgdEarthBondStatusMarker, true)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, true)
+!mmm
+!mmm     chat: Der Boden unter ${targetID.name} wächst blitzschnell knöchelhoch an: das dürfte es deutlich schwerer machen, sich zu bewegen.
+!mmm     if activateGIF ne ""
+!mmm       chat: [x](${activateGIF})
+!mmm     end if 
+!mmm
+!mmm     chat: /w GM ${"&"}{template:default} {{name=Erdfessel}} {{ Opfer = ${targetID.name}}} {{ Folge = Abwehr -2 }} {{ Option = [**ENTFERNEN**](~MacroSheet|earthBondRemove) }}
+!mmm     
+!mmm     
+!mmm   else if command eq "releaseByCreator" or command eq "releaseByExhaustion"
 !mmm
 !mmm     if command eq "releaseByCreator"
 !mmm       do m3mgdModifyEndurance(-1 * earthBondToggleCost, weaponWielderID.token_id, "AP")
+!mmm       chat: /w "${weaponWielderID.character_name}" Du hast die Erdfessel gelöst; das hat ${earthBondToggleCost} AP gekostet.
 !mmm     end if
 !mmm     combine chat
 !mmm       chat: Die Erdfessel gibt ${targetID.name} frei, und plötzlich sieht der Untergrund wieder aus wie vorher, als wäre nichts gewesen.
@@ -132,6 +222,11 @@
 !mmm       end if
 !mmm     end combine
 !mmm
+!mmm     do setattr(targetID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, "")
+!mmm
+!mmm     
 !mmm   else if command eq "escapeByPatience"
 !mmm     
 !mmm     set sender = targetID.token_name
@@ -155,6 +250,11 @@
 !mmm     
 !mmm     end if
 !mmm
+!mmm     do setattr(targetID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, "")
+!mmm
+!mmm     
 !mmm   else if command eq "escapeByForce"
 !mmm
 !mmm     set sender = targetID.token_name
@@ -179,11 +279,11 @@
 !mmm     
 !mmm     end if
 !mmm
-!mmm   end if
+!mmm     do setattr(targetID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, "")
 !mmm
-!mmm   do setattr(targetID, m3mgdEarthBondStatusMarker, false)
-!mmm   do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, false)
-!mmm   do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, "")
+!mmm   end if
 !mmm
 !mmm   return true
 !mmm
