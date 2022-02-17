@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.15.0 (2022-02-06)"
+!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -89,7 +89,7 @@
 !mmm   set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
 !rem   // Special case: magic weapons or weapon spells with additional effects scripts whose name is stored in .max
 !mmm   if m3mgdExchange.(m3mgdAttrAttackWeaponType).max ne ""
-!mmm     set attackWeaponSpecialEffectScript = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
+!mmm     set attackWeaponSpecialEffect = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
 !mmm   end if
 !rem   // Check for armor piercing projectiles
 !mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
@@ -305,11 +305,6 @@
 !mmm     end if
 !mmm   end if
 !mmm
-!rem   // Add button for player to call special damage effects script
-!mmm   if not defenseSuccess and attackWeaponSpecialEffectScript
-!mmm     set modifierLog = modifierLog & " {{ " & attackWeaponType & "=[**Sondereffekt**](~" & attackWeaponSpecialEffectScript & ") }}"
-!mmm   end if
-!mmm
 !rem   // Verbose output
 !mmm   if cVerbose
 !mmm     combine chat
@@ -357,7 +352,12 @@
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm   
-!rem   // Special effects
+!rem   // Weapon-specific special damage effects
+!mmm   if not defenseSuccess and attackWeaponSpecialEffect
+!mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, m3mgdExchange.(m3mgdAttrAttackerID))
+!mmm   end if
+!mmm
+!rem   // Injury special effects
 !mmm   if effHealthLoss > 0 or effEnduranceLoss > 0
 !mmm     do m3mgdInjuryFX(cOwnID, effHealthLoss / maxHealth, effEnduranceLoss / cOwnID.(cEnduranceAttr).max)
 !mmm   end if

@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.1.2 (2022-02-06)"
+!mmm   set scriptVersion = "initGameGlobals 1.2.0-pre (2022-02-17)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -33,6 +33,10 @@
 !mmm     exit script
 !mmm   end if
 !mmm
+%{MacroSheetLibrary|libBasics}
+!mmm   
+!mmm   publish to game: count, sign, stringify
+!mmm   
 !mmm   set m3mgdPlayerCharacters = "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
 !mmm   for charName in m3mgdPlayerCharacters
 !mmm     if not isdenied(charName.character_id) and (isunknown(charName.PC) or charName.PC ne "1")
@@ -79,9 +83,6 @@
 !mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
 !mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln", "waffenlos"
 !mmm
-!mmm   set m3mgdEarthBondPCAttrTargetID = "m3mgd_earthBond_targetID"
-!mmm   set m3mgdEarthBondStatusMarker = "status_cobweb"
-!mmm
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
@@ -92,7 +93,6 @@
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
-!mmm   publish to game: m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker
 !mmm   publish to game: m3mgdAttrXP, m3mgdAttrXPLog
 !mmm   
 !mmm   set cssTableHeaderButton = "\" style=\"border:1px solid #FFFFFF;float:right; background-color:#ce0f69;margin:0px 0px 0px 8px;padding:3px;font-style:normal;font-size:12px;line-height:12px;vertical-align:sub; color:#FFFFFF;text-decoration:none;text-transform:uppercase"
@@ -109,12 +109,11 @@
 !mmm   publish to game: m3mgdShapeMoji, m3mgdIsDefenseless
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons, m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
-!mmm   publish to game: m3mgdWeaponSelectorChatMenu, m3mgdDefenseDataTable, m3mgdInjuryFX
+!mmm   publish to game: m3mgdWeaponSelectorChatMenu, m3mgdDefenseDataTable, m3mgdWeaponSpecialEffect, m3mgdInjuryFX
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm   
-%{MacroSheetLibrary|libBasics}
-!mmm   
-!mmm   publish to game: count, sign, stringify
+%{MacroSheetLibrary|libMidgardRuneBlades}
+!mmm   do _libMidgardRuneBlades()
 !mmm   
 !mmm   chat: /me loaded: ${scriptVersion}
 !mmm   

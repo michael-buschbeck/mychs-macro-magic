@@ -1,7 +1,7 @@
 !rem // waterWalkerBlastEffect
 !rem
 !mmm script
-!mmm   set scriptVersion = "1.1.2 (2022-01-27)"
+!mmm   set scriptVersion = "1.2.0 (2022-02-12)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -29,34 +29,7 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Identify target (user points to token)
-!mmm   set foe = m3mgdExchange.(m3mgdAttrAttackTargetID)
-!mmm   if isunknown(foe) or isdenied(foe) or foe.permission ne "control"
-!mmm     do whisperback("Target given as token ID '" & foe & "' may not be a correct token ID, or does not allow control of attributes")
-!mmm     exit script
-!mmm   end if
-!rem
-!rem   // Dazzle players with special effects
-!mmm   do spawnfx("beam-water", cWeaponWielder.left, cWeaponWielder.top, foe.left, foe.top)
-!mmm
-!mmm   set stRoll = roll("1d100")
-!mmm   if stRoll <= 0.5 * foe.St
-!mmm     chat: Der Wasserstrahl mag gezwickt haben, aber ${foe.name} verzieht ansonsten keine Wimper: PW:St(${foe.St}) = ${stRoll}
-!mmm   else if stRoll <= 0.8 * foe.St
-!mmm     chat: ${foe.name} zuckt überrascht, als der Wasserstrahl trifft, aber wirklich aus der Ruhe bringt ihn/sie der nicht: PW:St(${foe.St}) = ${stRoll}
-!mmm   else if stRoll <= foe.St
-!mmm     chat: ${foe.name} spannt gerade noch rechtzeitig den Körper an, stellt sich dem Strahl entgegen und schafft es stehen zu bleiben: PW:St(${foe.St}) = ${stRoll}
-!mmm   else
-!mmm     set blastDistance = roll("1d6-1")
-!mmm     if blastDistance == 0
-!mmm       chat: Der harte Strahl lässt ${foe.name} auf der Stelle stolpern und stürzen: PW:St(${foe.St}) = ${stRoll} / Strahlstärke: ${blastDistance}
-!mmm     else 
-!mmm       set blastBearing = m3mgdGetTokenDirection(cWeaponWielder, foe)
-!mmm       do setattr(foe, "left", foe.left - (sin(blastBearing) * blastDistance / distscale()))
-!mmm       do setattr(foe, "top", foe.top + (cos(blastBearing) * blastDistance / distscale()))
-!mmm       chat: Der harte Wasserstrahl spült ${foe.name} ${blastDistance} Meter nach hinten und auf den Hosenboden: PW:St(${foe.St}) = ${stRoll} / Strahlstärke: ${blastDistance} [x](https://media.giphy.com/media/MZSBHPaa0Y7FMelPtN/giphy.gif)
-!mmm     end if
-!mmm   end if
+!mmm   do m3mgdRuneEffectWaterWalker(cWeaponWielder, cWeaponLabel, "water-blast")
 !mmm   
 !mmm   do m3mgdFlushExchange()
 !mmm end script

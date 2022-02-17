@@ -1,0 +1,38 @@
+!rem // Magische Runenklinge "Feuermal" (Langschwert)
+!rem // Aktivierungs- und Deaktivierungsskript
+!rem // v1.5.0 2022-02-11 phr
+!mmm script
+!rem   // Config (overwrite in a customize block called immediately before this script)
+!rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
+!rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
+!rem   //  cWeaponMagicMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
+!rem   //  cWeaponToggleCost    Endurance cost (AP) to activating the weapon's magic
+!mmm   set customizable cWeaponLabel = "Feuermal (Langschwert)"
+!mmm   set customizable cWeaponName = "Feuermal"
+!mmm
+!mmm   if m3mgdRuneEffectFireMole eq ""
+!mmm     do whisperback("Global function m3mgdRuneEffectFireMole() missing. Aborting.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   if selected and sender.token_id ne selected
+!mmm     set customizable cOwnID = selected.token_id
+!mmm     set customizable cHealthAttr = "bar3"
+!mmm     set customizable cEnduranceAttr = "bar2"
+!mmm   else 
+!mmm     set customizable cOwnID = sender.token_id
+!mmm     set customizable cHealthAttr = "LP"
+!mmm     set customizable cEnduranceAttr = "AP"
+!mmm   end if
+!mmm   
+!mmm   if cOwnID.(cEnduranceAttr) <= 0 
+!mmm     do whisperback("Nichts passiert: bin zu erschöpft, um mich zu konzentrieren.")
+!mmm   else
+!mmm     do m3mgdRuneEffectFireMole(cOwnID, cWeaponLabel, "toggle-first")
+!mmm   end if
+!mmm
+!mmm   if cOwnID.(cEnduranceAttr) <= 0 
+!mmm     chat: /w "${cOwnID.character_name}" ${m3mgdShapeMoji(cOwnID)} Ich bin erschöpft (**AP=0**).
+!mmm     chat: /w GM ${cOwnID.character_name} ist nun erschöpft (**AP=0**).
+!mmm   end if
+!mmm end script

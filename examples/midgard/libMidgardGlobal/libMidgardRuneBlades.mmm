@@ -1,0 +1,504 @@
+!rem // _libMidgardRuneBlades()
+!rem // 
+!rem //   Initializer and publisher function. Call once from autorun.
+!rem //
+!mmm function _libMidgardRuneBlades()
+!mmm   
+!mmm   set libVersion = "libMidgardRuneBlades v1.0.0-pre (2022-02-12)"
+!mmm   set sender = "MacroSheetLibrary"
+!mmm
+!rem   // Game-global constants for publication
+!rem
+!mmm   set m3mgdFireMoleActiveMarker = "status_all_for_one"
+!mmm   set m3mgdEarthBondStatusMarker = "status_cobweb"
+!mmm   set m3mgdEarthBondPCAttrTargetID = "m3mgd_earthBond_targetID"
+!mmm   set m3mgdWhirlWindActiveMarker = "status_half_haze"
+!mmm
+!mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker, m3mgdWhirlWindActiveMarker
+!mmm
+!rem   // Publish game-global functions defined below
+!rem
+!mmm   publish to game: m3mgdRuneEffectFireMole, m3mgdRuneEffectEarthBond, m3mgdRuneEffectWaterWalker, m3mgdRuneEffectWhirlWind, m3mgdCancelRuneEffects
+!mmm
+!mmm   chat: ${libVersion} loaded.
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdRuneEffectFireMole(tokenID, weaponLabel, command)
+!rem // 
+!rem //   Executes command on tokenID's rune blade Firemole (registered in character sheet as weaponLabel).
+!rem //   Known commands: "toggle-first", "start-first", "end-first", "cancel-first" (regarding the first rune effect)
+!rem // 
+!mmm function m3mgdRuneEffectFireMole(tokenID, weaponLabel, command)
+!mmm 
+!mmm   set weaponToggleCost = 1
+!mmm   set activateGIF = "https://media.giphy.com/media/3og0IDCumL5GLx7zag/giphy.gif"
+!mmm   set deactivateGIF = "https://media.giphy.com/media/hSvQn8tqv16bkzCGYI/giphy.gif"
+!mmm
+!mmm   if tokenID.character_name ne "Yorric MacRathgar"
+!mmm     do whisperback("*Feuermal* ist an Yorric MacRathgar gebunden und reagiert nicht auf " & tokenID.name)
+!mmm     return false
+!mmm   end if
+!mmm   set sender = tokenID.character_name
+!mmm
+!mmm   if tokenID.(script.cEnduranceAttr) <= 0
+!mmm
+!mmm     return false
+!mmm     
+!mmm   else if (command eq "toggle-first" or command eq "start-first") and not tokenID.(m3mgdFireMoleActiveMarker) eq "shown"
+!mmm     
+!rem     // First rune effect, command "toggle"/"start", state "not active": Spark magic flames around the blade
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Flammen um meine Runenklinge *Feuermal* zu züngeln. [x](${activateGIF})
+!mmm     
+!mmm     if not setattr(tokenID, m3mgdFireMoleActiveMarker, true) eq "shown"
+!mmm       do whisperback("m3mgdRuneEffectFireMole(" & command & "): Failure setting status marker '" & m3mgdFireMoleActiveMarker & "' to shown.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.(cEnduranceAttr))
+!mmm     chat: /w "${tokenID.character_name}" Das hat ${weaponToggleCost} AP gekostet.
+!mmm     chat: /w GM ${tokenID.character_name} hat die magischen Flammen seiner Runenklinge aktiviert. **Dauer: 10s.** Kosten: ${weaponToggleCost} AP (schon abgezogen). 
+!mmm     
+!mmm   else if (command eq "toggle-first" or command eq "end-first") and tokenID.(m3mgdFireMoleActiveMarker) eq "shown"
+!mmm     
+!rem     // First rune effect, command "toggle"/"end", state "active": Douse magic flames around the blade
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und die Flammen um meine Runenklinge *Feuermal* erlöschen. [x](${deactivateGIF})
+!mmm     
+!mmm     if not setattr(tokenID, m3mgdFireMoleActiveMarker, false) eq "false"
+!mmm       do whisperback("m3mgdRuneEffectFireMole(" & command & "): Failure setting status marker '" & m3mgdFireMoleActiveMarker & "' to false.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.(cEnduranceAttr))
+!mmm     chat: /w "${tokenID.character_name}" Das hat ${weaponToggleCost} AP gekostet.
+!mmm     chat: /w GM ${tokenID.character_name} hat die magischen Flammen seiner Runenklinge gelöscht. **Dauer: 10s.** Kosten: ${weaponToggleCost} AP (schon abgezogen).
+!mmm   
+!mmm   else if (command eq "cancel-first") and tokenID.(m3mgdFireMoleActiveMarker) eq "shown"
+!mmm     
+!rem     // First rune effect, command "cancel", state "active": Abruptly douse magic flames around the blade, no endurance cost
+!mmm     chat: Plötzlich erlöschen die Flammen um meine Runenklinge *Feuermal*. [x](${deactivateGIF})
+!mmm     
+!mmm     if not setattr(tokenID, m3mgdFireMoleActiveMarker, false) eq "false"
+!mmm       do whisperback("m3mgdRuneEffectFireMole(" & command & "): Failure setting status marker '" & m3mgdFireMoleActiveMarker & "' to false.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     chat: /w "${tokenID.character_name}" Du bist erschöpft, die magischen Flammen sind von selbst erloschen.
+!mmm     chat: /w GM ${tokenID.character_name} ist erschöpft, die magischen Flammen seiner Runenklinge sind sofort erloschen. Keine AP-Kosten.
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return true
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdRuneEffectEarthBond(weaponWielderID, weaponLabel, command, [targetID])
+!rem // 
+!rem //   Known commands: "create", "apply", "releaseByCreator", "releaseByExhaustion", "escapeByPatience", "escapeByForce".
+!rem //   Executes command on weaponWielderID's earth bond capability (from the rune blade weaponLabel) against the stored target or [targetID].
+!rem //   Returns true if given command was successfully executed (e.g. escape from the bond succeeded), otherwise (in case of errors or failures) false.
+!rem // 
+!mmm function m3mgdRuneEffectEarthBond(weaponWielderID, weaponLabel, command, targetID)
+!mmm   
+!mmm   set earthBondToggleCost = 1
+!mmm   set activateGIF = ""
+!mmm   set deactivateGIF = ""
+!mmm
+!mmm   set sender = weaponWielderID.character_name
+!mmm
+!rem   // Validate input and permissions
+!mmm
+!mmm   if not findattr(weaponWielderID, "Angriff", "Waffe", weaponLabel, "WaffeEW")
+!mmm     do whisperback("WO IST DIE ERDKLINGE?! Ich scheine sie jedenfalls nicht zu führen.")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if command eq "create" and isdefault(targetID)
+!mmm
+!mmm     do whisperback("Argument targetID required to create new earth bond.")
+!mmm     return false
+!mmm     
+!mmm   else if isdefault(targetID)
+!mmm     
+!rem     // Retrieve target ID
+!mmm     set targetID = weaponWielderID.(m3mgdEarthBondPCAttrTargetID)
+!mmm     if isunknown(targetID) or isdenied(targetID) or isdenied(targetID.token_id) or isunknown(targetID.token_id) or isdenied(targetID.(m3mgdEarthBondStatusMarker))
+!mmm       do whisperback("Target token '" & targetID & "' not a token ID, or does not allow access to attributes:" & getreason(targetID))
+!mmm       return false
+!mmm     end if
+!mmm 
+!mmm     if command ne "apply" and targetID.(m3mgdEarthBondStatusMarker) ne "shown"
+!mmm       do whisperback(targetID.name & " trägt aber keine Erdfessel oder '" & m3mgdEarthBondStatusMarker & "' wurde schon entfernt.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm   end if
+!mmm
+!mmm   if command eq "apply" and targetID.permission ne "control"
+!mmm     
+!mmm       do whisperback("m3mgdRuneEffectEarthBond(command=apply) requires GM permissions")
+!mmm       return false
+!mmm     
+!mmm   end if
+!mmm
+!mmm     
+!rem   // Execute command
+!mmm
+!mmm     
+!mmm   if command eq "create"
+!mmm     
+!rem     // Check if conditions apply
+!mmm     
+!mmm     set distance = m3mgdGetDistance(weaponWielderID, targetID)
+!mmm     if distance > 0
+!mmm       do whisperback(targetID.name & " ist zu weit entfernt, um eine Erdfessel auszulösen (max. 1m). Schade.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     set myViewAngle = m3mgdGetViewAngle(weaponWielderID, targetID)
+!mmm     if (myViewAngle < -90) or (myViewAngle > 90)
+!mmm       do whisperback(targetID.name & " ist außerhalb meines Blickfeldes (" & myViewAngle & "°). Schade.")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     if earthBondToggleCost > 0 and weaponWielderID.AP <= 0
+!mmm       do whisperback("Nur ein einsamer Schweißtropfen rollt mein Haupt hinunter (erschöpft).")
+!mmm       return false
+!mmm     end if
+!mmm     
+!mmm     if weaponWielderID.(m3mgdEarthBondStatusMarker) eq "shown"
+!mmm       do whisperback("Nichts passiert. Ich hab ja noch eine andere aktive Erdfessel, ich Dussel!")
+!mmm       return false
+!mmm     end if
+!mmm     
+!rem     // Set up new earth bond on targetID
+!mmm     
+!mmm     chat: Ich richte *Steinherz* auf den Boden vor ${targetID.name}.
+!mmm   
+!mmm     if earthBondToggleCost > 0
+!mmm       do m3mgdModifyEndurance(-1 * earthBondToggleCost, weaponWielderID, "AP")
+!mmm       chat: /w "${weaponWielderID.character_name}" Das hat ${earthBondToggleCost} AP gekostet.
+!mmm     end if
+!mmm   
+!rem     // Store target for "apply" and "remove*" commands
+!mmm   
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, targetID.token_id)
+!mmm   
+!rem     // Confirm creation to GM and player
+!mmm   
+!mmm     combine chat
+!mmm       chat: /w GM ${weaponWielderID.name} möchte eine magische Erdfessel gegen **${targetID.name}** erzeugen. (${earthBondToggleCost} AP abgezogen.)
+!mmm       chat: Die Erdfessel wirkt nur, wenn der Boden aus Erde, Schlamm, Sand oder Staub besteht. Wenn ja, klick [**ANWENDEN**](~MacroSheet|earthBondApply).
+!mmm     end combine
+!mmm     
+!mmm     chat: /w "${weaponWielderID.character_name}" Die Erdfessel gegen **${foeID.name}** wartet auf Bestätigung des Spielleiters.
+!mmm     
+!mmm     
+!mmm   else if command eq "apply" 
+!mmm     
+!rem     // Show the earth bond icon & confirm effects to player and GM
+!mmm
+!mmm     do setattr(targetID, m3mgdEarthBondStatusMarker, true)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, true)
+!mmm
+!mmm     chat: Der Boden unter ${targetID.name} wächst blitzschnell knöchelhoch an: das dürfte es deutlich schwerer machen, sich zu bewegen.
+!mmm     if activateGIF ne ""
+!mmm       chat: [x](${activateGIF})
+!mmm     end if 
+!mmm
+!mmm     chat: /w GM ${"&"}{template:default} {{name=Erdfessel}} {{ Opfer = ${targetID.name}}} {{ Folge = Abwehr -2 }} {{ Option = [**ENTFERNEN**](~MacroSheet|earthBondRemove) }}
+!mmm     
+!mmm     
+!mmm   else if command eq "releaseByCreator" or command eq "releaseByExhaustion"
+!mmm
+!mmm     if command eq "releaseByCreator"
+!mmm       do m3mgdModifyEndurance(-1 * earthBondToggleCost, weaponWielderID.token_id, "AP")
+!mmm       chat: /w "${weaponWielderID.character_name}" Du hast die Erdfessel gelöst; das hat ${earthBondToggleCost} AP gekostet.
+!mmm     end if
+!mmm     combine chat
+!mmm       chat: Die Erdfessel gibt ${targetID.name} frei, und plötzlich sieht der Untergrund wieder aus wie vorher, als wäre nichts gewesen.
+!mmm       if deactivateGIF ne ""
+!mmm         chat: [x](${deactivateGIF})
+!mmm       end if
+!mmm     end combine
+!mmm
+!mmm     do setattr(targetID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, "")
+!mmm
+!mmm     
+!mmm   else if command eq "escapeByPatience"
+!mmm     
+!mmm     set sender = targetID.token_name
+!mmm     set dxRoll = roll("1d100")
+!mmm     
+!mmm     if dxRoll > targetID.Gw
+!mmm     
+!mmm       chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${targetID.Gw}) ist mit ${dxRoll} **fehlgeschlagen.**
+!mmm       chat: ${targetID.name} versucht sich allzu ruckartig von ${weaponWielderID.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter! Und dafür hab ich 5 Minuten verschwendet.
+!mmm       return false
+!mmm     
+!mmm     else
+!mmm     
+!mmm       combine chat
+!mmm         chat: /w GM **Lösen aus der Erdfessel:** PW:Gw(${targetID.Gw}) ist mit ${dxRoll} **gelungen.**
+!mmm         chat: ${targetID.name} befreit sich laaaaangsam, aber immerhin elegant von ${weaponWielderID.name}s Erdfessel. Es kann so einfach sein -- das waren 5 gut investierte Minuten!
+!mmm         if deactivateGIF ne ""
+!mmm           chat: [x](${deactivateGIF})
+!mmm         end if
+!mmm       end combine
+!mmm     
+!mmm     end if
+!mmm
+!mmm     do setattr(targetID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, "")
+!mmm
+!mmm     
+!mmm   else if command eq "escapeByForce"
+!mmm
+!mmm     set sender = targetID.token_name
+!mmm     set stRoll = roll("1d100")
+!mmm     set foeActOfStrength = roll(targetID.token_id, "@"&"{KraftaktW}")
+!mmm     
+!mmm     if stRoll > foeActOfStrength
+!mmm     
+!mmm       chat: /w GM **Ausbruch aus Erdfessel:** PW:KraftaktW(${foeActOfStrength}) ist mit ${stRoll} **fehlgeschlagen.**
+!mmm       chat: ${targetID.name} versucht sich mit einem schier übermensch*lichen Kraftakt von ${weaponWielderID.name}s Erdfessel zu befreien und verstrickt sich damit nur weiter. So ein Mist, verdammter!
+!mmm       return false
+!mmm     
+!mmm     else
+!mmm     
+!mmm       combine chat
+!mmm         chat: /w GM **Ausbruch aus Erdfessel:** PW:KraftaktW(${foeActOfStrength}) ist mit ${stRoll} **gelungen.**
+!mmm         chat: ${targetID.name} bricht mit einem übermensch*lichen Kraftakt aus ${weaponWielderID.name}s Erdfessel aus. Muckis, Baby!
+!mmm         if deactivateGIF ne "" 
+!mmm           chat: [x](${deactivateGIF})
+!mmm         end if
+!mmm       end combine
+!mmm     
+!mmm     end if
+!mmm
+!mmm     do setattr(targetID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondStatusMarker, false)
+!mmm     do setattr(weaponWielderID, m3mgdEarthBondPCAttrTargetID, "")
+!mmm
+!mmm   end if
+!mmm
+!mmm   return true
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdRuneEffectWaterWalker(tokenID, weaponLabel, command, [targetID])
+!rem // 
+!rem //   Executes command on tokenID's rune blade Waterwalker (registered in character sheet as weaponLabel).
+!rem //   Known commands: "water-blast"
+!rem // 
+!mmm function m3mgdRuneEffectWaterWalker(tokenID, weaponLabel, command, targetID)
+!mmm 
+!mmm   if isdefault(targetID)
+!mmm     set targetID = m3mgdExchange.(m3mgdAttrAttackTargetID)
+!mmm   end if
+!mmm   if isunknown(targetID) or isdenied(targetID) or targetID.permission ne "control"
+!mmm     do whisperback("Target given as token ID '" & targetID & "' may not be a correct token ID, or does not allow control of attributes")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set sender = tokenID.character_name
+!mmm
+!rem   // Execute command
+!mmm
+!mmm   if command eq "water-blast"
+!mmm
+!rem     // Dazzle players with special effects
+!mmm     do spawnfx("beam-water", tokenID.left, tokenID.top, targetID.left, targetID.top)
+!mmm   
+!mmm     set stRoll = roll("1d100")
+!mmm   
+!mmm     if stRoll <= 0.5 * targetID.St
+!mmm   
+!mmm       set stRoll = highlight(stRoll, default, "PW(St): " & stRoll & " (Wurf) < " & targetID.St & " (St)")
+!mmm       chat: ${targetID.name} stellt den Körper in den Wasserstrahl und verzieht keine Miene. ${"<"}br>PW(St) erfolgreich: ${stRoll}
+!mmm   
+!mmm     else if stRoll <= 0.8 * targetID.St
+!mmm   
+!mmm       set stRoll = highlight(stRoll, default, "PW(St): " & stRoll & " (Wurf) < " & targetID.St & " (St)")
+!mmm       chat: ${targetID.name} stellt den Körper in den Wasserstrahl und verzieht ein bisschen das Gesicht. ${"<"}br>PW(St) erfolgreich: ${stRoll}
+!mmm   
+!mmm     else if stRoll <= targetID.St
+!mmm   
+!mmm       set stRoll = highlight(stRoll, default, "PW(St): " & stRoll & " (Wurf) < " & targetID.St & " (St)")
+!mmm       chat: ${targetID.name} spannt gerade noch rechtzeitig den Körper an, stellt sich dem Strahl entgegen und schafft es gerade so stehen zu bleiben. ${"<"}br>PW(St) erfolgreich: ${stRoll}
+!mmm   
+!mmm     else
+!mmm   
+!mmm       set stRoll = highlight(stRoll, default, "PW(St): " & stRoll & " (Wurf) > " & targetID.St & " (St)")
+!mmm       set blastDistance = roll("1d6-1")
+!mmm   
+!mmm       if blastDistance == 0
+!mmm         chat: Der harte Strahl lässt ${targetID.name} auf der Stelle stolpern und stürzen. ${"<"}br>PW(St) erfolglos: ${stRoll}
+!mmm       else 
+!mmm         set blastBearing = m3mgdGetTokenDirection(tokenID, targetID)
+!mmm         do setattr(targetID, "left", targetID.left - (sin(blastBearing) * blastDistance / distscale()))
+!mmm         do setattr(targetID, "top", targetID.top + (cos(blastBearing) * blastDistance / distscale()))
+!mmm         chat: Der harte Wasserstrahl spült ${targetID.name} ${blastDistance} Meter nach hinten und auf den Hosenboden. ${"<"}br>PW(St) erfolglos: ${stRoll} [x](https://media.giphy.com/media/MZSBHPaa0Y7FMelPtN/giphy.gif)
+!mmm       end if
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return true
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdRuneEffectWhirlWind(tokenID, weaponLabel, command)
+!rem // 
+!rem //   Executes command on tokenID's rune blade Whirlwind (registered in character sheet as weaponLabel).
+!rem //   Known commands: "wind-gust", "toggle|start|end|cancel-defense" (regarding the first rune effect)
+!rem // 
+!mmm function m3mgdRuneEffectWhirlWind(tokenID, weaponLabel, command)
+!mmm 
+!mmm   set weaponToggleCost = 1
+!mmm   set activateGIF = "https://media.giphy.com/media/EeofceO0vyYKvqJKHH/giphy.gif"
+!mmm   set deactivateGIF = "https://media.giphy.com/media/kiCXF8mL3j6Oe0vAm9/giphy.gif"
+!mmm
+!mmm   if not (tokenID.character_name eq "Finn MacRathgar" or tokenID.character_name eq "Yorric MacRathgar")
+!mmm     do whisperback("*Feuermal* ist an Finn MacRathgar gebunden und reagiert nicht auf " & tokenID.name)
+!mmm     return false
+!mmm   end if
+!mmm   set sender = tokenID.character_name
+!mmm   set ownName = tokenID.name
+!mmm   
+!rem   // "wind-gust" or "cancel-defense" do not require endurance
+!mmm   if command eq "wind-gust"
+!mmm     
+!mmm     set ownRotation = round(tokenID.rotation) % 360
+!mmm     
+!mmm     if ownRotation > 270
+!mmm       set angle = ownRotation - 270
+!mmm       set xOffset = 1
+!mmm       set yOffset = 1
+!mmm     else if ownRotation > 180
+!mmm       set angle = ownRotation - 180
+!mmm       set xOffset = 1
+!mmm       set yOffset = -1
+!mmm     else if ownRotation > 90
+!mmm       set angle = ownRotation - 90
+!mmm       set xOffset = -1
+!mmm       set yOffset = -1
+!mmm     else 
+!mmm       set angle = ownRotation
+!mmm       set xOffset = -1
+!mmm       set yOffset = 1
+!mmm     end if
+!mmm     set reach = 30 * distsnap()
+!mmm     set xOffset = xOffset * (reach * sin(angle))
+!mmm     set yOffset = yOffset * ((reach**2 - xOffset**2) ** 0.5)
+!mmm     
+!mmm     do spawnfx("beam-smoke", tokenID.left, tokenID.top, tokenID.left + xOffset, tokenID.top + yOffset)
+!mmm     
+!mmm     if roll("1d6") >= 4
+!mmm       set torches = "und Fackeln"
+!mmm     else
+!mmm       set torches = ""
+!mmm     end if
+!mmm     chat: ${tokenID.name}s Windstoß löscht alle Kerzen ${torches} auf 30m Entfernung; Nebel, Rauch oder Gas werden weggeweht.
+!mmm
+!mmm     return true
+!mmm
+!mmm   else if command eq "cancel-defense" and tokenID.(m3mgdWhirlWindActiveMarker) eq "shown"
+!mmm   
+!mmm     chat: Plötzlich kommen die Windböen um mich herum zum erliegen. [x](${deactivateGIF})
+!mmm   
+!mmm     do setattr(tokenID, m3mgdWhirlWindActiveMarker, false)
+!mmm   
+!mmm     chat: /w "${ownName}" Du bist erschöpft, dadurch ist der Wirbelwind-Effekt sofort beendet.
+!mmm     chat: /GM ${ownName} ist erschöpft, die Winde sind sofort weg. Keine AP-Kosten.
+!mmm   
+!mmm     return true
+!mmm
+!mmm   end if
+!mmm     
+!rem   // The other commands all cost endurance, so they do not work if exhausted
+!mmm   if tokenID.(script.cEnduranceAttr) <= 0
+!mmm
+!mmm     return false
+!mmm     
+!mmm   else if (command eq "toggle-defense" or command eq "start-defense") and not tokenID.(m3mgdWhirlWindActiveMarker) eq "shown"
+!mmm   
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Windböen um mich zu wehen. [x](${activateGIF})
+!mmm   
+!mmm     do setattr(tokenID, m3mgdWhirlWindActiveMarker, true)
+!mmm   
+!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.cEnduranceAttr)
+!mmm     chat: /w "${ownName}" Das hat 10 Sekunden gedauert und ${weaponToggleCost} AP gekostet.
+!mmm     chat: /GM **Dauer: 10s.** Kosten: ${weaponToggleCost} AP (schon abgezogen). Alle Gegner haben nun -4 auf Angriff (wird automatisch berücksichtigt).
+!mmm   
+!mmm   else if (command eq "toggle-defense" or command eq "end-defense") and tokenID.(m3mgdWhirlWindActiveMarker) eq "shown"
+!mmm   
+!mmm     chat: Ich konzentriere mich für 10 Sekunden, und die Windböen um mich herum kommen zum erliegen. [x](${deactivateGIF})
+!mmm   
+!mmm     do setattr(tokenID, m3mgdWhirlWindActiveMarker, false)
+!mmm   
+!mmm     set endurance = m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, script.cEnduranceAttr)
+!mmm     chat: /w "${ownName}" Das hat 10 Sekunden gedauert und ${weaponToggleCost} AP gekostet.
+!mmm     chat: /GM **Dauer: 10s.** Kosten: ${weaponToggleCost} AP (schon abgezogen).
+!mmm   
+!mmm   end if
+!mmm end function
+!rem
+!rem // m3mgdCancelRuneEffects(weaponWielderID)
+!rem // 
+!rem //   Stops any active rune effects originating with weaponWielderID
+!rem // 
+!mmm function m3mgdCancelRuneEffects(weaponWielderID)
+!mmm   
+!mmm   if isdefault(weaponWielderID)
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if weaponWielderID.(m3mgdFireMoleActiveMarker)
+!mmm   
+!mmm     if m3mgdRuneEffectFireMole(weaponWielderID, default, "cancel-first")
+!mmm   
+!mmm       return true
+!mmm   
+!mmm     else
+!mmm   
+!mmm       do whisperback("cancelRuneEffects(): call to m3mgdRuneEffectFireMole(cancel-first) failed.")
+!mmm       return false
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   else if weaponWielderID.(m3mgdEarthBondStatusMarker)
+!mmm   
+!mmm     if m3mgdRuneEffectEarthBond(weaponWielderID, default, "releaseByExhaustion")
+!mmm   
+!mmm       return true
+!mmm   
+!mmm     else
+!mmm   
+!mmm       do whisperback("cancelRuneEffects(): call to runeEffectEarthBond(releaseByExhaustion) failed.")
+!mmm       return false
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   else if weaponWielderID.(m3mgdWhirlWindActiveMarker)
+!mmm   
+!mmm     if m3mgdRuneEffectWhirlWind(weaponWielderID, default, "cancel-defense")
+!mmm   
+!mmm       return true
+!mmm   
+!mmm     else
+!mmm   
+!mmm       do whisperback("cancelRuneEffects(): call to m3mgdRuneEffectWhirlWind(cancel-defense) failed.")
+!mmm       return false
+!mmm   
+!mmm     end if
+!mmm   
+!mmm   end if
+!mmm   
+!mmm   return true
+!mmm
+!mmm end function
