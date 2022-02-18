@@ -74,7 +74,7 @@
 !rem
 !rem // m3mgdValidateAttackData([dataExchangeID])
 !rem // 
-!rem //   Expects a global data exchange character sheet as script.m3mgdExchange or as an argument.
+!rem //   Expects a global data exchange character sheet as m3mgdExchange or as an argument.
 !rem //   Validates attack data stack within that sheet and returns true/false.
 !rem // 
 !mmm function m3mgdValidateAttackData(dataExchangeID)
@@ -279,7 +279,7 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   set dataExchangeID = m3mgdExchange
 !mmm   
 !mmm   set flushStoredAttr = true
 !mmm   set ceilingValue = _m3mgdGetStoredAttr(dataExchangeID, tokenID, attrLabel, flushStoredAttr)
@@ -733,7 +733,7 @@
 !rem //
 !mmm function m3mgdExchangeStoreAttack(attackType, magicSpell)
 !mmm   
-!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   set dataExchangeID = m3mgdExchange
 !mmm   do m3mgdFlushExchange(dataExchangeID)
 !mmm
 !mmm   if attackType eq "magic" and magicSpell eq ""
@@ -748,16 +748,16 @@
 !mmm
 !rem   // Store the bare minimum of any attack dataset
 !mmm
-!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackType, attackType) eq attackType
+!mmm   if setattr(dataExchangeID, m3mgdAttrAttackType, attackType) eq attackType
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
-!mmm   if setattrmax(dataExchangeID, script.m3mgdAttrAttackType, magicSpell) eq magicSpell
+!mmm   if setattrmax(dataExchangeID, m3mgdAttrAttackType, magicSpell) eq magicSpell
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
-!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackerID, script.cOwnID) eq script.cOwnID
+!mmm   if setattr(dataExchangeID, m3mgdAttrAttackerID, script.cOwnID) eq script.cOwnID
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
-!mmm   if setattr(dataExchangeID, script.m3mgdAttrAttackTargetID, script.foeID) eq script.foeID
+!mmm   if setattr(dataExchangeID, m3mgdAttrAttackTargetID, script.foeID) eq script.foeID
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
 !mmm 
@@ -765,7 +765,7 @@
 !mmm
 !mmm   if script.attackResult >= 20
 !mmm     set storeTarget = storeTarget + 1
-!mmm     if setattr(dataExchangeID, script.m3mgdAttrAttackResult, script.attackResult) == script.attackResult
+!mmm     if setattr(dataExchangeID, m3mgdAttrAttackResult, script.attackResult) == script.attackResult
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm   end if
@@ -774,14 +774,14 @@
 !mmm     set storeTarget = storeTarget + 1
 !rem     // normalize boolean variable to avoid setting the attribute to undef (which would evaluate as false above)
 !mmm     set criticalAttack = (script.criticalAttack == true)
-!mmm     if setattrmax(dataExchangeID, script.m3mgdAttrAttackResult, criticalAttack) == script.criticalAttack
+!mmm     if setattrmax(dataExchangeID, m3mgdAttrAttackResult, criticalAttack) == script.criticalAttack
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm   end if
 !mmm
 !mmm   if script.damageResult > 0
 !mmm     set storeTarget = storeTarget + 1
-!mmm     if setattr(dataExchangeID, script.m3mgdAttrAttackDamage, script.damageResult) == script.damageResult
+!mmm     if setattr(dataExchangeID, m3mgdAttrAttackDamage, script.damageResult) == script.damageResult
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm   end if
@@ -792,19 +792,19 @@
 !mmm     if damageRoll < 0
 !mmm       set damageRoll = 0
 !mmm     end if
-!mmm     if setattr(dataExchangeID, script.m3mgdAttrAttackDamageRoll, damageRoll) == damageRoll
+!mmm     if setattr(dataExchangeID, m3mgdAttrAttackDamageRoll, damageRoll) == damageRoll
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm   end if
 !mmm
 !mmm   if script.cWeaponType ne ""
 !mmm     set storeTarget = storeTarget + 1
-!mmm     if setattr(dataExchangeID, script.m3mgdAttrAttackWeaponType, script.cWeaponType[0]) eq script.cWeaponType[0]
+!mmm     if setattr(dataExchangeID, m3mgdAttrAttackWeaponType, script.cWeaponType[0]) eq script.cWeaponType[0]
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm     if script.cWeaponType[1] ne ""
 !mmm       set storeTarget = storeTarget + 1
-!mmm       if setattrmax(dataExchangeID, script.m3mgdAttrAttackWeaponType, script.cWeaponType[1]) eq script.cWeaponType[1]
+!mmm       if setattrmax(dataExchangeID, m3mgdAttrAttackWeaponType, script.cWeaponType[1]) eq script.cWeaponType[1]
 !mmm         set storeCounter = storeCounter + 1
 !mmm       end if
 !mmm     end if
@@ -820,7 +820,7 @@
 !rem //
 !mmm function m3mgdExchangeStoreHealthBoost(healthGain, targetID)
 !mmm   
-!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   set dataExchangeID = m3mgdExchange
 !mmm
 !mmm   if isdefault(healthGain) or not healthGain
 !mmm     return false
@@ -831,10 +831,10 @@
 !mmm   end if
 !mmm 
 !mmm   set storeCounter = 0
-!mmm   if setattr(dataExchangeID, script.m3mgdAttrHealthGain, healthGain) eq healthGain
+!mmm   if setattr(dataExchangeID, m3mgdAttrHealthGain, healthGain) eq healthGain
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
-!mmm   if setattrmax(dataExchangeID, script.m3mgdAttrHealthGain, targetID) eq targetID
+!mmm   if setattrmax(dataExchangeID, m3mgdAttrHealthGain, targetID) eq targetID
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
 !mmm   return (storeCounter == 2)
@@ -847,7 +847,7 @@
 !rem //
 !mmm function m3mgdExchangeStoreEnduranceBoost(enduranceGain, targetID)
 !mmm   
-!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   set dataExchangeID = m3mgdExchange
 !mmm
 !mmm   if isdefault(enduranceGain) or not enduranceGain
 !mmm     return false
@@ -858,10 +858,10 @@
 !mmm   end if
 !mmm 
 !mmm   set storeCounter = 0
-!mmm   if setattr(dataExchangeID, script.m3mgdAttrEnduranceGain, enduranceGain) eq enduranceGain
+!mmm   if setattr(dataExchangeID, m3mgdAttrEnduranceGain, enduranceGain) eq enduranceGain
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
-!mmm   if setattrmax(dataExchangeID, script.m3mgdAttrEnduranceGain, targetID) eq targetID
+!mmm   if setattrmax(dataExchangeID, m3mgdAttrEnduranceGain, targetID) eq targetID
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
 !mmm   return (storeCounter == 2)
@@ -1301,10 +1301,10 @@
 !mmm   end if
 !mmm
 !mmm   set logLine = "PP:" & weaponLabel & "(" & newPP & ")=Kritisch erfolgreicher Angriff auf " & targetID.name & " (AP=" & targetID.(script.cEnduranceAttr) & ")"
-!mmm   if isunknown(ownID.(script.m3mgdAttrXPLog))
-!mmm     do setattr(ownID, script.m3mgdAttrXPLog, "")
+!mmm   if isunknown(ownID.(m3mgdAttrXPLog))
+!mmm     do setattr(ownID, m3mgdAttrXPLog, "")
 !mmm   end if
-!mmm   do setattr(ownID, script.m3mgdAttrXPLog, ownID.(script.m3mgdAttrXPLog) & " {\{" & logLine & "}\} ")
+!mmm   do setattr(ownID, m3mgdAttrXPLog, ownID.(m3mgdAttrXPLog) & " {\{" & logLine & "}\} ")
 !mmm
 !mmm   return true
 !mmm
@@ -1327,7 +1327,7 @@
 !mmm   end if
 !mmm   
 !mmm   if isdefault(attackerID)
-!mmm     set attackerID = script.m3mgdExchange.(script.m3mgdAttrAttackerID)
+!mmm     set attackerID = m3mgdExchange.(m3mgdAttrAttackerID)
 !mmm   end if
 !mmm   if attackerID.permission ne "control"
 !mmm     do whisperback("m3mgdProcessAttackXP(): Unable to process experience for attack: no control over token '" & attackerID.name & "'")
@@ -1354,21 +1354,21 @@
 !mmm     set xpTooltip = "(" & xpTooltip & ") x2[verheerend]"
 !mmm   end if
 !mmm   
-!mmm   set newXP = attackerID.(script.m3mgdAttrXP) + xpGain
+!mmm   set newXP = attackerID.(m3mgdAttrXP) + xpGain
 !mmm   if newXP <= 0 or not newXP
 !mmm     do whisperback("m3mgdProcessAttackXP(): Failure: new calculated XP likely undefined ('" & newXP & "') -- no experience processed.")
 !mmm     return false
 !mmm   end if
-!mmm   if setattr(attackerID, script.m3mgdAttrXP, newXP) != newXP
-!mmm     do whisperback("m3mgdProcessAttackXP(): Failure storing new experience total " & newXP & " in attribute '" & attackerID.name & "'." & script.m3mgdAttrXP)
+!mmm   if setattr(attackerID, m3mgdAttrXP, newXP) != newXP
+!mmm     do whisperback("m3mgdProcessAttackXP(): Failure storing new experience total " & newXP & " in attribute '" & attackerID.name & "'." & m3mgdAttrXP)
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set xpLog = attackerID.(script.m3mgdAttrXP) & "(+" & xpGain & ")=Angriff (" & attackType & ", Wurf: " & attackDamageRoll & ") auf " & targetID.name & " (Grad: " & targetID.Grad & ") = " & xpTooltip
-!mmm   if isunknown(attackerID.(script.m3mgdAttrXPLog))
-!mmm     do setattr(attackerID, script.m3mgdAttrXPLog, "")
+!mmm   set xpLog = attackerID.(m3mgdAttrXP) & "(+" & xpGain & ")=Angriff (" & attackType & ", Wurf: " & attackDamageRoll & ") auf " & targetID.name & " (Grad: " & targetID.Grad & ") = " & xpTooltip
+!mmm   if isunknown(attackerID.(m3mgdAttrXPLog))
+!mmm     do setattr(attackerID, m3mgdAttrXPLog, "")
 !mmm   end if
-!mmm   do setattr(attackerID, script.m3mgdAttrXPLog, attackerID.(script.m3mgdAttrXPLog) & " {\{" & xpLog & "}\} ")
+!mmm   do setattr(attackerID, m3mgdAttrXPLog, attackerID.(m3mgdAttrXPLog) & " {\{" & xpLog & "}\} ")
 !mmm
 !mmm   return highlight(xpGain, "normal", xpTooltip)
 !mmm
@@ -1385,11 +1385,11 @@
 !mmm   set shapeMoji = m3mgdShapeMoji(script.cOwnID)
 !mmm
 !mmm   if script.criticalAttack
-!mmm     set attackResult = highlight(script.attackResult, "good", "Kritisch erfolgreicher Angriff von " & script.m3mgdExchange.(m3mgdAttrAttackerID).name)
+!mmm     set attackResult = highlight(script.attackResult, "good", "Kritisch erfolgreicher Angriff von " & m3mgdExchange.(m3mgdAttrAttackerID).name)
 !mmm   else
-!mmm     set attackResult = highlight(script.attackResult, "info", "Angriff von " & script.m3mgdExchange.(m3mgdAttrAttackerID).name)
+!mmm     set attackResult = highlight(script.attackResult, "info", "Angriff von " & m3mgdExchange.(m3mgdAttrAttackerID).name)
 !mmm   end if
-!mmm   set attackDamage = highlight(script.m3mgdExchange.(m3mgdAttrAttackDamage), "info", script.m3mgdExchange.(m3mgdAttrAttackType))
+!mmm   set attackDamage = highlight(m3mgdExchange.(m3mgdAttrAttackDamage), "info", m3mgdExchange.(m3mgdAttrAttackType))
 !mmm   set effEnduranceLoss = highlight(script.effEnduranceLoss, "normal")
 !mmm   set effHealthLoss = highlight(script.effHealthLoss, "normal")
 !mmm
@@ -1407,8 +1407,8 @@
 !mmm
 !mmm     if script.cNoDefense
 !mmm       chat: {\{name=${shapeMoji}${script.cOwnID.name}: Keine Abwehr (wehrlos) }\}
-!mmm     else if script.m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
-!mmm       chat: {\{name=${shapeMoji}${script.cOwnID.name}: Abwehr gegen ${script.m3mgdExchange.(m3mgdAttrAttackType).max} }\}
+!mmm     else if m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
+!mmm       chat: {\{name=${shapeMoji}${script.cOwnID.name}: Abwehr gegen ${m3mgdExchange.(m3mgdAttrAttackType).max} }\}
 !mmm     else if script.cWeaponLabel eq "Abwehr ohne Schild"
 !mmm       chat: {\{name=${shapeMoji}${script.cOwnID.name}: Abwehr ohne Schild }\}
 !mmm     else
@@ -1441,7 +1441,7 @@
 !mmm       chat: {\{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}\}
 !mmm     end if
 !mmm
-!mmm     if script.criticalAttack == true and script.m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
+!mmm     if script.criticalAttack == true and m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
 !mmm       chat: {\{Kritischer Zaubererfolg=Zauber wirkt **doppelt so stark** oder ist **halb so teuer**: Nach Wahl des Zauberers umsetzen.}\}
 !mmm     else if script.criticalAttack == true
 !mmm       chat: {\{Kritischer Schaden=🎲🎲🎲}\}
