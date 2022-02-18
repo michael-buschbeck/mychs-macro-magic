@@ -57,7 +57,7 @@
 !mmm
 !mmm   combine chat
 !mmm     
-!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr) & cOwnID.name}: Heil-/Ausdauereffekte}} 
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji() & cOwnID.name}: Heil-/Ausdauereffekte}} 
 !mmm     
 !mmm     chat: {{Heileffekt=${highlight("+" & maxHealthGain, "normal")} **=>** ${newHealth} **LP**}}
 !mmm

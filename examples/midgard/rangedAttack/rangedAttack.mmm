@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.15.0 (2022-02-06)"
+!mmm   set scriptVersion = "1.16.0-pre (2022-02-18)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -497,7 +497,7 @@
 !mmm       chat: /w GM 
 !mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff mit ${cWeaponType[0]} * ${cWeaponName} *}} 
-!mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(foeID, cHealthAttr, cEnduranceAttr)}}}
+!mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(foeID)}}}
 !mmm     if iscritical(cAttackRoll)
 !mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${cAttackRoll})}}
 !mmm     else if attackResult >= 20

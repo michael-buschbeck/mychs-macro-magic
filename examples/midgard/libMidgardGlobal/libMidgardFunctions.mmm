@@ -80,7 +80,7 @@
 !mmm function m3mgdValidateAttackData(dataExchangeID)
 !mmm
 !mmm   if isdefault(dataExchangeID)
-!mmm     set dataExchangeID = script.m3mgdExchange
+!mmm     set dataExchangeID = m3mgdExchange
 !mmm   end if
 !mmm   if isunknown(dataExchangeID) or isdenied(dataExchangeID)
 !mmm     do whisperback("Invalid attack data exchange sheet: " & getreason(dataExchangeID))
@@ -130,17 +130,17 @@
 !rem
 !rem // m3mgdFlushExchange([dataExchangeID], [attrList])
 !rem // 
-!rem //   Expects a global data exchange character sheet as script.m3mgdExchange or as an argument
+!rem //   Expects a global data exchange character sheet as m3mgdExchange or as an argument
 !rem // 
 !rem //   Returns the number of attributes set to "" in both their current and max values
 !rem // 
 !mmm function m3mgdFlushExchange(dataExchangeID, attrList)
 !mmm
 !mmm   if isdefault(dataExchangeID)
-!mmm     set dataExchangeID = script.m3mgdExchange
+!mmm     set dataExchangeID = m3mgdExchange
 !mmm   end if
 !mmm   if isdefault(attrList)
-!mmm     set attrList = script.m3mgdExchangeAttrList
+!mmm     set attrList = m3mgdExchangeAttrList
 !mmm   end if 
 !mmm
 !mmm   set flushedCounter = 0
@@ -174,7 +174,7 @@
 !mmm     set ceilingValue = tokenID.(attrLabel)
 !mmm   end if
 !mmm   
-!mmm   set dataExchangeID = script.m3mgdExchange
+!mmm   set dataExchangeID = m3mgdExchange
 !mmm   
 !mmm   set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
 !rem   // Roll20 attributes are always strings, so string comparison theoretically allows for non-numerical "ceilings"
@@ -254,7 +254,7 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set attrCeiling = _m3mgdGetStoredAttr(script.m3mgdExchange, tokenID, attrLabel)
+!mmm   set attrCeiling = _m3mgdGetStoredAttr(m3mgdExchange, tokenID, attrLabel)
 !mmm   if attrCeiling > 0
 !mmm     return attrCeiling
 !mmm   else
@@ -693,36 +693,22 @@
 !mmm   end if
 !mmm end function
 !rem
-!rem // m3mgdShapeMoji(tokenID, [healthAttr], [enduranceAttr])
+!rem // m3mgdShapeMoji([tokenID])
 !rem //
-!rem // Returns visual indicator of health and exhaustion or lack to access to health/endurance attributes.
-!rem // If healthAttr/enduranceAttr are not provided, they default to script.cHealthAttr/cEnduranceAttr.
+!rem // Returns visual indicator of health and exhaustion.
 !rem //
-!mmm function m3mgdShapeMoji(tokenID, healthAttr, enduranceAttr)
-!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm function m3mgdShapeMoji(tokenID)
+!mmm     
+!mmm   if isdefault(tokenID)
+!mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm   else
+!mmm     set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   end if
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
-!mmm   if isdefault(healthAttr)
-!mmm     if script.cHealthAttr
-!mmm       set healthAttr = script.cHealthAttr
-!mmm     else 
-!mmm       do whisperback("No health attribute provided as argument or at script level")
-!mmm       return false
-!mmm     end if
-!mmm   end if
-!mmm   if isdefault(enduranceAttr)
-!mmm     if script.cEnduranceAttr
-!mmm       set enduranceAttr = script.cEnduranceAttr
-!mmm     else
-!mmm       do whisperback("No endurance attribute provided as argument or at script level")
-!mmm       return false
-!mmm     end if
-!mmm   end if
-!mmm
-!mmm   if isdenied(tokenID.(healthAttr)) or isdenied(tokenID.(enduranceAttr))
-!mmm     return highlight("🔒", "bad", tokenID.name & ".AP/LP: Zugriff auf mind. ein Attribut verweigert")
-!mmm   end if 
+!mmm   set healthAttr = m3mgdGetHealthAttribute(tokenID)
+!mmm   set enduranceAttr = m3mgdGetEnduranceAttribute(tokenID)
 !mmm
 !mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 0
 !mmm     return highlight("💀", "bad", "Dem Tode nah... jetzt zählt jede Sekunde!")
@@ -1396,7 +1382,7 @@
 !rem
 !mmm   set prvEndurance = script.endurance
 !mmm   set prvHealth = script.health
-!mmm   set shapeMoji = m3mgdShapeMoji(script.cOwnID, script.cHealthAttr, script.cEnduranceAttr)
+!mmm   set shapeMoji = m3mgdShapeMoji(script.cOwnID)
 !mmm
 !mmm   if script.criticalAttack
 !mmm     set attackResult = highlight(script.attackResult, "good", "Kritisch erfolgreicher Angriff von " & script.m3mgdExchange.(m3mgdAttrAttackerID).name)

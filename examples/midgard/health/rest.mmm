@@ -111,7 +111,7 @@
 !mmm   combine chat
 !mmm     
 !mmm     chat: /w "${user}" ${"&"}{template:default} 
-!mmm     chat: {{name=${m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr) & cOwnID.name}: Erholung}} 
+!mmm     chat: {{name=${m3mgdShapeMoji() & cOwnID.name}: Erholung}} 
 !mmm     
 !mmm     chat: {{${restLog}=${healthGain} **=>** ${newHealth} **LP** / ${enduranceGain} **=>** ${newEndurance} **AP**}}
 !mmm

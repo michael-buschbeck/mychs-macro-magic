@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.15.1 (2022-02-11)"
+!mmm   set scriptVersion = "v1.16.0-pre (2022-02-18)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -334,7 +334,7 @@
 !mmm       chat: /w GM 
 !mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
-!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(foeID, cHealthAttr, cEnduranceAttr)}}}
+!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(foeID)}}}
 !mmm     if attackResult >= 20
 !mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{cAttackRoll})}}
 !mmm     else 
