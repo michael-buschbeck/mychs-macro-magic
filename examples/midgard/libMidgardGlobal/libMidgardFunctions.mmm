@@ -290,9 +290,9 @@
 !mmm   
 !mmm end function
 !rem 
-!rem // m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
+!rem // m3mgdEnduranceStatusLabel(tokenID)
 !rem // 
-!mmm function m3mgdEnduranceStatusLabel(tokenID, enduranceAttr)
+!mmm function m3mgdEnduranceStatusLabel(tokenID)
 !mmm   
 !mmm   set enduranceLabel = "🔋 "
 !mmm
@@ -301,11 +301,6 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
-!mmm   if not enduranceAttr
-!mmm     return false
-!mmm   end if
-!mmm
 !mmm   if tokenID.status_green eq "shown"
 !mmm     
 !mmm     return enduranceLabel & "Erschöpft"
@@ -1533,7 +1528,7 @@
 !mmm     
 !mmm       chat: {\{Zustand=${script.newHealth} **LP** / ${script.newEndurance} **AP**}\}
 !mmm       chat: {\{${m3mgdHealthStatusLabel(script.cOwnID, script.cHealthAttr)}=${m3mgdHealthStatusEffectsDesc(script.cOwnID, script.cHealthAttr)} }\}
-!mmm       chat: {\{${m3mgdEnduranceStatusLabel(script.cOwnID, script.cEnduranceAttr)}=${m3mgdEnduranceStatusEffectsDesc(script.cOwnID, script.cEnduranceAttr)} }\}
+!mmm       chat: {\{${m3mgdEnduranceStatusLabel(script.cOwnID)}=${m3mgdEnduranceStatusEffectsDesc(script.cOwnID, script.cEnduranceAttr)} }\}
 !mmm     
 !mmm     end if
 !mmm
