@@ -296,7 +296,11 @@
 !mmm   
 !mmm   set enduranceLabel = "🔋 "
 !mmm
-!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if isdefault(tokenID)
+!mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm   else
+!mmm     set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   end if
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
@@ -313,25 +317,24 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdEnduranceStatusEffectsDesc([tokenID], [enduranceAttr])
+!rem // m3mgdEnduranceStatusEffectsDesc([tokenID])
 !rem // 
-!mmm function m3mgdEnduranceStatusEffectsDesc(tokenID, enduranceAttr)
-!mmm   
-!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm function m3mgdEnduranceStatusEffectsDesc(tokenID)
+!mmm
+!mmm   if isdefault(tokenID)
+!mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm   else
+!mmm     set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   end if
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
-!mmm   if not enduranceAttr
-!mmm     return false
-!mmm   end if
-!mmm
 !mmm   if tokenID.status_green eq "shown"
 !mmm     
 !mmm     return "🟢 -4 auf alles, max. Last reduziert"
 !mmm     
-!mmm   else if (tokenID.status_yellow eq "shown" or tokenID.status_red eq "shown" or tokenID.status_death_zone eq "shown") and m3mgdAttrCeiling(tokenID, enduranceAttr)
+!mmm   else if (tokenID.status_yellow eq "shown" or tokenID.status_red eq "shown" or tokenID.status_death_zone eq "shown") and m3mgdAttrCeiling(tokenID, m3mgdGetEnduranceAttribute(tokenID))
 !mmm     
 !mmm     return "🟡 Ausdauer begrenzt auf 50%"
 !mmm     
@@ -1528,7 +1531,7 @@
 !mmm     
 !mmm       chat: {\{Zustand=${script.newHealth} **LP** / ${script.newEndurance} **AP**}\}
 !mmm       chat: {\{${m3mgdHealthStatusLabel(script.cOwnID, script.cHealthAttr)}=${m3mgdHealthStatusEffectsDesc(script.cOwnID, script.cHealthAttr)} }\}
-!mmm       chat: {\{${m3mgdEnduranceStatusLabel(script.cOwnID)}=${m3mgdEnduranceStatusEffectsDesc(script.cOwnID, script.cEnduranceAttr)} }\}
+!mmm       chat: {\{${m3mgdEnduranceStatusLabel()}=${m3mgdEnduranceStatusEffectsDesc()} }\}
 !mmm     
 !mmm     end if
 !mmm
