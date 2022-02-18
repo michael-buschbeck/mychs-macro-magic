@@ -102,8 +102,8 @@
 !mmm   
 !mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute, m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute, m3mgdValidateAttackData, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
-!mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc, m3mgdEnduranceStatusHighlight
-!mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc, m3mgdHealthStatusHighlight
+!mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
+!mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
 !mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth
 !mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
 !mmm   publish to game: m3mgdShapeMoji, m3mgdIsDefenseless

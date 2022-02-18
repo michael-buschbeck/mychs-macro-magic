@@ -346,36 +346,6 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdEnduranceStatusHighlight([tokenID], [enduranceAttr])
-!rem // 
-!mmm function m3mgdEnduranceStatusHighlight(tokenID, enduranceAttr)
-!mmm   
-!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
-!mmm   if not tokenID
-!mmm     return false
-!mmm   end if
-!mmm   
-!mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
-!mmm   if not enduranceAttr
-!mmm     return false
-!mmm   end if
-!mmm
-!mmm   if tokenID.(enduranceAttr) == tokenID.(enduranceAttr).max
-!mmm     
-!mmm     return "good"
-!mmm     
-!mmm   else if tokenID.status_green eq "shown"
-!mmm     
-!mmm     return "bad"
-!mmm     
-!mmm   else
-!mmm     
-!mmm     return "normal"
-!mmm     
-!mmm   end if
-!mmm     
-!mmm end function
-!rem // 
 !rem // m3mgdHealthStatusLabel([tokenID], [healthAttr])
 !rem // 
 !mmm function m3mgdHealthStatusLabel(tokenID, healthAttr)
@@ -449,44 +419,6 @@
 !mmm   else
 !mmm     
 !mmm     return "keine Einschränkungen"
-!mmm     
-!mmm   end if
-!mmm     
-!mmm end function
-!rem // 
-!rem // m3mgdHealthStatusHighlight([tokenID], [healthAttr])
-!rem // 
-!mmm function m3mgdHealthStatusHighlight(tokenID, healthAttr)
-!mmm   
-!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
-!mmm   if not tokenID
-!mmm     return false
-!mmm   end if
-!mmm   
-!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
-!mmm   if not healthAttr
-!mmm     return false
-!mmm   end if
-!mmm
-!mmm   if tokenID.(healthAttr) == tokenID.(healthAttr).max
-!mmm     
-!mmm     return "good"
-!mmm     
-!mmm   else if tokenID.status_yellow eq "shown"
-!mmm     
-!mmm     return "important"
-!mmm     
-!mmm   else if tokenID.status_red eq "shown"
-!mmm     
-!mmm     return "bad"
-!mmm     
-!mmm   else if tokenID.status_death_zone eq "shown"
-!mmm     
-!mmm     return "bad"
-!mmm     
-!mmm   else
-!mmm     
-!mmm     return "normal"
 !mmm     
 !mmm   end if
 !mmm     
