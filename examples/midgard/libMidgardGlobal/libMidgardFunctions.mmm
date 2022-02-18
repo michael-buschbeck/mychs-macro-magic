@@ -387,19 +387,20 @@
 !mmm     
 !mmm end function
 !rem // 
-!rem // m3mgdHealthStatusEffectsDesc([tokenID], [healthAttr])
+!rem // m3mgdHealthStatusEffectsDesc([tokenID])
 !rem // 
-!mmm function m3mgdHealthStatusEffectsDesc(tokenID, healthAttr)
+!mmm function m3mgdHealthStatusEffectsDesc(tokenID)
 !mmm   
-!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if isdefault(tokenID)
+!mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm   else
+!mmm     set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   end if
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
-!mmm   if not healthAttr
-!mmm     return false
-!mmm   end if
+!mmm   set healthAttr = m3mgdGetHealthAttribute(tokenID)
 !mmm
 !mmm   if tokenID.status_yellow eq "shown"
 !mmm     
@@ -1463,7 +1464,7 @@
 !mmm     else
 !mmm     
 !mmm       chat: {\{Zustand=${script.newHealth} **LP** / ${script.newEndurance} **AP**}\}
-!mmm       chat: {\{${m3mgdHealthStatusLabel()}=${m3mgdHealthStatusEffectsDesc(script.cOwnID, script.cHealthAttr)} }\}
+!mmm       chat: {\{${m3mgdHealthStatusLabel()}=${m3mgdHealthStatusEffectsDesc()} }\}
 !mmm       chat: {\{${m3mgdEnduranceStatusLabel()}=${m3mgdEnduranceStatusEffectsDesc()} }\}
 !mmm     
 !mmm     end if

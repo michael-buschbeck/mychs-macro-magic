@@ -69,7 +69,7 @@
 !mmm     
 !mmm     else
 !mmm     
-!mmm       chat: {{${m3mgdHealthStatusLabel()}=${m3mgdHealthStatusEffectsDesc(cOwnID, cHealthAttr)}}}
+!mmm       chat: {{${m3mgdHealthStatusLabel()}=${m3mgdHealthStatusEffectsDesc()}}}
 !mmm       chat: {{${m3mgdEnduranceStatusLabel()}=${m3mgdEnduranceStatusEffectsDesc()}}}
 !mmm     
 !mmm     end if
