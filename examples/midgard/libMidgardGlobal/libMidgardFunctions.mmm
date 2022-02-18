@@ -50,7 +50,9 @@
 !rem //
 !rem //   Returns name of a valid, preferred attribute to access the token's endurance.
 !mmm function m3mgdGetEnduranceAttribute(tokenID)
-!mmm   if tokenID.PC
+!mmm   if m3mgdValidateTokenAttribute(tokenID, script.cEnduranceAttr)
+!mmm     return script.cEnduranceAttr
+!mmm   else if tokenID.PC
 !mmm     return m3mgdValidateTokenAttribute(tokenID, "AP")
 !mmm   else
 !mmm     return m3mgdValidateTokenAttribute(tokenID, "bar2")
@@ -61,7 +63,9 @@
 !rem //
 !rem //   Returns name of a valid, preferred attribute to access the token's health.
 !mmm function m3mgdGetHealthAttribute(tokenID)
-!mmm   if tokenID.PC
+!mmm   if m3mgdValidateTokenAttribute(tokenID, script.cHealthAttr)
+!mmm     return script.cHealthAttr
+!mmm   else if tokenID.PC
 !mmm     return m3mgdValidateTokenAttribute(tokenID, "LP")
 !mmm   else
 !mmm     return m3mgdValidateTokenAttribute(tokenID, "bar3")
