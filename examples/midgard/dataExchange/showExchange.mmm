@@ -2,7 +2,7 @@
 !rem // 
 !mmm script
 !mmm 
-!mmm   set scriptVersion = "showExchange 1.2.1 (2022-01-24)"
+!mmm   set scriptVersion = "showExchange 1.2.2 (2022-02-18)"
 !mmm
 !mmm   if version < 1.26 or not m3mgdExchange or not m3mgdExchangeAttrList
 !mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
@@ -25,7 +25,11 @@
 !mmm       if showMaxValue.name
 !mmm         set showMaxValue = highlight(m3mgdExchange.(attribute).max.name, "normal", m3mgdExchange.(attribute).max)
 !mmm       end if
-!mmm       chat: {{ ${attribute}=${showValue} / ${showMaxValue} }}
+!mmm       if showMaxValue
+!mmm         chat: {{ ${attribute}=${showValue} (${showMaxValue}) }}
+!mmm       else
+!mmm         chat: {{ ${attribute}=${showValue} }}
+!mmm       end if 
 !mmm     end for
 !mmm   end combine
 !mmm end script
