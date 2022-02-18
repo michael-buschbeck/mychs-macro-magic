@@ -19,7 +19,7 @@
 !mmm 
 !mmm end function
 !rem
-!rem // m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
+!rem // m3mgdValidateTokenAttribute(tokenID, attrLabel, [defaultAttrLabel])
 !rem // 
 !rem //   Validates attrLabel or, if set to default, defaultAttrLabel, as a readable attribute of tokenID.
 !rem //   Returns the attrLabel value found valid or false in case of validation or access issues.
@@ -44,6 +44,28 @@
 !mmm   
 !mmm   return attrLabel
 !mmm 
+!mmm end function
+!rem
+!rem // m3mgdGetEnduranceAttribute(tokenID)
+!rem //
+!rem //   Returns name of a valid, preferred attribute to access the token's endurance.
+!mmm function m3mgdGetEnduranceAttribute(tokenID)
+!mmm   if tokenID.PC
+!mmm     return m3mgdValidateTokenAttribute(tokenID, "AP")
+!mmm   else
+!mmm     return m3mgdValidateTokenAttribute(tokenID, "bar2")
+!mmm   end if
+!mmm end function
+!rem
+!rem // m3mgdGetHealthAttr(tokenID)
+!rem //
+!rem //   Returns name of a valid, preferred attribute to access the token's health.
+!mmm function m3mgdGetHealthAttribute(tokenID)
+!mmm   if tokenID.PC
+!mmm     return m3mgdValidateTokenAttribute(tokenID, "LP")
+!mmm   else
+!mmm     return m3mgdValidateTokenAttribute(tokenID, "bar3")
+!mmm   end if
 !mmm end function
 !rem
 !rem // m3mgdValidateAttackData([dataExchangeID])

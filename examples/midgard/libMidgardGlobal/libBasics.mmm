@@ -49,3 +49,22 @@
 !mmm   end for
 !mmm   return string
 !mmm end function
+!rem
+!rem // rollResult(roll, skill, [modifiers])
+!rem //
+!rem //   Calculates and formats the result of a 1d20 roll on a skill with modifiers for display.
+!rem //
+!mmm function rollResult(roll, skill, modifiers)
+!mmm   set result = roll + skill + modifiers
+!mmm   set tooltip = " = 1d20:" & roll & " + FW/WW:" & skill
+!mmm   if not isdefault(modifiers)
+!mmm     set tooltip = tooltip & " " & sign(modifiers, "display")
+!mmm   end if
+!mmm   if iscritical(roll)
+!mmm     return highlight(result, "good", tooltip)
+!mmm   else if isfumble(roll)
+!mmm     return highlight(result, "bad", tooltip)
+!mmm   else
+!mmm     return highlight(result, "normal", tooltip)
+!mmm   end if
+!mmm end function

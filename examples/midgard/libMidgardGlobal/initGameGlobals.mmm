@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.2.0-pre (2022-02-17)"
+!mmm   set scriptVersion = "initGameGlobals 1.2.0-pre (2022-02-18)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -35,7 +35,7 @@
 !mmm
 %{MacroSheetLibrary|libBasics}
 !mmm   
-!mmm   publish to game: count, sign, stringify
+!mmm   publish to game: count, sign, stringify, rollResult
 !mmm   
 !mmm   set m3mgdPlayerCharacters = "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
 !mmm   for charName in m3mgdPlayerCharacters
@@ -100,7 +100,7 @@
 !mmm
 %{MacroSheetLibrary|libMidgardFunctions}
 !mmm   
-!mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute, m3mgdValidateAttackData, m3mgdFlushExchange
+!mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute, m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute, m3mgdValidateAttackData, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
 !mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc, m3mgdEnduranceStatusHighlight
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc, m3mgdHealthStatusHighlight
