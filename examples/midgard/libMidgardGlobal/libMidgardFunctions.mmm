@@ -28,22 +28,22 @@
 !mmm 
 !mmm   if isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
 !mmm     
-!mmm     if isdefault(defaultAttrLabel)
-!mmm       do whisperback("Attribute '" & attrLabel & "' unknown or denied for token '" & tokenID.name & "'/" & tokenID & ", no default attribute provided.")
-!mmm       return false
-!mmm     end if
+!mmm     if isdefault(defaultAttrLabel) or isunknown(tokenID.(script.(defaultAttrLabel))) or isdenied(tokenID.(script.(defaultAttrLabel)))
 !mmm     
-!mmm     if isunknown(tokenID.(script.(defaultAttrLabel))) or isdenied(tokenID.(script.(defaultAttrLabel)))
-!mmm       do whisperback("Attribute '" & attrLabel & "' AND default attribute 'script." & defaultAttrLabel & "' unknown or denied for token '" & tokenID.name & "'/" & tokenID & ".")
 !mmm       return false
+!mmm     
 !mmm     else
+!mmm     
 !mmm       return script.(defaultAttrLabel)
+!mmm     
 !mmm     end if
 !mmm     
+!mmm   else
+!mmm   
+!mmm     return attrLabel
+!mmm 
 !mmm   end if
 !mmm   
-!mmm   return attrLabel
-!mmm 
 !mmm end function
 !rem
 !rem // m3mgdGetEnduranceAttribute(tokenID)
