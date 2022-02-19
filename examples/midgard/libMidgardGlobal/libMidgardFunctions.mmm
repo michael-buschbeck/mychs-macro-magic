@@ -1239,7 +1239,6 @@
 !mmm   set sender = tokenID.token_name
 !mmm   
 !mmm   chat: /w "${tokenID.character_name}" ${chatMenu}
-!rem //  chat: ${chatMenu}
 !mmm   
 !mmm   return true
 !mmm   

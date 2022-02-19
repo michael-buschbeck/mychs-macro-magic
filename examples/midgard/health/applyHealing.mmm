@@ -1,7 +1,7 @@
 !rem // applyHealing applies both healing and energy boosts (or either)
 !rem //
 !mmm script
-!mmm   set scriptVersion = "applyHealing 1.1.2 (2022-02-01)"
+!mmm   set scriptVersion = "applyHealing 2.0.0 (2022-02-19)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -16,20 +16,25 @@
 !mmm
 !mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
-!mmm     set customizable cHealthAttr = "bar3"
-!mmm     set customizable cEnduranceAttr = "bar2"
 !mmm   else 
 !mmm     set customizable cOwnID = sender.token_id
-!mmm     set customizable cHealthAttr = "LP"
-!mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
+!mmm   set cHealthAttr = m3mgdGetHealthAttribute(cOwnID)
+!mmm   set cEnduranceAttr = m3mgdGetEnduranceAttribute(cOwnID)
 !mmm   
-!mmm   set maxEnduranceGain = m3mgdExchange.(m3mgdAttrEnduranceGain)
-!mmm   set maxHealthGain = m3mgdExchange.(m3mgdAttrHealthGain)
+!rem   // Points to be applied are taken, first, from customize block, and only if there was none, from the data exchange
+!mmm   set customizable maxEnduranceGain = m3mgdExchange.(m3mgdAttrEnduranceGain)
+!mmm   set customizable maxHealthGain = m3mgdExchange.(m3mgdAttrHealthGain)
 !mmm   
+!rem   // If neither is present, spill out customize block for manual entry & rerun the script
 !mmm   if not (maxHealthGain > 0 or maxEnduranceGain > 0)
 !mmm   
-!mmm     chat: /w "${cOwnID.character_name}" [**Lebens-/Ausdauergewinn eingeben**](~MacroSheet|applyHealingDataEntry)
+!mmm     set payload = "!mmm customize&#13;"
+!mmm     set payload = payload & literal("!mmm set maxHealthGain=?" & "{Gewonnene Lebenspunkte (LP)|0}") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set maxEnduranceGain=?" & "{Gewonnene Ausdauerpunkte (AP)|0}") & "&#13;"
+!mmm     set payload = payload & "!mmm end customize&#13;"
+!mmm     set payload = payload & "&#x25;{MacroSheet|applyHealing}"
+!mmm     chat: /w "${cOwnID.character_name}" [**Lebens-/Ausdauergewinn eingeben**](${payload})
 !mmm     exit script
 !mmm
 !mmm   end if 
