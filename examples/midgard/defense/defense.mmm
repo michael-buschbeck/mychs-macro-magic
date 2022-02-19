@@ -89,11 +89,8 @@
 !mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, armorPiercing)") & "&#13;"
 !mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)") & "&#13;"
 !mmm     set payload = payload & "!mmm end script&#13;"
-!mmm     if cOwnID.PC
-!mmm       set payload = payload & "&#x25;{MacroSheet|defense}"
-!mmm     else
-!mmm       set payload = payload & "&#x25;{GM_NPC_Makros|NPC_Abwehr}"
-!mmm     end if
+!mmm     set payload = payload & m3mgdDefenseInitPayload(cOwnID)
+!mmm     set payload = payload & "&#x25;{MacroSheet|defenseMain}"
 !mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: Angriffsdaten unvollständig oder ungültig${"<"}br>[**Angriffsdaten eingeben**](${payload})
 !mmm     exit script
 !mmm   end if
