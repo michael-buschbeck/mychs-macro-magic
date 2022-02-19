@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-18)"
+!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-19)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -65,7 +65,36 @@
 !mmm   
 !rem   // Validate attack data and request manual entry if anything is amiss
 !mmm   if not m3mgdValidateAttackData()
-!mmm     do whisperback("**Abwehrskript: Daten fehlen oder widersprüchlich** [**Angriffsdaten eingeben**](~MacroSheet|defenseDataEntry)")
+!mmm     set payload = "!mmm script&#13;"
+!mmm     set payload = payload & literal("!mmm   set attackType = \"?" & "{Art des Angriffs|Nahkampf,melee|Fernkampf,ranged}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set attackerID = \"@" & "{target|Wer greift an?|token_id}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set targetID = \"@" & "{target|Wer wird angegriffen (Ziel)?|token_id}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set attackResult = \"?" & "{Angriffswert|0}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set criticalAttack = \"?" & "{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set attackDamage = \"?" & "{Schaden laut Angreifer|0}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set attackDamageRoll = \"?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set armorPiercing = \"?" & "{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust|Nein,0|Ja,1}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set weaponType = \"?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   if attackResult < 20") & "&#13;"
+!mmm     set payload = payload & literal("!mmm     do whisperback(\"Abbruch: Angriff mit **\" & attackResult & \"** war nicht erfolgreich, keine Abwehr nötig.\")") & "&#13;"
+!mmm     set payload = payload & literal("!mmm     exit script") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   end if") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackType, attackType)") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackerID, attackerID)") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, targetID)") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattrmax(m3mgdExchange, m3mgdAttrAttackResult, (criticalAttack == 1))") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamage, attackDamage)") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, attackDamageRoll)") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, armorPiercing)") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)") & "&#13;"
+!mmm     set payload = payload & "!mmm end script&#13;"
+!mmm     if cOwnID.PC
+!mmm       set payload = payload & "&#x25;{MacroSheet|defense}"
+!mmm     else
+!mmm       set payload = payload & "&#x25;{GM_NPC_Makros|NPC_Abwehr}"
+!mmm     end if
+!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: Angriffsdaten unvollständig oder ungültig${"<"}br>[**Angriffsdaten eingeben**](${payload})
 !mmm     exit script
 !mmm   end if
 !mmm   if not m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID

@@ -36,16 +36,24 @@
 !mmm   end if
 !mmm end function
 !rem
-!rem // stringify(list) rebuilds list as a list definition string: "item1", "item2", "item3" and so on. 
-!rem // All elements are treated as strings themselves.
+!rem // stringify(list, [quotemark], [connector])
 !rem //
-!mmm function stringify(list)
+!rem //   Builds list as list definition or option strings: "item1", "item2", "item3", ... 
+!rem //   All elements are treated as strings themselves. If no quotemark and connector is given, the above template is used.
+!rem //
+!mmm function stringify(list, quotemark, connector)
+!mmm   if isdefault(quotemark)
+!mmm     set quotemark = "\""
+!mmm   end if
+!mmm   if isdefault(connector)
+!mmm     set connector = ","
+!mmm   end if
 !mmm   set string = ""
 !mmm   for item in list
 !mmm     if string ne ""
-!mmm       set string = string & ","
+!mmm       set string = string & connector
 !mmm     end if
-!mmm     set string = string & "\"" & item & "\""
+!mmm     set string = string & quotemark & item & quotemark
 !mmm   end for
 !mmm   return string
 !mmm end function
