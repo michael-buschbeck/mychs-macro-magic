@@ -50,6 +50,10 @@
             white-space: pre-wrap;
         }
 
+        #results-container {
+            margin-bottom: 8pt;
+        }
+
         div.results-success {
             padding: 0.5em 1em;
             border: 1px solid gray;
@@ -68,6 +72,15 @@
             font-size: 12pt;
             color: red;
             background: #FFC0C0;
+        }
+
+        div.results-failure a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        div.results-failure a:hover {
+            text-decoration: underline;
         }
 
         td {
@@ -154,6 +167,8 @@
     </style>
 </head>
 <body>
+    <div id="results-container"></div>
+
     <script>
         let includedScriptSources = [];
 
@@ -1946,7 +1961,7 @@
 
             let scriptSource = scriptSources[scriptSourceIndex];
 
-            document.write("<div class='script'>");
+            document.write("<div class='script' id='script-" + scriptSourceIndex + "'>");
             document.write("<table>");
             document.write("<tr><td></td><td class='script-header'>test script " + scriptSourceIndex + "</td></tr>");
 
@@ -2171,15 +2186,17 @@
 
         if (numTestsSuccessful == numTestsRun)
         {
-            document.write("<div class='results-success'>");
+            document.write("<div id='results' class='results-success'>");
             document.write("Success: Ran " + numTestsRun + " test scripts, all successful.");
             document.write("</div>");
         }
         else
         {
-            document.write("<div class='results-failure'>");
-            document.write("Failed: Ran " + numTestsRun + " test scripts, " + (numTestsRun - numTestsSuccessful) + " failed (script index " + testsFailed.join(", ") + ")");
+            document.write("<div id='results' class='results-failure'>");
+            document.write("Failed: Ran " + numTestsRun + " test scripts, " + (numTestsRun - numTestsSuccessful) + " failed (script index " + testsFailed.map(index => "<a href='#script-" + index + "'>" + index + "</a>").join(", ") + ")");
             document.write("</div>");
         }
+
+        document.getElementById("results-container").appendChild(document.getElementById("results"));
     </script>
 </body>
