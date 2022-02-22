@@ -1146,6 +1146,7 @@
 !mmm   set payload = payload & literal("!mmm   do whisperback(\"Abbruch: Angriff mit **\" & attackResult & \"** war nicht erfolgreich, keine Abwehr nötig.\")") & "&#13;"
 !mmm   set payload = payload & literal("!mmm   exit script") & "&#13;"
 !mmm   set payload = payload & literal("!mmm end if") & "&#13;"
+!mmm   set payload = payload & literal("!mmm do m3mgdFlushExchange()") & "&#13;"
 !mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackType, attackType)") & "&#13;"
 !mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackerID, attackerID)") & "&#13;"
 !mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, targetID)") & "&#13;"
