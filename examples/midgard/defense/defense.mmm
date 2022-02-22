@@ -25,11 +25,11 @@
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //
-!mmm   if selected and sender.token_id ne selected
+!mmm   if selected and sender.token_id ne selected and m3mgdValidateOwnTokenID(selected.token_id)
 !mmm     set customizable cOwnID = selected.token_id
-!mmm   else if m3mgdExchange.(m3mgdAttrAttackTargetID) ne ""
+!mmm   else if m3mgdExchange.(m3mgdAttrAttackTargetID) ne "" and m3mgdValidateOwnTokenID(m3mgdExchange.(m3mgdAttrAttackTargetID))
 !mmm     set customizable cOwnID = m3mgdExchange.(m3mgdAttrAttackTargetID)
-!mmm   else 
+!mmm   else if m3mgdValidateOwnTokenID(sender.token_id)
 !mmm     set customizable cOwnID = sender.token_id
 !mmm   end if
 !mmm   set customizable cWeaponLabel = ""
@@ -64,7 +64,14 @@
 !mmm   set cEnduranceAttr = m3mgdGetEnduranceAttribute(cOwnID)
 !mmm   
 !rem   // Validate attack data and request manual entry if anything is amiss
-!mmm   if not m3mgdValidateAttackData()
+!mmm   if not cOwnID
+!mmm     set payload = "!mmm customize&#13;"
+!mmm     set payload = payload & literal("!mmm set cOwnID = \"@" & "{target|Wer verteidigt sich?|token_id}\"") & "&#13;"
+!mmm     set payload = payload & "!mmm end customize&#13;"
+!mmm     set payload = payload & "&#x25;{MacroSheet|defenseMain}"
+!mmm     do whisperback("<" & "br>Wer soll sich denn verteidigen?<" & "br>[**Token auswählen**](" & payload & ")")
+!mmm     exit script
+!mmm   else if not m3mgdValidateAttackData()
 !mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: Angriffsdaten unvollständig oder ungültig${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
 !mmm     exit script
 !mmm   end if
