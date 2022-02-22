@@ -1387,7 +1387,10 @@
 !mmm   if isdefault(attackerID)
 !mmm     set attackerID = m3mgdExchange.(m3mgdAttrAttackerID)
 !mmm   end if
-!mmm   if attackerID.permission ne "control"
+!mmm   if not isChar(attackerID)
+!mmm     do whisperback("m3mgdProcessAttackXP(): Unable to process experience for attack: attacker '" & attackerID.name & "' not linked to a character sheet.")
+!mmm     return false
+!mmm   else if attackerID.permission ne "control"
 !mmm     do whisperback("m3mgdProcessAttackXP(): Unable to process experience for attack: no control over token '" & attackerID.name & "'")
 !mmm     return false
 !mmm   end if

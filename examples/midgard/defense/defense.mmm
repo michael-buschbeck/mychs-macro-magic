@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-19)"
+!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-22)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -273,7 +273,7 @@
 !mmm   end if
 !rem
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
-!mmm   if not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
+!mmm   if isChar(m3mgdExchange.(m3mgdAttrAttackerID)) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
 !mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackDamageRoll, m3mgdExchange.(m3mgdAttrAttackerID), cOwnID)
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": +" & xpGain & " EP}} "
 !mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess

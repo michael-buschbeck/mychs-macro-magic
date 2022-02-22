@@ -16,6 +16,17 @@
 !mmm   return count
 !mmm end function
 !rem
+!rem // isChar(id) returns true if id is either a character id itself or a token id linked to a character sheet, otherwise false.
+!rem //
+!mmm function isChar(id)
+!rem   // Tokens unlinked to a char sheet return unknown while player ids return denied
+!mmm   if not isunknown(id.character_id) and not isdenied(id.character_id)
+!mmm     return true
+!mmm   else
+!mmm     return false
+!mmm   end if
+!mmm end function
+!rem
 !rem // sign(val, [zero]) signs a value for display
 !rem //
 !rem //   If [zero] is omitted, only positives are signed as "+X" and "0" is left without a sign.

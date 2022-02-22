@@ -35,7 +35,7 @@
 !mmm
 %{MacroSheetLibrary|libBasics}
 !mmm   
-!mmm   publish to game: count, sign, stringify, rollResult
+!mmm   publish to game: count, isChar, sign, stringify, rollResult
 !mmm   
 !mmm   set m3mgdPlayerCharacters = "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
 !mmm   for charName in m3mgdPlayerCharacters
