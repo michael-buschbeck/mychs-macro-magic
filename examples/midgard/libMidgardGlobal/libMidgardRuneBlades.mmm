@@ -314,7 +314,7 @@
 !mmm function m3mgdRuneEffectWaterWalker(tokenID, weaponLabel, command, targetID)
 !mmm
 !mmm   if not (tokenID.character_name eq "Wulfric MacConuilh" or tokenID.character_name eq "Yerrick MacRothgar")
-!mmm     do whisperback("*Wirbelwind* ist an Wulfric MacConuilh gebunden und reagiert nicht auf " & tokenID.name)
+!mmm     do whisperback("*Wasserläufer* ist an Wulfric MacConuilh gebunden und reagiert nicht auf " & tokenID.name)
 !mmm     return false
 !mmm   end if
 !mmm
