@@ -22,14 +22,6 @@
 !mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cVerbose             Toggle narrative output: true for on, false for off 
-!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
-!rem   //  cNoDefense           true/false: flag for defenseless attacks (surprises, ambushes etc.)
-!rem   //
-!mmm   set customizable cVerbose = true
-!mmm   set customizable cGMSilentMode = false
-!mmm   set customizable cNoDefense = false
-!rem
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //
@@ -41,6 +33,14 @@
 !mmm     set customizable cOwnID = sender.token_id
 !mmm   end if
 !mmm   set customizable cWeaponLabel = ""
+!rem
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off 
+!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
+!rem   //  cNoDefense           true/false: flag for defenseless attacks (surprises, ambushes etc.)
+!rem   //
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cGMSilentMode = (cOwnID.PC != 1)
+!mmm   set customizable cNoDefense = false
 !rem
 !rem   //  cDefenseRoll         Override by player to see beautifully animated 3D dice
 !rem   //  cSemiManualModifiers Override by self-generated customize block for user to select key conditions for defense roll
@@ -65,37 +65,11 @@
 !mmm   
 !rem   // Validate attack data and request manual entry if anything is amiss
 !mmm   if not m3mgdValidateAttackData()
-!mmm     set payload = "!mmm script&#13;"
-!mmm     set payload = payload & literal("!mmm   set attackType = \"?" & "{Art des Angriffs|Nahkampf,melee|Fernkampf,ranged}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set attackerID = \"@" & "{target|Wer greift an?|token_id}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set targetID = \"@" & "{target|Wer wird angegriffen (Ziel)?|token_id}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set attackResult = \"?" & "{Angriffswert|0}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set criticalAttack = \"?" & "{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set attackDamage = \"?" & "{Schaden laut Angreifer|0}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set attackDamageRoll = \"?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set armorPiercing = \"?" & "{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust|Nein,0|Ja,1}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set weaponType = \"?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   if attackResult < 20") & "&#13;"
-!mmm     set payload = payload & literal("!mmm     do whisperback(\"Abbruch: Angriff mit **\" & attackResult & \"** war nicht erfolgreich, keine Abwehr nötig.\")") & "&#13;"
-!mmm     set payload = payload & literal("!mmm     exit script") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   end if") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackType, attackType)") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackerID, attackerID)") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, targetID)") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattrmax(m3mgdExchange, m3mgdAttrAttackResult, (criticalAttack == 1))") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamage, attackDamage)") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, attackDamageRoll)") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, armorPiercing)") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)") & "&#13;"
-!mmm     set payload = payload & "!mmm end script&#13;"
-!mmm     set payload = payload & m3mgdDefenseInitPayload(cOwnID)
-!mmm     set payload = payload & "&#x25;{MacroSheet|defenseMain}"
-!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: Angriffsdaten unvollständig oder ungültig${"<"}br>[**Angriffsdaten eingeben**](${payload})
+!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: Angriffsdaten unvollständig oder ungültig${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
 !mmm     exit script
 !mmm   end if
 !mmm   if not m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
-!mmm     do whisperback("**Abwehrskript:** " & m3mgdExchange.(m3mgdAttrAttackTargetID).name & " wurde zuletzt angegriffen, nicht ich. [**Angriffsdaten eingeben**](~MacroSheet|defenseDataEntry)")
+!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: ${m3mgdExchange.(m3mgdAttrAttackTargetID).name} wurde zuletzt angegriffen, nicht ich.${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
 !mmm     exit script
 !mmm   end if
 !mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
@@ -139,6 +113,20 @@
 !mmm
 !rem     // Not helpless, so let's prep for the big defense!
 !rem
+!rem     // Validate defense weapon, default to the only one or request manual entry
+!mmm     if cWeaponLabel eq ""
+!mmm       set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
+!mmm       if not defenseWeaponList
+!mmm         do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
+!mmm         exit script
+!mmm       else if count(defenseWeaponList) == 1
+!mmm         set cWeaponLabel = cOwnID.(defenseWeaponList)
+!mmm       else 
+!mmm         do m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)
+!mmm         exit script
+!mmm       end if
+!mmm     end if
+!rem
 !rem     // If user wants to use a parry weapon/shield, validate
 !mmm     set parryWeaponUsable = false
 !mmm     set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
@@ -166,20 +154,6 @@
 !rem       // Script was called for a parry weapon that was not found in the character sheet
 !mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nicht im Charakterblatt}}"
 !mmm       set cWeaponLabel = ""
-!mmm     end if
-!rem
-!rem     // Validate defense weapon and request manual entry if selection is missing
-!mmm     if cWeaponLabel eq ""
-!mmm       set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
-!mmm       if not defenseWeaponList
-!mmm         do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
-!mmm         exit script
-!mmm       else if count(defenseWeaponList) == 1
-!mmm         set cWeaponLabel = cOwnID.(defenseWeaponList)
-!mmm       else 
-!mmm         do m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)
-!mmm         exit script
-!mmm       end if
 !mmm     end if
 !mmm
 !rem     // Collect defense modifiers

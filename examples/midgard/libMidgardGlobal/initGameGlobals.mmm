@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.2.0-pre (2022-02-19)"
+!mmm   set scriptVersion = "initGameGlobals 1.2.0-pre (2022-02-22)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -109,7 +109,7 @@
 !mmm   publish to game: m3mgdShapeMoji, m3mgdIsDefenseless
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons, m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
-!mmm   publish to game: m3mgdDefenseInitPayload, m3mgdWeaponSelectorChatMenu, m3mgdDefenseDataTable, m3mgdWeaponSpecialEffect, m3mgdInjuryFX
+!mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdWeaponSelectorChatMenu, m3mgdDefenseDataTable, m3mgdWeaponSpecialEffect, m3mgdInjuryFX
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm   
 %{MacroSheetLibrary|libMidgardRuneBlades}
