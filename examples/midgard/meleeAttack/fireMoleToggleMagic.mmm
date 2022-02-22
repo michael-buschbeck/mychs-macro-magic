@@ -1,6 +1,6 @@
 !rem // Magische Runenklinge "Feuermal" (Langschwert)
 !rem // Aktivierungs- und Deaktivierungsskript
-!rem // v1.5.0 2022-02-11 phr
+!rem // v1.6.0 2022-02-22 phr
 !mmm script
 !rem   // Config (overwrite in a customize block called immediately before this script)
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
@@ -26,7 +26,9 @@
 !mmm   end if
 !mmm   
 !mmm   if cOwnID.(cEnduranceAttr) <= 0 
-!mmm     do whisperback("Nichts passiert: bin zu erschöpft, um mich zu konzentrieren.")
+!mmm     chat: /w "${cOwnID.character_name}" Nichts passiert: bin zu erschöpft, um mich zu konzentrieren.
+!mmm   else if not cOwnID.(m3mgdFireMoleActiveMarker) and cOwnID.(cEnduranceAttr) < 2
+!mmm     chat: /w "${cOwnID.character_name}" Ich bin so nah an der Erschöpfung, dass die Flammen sofort wieder erlöschen würden. Das lasse ich lieber.
 !mmm   else
 !mmm     do m3mgdRuneEffectFireMole(cOwnID, cWeaponLabel, "toggle-first")
 !mmm   end if

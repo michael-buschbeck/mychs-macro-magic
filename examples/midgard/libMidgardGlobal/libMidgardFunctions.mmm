@@ -1543,7 +1543,7 @@
 !rem // m3mgdInjuryFX(tokenID, relativeHealthLoss, relativeEnduranceLoss)
 !rem //
 !mmm function m3mgdInjuryFX(tokenID, relativeHealthLoss, relativeEnduranceLoss)
-!mmm debug do relativeHealthLoss, relativeEnduranceLoss, tokenID.(m3mgdGetEnduranceAttribute(tokenID))
+!mmm   
 !mmm   set fx = ""
 !mmm   if relativeHealthLoss >= .2
 !mmm     set fx = "nova-blood"
