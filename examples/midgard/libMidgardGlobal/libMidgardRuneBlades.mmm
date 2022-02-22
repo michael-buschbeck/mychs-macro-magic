@@ -10,11 +10,12 @@
 !rem   // Game-global constants for publication
 !rem
 !mmm   set m3mgdFireMoleActiveMarker = "status_all_for_one"
+!mmm   set m3mgdEarthBladeWeaponLabel = "Steinherz (Streitaxt)"
 !mmm   set m3mgdEarthBondStatusMarker = "status_cobweb"
 !mmm   set m3mgdEarthBondPCAttrTargetID = "m3mgd_earthBond_targetID"
 !mmm   set m3mgdWhirlWindActiveMarker = "status_half_haze"
 !mmm
-!mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker, m3mgdWhirlWindActiveMarker
+!mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBladeWeaponLabel, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker, m3mgdWhirlWindActiveMarker
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
@@ -104,6 +105,10 @@
 !mmm   set activateGIF = ""
 !mmm   set deactivateGIF = ""
 !mmm
+!mmm   if isdefault(weaponLabel)
+!mmm     set weaponLabel = m3mgdEarthBladeWeaponLabel
+!mmm   end if
+!mmm   
 !mmm   set sender = weaponWielderID.character_name
 !mmm
 !rem   // Validate input and permissions
@@ -466,7 +471,7 @@
 !mmm   
 !mmm     else
 !mmm   
-!mmm       do whisperback("cancelRuneEffects(): call to m3mgdRuneEffectFireMole(cancel-first) failed.")
+!mmm       do whisperback("m3mgdCancelRuneEffects(): call to m3mgdRuneEffectFireMole(cancel-first) failed.")
 !mmm       return false
 !mmm   
 !mmm     end if
@@ -479,7 +484,7 @@
 !mmm   
 !mmm     else
 !mmm   
-!mmm       do whisperback("cancelRuneEffects(): call to runeEffectEarthBond(releaseByExhaustion) failed.")
+!mmm       do whisperback("m3mgdCancelRuneEffects(): call to runeEffectEarthBond(releaseByExhaustion) failed.")
 !mmm       return false
 !mmm   
 !mmm     end if
@@ -492,7 +497,7 @@
 !mmm   
 !mmm     else
 !mmm   
-!mmm       do whisperback("cancelRuneEffects(): call to m3mgdRuneEffectWhirlWind(cancel-defense) failed.")
+!mmm       do whisperback("m3mgdCancelRuneEffects(): call to m3mgdRuneEffectWhirlWind(cancel-defense) failed.")
 !mmm       return false
 !mmm   
 !mmm     end if

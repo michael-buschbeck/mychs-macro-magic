@@ -343,7 +343,7 @@
 !mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, m3mgdExchange.(m3mgdAttrAttackerID))
 !mmm   end if
 !mmm
-!rem   // Injury special effects
+!rem   // Injury & exhaustion special effects
 !mmm   if effHealthLoss > 0 or effEnduranceLoss > 0
 !mmm     do m3mgdInjuryFX(cOwnID, effHealthLoss / maxHealth, effEnduranceLoss / cOwnID.(cEnduranceAttr).max)
 !mmm   end if

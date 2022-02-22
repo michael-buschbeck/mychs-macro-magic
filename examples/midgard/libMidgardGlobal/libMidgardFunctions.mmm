@@ -490,7 +490,6 @@
 !mmm   
 !mmm     set newEndurance = highlight(newEndurance, "bad", "🟢 (= " & prvEndurance & effOffset & ")")
 !mmm     do setattr(tokenID, "status_green", true)
-!mmm     do m3mgdCancelRuneEffects(tokenID)
 !mmm   
 !mmm   else
 !mmm   
@@ -1544,18 +1543,24 @@
 !rem // m3mgdInjuryFX(tokenID, relativeHealthLoss, relativeEnduranceLoss)
 !rem //
 !mmm function m3mgdInjuryFX(tokenID, relativeHealthLoss, relativeEnduranceLoss)
-!mmm
+!mmm debug do relativeHealthLoss, relativeEnduranceLoss, tokenID.(m3mgdGetEnduranceAttribute(tokenID))
+!mmm   set fx = ""
 !mmm   if relativeHealthLoss >= .2
 !mmm     set fx = "nova-blood"
 !mmm   else if relativeHealthLoss > 0
 !mmm     set fx = "bubbling-blood"
-!mmm   else if relativeEnduranceLoss > 0
+!mmm   else if relativeEnduranceLoss > .05
 !mmm     set fx = "bubbling-water"
 !mmm   end if
 !mmm   if fx ne ""
-!mmm     do delay(3)
+!mmm     do delay(2)
 !mmm     do spawnfx(fx, tokenID.left, tokenID.top)
 !mmm     do delay(1)
 !mmm     do spawnfx(fx, tokenID.left, tokenID.top)
 !mmm   end if
+!mmm   
+!mmm   if relativeEnduranceLoss > 0 and tokenID.(m3mgdGetEnduranceAttribute(tokenID)) <= 0
+!mmm     do m3mgdCancelRuneEffects(tokenID)
+!mmm   end if
+!mmm   
 !mmm end function

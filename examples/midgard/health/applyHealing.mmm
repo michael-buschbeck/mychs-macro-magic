@@ -39,14 +39,21 @@
 !mmm
 !mmm   end if 
 !mmm
+!mmm   set prvHealth = cOwnID.(cHealthAttr)
 !mmm   set newHealth = m3mgdModifyHealth(maxHealthGain, cOwnID, cHealthAttr)
+!mmm   set effHealthGain = newHealth - prvHealth
+!mmm   if effHealthGain < maxHealthGain
+!mmm     if newHealth == cOwnID.(cHealthAttr).max
+!mmm       set healthLog = "Auf LP.max begrenzt"
+!mmm     else
+!mmm       set healthLog = "Fehler? Grund für reduzierten LP-Gewinn unbekannt"
+!mmm     end if
+!mmm   end if
 !mmm   
 !mmm   set prvEndurance = cOwnID.(cEnduranceAttr)
 !mmm   set newEndurance = m3mgdModifyEndurance(maxEnduranceGain, cOwnID, cEnduranceAttr)
 !mmm   set effEnduranceGain = newEndurance - prvEndurance
-!mmm   set enduranceHighlight = "normal"
 !mmm   if effEnduranceGain < maxEnduranceGain
-!mmm     set enduranceHighlight = "important"
 !mmm     if newEndurance == cOwnID.(cEnduranceAttr).max
 !mmm       set enduranceLog = "Auf AP.max begrenzt"
 !mmm     else if newEndurance <= m3mgdAttrCeiling(cOwnID, cEnduranceAttr)
@@ -64,9 +71,17 @@
 !mmm     
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji() & cOwnID.name}: Heil-/Ausdauereffekte}} 
 !mmm     
-!mmm     chat: {{Heileffekt=${highlight("+" & maxHealthGain, "normal")} **=>** ${newHealth} **LP**}}
+!mmm     if effHealthGain == maxHealthGain
+!mmm       chat: {{Heileffekt=${highlight("+" & maxHealthGain, "normal")} **=>** ${newHealth} **LP**}}
+!mmm     else
+!mmm       chat: {{Heileffekt=${highlight("+" & effHealthGain & "/" & maxHealthGain, "important", healthLog)} **=>** ${newHealth} **LP**}}
+!mmm     end if
 !mmm
-!mmm     chat: {{Ausdauereffekt=${highlight("+" & effEnduranceGain & "/" & maxEnduranceGain, enduranceHighlight, enduranceLog)} **=>** ${newEndurance} **AP**}}
+!mmm     if effEnduranceGain == maxEnduranceGain
+!mmm       chat: {{Ausdauereffekt=${highlight("+" & maxEnduranceGain, "normal")} **=>** ${newEndurance} **AP**}}
+!mmm     else
+!mmm       chat: {{Ausdauereffekt=${highlight("+" & effEnduranceGain & "/" & maxEnduranceGain, "important", enduranceLog)} **=>** ${newEndurance} **AP**}}
+!mmm     end if
 !mmm     
 !mmm     if newHealth < 0 and timeToDie < 0
 !mmm     
