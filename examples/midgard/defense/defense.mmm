@@ -1,11 +1,11 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-17)"
+!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-22)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Combat Defense Script " & scriptVersion)
+!mmm     do whisperback(scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -22,63 +22,61 @@
 !mmm
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cVerbose             Toggle narrative output: true for on, false for off 
+!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //
-!mmm   set customizable cVerbose = true
+!mmm   if selected and sender.token_id ne selected and m3mgdValidateOwnTokenID(selected.token_id)
+!mmm     set customizable cOwnID = selected.token_id
+!mmm   else if m3mgdExchange.(m3mgdAttrAttackTargetID) ne "" and m3mgdValidateOwnTokenID(m3mgdExchange.(m3mgdAttrAttackTargetID))
+!mmm     set customizable cOwnID = m3mgdExchange.(m3mgdAttrAttackTargetID)
+!mmm   else if m3mgdValidateOwnTokenID(sender.token_id)
+!mmm     set customizable cOwnID = sender.token_id
+!mmm   end if
 !mmm   set customizable cWeaponLabel = ""
 !rem
-!rem   // User input
-!rem   //  cSemiManualModifiers 
-!rem   //  
-!mmm   set customizable cSemiManualModifiers = 0
-!rem
-!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
-!rem   //  cHealthAttr          Override if character's/token's health is stored differently than usual
-!rem   //  cEnduranceAttr       Override if character's/token's endurance is stored differently than usual
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off 
 !rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
 !rem   //  cNoDefense           true/false: flag for defenseless attacks (surprises, ambushes etc.)
-!rem   //  cDefenseRoll         Override by player to see beautifully animated 3D dice
 !rem   //
-!mmm   if selected and sender.token_id ne selected
-!mmm     set customizable cOwnID = selected.token_id
-!mmm     set customizable cHealthAttr = "bar3"
-!mmm     set customizable cEnduranceAttr = "bar2"
-!mmm   else if m3mgdExchange.(m3mgdAttrAttackTargetID) ne ""
-!mmm     set customizable cOwnID = m3mgdExchange.(m3mgdAttrAttackTargetID)
-!mmm     set customizable cHealthAttr = "bar3"
-!mmm     set customizable cEnduranceAttr = "bar2"
-!mmm   else 
-!mmm     set customizable cOwnID = sender.token_id
-!mmm     set customizable cHealthAttr = "LP"
-!mmm     set customizable cEnduranceAttr = "AP"
-!mmm   end if
-!mmm   set customizable cGMSilentMode = false
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cGMSilentMode = (cOwnID.PC != 1)
 !mmm   set customizable cNoDefense = false
+!rem
+!rem   //  cDefenseRoll         Override by player to see beautifully animated 3D dice
+!rem   //  cSemiManualModifiers Override by self-generated customize block for user to select key conditions for defense roll
+!rem   //  
 !mmm   set customizable cDefenseRoll = roll("1d20")
+!mmm   set customizable cSemiManualModifiers = 0
 !mmm
 !rem
 !rem   // Initialize & collect data
-!rem
-!rem   // Refetch character_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = cOwnID.token_id
-!mmm   if isdenied(cOwnID) or isunknown(cOwnID)
-!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Token möglich - " & cOwnID) 
-!mmm     exit script
-!mmm   end if
 !rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
 !mmm   if cOwnID.token_name ne sender
 !mmm     set sender = cOwnID.token_name
 !mmm   end if
+!mmm   
+!rem   // Refetch token id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = m3mgdValidateOwnTokenID(cOwnID)
 !rem
+!rem   // For player chars, work with the charsheet LP/AP attributes; for NPCs, use the token bars in case they are generic NPCs
+!mmm   set cHealthAttr = m3mgdGetHealthAttribute(cOwnID)
+!mmm   set cEnduranceAttr = m3mgdGetEnduranceAttribute(cOwnID)
+!mmm   
 !rem   // Validate attack data and request manual entry if anything is amiss
-!mmm   if not m3mgdValidateAttackData()
-!mmm     do whisperback("**Abwehrskript: Daten fehlen oder widersprüchlich** [**Angriffsdaten eingeben**](~MacroSheet|defenseDataEntry)")
+!mmm   if not cOwnID
+!mmm     set payload = "!mmm customize&#13;"
+!mmm     set payload = payload & literal("!mmm set cOwnID = \"@" & "{target|Wer verteidigt sich?|token_id}\"") & "&#13;"
+!mmm     set payload = payload & "!mmm end customize&#13;"
+!mmm     set payload = payload & "&#x25;{MacroSheet|defenseMain}"
+!mmm     do whisperback("<" & "br>Wer soll sich denn verteidigen?<" & "br>[**Token auswählen**](" & payload & ")")
+!mmm     exit script
+!mmm   else if not m3mgdValidateAttackData()
+!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: Angriffsdaten unvollständig oder ungültig${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
 !mmm     exit script
 !mmm   end if
 !mmm   if not m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
-!mmm     do whisperback("**Abwehrskript:** " & m3mgdExchange.(m3mgdAttrAttackTargetID).name & " wurde zuletzt angegriffen, nicht ich. [**Angriffsdaten eingeben**](~MacroSheet|defenseDataEntry)")
+!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: ${m3mgdExchange.(m3mgdAttrAttackTargetID).name} wurde zuletzt angegriffen, nicht ich.${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
 !mmm     exit script
 !mmm   end if
 !mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
@@ -94,6 +92,7 @@
 !rem   // Check for armor piercing projectiles
 !mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
 !mmm
+!rem   // Check if an active defense is even possible
 !mmm   set cNoDefense = (cNoDefense eq "true") or m3mgdIsDefenseless(cOwnID)
 !mmm
 !rem   // Initialize defender 
@@ -120,6 +119,20 @@
 !mmm   else
 !mmm
 !rem     // Not helpless, so let's prep for the big defense!
+!rem
+!rem     // Validate defense weapon, default to the only one or request manual entry
+!mmm     if cWeaponLabel eq ""
+!mmm       set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
+!mmm       if not defenseWeaponList
+!mmm         do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
+!mmm         exit script
+!mmm       else if count(defenseWeaponList) == 1
+!mmm         set cWeaponLabel = cOwnID.(defenseWeaponList)
+!mmm       else 
+!mmm         do m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)
+!mmm         exit script
+!mmm       end if
+!mmm     end if
 !rem
 !rem     // If user wants to use a parry weapon/shield, validate
 !mmm     set parryWeaponUsable = false
@@ -148,20 +161,6 @@
 !rem       // Script was called for a parry weapon that was not found in the character sheet
 !mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nicht im Charakterblatt}}"
 !mmm       set cWeaponLabel = ""
-!mmm     end if
-!rem
-!rem     // Validate defense weapon and request manual entry if selection is missing
-!mmm     if cWeaponLabel eq ""
-!mmm       set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
-!mmm       if not defenseWeaponList
-!mmm         do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
-!mmm         exit script
-!mmm       else if count(defenseWeaponList) == 1
-!mmm         set cWeaponLabel = cOwnID.(defenseWeaponList)
-!mmm       else 
-!mmm         do m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)
-!mmm         exit script
-!mmm       end if
 !mmm     end if
 !mmm
 !rem     // Collect defense modifiers
@@ -205,21 +204,8 @@
 !mmm
 !rem     // Run & format rolls
 !rem
-!mmm     set defenseResult = cDefenseRoll + effDefense + modifiers
-!mmm     if modifiers == 0
-!mmm       set modifiers = "+/-0"
-!mmm     else if modifiers > 0
-!mmm       set modifiers = "+" & modifiers
-!mmm     end if
-!mmm     set defenseResultLog = defenseResult & " = (1d20:" & cDefenseRoll & ")+(WW:" & effDefense & ")+(" & modifiers & ")"
-!mmm     set modifiers = highlight(modifiers, "info")
-!mmm     if iscritical(cDefenseRoll)
-!mmm       set defenseResult = highlight(defenseResult, "good", defenseResultLog)
-!mmm     else if isfumble(cDefenseRoll)
-!mmm       set defenseResult = highlight(defenseResult, "bad", defenseResultLog)
-!mmm     else
-!mmm       set defenseResult = highlight(defenseResult, "normal", defenseResultLog)
-!mmm     end if
+!mmm     set defenseResult = rollResult(cDefenseRoll, effDefense, modifiers)
+!mmm     set modifiers = highlight(sign(modifiers, "display"), "info")
 !mmm
 !mmm   end if
 !mmm
@@ -287,7 +273,7 @@
 !mmm   end if
 !rem
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
-!mmm   if not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
+!mmm   if isChar(m3mgdExchange.(m3mgdAttrAttackerID)) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
 !mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackDamageRoll, m3mgdExchange.(m3mgdAttrAttackerID), cOwnID)
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": +" & xpGain & " EP}} "
 !mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
@@ -357,7 +343,7 @@
 !mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, m3mgdExchange.(m3mgdAttrAttackerID))
 !mmm   end if
 !mmm
-!rem   // Injury special effects
+!rem   // Injury & exhaustion special effects
 !mmm   if effHealthLoss > 0 or effEnduranceLoss > 0
 !mmm     do m3mgdInjuryFX(cOwnID, effHealthLoss / maxHealth, effEnduranceLoss / cOwnID.(cEnduranceAttr).max)
 !mmm   end if

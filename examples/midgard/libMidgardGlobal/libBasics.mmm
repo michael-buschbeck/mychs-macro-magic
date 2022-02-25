@@ -16,6 +16,17 @@
 !mmm   return count
 !mmm end function
 !rem
+!rem // isChar(id) returns true if id is either a character id itself or a token id linked to a character sheet, otherwise false.
+!rem //
+!mmm function isChar(id)
+!rem   // Tokens unlinked to a char sheet return unknown while player ids return denied
+!mmm   if not isunknown(id.character_id) and not isdenied(id.character_id)
+!mmm     return true
+!mmm   else
+!mmm     return false
+!mmm   end if
+!mmm end function
+!rem
 !rem // sign(val, [zero]) signs a value for display
 !rem //
 !rem //   If [zero] is omitted, only positives are signed as "+X" and "0" is left without a sign.
@@ -36,16 +47,43 @@
 !mmm   end if
 !mmm end function
 !rem
-!rem // stringify(list) rebuilds list as a list definition string: "item1", "item2", "item3" and so on. 
-!rem // All elements are treated as strings themselves.
+!rem // stringify(list, [quotemark], [connector])
 !rem //
-!mmm function stringify(list)
+!rem //   Builds list as list definition or option strings: "item1", "item2", "item3", ... 
+!rem //   All elements are treated as strings themselves. If no quotemark and connector is given, the above template is used.
+!rem //
+!mmm function stringify(list, quotemark, connector)
+!mmm   if isdefault(quotemark)
+!mmm     set quotemark = "\""
+!mmm   end if
+!mmm   if isdefault(connector)
+!mmm     set connector = ","
+!mmm   end if
 !mmm   set string = ""
 !mmm   for item in list
 !mmm     if string ne ""
-!mmm       set string = string & ","
+!mmm       set string = string & connector
 !mmm     end if
-!mmm     set string = string & "\"" & item & "\""
+!mmm     set string = string & quotemark & item & quotemark
 !mmm   end for
 !mmm   return string
+!mmm end function
+!rem
+!rem // rollResult(roll, skill, [modifiers])
+!rem //
+!rem //   Calculates and formats the result of a 1d20 roll on a skill with modifiers for display.
+!rem //
+!mmm function rollResult(roll, skill, modifiers)
+!mmm   set result = roll + skill + modifiers
+!mmm   set tooltip = " = 1d20:" & roll & " + FW/WW:" & skill
+!mmm   if not isdefault(modifiers)
+!mmm     set tooltip = tooltip & " " & sign(modifiers, "display")
+!mmm   end if
+!mmm   if iscritical(roll)
+!mmm     return highlight(result, "good", tooltip)
+!mmm   else if isfumble(roll)
+!mmm     return highlight(result, "bad", tooltip)
+!mmm   else
+!mmm     return highlight(result, "normal", tooltip)
+!mmm   end if
 !mmm end function

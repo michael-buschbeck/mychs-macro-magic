@@ -1,7 +1,7 @@
 !rem // applyHealing applies both healing and energy boosts (or either)
 !rem //
 !mmm script
-!mmm   set scriptVersion = "applyHealing 1.1.2 (2022-02-01)"
+!mmm   set scriptVersion = "applyHealing 2.0.0 (2022-02-19)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -16,32 +16,44 @@
 !mmm
 !mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
-!mmm     set customizable cHealthAttr = "bar3"
-!mmm     set customizable cEnduranceAttr = "bar2"
 !mmm   else 
 !mmm     set customizable cOwnID = sender.token_id
-!mmm     set customizable cHealthAttr = "LP"
-!mmm     set customizable cEnduranceAttr = "AP"
 !mmm   end if
+!mmm   set cHealthAttr = m3mgdGetHealthAttribute(cOwnID)
+!mmm   set cEnduranceAttr = m3mgdGetEnduranceAttribute(cOwnID)
 !mmm   
-!mmm   set maxEnduranceGain = m3mgdExchange.(m3mgdAttrEnduranceGain)
-!mmm   set maxHealthGain = m3mgdExchange.(m3mgdAttrHealthGain)
+!rem   // Points to be applied are taken, first, from customize block, and only if there was none, from the data exchange
+!mmm   set customizable maxEnduranceGain = m3mgdExchange.(m3mgdAttrEnduranceGain)
+!mmm   set customizable maxHealthGain = m3mgdExchange.(m3mgdAttrHealthGain)
 !mmm   
+!rem   // If neither is present, spill out customize block for manual entry & rerun the script
 !mmm   if not (maxHealthGain > 0 or maxEnduranceGain > 0)
 !mmm   
-!mmm     chat: /w "${cOwnID.character_name}" [**Lebens-/Ausdauergewinn eingeben**](~MacroSheet|applyHealingDataEntry)
+!mmm     set payload = "!mmm customize&#13;"
+!mmm     set payload = payload & literal("!mmm set maxHealthGain=?" & "{Gewonnene Lebenspunkte (LP)|0}") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set maxEnduranceGain=?" & "{Gewonnene Ausdauerpunkte (AP)|0}") & "&#13;"
+!mmm     set payload = payload & "!mmm end customize&#13;"
+!mmm     set payload = payload & "&#x25;{MacroSheet|applyHealing}"
+!mmm     chat: /w "${cOwnID.character_name}" [**Lebens-/Ausdauergewinn eingeben**](${payload})
 !mmm     exit script
 !mmm
 !mmm   end if 
 !mmm
+!mmm   set prvHealth = cOwnID.(cHealthAttr)
 !mmm   set newHealth = m3mgdModifyHealth(maxHealthGain, cOwnID, cHealthAttr)
+!mmm   set effHealthGain = newHealth - prvHealth
+!mmm   if effHealthGain < maxHealthGain
+!mmm     if newHealth == cOwnID.(cHealthAttr).max
+!mmm       set healthLog = "Auf LP.max begrenzt"
+!mmm     else
+!mmm       set healthLog = "Fehler? Grund für reduzierten LP-Gewinn unbekannt"
+!mmm     end if
+!mmm   end if
 !mmm   
 !mmm   set prvEndurance = cOwnID.(cEnduranceAttr)
 !mmm   set newEndurance = m3mgdModifyEndurance(maxEnduranceGain, cOwnID, cEnduranceAttr)
 !mmm   set effEnduranceGain = newEndurance - prvEndurance
-!mmm   set enduranceHighlight = "normal"
 !mmm   if effEnduranceGain < maxEnduranceGain
-!mmm     set enduranceHighlight = "important"
 !mmm     if newEndurance == cOwnID.(cEnduranceAttr).max
 !mmm       set enduranceLog = "Auf AP.max begrenzt"
 !mmm     else if newEndurance <= m3mgdAttrCeiling(cOwnID, cEnduranceAttr)
@@ -57,11 +69,19 @@
 !mmm
 !mmm   combine chat
 !mmm     
-!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji(cOwnID, cHealthAttr, cEnduranceAttr) & cOwnID.name}: Heil-/Ausdauereffekte}} 
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji() & cOwnID.name}: Heil-/Ausdauereffekte}} 
 !mmm     
-!mmm     chat: {{Heileffekt=${highlight("+" & maxHealthGain, "normal")} **=>** ${newHealth} **LP**}}
+!mmm     if effHealthGain == maxHealthGain
+!mmm       chat: {{Heileffekt=${highlight("+" & maxHealthGain, "normal")} **=>** ${newHealth} **LP**}}
+!mmm     else
+!mmm       chat: {{Heileffekt=${highlight("+" & effHealthGain & "/" & maxHealthGain, "important", healthLog)} **=>** ${newHealth} **LP**}}
+!mmm     end if
 !mmm
-!mmm     chat: {{Ausdauereffekt=${highlight("+" & effEnduranceGain & "/" & maxEnduranceGain, enduranceHighlight, enduranceLog)} **=>** ${newEndurance} **AP**}}
+!mmm     if effEnduranceGain == maxEnduranceGain
+!mmm       chat: {{Ausdauereffekt=${highlight("+" & maxEnduranceGain, "normal")} **=>** ${newEndurance} **AP**}}
+!mmm     else
+!mmm       chat: {{Ausdauereffekt=${highlight("+" & effEnduranceGain & "/" & maxEnduranceGain, "important", enduranceLog)} **=>** ${newEndurance} **AP**}}
+!mmm     end if
 !mmm     
 !mmm     if newHealth < 0 and timeToDie < 0
 !mmm     
@@ -69,8 +89,8 @@
 !mmm     
 !mmm     else
 !mmm     
-!mmm       chat: {{${m3mgdHealthStatusLabel(cOwnID, cHealthAttr)}=${m3mgdHealthStatusEffectsDesc(cOwnID, cHealthAttr)}}}
-!mmm       chat: {{${m3mgdEnduranceStatusLabel(cOwnID, cEnduranceAttr)}=${m3mgdEnduranceStatusEffectsDesc(cOwnID, cEnduranceAttr)}}}
+!mmm       chat: {{${m3mgdHealthStatusLabel()}=${m3mgdHealthStatusEffectsDesc()}}}
+!mmm       chat: {{${m3mgdEnduranceStatusLabel()}=${m3mgdEnduranceStatusEffectsDesc()}}}
 !mmm     
 !mmm     end if
 !mmm     

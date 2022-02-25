@@ -4,17 +4,18 @@
 !rem //
 !mmm function _libMidgardRuneBlades()
 !mmm   
-!mmm   set libVersion = "libMidgardRuneBlades v1.0.0-pre (2022-02-12)"
+!mmm   set libVersion = "libMidgardRuneBlades v1.0.0 (2022-02-22)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Game-global constants for publication
 !rem
 !mmm   set m3mgdFireMoleActiveMarker = "status_all_for_one"
+!mmm   set m3mgdEarthBladeWeaponLabel = "Steinherz (Streitaxt)"
 !mmm   set m3mgdEarthBondStatusMarker = "status_cobweb"
 !mmm   set m3mgdEarthBondPCAttrTargetID = "m3mgd_earthBond_targetID"
 !mmm   set m3mgdWhirlWindActiveMarker = "status_half_haze"
 !mmm
-!mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker, m3mgdWhirlWindActiveMarker
+!mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBladeWeaponLabel, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker, m3mgdWhirlWindActiveMarker
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
@@ -46,6 +47,12 @@
 !mmm     return false
 !mmm     
 !mmm   else if (command eq "toggle-first" or command eq "start-first") and not tokenID.(m3mgdFireMoleActiveMarker) eq "shown"
+!mmm     
+!rem     // Starting an effect that doesn't immediately fizzle out for exhaustion requires at least 1 AP more than necessary
+!mmm     if tokenID.(script.cEnduranceAttr) < weaponToggleCost + 1
+!mmm       do whisperback("m3mgdRuneEffectFireMole(" & command & ") would immediately exhaust me (AP=0) and thus cancel the effect. Aborted.")
+!mmm       return false
+!mmm     end if
 !mmm     
 !rem     // First rune effect, command "toggle"/"start", state "not active": Spark magic flames around the blade
 !mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Flammen um meine Runenklinge *Feuermal* zu züngeln. [x](${activateGIF})
@@ -104,6 +111,15 @@
 !mmm   set activateGIF = ""
 !mmm   set deactivateGIF = ""
 !mmm
+!mmm   if not (weaponWielderID.character_name eq "Ufix Steinbrot" or weaponWielderID.character_name eq "Yerrick MacRothgar")
+!mmm     do whisperback("*Steinherz* ist an Ufix Steinbrot gebunden und reagiert nicht auf " & weaponWielderID.name)
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isdefault(weaponLabel)
+!mmm     set weaponLabel = m3mgdEarthBladeWeaponLabel
+!mmm   end if
+!mmm   
 !mmm   set sender = weaponWielderID.character_name
 !mmm
 !rem   // Validate input and permissions
@@ -161,8 +177,9 @@
 !mmm       return false
 !mmm     end if
 !mmm     
-!mmm     if earthBondToggleCost > 0 and weaponWielderID.AP <= 0
-!mmm       do whisperback("Nur ein einsamer Schweißtropfen rollt mein Haupt hinunter (erschöpft).")
+!rem     // Starting an effect that doesn't immediately fizzle out for exhaustion requires at least 1 AP more than necessary
+!mmm     if earthBondToggleCost > 0 and weaponWielderID.AP < earthBondToggleCost + 1
+!mmm       do whisperback("Nur ein einsamer Schweißtropfen rollt mein Haupt hinunter (erschöpft oder so nah dran, dass die Erdfessel keinen Bestand haben kann).")
 !mmm       return false
 !mmm     end if
 !mmm     
@@ -295,7 +312,12 @@
 !rem //   Known commands: "water-blast"
 !rem // 
 !mmm function m3mgdRuneEffectWaterWalker(tokenID, weaponLabel, command, targetID)
-!mmm 
+!mmm
+!mmm   if not (tokenID.character_name eq "Wulfric MacConuilh" or tokenID.character_name eq "Yerrick MacRothgar")
+!mmm     do whisperback("*Wasserläufer* ist an Wulfric MacConuilh gebunden und reagiert nicht auf " & tokenID.name)
+!mmm     return false
+!mmm   end if
+!mmm
 !mmm   if isdefault(targetID)
 !mmm     set targetID = m3mgdExchange.(m3mgdAttrAttackTargetID)
 !mmm   end if
@@ -364,9 +386,10 @@
 !mmm   set deactivateGIF = "https://media.giphy.com/media/kiCXF8mL3j6Oe0vAm9/giphy.gif"
 !mmm
 !mmm   if not (tokenID.character_name eq "Finn MacRathgar" or tokenID.character_name eq "Yorric MacRathgar")
-!mmm     do whisperback("*Feuermal* ist an Finn MacRathgar gebunden und reagiert nicht auf " & tokenID.name)
+!mmm     do whisperback("*Wirbelwind* ist an Finn MacRathgar gebunden und reagiert nicht auf " & tokenID.name)
 !mmm     return false
 !mmm   end if
+!mmm
 !mmm   set sender = tokenID.character_name
 !mmm   set ownName = tokenID.name
 !mmm   
@@ -427,6 +450,12 @@
 !mmm     
 !mmm   else if (command eq "toggle-defense" or command eq "start-defense") and not tokenID.(m3mgdWhirlWindActiveMarker) eq "shown"
 !mmm   
+!rem     // Starting an effect that doesn't immediately fizzle out for exhaustion requires at least 1 AP more than necessary
+!mmm     if tokenID.(script.cEnduranceAttr) < weaponToggleCost + 1
+!mmm       do whisperback("m3mgdRuneEffectWhirlWind(" & command & ") would immediately exhaust me (AP=0) and thus cancel the effect. Aborted.")
+!mmm       return false
+!mmm     end if
+!mmm     
 !mmm     chat: Ich konzentriere mich für 10 Sekunden, und es beginnen Windböen um mich zu wehen. [x](${activateGIF})
 !mmm   
 !mmm     do setattr(tokenID, m3mgdWhirlWindActiveMarker, true)
@@ -466,7 +495,7 @@
 !mmm   
 !mmm     else
 !mmm   
-!mmm       do whisperback("cancelRuneEffects(): call to m3mgdRuneEffectFireMole(cancel-first) failed.")
+!mmm       do whisperback("m3mgdCancelRuneEffects(): call to m3mgdRuneEffectFireMole(cancel-first) failed.")
 !mmm       return false
 !mmm   
 !mmm     end if
@@ -479,7 +508,7 @@
 !mmm   
 !mmm     else
 !mmm   
-!mmm       do whisperback("cancelRuneEffects(): call to runeEffectEarthBond(releaseByExhaustion) failed.")
+!mmm       do whisperback("m3mgdCancelRuneEffects(): call to runeEffectEarthBond(releaseByExhaustion) failed.")
 !mmm       return false
 !mmm   
 !mmm     end if
@@ -492,7 +521,7 @@
 !mmm   
 !mmm     else
 !mmm   
-!mmm       do whisperback("cancelRuneEffects(): call to m3mgdRuneEffectWhirlWind(cancel-defense) failed.")
+!mmm       do whisperback("m3mgdCancelRuneEffects(): call to m3mgdRuneEffectWhirlWind(cancel-defense) failed.")
 !mmm       return false
 !mmm   
 !mmm     end if

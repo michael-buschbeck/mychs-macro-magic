@@ -1,5 +1,5 @@
 !rem // whirlWindMagic executes magic features of Finn's longsword "Whirlwind"
-!rem // v1.2.0 2022-02-11
+!rem // v1.3.0 2022-02-22
 !mmm script
 !mmm   
 !rem   // Commands are set by config script, valid commands are "toggle-defense" and "wind-gust"
@@ -24,7 +24,9 @@
 !mmm   end if
 !mmm   
 !mmm   if cOwnID.(cEnduranceAttr) <= 0 
-!mmm     do whisperback("Nichts passiert: bin zu erschöpft, um mich zu konzentrieren.")
+!mmm     chat: /w "${cOwnID.character_name}" Nichts passiert: bin zu erschöpft, um mich zu konzentrieren.
+!mmm   else if not cOwnID.(m3mgdWhirlWindActiveMarker) and cOwnID.(cEnduranceAttr) < 2
+!mmm     chat: /w "${cOwnID.character_name}" Ich bin so nah an der Erschöpfung, dass die Windböen sofort wieder erlöschen würden. Das lasse ich lieber.
 !mmm   else
 !mmm     do m3mgdRuneEffectWhirlWind(cOwnID, cWeaponLabel, command)
 !mmm   end if
