@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.2.0-pre (2022-02-25)"
+!mmm   set scriptVersion = "initGameGlobals 1.2.0 (2022-02-25)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -33,9 +33,16 @@
 !mmm     exit script
 !mmm   end if
 !mmm
+!mmm   chat: ${"<"}br>
+!mmm
 %{MacroSheetLibrary|libBasics}
+!mmm   do _libMidgardBasics()
 !mmm   
-!mmm   publish to game: count, isChar, sign, stringify, rollResult
+%{MacroSheetLibrary|libMidgard}
+!mmm   do _libMidgard()
+!mmm   
+%{MacroSheetLibrary|libMidgardRuneBlades}
+!mmm   do _libMidgardRuneBlades()
 !mmm   
 !mmm   combine chat
 !mmm     set m3mgdPlayerCharacters = "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
@@ -60,12 +67,6 @@
 !mmm   set cssTableHeaderButton = "\" style=\"border:1px solid #FFFFFF;float:right; background-color:#ce0f69;margin:0px 0px 0px 8px;padding:3px;font-style:normal;font-size:12px;line-height:12px;vertical-align:sub; color:#FFFFFF;text-decoration:none;text-transform:uppercase"
 !mmm   publish to game: cssTableHeaderButton
 !mmm
-%{MacroSheetLibrary|libMidgard}
-!mmm   do _libMidgard()
-!mmm   
-%{MacroSheetLibrary|libMidgardRuneBlades}
-!mmm   do _libMidgardRuneBlades()
-!mmm   
 !mmm   function sudo(cmd)
 !mmm     do whisperback("sudo: executing (privileged=" & privileged & ") '" & cmd & "' as '!mmm " & cmd & "'")
 !mmm     chat: !mmm ${cmd}
