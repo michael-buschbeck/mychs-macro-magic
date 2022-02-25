@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.2.0-pre (2022-02-22)"
+!mmm   set scriptVersion = "initGameGlobals 1.2.0-pre (2022-02-25)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -37,83 +37,40 @@
 !mmm   
 !mmm   publish to game: count, isChar, sign, stringify, rollResult
 !mmm   
-!mmm   set m3mgdPlayerCharacters = "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
-!mmm   for charName in m3mgdPlayerCharacters
-!mmm     if not isdenied(charName.character_id) and (isunknown(charName.PC) or charName.PC ne "1")
-!mmm       if setattr(charName.character_id, "PC", 1) == 1
-!mmm         do chat("MacroSheetLibrary", "Registered player status for " & charName)
-!mmm       else
-!mmm         do chat("MacroSheetLibrary", "ERROR: No access or write error to character sheet '" & charName & "' which misses a player flag. Aborting.")
-!mmm         exit script
-!mmm       end if 
-!mmm     end if
-!mmm     chat: ${charName} is player char: ${(charName.PC eq "1")}
-!mmm   end for
+!mmm   combine chat
+!mmm     set m3mgdPlayerCharacters = "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
+!mmm     for charName in m3mgdPlayerCharacters
+!mmm       if not isdenied(charName.character_id) and (isunknown(charName.PC) or charName.PC ne "1")
+!mmm         if setattr(charName.character_id, "PC", 1) == 1
+!mmm           do chat("MacroSheetLibrary", "Registered player status for " & charName)
+!mmm         else
+!mmm           do chat("MacroSheetLibrary", "ERROR: No access or write error to character sheet '" & charName & "' which misses a player flag. Aborting.")
+!mmm           exit script
+!mmm         end if 
+!mmm       end if
+!mmm       if charName.PC eq "1"
+!mmm         chat: ${"<"}br>**${charName}**.PC: ✅
+!mmm       else 
+!mmm         chat: ${"<"}br>**${charName}**.PC: ❌
+!mmm       end if
+!mmm     end for
+!mmm   end combine
 !mmm   publish to game: m3mgdPlayerCharacters
-!mmm   
-!mmm   set m3mgdExchangeDataSheet = "MacroSheet"
-!mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
-!mmm 
-!mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
-!mmm     do whisperback(scriptVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Aborting.")
-!mmm     exit script
-!mmm   end if
-!mmm
-!mmm   set m3mgdAttrAttackType          = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackerID          = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetID      = "m3mgd_attack_targetID"
-!mmm   set m3mgdAttrAttackResult        = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackDamage        = "m3mgd_attack_damage"
-!mmm   set m3mgdAttrAttackDamageRoll    = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackWeaponType    = "m3mgd_attack_weapon_type"
-!mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
-!mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
-!mmm
-!mmm   set m3mgdExchangeAttrList = m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType, m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
-!mmm
-!mmm   set m3mgdValidMeleeAttackWeaponTypes = "waffenlos", "Einhandschwert", "Zweihandschwert", "Fechtwaffe", "Stichwaffe", "Stockwaffe", "Spießwaffe", "Kettenwaffe", "Einhandschlagwaffe", "Zweihandschlagwaffe", "Zauberstab"
-!mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Kurzbogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
-!mmm   set m3mgdValidAttackWeaponTypes = m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
-!mmm
-!mmm   set m3mgdArmorPiercingWeaponTypes = "Langbogen", "Kompositbogen", "schwere Armbrust", "Schwere Armbrust"
-!mmm
-!mmm   set m3mgdParryLargeShieldTypes = "großer Schild", "Großer Schild"
-!mmm   set m3mgdParrySmallShieldTypes = "kleiner Schild", "Kleiner Schild"
-!mmm   set m3mgdParrySmallShieldEffectiveAgainst = "Einhandschlagwaffe", "Einhandschwert", "Fechtwaffe", "Kettenwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "waffenlos"
-!mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
-!mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln", "waffenlos"
-!mmm
-!mmm   set m3mgdAttrXP = "Erfahrungsschatz"
-!mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
-!mmm
-!mmm   publish to game: m3mgdExchange
-!mmm   publish to game: m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
-!mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
-!mmm   publish to game: m3mgdExchangeAttrList
-!mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
-!mmm   publish to game: m3mgdArmorPiercingWeaponTypes
-!mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
-!mmm   publish to game: m3mgdAttrXP, m3mgdAttrXPLog
 !mmm   
 !mmm   set cssTableHeaderButton = "\" style=\"border:1px solid #FFFFFF;float:right; background-color:#ce0f69;margin:0px 0px 0px 8px;padding:3px;font-style:normal;font-size:12px;line-height:12px;vertical-align:sub; color:#FFFFFF;text-decoration:none;text-transform:uppercase"
 !mmm   publish to game: cssTableHeaderButton
 !mmm
-%{MacroSheetLibrary|libMidgardFunctions}
-!mmm   
-!mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute, m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute, m3mgdValidateAttackData, m3mgdFlushExchange
-!mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
-!mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
-!mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
-!mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth
-!mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
-!mmm   publish to game: m3mgdShapeMoji, m3mgdIsDefenseless
-!mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
-!mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons, m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
-!mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdWeaponSelectorChatMenu, m3mgdDefenseDataTable, m3mgdWeaponSpecialEffect, m3mgdInjuryFX
-!mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
+%{MacroSheetLibrary|libMidgard}
+!mmm   do _libMidgard()
 !mmm   
 %{MacroSheetLibrary|libMidgardRuneBlades}
 !mmm   do _libMidgardRuneBlades()
+!mmm   
+!mmm   function sudo(cmd)
+!mmm     do whisperback("sudo: executing (privileged=" & privileged & ") '" & cmd & "' as '!mmm " & cmd & "'")
+!mmm     chat: !mmm ${cmd}
+!mmm   end function
+!mmm   publish to game: sudo
 !mmm   
 !mmm   chat: /me loaded: ${scriptVersion}
 !mmm   
