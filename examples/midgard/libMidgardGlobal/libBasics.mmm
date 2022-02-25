@@ -1,7 +1,22 @@
-!rem // libBasics
+!rem // libBasics: Basic MMM utility functions
 !rem // 
-!rem // Basic MMM utility functions
+!rem // _libMidgardBasics()
 !rem // 
+!rem //   Initializer and publisher function. Call once from autorun.
+!rem //
+!mmm function _libMidgardBasics()
+!mmm   
+!mmm   set libVersion = "libMidgardBasics v1.0.0 (2022-02-25)"
+!mmm   set sender = "MacroSheetLibrary"
+!mmm
+!rem   // Publish game-global functions defined below
+!rem
+!mmm   publish to game: count, isChar, sign, stringify, rollResult
+!mmm
+!mmm   chat: ${libVersion} loaded.
+!mmm   
+!mmm end function
+!rem
 !rem // 
 !rem // count(list) counts the number of items in list
 !rem // 
