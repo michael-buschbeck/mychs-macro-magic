@@ -4954,12 +4954,9 @@ class MychExpression
                 // keep same-precedence operators if precedence level is right-associative
                 let stopPrecedence = MychExpression.precedenceIsRightAssociative[precedence] ? precedence : precedence + 0.5;
 
-                let operatorEntry;
-                let operatorEvaluator;
-
                 while (this.operatorStack.length > 0)
                 {
-                    operatorEntry = this.operatorStack.pop();
+                    let operatorEntry = this.operatorStack.pop();
 
                     if (!operatorEntry.operator || operatorEntry.precedence >= stopPrecedence)
                     {
@@ -4967,7 +4964,7 @@ class MychExpression
                         break;
                     }
 
-                    operatorEvaluator = this.evaluateOperator(operatorEntry);
+                    this.evaluateOperator(operatorEntry);
                 }
             }
 
