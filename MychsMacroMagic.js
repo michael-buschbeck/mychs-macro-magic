@@ -4049,6 +4049,16 @@ class MychExpression
         return mappedList;
     }
 
+    static normalize(value)
+    {
+        if (value instanceof MychExpressionArgs)
+        {
+            return MychExpression.coerceList(value);
+        }
+
+        return value;
+    }
+
     static literal(value)
     {
         if (Array.isArray(value))
@@ -5171,12 +5181,7 @@ class MychExpression
             throw "MychExpression internal error: constant expression yields value prior to return";
         }
 
-        if (resultContainer.value instanceof MychExpressionArgs)
-        {
-            return MychExpression.coerceList(resultContainer.value);
-        }
-
-        return resultContainer.value;
+        return MychExpression.normalize(resultContainer.value);
     }
 
     *evaluate(variables)
@@ -5186,13 +5191,6 @@ class MychExpression
             throw new MychExpressionError("evaluate", "no expression parsed prior to evaluation", "", 0);
         }
 
-        let result = yield* this.evaluator(variables);
-
-        if (result instanceof MychExpressionArgs)
-        {
-            return MychExpression.coerceList(result);
-        }
-
-        return result;
+        return MychExpression.normalize(yield* this.evaluator(variables));
     }
 }
