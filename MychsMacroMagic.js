@@ -3985,7 +3985,7 @@ class MychExpression
             }
         }
 
-        return 0;
+        return false;
     }
 
     static coerceArgs(value)
