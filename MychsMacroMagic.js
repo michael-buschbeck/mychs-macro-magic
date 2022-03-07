@@ -3883,10 +3883,7 @@ class MychExpression
 
     static coerceScalar(value)
     {
-        if (Array.isArray(value))
-        {
-            return value[value.length - 1];
-        }
+        value = MychExpression.coerceListItem(value);
 
         if (value && value.toScalar instanceof Function)
         {
@@ -4021,6 +4018,16 @@ class MychExpression
         }
 
         return [value];
+    }
+
+    static coerceListItem(value)
+    {
+        if (Array.isArray(value))
+        {
+            return value[value.length - 1];
+        }
+
+        return value;
     }
 
     static *mapList(list, mapping = function*(item) {})
@@ -4195,7 +4202,7 @@ class MychExpression
                 {
                     return function* propertyLookupEvaluator(variables)
                     {
-                        let valueStruct = yield* evaluatorStruct(variables);
+                        let valueStruct = MychExpression.coerceListItem(yield* evaluatorStruct(variables));
                         let valueKey = MychExpression.coerceString(yield* evaluatorKey(variables));
 
                         if (valueStruct && valueStruct.$getProperty instanceof Function)
