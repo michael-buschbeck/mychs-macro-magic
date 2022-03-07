@@ -3938,6 +3938,11 @@ class MychExpression
     {
         value = MychExpression.coerceScalar(value);
 
+        if (value && value.toNumber instanceof Function)
+        {
+            return value.toNumber();
+        }
+
         switch (typeof(value))
         {
             case "number":
@@ -3963,6 +3968,11 @@ class MychExpression
     static coerceBoolean(value)
     {
         value = MychExpression.coerceScalar(value);
+
+        if (value && value.toBoolean instanceof Function)
+        {
+            return value.toBoolean();
+        }
 
         switch (typeof(value))
         {
