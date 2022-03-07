@@ -4452,7 +4452,7 @@ class MychExpression
                 {
                     return function* callEvaluator(variables)
                     {
-                        let func = yield* funcEvaluator(variables);
+                        let func = MychExpression.coerceListItem(yield* funcEvaluator(variables));
                         let args = argsEvaluator ? MychExpression.coerceArgs(yield* argsEvaluator(variables)) : [];
 
                         if (func instanceof Function)
