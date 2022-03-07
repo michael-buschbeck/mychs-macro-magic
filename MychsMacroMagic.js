@@ -4119,7 +4119,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, unaryOperator, operatorDef.precedence, { isIdempotent: true });
+                state.pushOperator(token, unaryOperator, operatorDef.precedenceDef, { isIdempotent: true });
             },
 
             nextRuleNames: new Set(
@@ -4178,7 +4178,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, binaryOperator, operatorDef.precedence, { isIdempotent: true });
+                state.pushOperator(token, binaryOperator, operatorDef.precedenceDef, { isIdempotent: true });
             },
 
             nextRuleNames: new Set(
@@ -4214,7 +4214,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, propertyLookupOperator, -1);
+                state.pushOperator(token, propertyLookupOperator, { left: -1, right: -1 });
             },
 
             nextRuleNames: new Set(
@@ -4305,7 +4305,9 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, debugOperator, Math.min(debugPrecedence, maxDebugPrecedence));
+                debugPrecedence = Math.min(debugPrecedence, maxDebugPrecedence);
+
+                state.pushOperator(token, debugOperator, { right: debugPrecedence });
             },
 
             nextRuleNames: new Set(
@@ -4465,7 +4467,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, callOperator, -1);
+                state.pushOperator(token, callOperator, { left: -1, right: -1 });
                 state.startGroup(token);
             },
 
@@ -4568,7 +4570,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, listLookupOperator, 0, { isIdempotent: true });
+                state.pushOperator(token, listLookupOperator, { left: 0, right: 0 }, { isIdempotent: true });
                 state.startGroup(token);
             },
 
@@ -4836,30 +4838,36 @@ class MychExpression
         ...Object.values(MychExpression.unaryOperatorDefs).map(operatorDef => operatorDef.precedence),
         ...Object.values(MychExpression.binaryOperatorDefs).map(operatorDef => operatorDef.precedence));
 
-    static createPrecedenceIsRightAssociative()
+    static
     {
-        let precedenceIsRightAssociative = [];
-
-        for (let operatorDef of Object.values(MychExpression.binaryOperatorDefs))
+        for (let unaryOperatorDef of Object.values(MychExpression.unaryOperatorDefs))
         {
-            let operatorPrecedence = operatorDef.precedence;
-            let operatorIsRightAssociative = !!operatorDef.rightAssociative;
-
-            if (precedenceIsRightAssociative[operatorPrecedence] == undefined)
+            unaryOperatorDef.precedenceDef =
             {
-                precedenceIsRightAssociative[operatorPrecedence] = operatorIsRightAssociative;
-            }
-            else if (precedenceIsRightAssociative[operatorPrecedence] != operatorIsRightAssociative)
-            {
-                // associativity must be consistent on each precedence level to avoid ambiguities
-                throw "MychExpression internal error: inconsistent associativity for precedence level " + operatorPrecedence;
-            }
+                right: unaryOperatorDef.precedence,
+            };
         }
 
-        return precedenceIsRightAssociative;
-    }
+        for (let binaryOperatorDef of Object.values(MychExpression.binaryOperatorDefs))
+        {
+            // operators collapse while deferred precedence <= precedence.left
+            // - if right-associative, stop collapsing at same-precedence deferred operator
+            // - if left-associative, collapse same-precedence deferred operators
 
-    static precedenceIsRightAssociative = MychExpression.createPrecedenceIsRightAssociative();
+            let binaryOperatorLeftPrecedence =
+                (binaryOperatorDef.rightAssociative
+                    ? binaryOperatorDef.precedence - 0.5
+                    : binaryOperatorDef.precedence);
+
+            let binaryOperatorRightPrecedence = binaryOperatorDef.precedence;
+
+            binaryOperatorDef.precedenceDef =
+            {
+                left: binaryOperatorLeftPrecedence,
+                right: binaryOperatorRightPrecedence,
+            };
+        }
+    }
 
     static createTokenRegExp()
     {
@@ -4954,18 +4962,15 @@ class MychExpression
             }
         }
 
-        pushOperator(token, operator, precedence, attributes = {})
+        pushOperator(token, operator, precedenceDef, attributes = {})
         {
-            if (operator.length > 1)
+            if (precedenceDef.left != undefined)
             {
-                // keep same-precedence operators if precedence level is right-associative
-                let stopPrecedence = MychExpression.precedenceIsRightAssociative[precedence] ? precedence : precedence + 0.5;
-
                 while (this.operatorStack.length > 0)
                 {
                     let operatorEntry = this.operatorStack.pop();
 
-                    if (!operatorEntry.operator || operatorEntry.precedence >= stopPrecedence)
+                    if (!operatorEntry.operator || operatorEntry.precedence > precedenceDef.left)
                     {
                         this.operatorStack.push(operatorEntry);
                         break;
@@ -4975,7 +4980,7 @@ class MychExpression
                 }
             }
 
-            this.operatorStack.push({ precedence: precedence, operator: operator, sourceOffset: token.offset, sourceLength: token.length, ...attributes });
+            this.operatorStack.push({ precedence: precedenceDef.right, operator: operator, sourceOffset: token.offset, sourceLength: token.length, ...attributes });
         }
 
         evaluateOperator(operatorEntry)
