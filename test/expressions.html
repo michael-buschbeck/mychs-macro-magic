@@ -998,11 +998,15 @@
 
                 if (expression.isConstant())
                 {
+                    let variableResult = resultContainer.value;
                     let constantResult = expression.evaluateConstant();
 
-                    if (resultContainer.value !== constantResult)
+                    let variableResultRepresentation = getResultRepresentation(expression.context, variableResult);
+                    let constantResultRepresentation = getResultRepresentation(expression.context, constantResult);
+
+                    if (variableResultRepresentation != constantResultRepresentation)
                     {
-                        console.log("result:", resultContainer.value, "constant:", constantResult);
+                        console.log("result:", variableResult, "constant:", constantResult);
                         throw "Constant result not equal to variable result";
                     }
                 }
