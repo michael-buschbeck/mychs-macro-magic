@@ -548,6 +548,11 @@ class MychScriptContext extends MychProperties
 
             return "<span style=\"" + style + "\">" + label + "</span>";
         }
+
+        toLiteral()
+        {
+            return "default";
+        }
     }
 
     static DiagnosticUndef = class
@@ -578,6 +583,11 @@ class MychScriptContext extends MychProperties
         
             let tooltip = this.reason.replace(/"/ug, "&quot;");
             return "<span class=\"mmm-" + this.label + " showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "; cursor: help\">" + this.label + "</span>";
+        }
+
+        toLiteral()
+        {
+            return this.label;
         }
     }
 
@@ -4078,9 +4088,22 @@ class MychExpression
 
     static literal(value)
     {
+        if (value && value.toLiteral instanceof Function)
+        {
+            return value.toLiteral();
+        }
+
         if (Array.isArray(value))
         {
-            return value.map(MychExpression.literal).join(", ");
+            switch (value.length)
+            {
+                case 0:
+                    return "undef";
+                case 1:
+                    return MychExpression.literal(value[0]);
+                default:
+                    return "(" + value.map(MychExpression.literal).join(", ") + ")";
+            }
         }
 
         if (value instanceof Function)

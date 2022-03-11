@@ -221,7 +221,7 @@
             ],
             [
                 "list12, list345",
-                { result: "1, 2, 3, 4, 5" },
+                { result: "(1, 2, 3, 4, 5)" },
             ],
             [
                 "list12[]",
@@ -245,19 +245,19 @@
             ],
             [
                 "list345 select ... + 1",
-                { result: "4, 5, 6" },
+                { result: "(4, 5, 6)" },
             ],
             [
                 "list345 select (..., ...)",
-                { result: "3, 3, 4, 4, 5, 5" },
+                { result: "(3, 3, 4, 4, 5, 5)" },
             ],
             [
                 "list345 select ..., ...",
-                { result: "3, 4, 5, \"anonymous!\"" },
+                { result: "(3, 4, 5, \"anonymous!\")" },
             ],
             [
                 "list345 where ... < 3",
-                { result: "" },
+                { result: "undef" },
             ],
             [
                 "list345 where ... < 4",
@@ -265,27 +265,27 @@
             ],
             [
                 "list345 where ... < 5",
-                { result: "3, 4" },
+                { result: "(3, 4)" },
             ],
             [
                 "list345 where true",
-                { result: "3, 4, 5" },
+                { result: "(3, 4, 5)" },
             ],
             [
                 "(22, 33, 44) where ... % 2 == 0",
-                { result: "22, 44" },
+                { result: "(22, 44)" },
             ],
             [
                 "list345 select ... + 10 where ... < 15",
-                { result: "13, 14" },
+                { result: "(13, 14)" },
             ],
             [
                 "list345 where ... < 5 select ... + 10",
-                { result: "13, 14" },
+                { result: "(13, 14)" },
             ],
             [
                 "args()",
-                { result: "" },
+                { result: "undef" },
             ],
             [
                 "args(())",
@@ -297,15 +297,15 @@
             ],
             [
                 "args(1, 'two', 3, 'four')",
-                { result: "1, \"two\", 3, \"four\"" },
+                { result: "(1, \"two\", 3, \"four\")" },
             ],
             [
                 "args(list12, list345)",
-                { result: "1, 2, 3, 4, 5" },
+                { result: "((1, 2), (3, 4, 5))" },
             ],
             [
                 "args((1, 'two'), (3, 'four'))",
-                { result: "1, \"two\", 3, \"four\"" },
+                { result: "(1, \"two\", 3, \"four\")" },
             ],
             [
                 "argnum()",
@@ -672,17 +672,17 @@
             ],
             [
                 "? default + 123",
-                { debug: "❰undef❱ ← ? ❰default❱ + 123" },
+                { debug: "❰default❱ ← ? ❰default❱ + 123" },
                 { result: "123" },
             ],
             [
                 "? denied + 123",
-                { debug: "❰undef❱ ← ? ❰denied❱ + 123" },
+                { debug: "❰denied❱ ← ? ❰denied❱ + 123" },
                 { result: "123" },
             ],
             [
                 "? unknown + 123",
-                { debug: "❰undef❱ ← ? ❰unknown❱ + 123" },
+                { debug: "❰unknown❱ ← ? ❰unknown❱ + 123" },
                 { result: "123" },
             ],
             [
@@ -940,11 +940,6 @@
             {
                 let reason = context.getreason(result);
                 return reason ? ("[denied: " + reason + "]") : "[denied]";
-            }
-
-            if (result && result.toScalar instanceof Function)
-            {
-                return getResultRepresentation(context, result.toScalar());
             }
 
             return MychExpression.literal(result);
