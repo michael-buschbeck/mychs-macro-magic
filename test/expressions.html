@@ -188,7 +188,8 @@
             ],
             [
                 "1 + .prop",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ❌.prop" }            ],
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + ❌.prop" }
+            ],
             [
                 "strlen('ookook')",
                 { result: "6" },
@@ -207,15 +208,15 @@
             ],
             [
                 "1 + ()",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + (❌)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + (❌)" },
             ],
             [
                 "1 * ()",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 * (❌)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 * (❌)" },
             ],
             [
                 "3 * (() + 2)",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 3 * ((❌) + 2)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 3 * ((❌) + 2)" },
             ],
             [
                 "2 ** 8",
@@ -231,7 +232,7 @@
             ],
             [
                 "list12[]",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: list12[❌]" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: list12[❌]" },
             ],
             [
                 "list12[0] + list345[1 + 1]",
@@ -239,11 +240,11 @@
             ],
             [
                 "list12[0][1]",
-                { error: "During parse, expected binary operator, or property lookup, or end of expression in expression: list12[0]❌[1]" },
+                { error: "During parse, expected binary operator, or property lookup, or three dots (to get list of property name-value pairs), or end of expression in expression: list12[0]❌[1]" },
             ],
             [
                 "list12[0)",
-                { error: "During parse, expected binary operator, or property lookup, or closing bracket in expression: list12[0❌)" },
+                { error: "During parse, expected binary operator, or colon (between property name and its value), or property lookup, or closing bracket in expression: list12[0❌)" },
             ],
             [
                 "(11, 22, 33)[2]",
@@ -295,7 +296,7 @@
             ],
             [
                 "args(())",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: args((❌))" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: args((❌))" },
             ],
             [
                 "args(1)",
@@ -430,6 +431,146 @@
                 { result: "true" },
             ],
             [
+                "foo: 123",
+                { result: "foo: 123" },
+            ],
+            [
+                "foo: 123 + 456",
+                { result: "foo: 579" },
+            ],
+            [
+                "1 + foo: 123 + 456",
+                { result: "580" },
+            ],
+            [
+                "not not foo: 1 == 1",
+                { result: "true" },
+            ],
+            [
+                "not not foo: 1 != 1",
+                { result: "false" },
+            ],
+            [
+                "(foo: 123, bar: 456) select ...key",
+                { result: "(\"foo\", \"bar\")" },
+            ],
+            [
+                "(foo: 123, bar: 456) select ...value",
+                { result: "(123, 456)" },
+            ],
+            [
+                "((foo: true, bar: false) where ...).key",
+                { result: "\"foo\"" },
+            ],
+            [
+                "((foo: true, bar: false) where not ...).key",
+                { result: "\"bar\"" },
+            ],
+            [
+                "(foo: 123).key",
+                { result: "\"foo\"" },
+            ],
+            [
+                "(foo: 123).value",
+                { result: "123" },
+            ],
+            [
+                "(foo: bar: 123).key",
+                { result: "\"foo\"" },
+            ],
+            [
+                "(foo: bar: 123).value",
+                { result: "bar: 123" },
+            ],
+            [
+                "(foo: bar: 123).value.key",
+                { result: "\"bar\"" },
+            ],
+            [
+                "(foo: bar: 123).value.value",
+                { result: "123" },
+            ],
+            [
+                "('f' & 'oo'): 123",
+                { result: "foo: 123" },
+            ],
+            [
+                "'foo': 123",
+                { result: "foo: 123" },
+            ],
+            [
+                "123.0: 456",
+                { result: "\"123\": 456" },
+            ],
+            [
+                "true: 123",
+                { result: "true: 123" },
+            ],
+            [
+                "list12[0]: 123",
+                { error: "During parse, expected binary operator, or property lookup, or three dots (to get list of property name-value pairs), or end of expression in expression: list12[0]❌: 123" },
+            ],
+            [
+                "{}.foo",
+                { result: "undef" },
+            ],
+            [
+                "{foo: 123, bar: 456}",
+                { result: "{bar: 456, foo: 123}" },
+            ],
+            [
+                "{foo: 123, bar: 456}.foo",
+                { result: "123" },
+            ],
+            [
+                "{foo: 123, bar: 456}.bar",
+                { result: "456" },
+            ],
+            [
+                "{foo: 123, bar: 456}.baz",
+                { result: "undef" },
+            ],
+            [
+                "{{foo: 123}, {bar: 456}}",
+                { result: "{bar: 456, foo: 123}" },
+            ],
+            [
+                "{{foo: 123, bar: 456}, foo: 789}",
+                { result: "{bar: 456, foo: 789}" },
+            ],
+            [
+                "{{foo: 123, bar: 456}, 789}",
+                { result: "{\"\": 789, bar: 456, foo: 123}" },
+            ],
+            [
+                "0 + {foo: 123, bar: 456}",
+                { result: "2" },
+            ],
+            [
+                "{foo: 123, bar: 456, baz: 789}...",
+                { result: "(bar: 456, baz: 789, foo: 123)" },
+            ],
+            [
+                "(foo: 123, bar: 456, baz: 789)...",
+                { result: "(bar: 456, baz: 789, foo: 123)" },
+            ],
+            [
+                "{{foo: 123, bar: 456, baz: 789}... where ...value > 234}",
+                { result: "{bar: 456, baz: 789}" },
+            ],
+            [
+                "{{foo: 123, bar: 456, baz: 789}... where ...key ne 'baz'}",
+                { result: "{bar: 456, foo: 123}" },
+            ],
+            [
+                "{('foo', 'bar', 'baz') select (...: ... & '!')}",
+                { result: "{bar: \"bar!\", baz: \"baz!\", foo: \"foo!\"}" }, 
+            ],
+            [
+                "({foo: 123, bar: 456}, {baz: 789}) select ... ...",
+                { result: "(bar: 456, foo: 123, baz: 789)" },
+            ],
+            [
                 "getattr('Char1', 'HP')",
                 { result: "\"15\"" },
             ],
@@ -537,11 +678,11 @@
             ],
             [
                 "(((1)",
-                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or closing parenthesis in expression: (((1)❌" },
+                { error: "During parse, expected binary operator, or colon (between property name and its value), or property lookup, or opening bracket (for array subscript), or three dots (to get list of property name-value pairs), or closing parenthesis in expression: (((1)❌" },
             ],
             [
                 "(((1))",
-                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or closing parenthesis in expression: (((1))❌" },
+                { error: "During parse, expected binary operator, or colon (between property name and its value), or property lookup, or opening bracket (for array subscript), or three dots (to get list of property name-value pairs), or closing parenthesis in expression: (((1))❌" },
             ],
             [
                 "(((1)))",
@@ -549,15 +690,15 @@
             ],
             [
                 "(((1))))",
-                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or end of expression in expression: (((1)))❌)" },
+                { error: "During parse, expected binary operator, or colon (between property name and its value), or property lookup, or opening bracket (for array subscript), or three dots (to get list of property name-value pairs), or end of expression in expression: (((1)))❌)" },
             ],
             [
                 "(((1)))]",
-                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or end of expression in expression: (((1)))❌]" },
+                { error: "During parse, expected binary operator, or colon (between property name and its value), or property lookup, or opening bracket (for array subscript), or three dots (to get list of property name-value pairs), or end of expression in expression: (((1)))❌]" },
             ],
             [
                 "(3 + (2 + (1) *",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: (3 + (2 + (1) *❌" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: (3 + (2 + (1) *❌" },
             ],
             [
                 "(1 + 2 * 3 + 4 ** 5) - foo / bar + (6 + 7, (8 + 9) * 10 - strlen('foo \\'bar\\' baz \\\\quux'))",
@@ -577,23 +718,23 @@
             ],
             [
                 ") + 123",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: ❌) + 123" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: ❌) + 123" },
             ],
             [
                 "* 456",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: ❌* 456" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: ❌* 456" },
             ],
             [
                 "1 + ?",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ?❌" },
+                { error: "During parse, expected unary operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + ?❌" },
             ],
             [
                 "1 + ? ? 2",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ? ❌? 2" },
+                { error: "During parse, expected unary operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + ? ❌? 2" },
             ],
             [
                 "1 + ???? 2",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ???❌? 2" },
+                { error: "During parse, expected unary operator, or literal value, or property name (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + ???❌? 2" },
             ],
             [
                 "1 + ? 2 * 3 + 4",

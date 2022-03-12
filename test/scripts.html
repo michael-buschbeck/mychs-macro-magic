@@ -250,7 +250,7 @@
             ],
             [
                 "!mmm chat: ${syntax error}",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in template in script: !mmm chat: ${syntax ❌error}" },
+                { error: "During parse, expected colon (between property name and its value), or binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or three dots (to get list of property name-value pairs), or end of expression in expression in template in script: !mmm chat: ${syntax ❌error}" },
             ],
             [
                 "!mmm do chat('correct')",
@@ -293,7 +293,7 @@
             ],
             [
                 "!mmm do chat 'missing parentheses'",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: !mmm do chat ❌'missing parentheses'" }
+                { error: "During parse, expected colon (between property name and its value), or binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or three dots (to get list of property name-value pairs), or end of expression in expression in script: !mmm do chat ❌'missing parentheses'" }
             ],
             [
                 "!mmm     unknown command",
@@ -462,7 +462,7 @@
             [
                 "!mmm if false",
                 "!mmm else if broken syntax in expression",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: !mmm else if broken ❌syntax in expression" },
+                { error: "During parse, expected colon (between property name and its value), or binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or three dots (to get list of property name-value pairs), or end of expression in expression in script: !mmm else if broken ❌syntax in expression" },
                 "!mmm end if",
             ],
             [

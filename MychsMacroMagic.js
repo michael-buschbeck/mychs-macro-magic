@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.26.6";
+const MMM_VERSION = "1.27.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -3845,6 +3845,121 @@ class MychExpressionArgs extends Array
     // marker subclass for comma-separated argument lists in expressions
 }
 
+class MychExpressionStruct
+{
+    constructor()
+    {
+        this.properties = {};
+    }
+
+    $hasProperty(key)
+    {
+        return this.properties.hasOwnProperty(key);
+    }
+
+    $getProperty(key)
+    {
+        return this.$hasProperty(key) ? this.properties[key] : undefined;
+    }
+
+    $setProperty(key, value)
+    {
+        this.properties[key] = value;
+    }
+
+    getKeys()
+    {
+        let sortedKeys = Object.keys(this.properties);
+        sortedKeys.sort();
+
+        return sortedKeys;
+    }
+
+    getItems()
+    {
+        return this.getKeys().map(key => new MychExpressionStructItem(key, this.$getProperty(key)));
+    }
+
+    toNumber()
+    {
+        return Object.keys(this.properties).length;
+    }
+
+    toBoolean()
+    {
+        return Object.keys(this.properties).length != 0;
+    }
+
+    toString()
+    {
+        return this.getItems().map(MychExpression.coerceString).join(", ");
+    }
+
+    toMarkup()
+    {
+        return this.getItems().map(MychExpression.coerceMarkup).join(", ");
+    }
+
+    toLiteral()
+    {
+        return "{" + this.getItems().map(MychExpression.literal).join(", ") + "}";
+    }
+}
+
+class MychExpressionStructItem
+{
+    constructor(key, value)
+    {
+        this.key = key;
+        this.value = value;
+    }
+
+    $getProperty(key)
+    {
+        if (key == "key")
+        {
+            return this.key;
+        }
+
+        if (key == "value")
+        {
+            return this.value;
+        }
+
+        return undefined;
+    }
+
+    toNumber()
+    {
+        return MychExpression.coerceNumber(this.value);
+    }
+
+    toBoolean()
+    {
+        return MychExpression.coerceBoolean(this.value);
+    }
+
+    toString()
+    {
+        return MychExpression.coerceString(this.key) + ": " +
+               MychExpression.coerceString(this.value);
+    }
+
+    toMarkup()
+    {
+        return MychExpression.coerceMarkup(this.key) + ": " +
+               MychExpression.coerceMarkup(this.value);
+    }
+
+    toLiteral()
+    {
+        let keyAsString = MychExpression.coerceString(this.key);
+        let keyAsLiteral = /^[\p{L}_][\p{L}\p{N}_]*$/u.test(keyAsString) ? keyAsString : MychExpression.literal(keyAsString);
+
+        return keyAsLiteral + ": " + MychExpression.literal(this.value);
+    }
+}
+
 class MychExpression
 {
     constructor(source, context)
@@ -4050,6 +4165,46 @@ class MychExpression
         return value;
     }
 
+    static coerceStruct(value)
+    {
+        if (value instanceof MychExpressionStruct)
+        {
+            return value;
+        }
+
+        let struct = new MychExpressionStruct();
+
+        for (let valueItem of MychExpression.coerceList(value))
+        {
+            if (valueItem instanceof MychExpressionStruct)
+            {
+                for (let structItem of valueItem.getItems())
+                {
+                    struct.$setProperty(structItem.key, structItem.value);
+                }
+            }
+            else
+            {
+                let structItem = MychExpression.coerceStructItem(valueItem);
+                struct.$setProperty(structItem.key, structItem.value);
+            }
+        }
+
+        return struct;
+    }
+
+    static coerceStructItem(value)
+    {
+        let valueAsScalar = MychExpression.coerceScalar(value);
+
+        if (valueAsScalar instanceof MychExpressionStructItem)
+        {
+            return valueAsScalar;
+        }
+
+        return new MychExpressionStructItem("", value);
+    }
+
     static *mapList(list, mapping = function*(item) {})
     {
         let mappedList = [];
@@ -4147,9 +4302,11 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorName",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4184,9 +4341,11 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorName",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
         },
         binaryOperator:
@@ -4243,9 +4402,70 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorName",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
+            ]),
+        },
+        propertyDesignatorName:
+        {
+            description: "property name (followed by a colon)",
+            tokenType: "identifier",
+
+            processToken: function(token, state, context)
+            {
+                function* propertyDesignationNameEvaluator(variables)
+                {
+                    return token.value;
+                }
+
+                state.pushEvaluator(token, propertyDesignationNameEvaluator, { isConstant: true });
+            },
+
+            nextRuleNames: new Set(
+            [
+                "propertyDesignator",
+            ]),
+        },
+        propertyDesignator:
+        {
+            description: "colon (between property name and its value)",
+            tokenType: "propertyDesignator",
+
+            processToken: function(token, state, context)
+            {
+                function propertyDesignatorOperator(evaluatorKey, evaluatorValue)
+                {
+                    return function* propertyDesignationEvaluator(variables)
+                    {
+                        let valueKey = yield* evaluatorKey(variables);
+                        let value = MychExpression.normalize(yield* evaluatorValue(variables));
+
+                        return new MychExpressionStructItem(valueKey, value);
+                    }
+                }
+
+                let precedenceDef =
+                {
+                    left: -1,
+                    right: MychExpression.binaryOperatorDefs[","].precedence - 1,
+                };
+
+                state.pushOperator(token, propertyDesignatorOperator, precedenceDef, { isIdempotent: true });
+            },
+
+            nextRuleNames: new Set(
+            [
+                "unaryOperator",
+                "debugOperator",
+                "literal",
+                "propertyDesignatorName",
+                "symbolLookup",
+                "anonymousLookup",
+                "openingParenthesis",
+                "structConstructor",
             ]),
         },
         propertyLookup:
@@ -4301,8 +4521,10 @@ class MychExpression
                 "propertyLookup",
                 "call",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4321,9 +4543,11 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorName",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4371,9 +4595,11 @@ class MychExpression
             [
                 "unaryOperator",
                 "literal",
+                "propertyDesignatorName",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
         },
         symbolLookup:
@@ -4397,15 +4623,17 @@ class MychExpression
                 "propertyLookup",
                 "call",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
         anonymousLookup:
         {
             description: "anonymous variable",
-            tokenType: "anonymousIdentifier",
+            tokenType: "ellipsis",
 
             processToken: function(token, state, context)
             {
@@ -4422,10 +4650,13 @@ class MychExpression
             [
                 "anonymousPropertyLookupName",
                 "anonymousPropertyLookupExpression",
+                "propertyDesignator",
                 "binaryOperator",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4446,8 +4677,10 @@ class MychExpression
                 "propertyLookup",
                 "call",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4470,6 +4703,7 @@ class MychExpression
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4494,9 +4728,11 @@ class MychExpression
             nextRuleNames: new Set(
             [
                 "binaryOperator",
+                "propertyDesignator",
                 "propertyLookup",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4534,9 +4770,11 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorName",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4559,9 +4797,11 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorName",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4581,10 +4821,13 @@ class MychExpression
             nextRuleNames: new Set(
             [
                 "binaryOperator",
+                "propertyDesignator",
                 "propertyLookup",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4604,8 +4847,10 @@ class MychExpression
                 "binaryOperator",
                 "propertyLookup",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4636,13 +4881,46 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorName",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
                 "closingBracket",
+            ]),
+        },
+        structDeconstructor:
+        {
+            description: "three dots (to get list of property name-value pairs)",
+            tokenType: "ellipsis",
+
+            processToken: function(token, state, context)
+            {
+                function structDeconstructorOperator(structEvaluator)
+                {
+                    return function* structDeconstructorEvaluator(variables)
+                    {
+                        let struct = MychExpression.coerceStruct(yield* structEvaluator(variables));
+                        return struct.getItems();
+                    }
+                }
+
+                state.pushOperator(token, structDeconstructorOperator, { left: 0 }, { isIdempotent: true });
+            },
+
+            nextRuleNames: new Set(
+            [
+                "binaryOperator",
+                "propertyDesignator",
+                "propertyLookup",
+                "listLookup",
+                "closingParenthesis",
+                "closingBracket",
+                "closingBrace",
+                "endOfExpression",
             ]),
         },
         closingBracket:
@@ -4659,8 +4937,100 @@ class MychExpression
             [
                 "binaryOperator",
                 "propertyLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
+                "endOfExpression",
+            ]),
+        },
+        structConstructor:
+        {
+            description: "opening brace (for struct definition)",
+            tokenType: "openingBrace",
+
+            processToken: function(token, state, context)
+            {
+                function structConstructorOperator(itemsEvaluator)
+                {
+                    if (itemsEvaluator)
+                    {
+                        return function* structConstructorEvaluator(variables)
+                        {
+                            return MychExpression.coerceStruct(yield* itemsEvaluator(variables));
+                        }
+                    }
+                    else
+                    {
+                        return function* structConstructorEvaluator(variables)
+                        {
+                            return new MychExpressionStruct();
+                        }
+                    }
+                }
+
+                state.pushOperator(token, structConstructorOperator, { right: -1 }, { isIdempotent: true });
+                state.startGroup(token);
+            },
+
+            nextRuleNames: new Set(
+            [
+                "closingBraceEmpty",
+                "unaryOperator",
+                "debugOperator",
+                "literal",
+                "propertyDesignatorName",
+                "symbolLookup",
+                "anonymousLookup",
+                "openingParenthesis",
+                "structConstructor",
+            ]),
+            closeRuleNames: new Set(
+            [
+                "closingBrace",
+                "closingBraceEmpty",
+            ]),
+        },
+        closingBrace:
+        {
+            description: "closing brace",
+            tokenType: "closingBrace",
+
+            processToken: function(token, state, context)
+            {
+                state.reduceGroup(token);
+            },
+
+            nextRuleNames: new Set(
+            [
+                "binaryOperator",
+                "propertyLookup",
+                "structDeconstructor",
+                "closingParenthesis",
+                "closingBracket",
+                "closingBrace",
+                "endOfExpression",
+            ]),
+        },
+        closingBraceEmpty:
+        {
+            description: "closing brace (for empty struct)",
+            tokenType: "closingBrace",
+
+            processToken: function(token, state, context)
+            {
+                state.pushEvaluator(token, undefined, { isConstant: true });
+                state.reduceGroup(token);
+            },
+
+            nextRuleNames: new Set(
+            [
+                "binaryOperator",
+                "propertyLookup",
+                "structDeconstructor",
+                "closingParenthesis",
+                "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4946,10 +5316,10 @@ class MychExpression
             literalStringDouble:    /"([^"\\]|\\.)*"?/u,
             literalStringSingle:    /'([^'\\]|\\.)*'?/u,
 
-            anonymousIdentifier:    /\.\.\./u,
+            ellipsis:               /\.\.\./u,
 
+            propertyDesignator:     /:/u,
             propertyOperator:       /\./u,
-            debugOperator:          /\?{1,3}/u,
 
             identifier:             /(?<![\p{L}\p{N}_])[\p{L}_][\p{L}\p{N}_]*(?![\p{L}\p{N}_])|\$\[\[\w+\]\]/u,
 
@@ -4957,6 +5327,10 @@ class MychExpression
             closingParenthesis:     /\)/u,
             openingBracket:         /\[/u,
             closingBracket:         /\]/u,
+            openingBrace:           /\{/u,
+            closingBrace:           /\}/u,
+
+            debugOperator:          /\?{1,3}/u,
 
             whitespace:             /\s+/u,
             unsupported:            /.+/u,
