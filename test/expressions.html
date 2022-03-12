@@ -115,6 +115,12 @@
             border-top: 1px solid #E8E8E8;
         }
 
+        tr.token td.group {
+            width: 5em;
+            font-family: Calibri, sans-serif;
+            border-top: 1px solid #E8E8E8;
+        }
+
         tr.token td.evaluation {
             padding-right: 1.5em;
             font-family: Calibri, sans-serif;
@@ -965,11 +971,11 @@
             
             document.write("<div class='expression' id='expression-" + expressionSourceIndex + "'>");
             document.write("<table>");
-            document.write("<tr><td></td><td class='expression-header' colspan='4'>test expression " + expressionSourceIndex + "</td></tr>");
+            document.write("<tr><td></td><td class='expression-header' colspan='5'>test expression " + expressionSourceIndex + "</td></tr>");
 
             document.write("<tr>");
             document.write("<td class='lineno'>source</td>")
-            document.write("<td colspan='4'>" + escapeHTML(expressionSource) + "</td>");
+            document.write("<td colspan='5'>" + escapeHTML(expressionSource) + "</td>");
             document.write("</tr>");
 
             let expression = new MychExpression();
@@ -1044,7 +1050,7 @@
                 {
                     document.write("<tr class='ok'>");
                     document.write("<td class='lineno'>" + receivedOutputType + "</td>")
-                    document.write("<td class='output " + receivedOutputType + "' colspan='4'>" + escapeHTML(receivedOutputText) + "</td>");
+                    document.write("<td class='output " + receivedOutputType + "' colspan='5'>" + escapeHTML(receivedOutputText) + "</td>");
                     document.write("</tr>");
                 }
                 else
@@ -1053,7 +1059,7 @@
 
                     document.write("<tr class='unexpected'>");
                     document.write("<td class='lineno'>" + receivedOutputType + "</td>")
-                    document.write("<td class='output " + receivedOutputType + "' colspan='4'>" + escapeHTML(receivedOutputText) + "</td>");
+                    document.write("<td class='output " + receivedOutputType + "' colspan='5'>" + escapeHTML(receivedOutputText) + "</td>");
                     document.write("</tr>");
 
                     console.log("received:", JSON.stringify({ [receivedOutputType]: receivedOutputText }));
@@ -1062,7 +1068,7 @@
                     {
                         document.write("<tr class='expected'>");
                         document.write("<td class='lineno'>" + expectedOutputType + "</td>")
-                        document.write("<td class='output " + expectedOutputType + "' colspan='4'>" + escapeHTML(expectedOutputText) + "</td>");
+                        document.write("<td class='output " + expectedOutputType + "' colspan='5'>" + escapeHTML(expectedOutputText) + "</td>");
                         document.write("</tr>");
 
                         console.log("expected:", JSON.stringify({ [expectedOutputType]: expectedOutputText }));
@@ -1078,7 +1084,7 @@
 
                 document.write("<tr class='expected'>");
                 document.write("<td class='lineno'>" + expectedOutputType + "</td>")
-                document.write("<td class='output " + expectedOutputType + "' colspan='4'>" + escapeHTML(expectedOutputText) + "</td>");
+                document.write("<td class='output " + expectedOutputType + "' colspan='5'>" + escapeHTML(expectedOutputText) + "</td>");
                 document.write("</tr>");
 
                 console.log("expected:", JSON.stringify({ [expectedOutputType]: expectedOutputText }));
@@ -1147,6 +1153,7 @@
             document.write("<td>token</td>");
             document.write("<td>type</td>");
             document.write("<td>rule</td>");
+            document.write("<td>group</td>");
 
             if (numDependencyLevels == 0)
             {
@@ -1169,6 +1176,7 @@
                 document.write("<td class='token-source'>" + escapeHTML(expression.source.substr(token.offset, token.length)) + "</td>")
                 document.write("<td class='token-type'>" + escapeHTML(token.type) + "</td>")
                 document.write("<td class='rule-name'>" + escapeHTML(token.ruleName || "") + "</td>")
+                document.write("<td class='group'>" + escapeHTML(token.prevCloseTokenIndex != undefined ? token.prevCloseTokenIndex : "") + "</td>")
 
                 let dependencyEntriesForRow = dependencyEntriesPerRow[tokenIndex];
 

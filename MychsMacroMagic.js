@@ -4132,6 +4132,30 @@ class MychExpression
 
     static rules =
     {
+        startOfExpression:
+        {
+            description: "start of expression",
+            tokenType: "startOfExpression",
+    
+            processToken: function(token, state, context)
+            {
+                // nothing to do
+            },
+
+            nextRuleNames: new Set(
+            [
+                "unaryOperator",
+                "debugOperator",
+                "literal",
+                "symbolLookup",
+                "anonymousLookup",
+                "openingParenthesis",
+            ]),
+            closeRuleNames: new Set(
+            [
+                "endOfExpression",
+            ]),
+        },
         unaryOperator:
         {
             description: "unary operator",
@@ -4163,7 +4187,7 @@ class MychExpression
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
-            ]), 
+            ]),
         },
         binaryOperator:
         {
@@ -5055,7 +5079,7 @@ class MychExpression
 
         this.source = source;
         this.context = context;
-        this.tokens = [];
+        this.tokens = [{ type: "startOfExpression", source: source, offset: 0, length: 0 }];
 
         let tokenMatch;
 
@@ -5130,60 +5154,125 @@ class MychExpression
 
         this.tokens.push({ type: "endOfExpression", source: source, offset: source.length, length: 0 });
 
-        let expectedNextRuleNames = MychExpression.rules.unaryOperator.nextRuleNames;
-        let expectedCloseRuleNamesStack = [ new Set([ "endOfExpression" ]) ];
+        let errorTokenIndex = 0;
+        let errorExpectedRuleNames;
+        let errorExpectedCloseRuleNames;
 
-        function expectedRuleName(ruleName)
         {
-            return expectedNextRuleNames.has(ruleName) && (!MychExpression.closeRuleNames.has(ruleName) || expectedCloseRuleNamesStack[0].has(ruleName));
+            let token = this.tokens[0];
+
+            token.ruleName = MychExpression.ruleNamesByTokenType[token.type][0];
+            token.rule = MychExpression.rules[token.ruleName];
+            token.prevCloseTokenIndex = undefined;
+        
+            errorExpectedRuleNames = [token.rule.nextRuleNames];
+            errorExpectedCloseRuleNames = [token.rule.closeRuleNames];
         }
 
-        for (let token of this.tokens)
+        let tokenIndex = 1;
+
+        while (tokenIndex < this.tokens.length)
         {
-            token.ruleName = MychExpression.ruleNamesByTokenType[token.type].find(expectedRuleName);
+            let token = this.tokens[tokenIndex];
 
-            if (!token.ruleName)
+            let prevTokenIndex = tokenIndex - 1;
+            let prevToken = this.tokens[prevTokenIndex];
+
+            let closeTokenIndex = (prevToken.rule.closeRuleNames
+                ? prevTokenIndex
+                : prevToken.prevCloseTokenIndex);
+
+            let closeToken = this.tokens[closeTokenIndex];
+
+            let expectedRuleNames = prevToken.rule.nextRuleNames;
+            let expectedCloseRuleNames = closeToken.rule.closeRuleNames;
+
+            if (token.pendingRuleNames == undefined)
             {
-                let expectedRuleDescriptions = [...expectedNextRuleNames].filter(expectedRuleName).map(ruleName => MychExpression.rules[ruleName].description);  
-                throw new MychExpressionError("parse", "expected " + expectedRuleDescriptions.join(", or "), source, token.offset);
+                function isExpectedRuleName(ruleName)
+                {
+                    if (!expectedRuleNames.has(ruleName))
+                    {
+                        return false;
+                    }
+
+                    if (MychExpression.closeRuleNames.has(ruleName))
+                    {
+                        return expectedCloseRuleNames.has(ruleName);
+                    }
+
+                    return true;
+                }
+
+                token.pendingRuleNames = MychExpression.ruleNamesByTokenType[token.type].filter(isExpectedRuleName);
             }
 
-            if (MychExpression.closeRuleNames.has(token.ruleName))
+            if (token.pendingRuleNames.length > 0)
             {
-                expectedCloseRuleNamesStack.shift();
+                token.ruleName = token.pendingRuleNames.shift();
+                token.rule = MychExpression.rules[token.ruleName];
+
+                if (expectedCloseRuleNames.has(token.ruleName))
+                {
+                    token.prevCloseTokenIndex = closeToken.prevCloseTokenIndex;
+                }
+                else if (prevToken.rule.closeRuleNames)
+                {
+                    token.prevCloseTokenIndex = prevTokenIndex;
+                }
+                else
+                {
+                    token.prevCloseTokenIndex = prevToken.prevCloseTokenIndex;
+                }
+
+                tokenIndex += 1;
+
+                if (token.ruleName != "endOfExpression")
+                {
+                    let nextExpectedRuleNames = token.rule.nextRuleNames;
+                    let nextExpectedCloseRuleNames = token.rule.closeRuleNames || this.tokens[token.prevCloseTokenIndex].rule.closeRuleNames;
+
+                    if (tokenIndex > errorTokenIndex)
+                    {
+                        errorTokenIndex = tokenIndex;
+                        errorExpectedRuleNames = [nextExpectedRuleNames];
+                        errorExpectedCloseRuleNames = [nextExpectedCloseRuleNames];
+                    }
+                    else if (tokenIndex == errorTokenIndex)
+                    {
+                        errorExpectedRuleNames.push(nextExpectedRuleNames);
+                        errorExpectedCloseRuleNames.push(nextExpectedCloseRuleNames);
+                    }
+                }
             }
-
-            let rule = MychExpression.rules[token.ruleName];
-
-            if (!rule)
+            else
             {
-                let extraneousRuleDescription = MychExpression.rules[token.ruleName].description;
-                throw new MychExpressionError("parse", "extraneous " + extraneousRuleDescription, source, token.offset);
+                delete token.pendingRuleNames;
+
+                tokenIndex -= 1;
+
+                if (tokenIndex == 0)
+                {
+                    errorExpectedRuleNames = new Set(errorExpectedRuleNames.flatMap(set => [...set]));
+                    errorExpectedCloseRuleNames = new Set(errorExpectedCloseRuleNames.flatMap(set => [...set]));
+
+                    errorExpectedRuleNames = [...errorExpectedRuleNames].filter(ruleName => !MychExpression.closeRuleNames.has(ruleName) || errorExpectedCloseRuleNames.has(ruleName));
+
+                    let errorToken = this.tokens[errorTokenIndex];
+                    let errorPendingRuleNameDescriptions = errorExpectedRuleNames.map(ruleName => MychExpression.rules[ruleName].description);
+
+                    throw new MychExpressionError("parse", "expected " + errorPendingRuleNameDescriptions.join(", or "), source, errorToken.offset);
+                }
             }
-
-            if (rule.closeRuleNames)
-            {
-                expectedCloseRuleNamesStack.unshift(rule.closeRuleNames);
-            }
-
-            expectedNextRuleNames = rule.nextRuleNames;
-        }
-
-        if (expectedCloseRuleNamesStack.length > 0)
-        {
-            console.log("stack of expected close rules not empty:", expectedCloseRuleNamesStack);
-            throw "MychExpression internal error: stack of expected close rules not empty";
         }
 
         let state = new MychExpression.ParseState();
 
         for (let token of this.tokens)
         {
-            let rule = MychExpression.rules[token.ruleName];
-
             try
             {
-                rule.processToken(token, state, context);
+                token.rule.processToken(token, state, context);
             }
             catch (exception)
             {
