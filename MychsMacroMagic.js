@@ -4276,23 +4276,23 @@ class MychExpression
 
             nextRuleNames: new Set(
             [
-                "propertyName",
-                "propertyExpression",
+                "propertyLookupName",
+                "propertyLookupExpression",
             ]),
         },
-        propertyName:
+        propertyLookupName:
         {
             description: "property name",
             tokenType: "identifier",
 
             processToken: function(token, state, context)
             {
-                function* propertyNameEvaluator(variables)
+                function* propertyLookupNameEvaluator(variables)
                 {
                     return token.value;
                 }
 
-                state.pushEvaluator(token, propertyNameEvaluator, { isConstant: true });
+                state.pushEvaluator(token, propertyLookupNameEvaluator, { isConstant: true });
             },
 
             nextRuleNames: new Set(
@@ -4306,7 +4306,7 @@ class MychExpression
                 "endOfExpression",
             ]),
         },
-        propertyExpression:
+        propertyLookupExpression:
         {
             description: "opening parenthesis (for property expression)",
             tokenType: "openingParenthesis",
@@ -4420,8 +4420,8 @@ class MychExpression
 
             nextRuleNames: new Set(
             [
-                "anonymousPropertyName",
-                "anonymousPropertyExpression",
+                "anonymousPropertyLookupName",
+                "anonymousPropertyLookupExpression",
                 "binaryOperator",
                 "listLookup",
                 "closingParenthesis",
@@ -4429,7 +4429,7 @@ class MychExpression
                 "endOfExpression",
             ]),
         },
-        anonymousPropertyName:
+        anonymousPropertyLookupName:
         {
             description: "property name",
             tokenType: "identifier",
@@ -4437,7 +4437,7 @@ class MychExpression
             processToken: function(token, state, context)
             {
                 state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
-                state.processRule(context, "propertyName", token)
+                state.processRule(context, "propertyLookupName", token)
             },
 
             nextRuleNames: new Set(
@@ -4451,7 +4451,7 @@ class MychExpression
                 "endOfExpression",
             ]),
         },
-        anonymousPropertyExpression:
+        anonymousPropertyLookupExpression:
         {
             description: "opening parenthesis (for property expression)",
             tokenType: "openingParenthesis",
@@ -4459,7 +4459,7 @@ class MychExpression
             processToken: function(token, state, context)
             {
                 state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
-                state.processRule(context, "propertyExpression", token)
+                state.processRule(context, "propertyLookupExpression", token)
             },
 
             nextRuleNames: new Set(
