@@ -66,6 +66,10 @@
             text-decoration: underline;
         }
 
+        div.results-failure button {
+            margin-top: 5pt;
+        }
+
         table {
             table-layout: fixed;
         }
@@ -1216,6 +1220,10 @@
             }
         }
 
+        let tests = includedExpressionSources.length ? includedExpressionSources : [...Array(numTestsRun).keys()];
+        let testsFailedAsSet = new Set(testsFailed);
+        let testsSuccessful = tests.filter(index => !testsFailedAsSet.has(index));
+
         if (numTestsSuccessful == numTestsRun)
         {
             document.write("<div id='results' class='results-success'>");
@@ -1226,9 +1234,36 @@
         {
             document.write("<div id='results' class='results-failure'>");
             document.write("Failed: Evaluated " + numTestsRun + " test expressions, " + (numTestsRun - numTestsSuccessful) + " failed (expression index " + testsFailed.map(index => "<a href='#expression-" + index + "'>" + index + "</a>").join(", ") + ")");
+            document.write("<br>");
+            document.write("<button id='show-successful-tests-button' onclick='showSuccessfulTests()'>Show all tests</button>");
+            document.write("<button id='hide-successful-tests-button' onclick='hideSuccessfulTests()'>Show only failed tests</button>");
             document.write("</div>");
+
+            hideSuccessfulTests();
         }
 
         document.getElementById("results-container").appendChild(document.getElementById("results"));
+
+        function showSuccessfulTests()
+        {
+            for (testSuccessfulIndex of testsSuccessful)
+            {
+                document.getElementById("expression-" + testSuccessfulIndex).style = "display: auto";
+            }
+
+            document.getElementById("show-successful-tests-button").style = "display: none";
+            document.getElementById("hide-successful-tests-button").style = "display: auto";
+        }
+
+        function hideSuccessfulTests()
+        {
+            for (testSuccessfulIndex of testsSuccessful)
+            {
+                document.getElementById("expression-" + testSuccessfulIndex).style = "display: none";
+            }
+
+            document.getElementById("show-successful-tests-button").style = "display: auto";
+            document.getElementById("hide-successful-tests-button").style = "display: none";
+        }
     </script>
 </body>

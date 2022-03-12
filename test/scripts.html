@@ -83,6 +83,10 @@
             text-decoration: underline;
         }
 
+        div.results-failure button {
+            margin-top: 5pt;
+        }
+
         td {
             vertical-align: top;
             padding: 0;
@@ -2184,6 +2188,10 @@
             }
         }
 
+        let tests = includedScriptSources.length ? includedScriptSources : [...Array(numTestsRun).keys()];
+        let testsFailedAsSet = new Set(testsFailed);
+        let testsSuccessful = tests.filter(index => !testsFailedAsSet.has(index));
+
         if (numTestsSuccessful == numTestsRun)
         {
             document.write("<div id='results' class='results-success'>");
@@ -2194,9 +2202,36 @@
         {
             document.write("<div id='results' class='results-failure'>");
             document.write("Failed: Ran " + numTestsRun + " test scripts, " + (numTestsRun - numTestsSuccessful) + " failed (script index " + testsFailed.map(index => "<a href='#script-" + index + "'>" + index + "</a>").join(", ") + ")");
+            document.write("<br>");
+            document.write("<button id='show-successful-tests-button' onclick='showSuccessfulTests()'>Show all tests</button>");
+            document.write("<button id='hide-successful-tests-button' onclick='hideSuccessfulTests()'>Show only failed tests</button>");
             document.write("</div>");
+
+            hideSuccessfulTests();
         }
 
         document.getElementById("results-container").appendChild(document.getElementById("results"));
+
+        function showSuccessfulTests()
+        {
+            for (testSuccessfulIndex of testsSuccessful)
+            {
+                document.getElementById("script-" + testSuccessfulIndex).style = "display: auto";
+            }
+
+            document.getElementById("show-successful-tests-button").style = "display: none";
+            document.getElementById("hide-successful-tests-button").style = "display: auto";
+        }
+
+        function hideSuccessfulTests()
+        {
+            for (testSuccessfulIndex of testsSuccessful)
+            {
+                document.getElementById("script-" + testSuccessfulIndex).style = "display: none";
+            }
+
+            document.getElementById("show-successful-tests-button").style = "display: auto";
+            document.getElementById("hide-successful-tests-button").style = "display: none";
+        }
     </script>
 </body>
