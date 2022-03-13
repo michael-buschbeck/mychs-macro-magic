@@ -552,7 +552,11 @@
             ],
             [
                 "(foo: 123, bar: 456, baz: 789)...",
-                { result: "(bar: 456, baz: 789, foo: 123)" },
+                { result: "(foo: 123, bar: 456, baz: 789)" },
+            ],
+            [
+                "({foo: 123, bar: 456}, baz: 789)...",
+                { result: "(bar: 456, foo: 123, baz: 789)" },
             ],
             [
                 "{{foo: 123, bar: 456, baz: 789}... where ...value > 234}",

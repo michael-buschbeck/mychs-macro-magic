@@ -429,6 +429,27 @@ class MychProperties
         return undefined;
     }
 
+    $getPropertyKeys()
+    {
+        let keys = new Set();
+
+        for (let properties = this; properties; properties = properties.$parentProperties)
+        {
+            for (let key in properties)
+            {
+                if (!keys.has(key) && properties.$isValidPropertyKey(key))
+                {
+                    keys.add(key);
+                }
+            }
+        }
+
+        let sortedKeys = [...keys];
+        sortedKeys.sort();
+
+        return sortedKeys;
+    }
+
     $setProperty(key, value)
     {
         if (this.$isValidPropertyKey(key))
@@ -1145,15 +1166,43 @@ class MychScriptContext extends MychProperties
 
     getprop(nameOrId, attributeName)
     {
-        let attributeValue = this.getattr(nameOrId, attributeName);
+        let context = this;
 
         let attributeStruct =
         {
-            toScalar: () => attributeValue,
-            $getProperty: key => (key == "max") ? this.getattrmax(nameOrId, attributeName) : this.getprop(attributeValue, key),
+            toScalar: function()
+            {
+                return context.getattr(nameOrId, attributeName);
+            },
+
+            $getProperty: function(key)
+            {
+                return (key == "max"
+                    ? context.getattrmax(nameOrId, attributeName)
+                    : context.getprop(context.getattr(nameOrId, attributeName), key));
+            },
+
+            $getPropertyItems: function()
+            {
+                return [
+                    new MychExpressionStructItem("max", () => this.$getProperty("max"), true),
+                    ...context.getprops(context.getattr(nameOrId, attributeName))];
+            },
         };
 
         return attributeStruct;
+    }
+
+    getprops(nameOrId)
+    {
+        let attributeNames = this.$getAttributeNames(MychExpression.coerceString(nameOrId));
+        
+        attributeNames = attributeNames.filter(attributeName => !attributeName.startsWith("repeating_"));
+        attributeNames.sort();
+
+        let attributeItems = attributeNames.map(attributeName => new MychExpressionStructItem(attributeName, () => this.getprop(nameOrId, attributeName), true));
+
+        return attributeItems;
     }
 
     distunits()
@@ -1654,6 +1703,53 @@ class MychScriptContext extends MychProperties
         }
 
         return [character, token];
+    }
+
+    $getAttributeNames(nameOrId)
+    {
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+
+        if (!character && !token)
+        {
+            return [];
+        }
+
+        let attributeNames =
+        [
+            "permission",
+            "name",
+            "character_name",
+            "token_name",
+            "character_id",
+            "token_id",
+            "bar1",
+            "bar2",
+            "bar3",
+            "left",
+            "top",
+            "width",
+            "height",
+            "rotation",
+        ];
+
+        if (token)
+        {
+            let markers = token.get("statusmarkers");
+
+            if (markers && markers.length > 0)
+            {
+                let markerNames = markers.split(/,/u).map(marker => marker.replace(/@\d+$/u, ""));
+                attributeNames.push(...markerNames.map(markerName => "status_" + markerName.replace(/-/u, "_")));
+            }
+        }
+
+        if (this.$canControl(character))
+        {
+            let attributeObjs = findObjs({ type: "attribute", characterid: character.id });
+            attributeNames.push(...attributeObjs.map(attributeObj => attributeObj.get("name")));
+        }
+
+        return attributeNames;
     }
 
     $getAttribute(nameOrId, attributeName, max = false)
@@ -3867,7 +3963,7 @@ class MychExpressionStruct
         this.properties[key] = value;
     }
 
-    getKeys()
+    $getPropertyKeys()
     {
         let sortedKeys = Object.keys(this.properties);
         sortedKeys.sort();
@@ -3875,9 +3971,9 @@ class MychExpressionStruct
         return sortedKeys;
     }
 
-    getItems()
+    $getPropertyItems()
     {
-        return this.getKeys().map(key => new MychExpressionStructItem(key, this.$getProperty(key)));
+        return this.$getPropertyKeys().map(key => new MychExpressionStructItem(key, this.$getProperty(key)));
     }
 
     toNumber()
@@ -3892,26 +3988,26 @@ class MychExpressionStruct
 
     toString()
     {
-        return this.getItems().map(MychExpression.coerceString).join(", ");
+        return this.$getPropertyItems().map(MychExpression.coerceString).join(", ");
     }
 
     toMarkup()
     {
-        return this.getItems().map(MychExpression.coerceMarkup).join(", ");
+        return this.$getPropertyItems().map(MychExpression.coerceMarkup).join(", ");
     }
 
     toLiteral()
     {
-        return "{" + this.getItems().map(MychExpression.literal).join(", ") + "}";
+        return "{" + this.$getPropertyItems().map(MychExpression.literal).join(", ") + "}";
     }
 }
 
 class MychExpressionStructItem
 {
-    constructor(key, value)
+    constructor(key, value, dynamic = false)
     {
         this.key = key;
-        this.value = value;
+        this.getValue = dynamic ? value : (() => value);
     }
 
     $getProperty(key)
@@ -3923,7 +4019,7 @@ class MychExpressionStructItem
 
         if (key == "value")
         {
-            return this.value;
+            return this.getValue();
         }
 
         return undefined;
@@ -3931,24 +4027,24 @@ class MychExpressionStructItem
 
     toNumber()
     {
-        return MychExpression.coerceNumber(this.value);
+        return MychExpression.coerceNumber(this.getValue());
     }
 
     toBoolean()
     {
-        return MychExpression.coerceBoolean(this.value);
+        return MychExpression.coerceBoolean(this.getValue());
     }
 
     toString()
     {
         return MychExpression.coerceString(this.key) + ": " +
-               MychExpression.coerceString(this.value);
+               MychExpression.coerceString(this.getValue());
     }
 
     toMarkup()
     {
         return MychExpression.coerceMarkup(this.key) + ": " +
-               MychExpression.coerceMarkup(this.value);
+               MychExpression.coerceMarkup(this.getValue());
     }
 
     toLiteral()
@@ -3956,7 +4052,7 @@ class MychExpressionStructItem
         let keyAsString = MychExpression.coerceString(this.key);
         let keyAsLiteral = /^[\p{L}_][\p{L}\p{N}_]*$/u.test(keyAsString) ? keyAsString : MychExpression.literal(keyAsString);
 
-        return keyAsLiteral + ": " + MychExpression.literal(this.value);
+        return keyAsLiteral + ": " + MychExpression.literal(this.getValue());
     }
 }
 
@@ -4178,15 +4274,15 @@ class MychExpression
         {
             if (valueItem instanceof MychExpressionStruct)
             {
-                for (let structItem of valueItem.getItems())
+                for (let structItem of valueItem.$getPropertyItems())
                 {
-                    struct.$setProperty(structItem.key, structItem.value);
+                    struct.$setProperty(structItem.key, structItem.getValue());
                 }
             }
             else
             {
                 let structItem = MychExpression.coerceStructItem(valueItem);
-                struct.$setProperty(structItem.key, structItem.value);
+                struct.$setProperty(structItem.key, structItem.getValue());
             }
         }
 
@@ -4903,8 +4999,32 @@ class MychExpression
                 {
                     return function* structDeconstructorEvaluator(variables)
                     {
-                        let struct = MychExpression.coerceStruct(yield* structEvaluator(variables));
-                        return struct.getItems();
+                        let structs = MychExpression.coerceList(yield* structEvaluator(variables));
+                        let structItems = [];
+
+                        for (let struct of structs)
+                        {
+                            if (struct instanceof MychExpressionStructItem)
+                            {
+                                structItems.push(struct);
+                            }
+                            else if (struct.$getPropertyItems instanceof Function)
+                            {
+                                structItems.push(...struct.$getPropertyItems());
+                            }
+                            else if (struct.$getPropertyKeys instanceof Function &&
+                                     struct.$getProperty     instanceof Function)
+                            {
+                                structItems.push(...struct.$getPropertyKeys()
+                                    .map(key => new MychExpressionStructItem(key, () => struct.$getProperty(key), true)));
+                            }
+                            else
+                            {
+                                structItems.push(...context.getprops(struct));
+                            }
+                        }
+
+                        return structItems;
                     }
                 }
 

@@ -1052,6 +1052,31 @@
             ],
             [
                 "!mmm script",
+                "!mmm     for attr in (unknown)...",
+                "!mmm         chat: unknown's ${attr}",
+                "!mmm     end for",
+                "!mmm     for attr in ('Finn')...",
+                "!mmm         chat: Finn's ${attr}",
+                "!mmm     end for",
+                "!mmm end script",
+                { chat: "Finn's name: Finn MacRathgar" },
+                { chat: "Finn's HP: 19" },
+                { chat: "Finn's LP: 15" },
+                { chat: "Finn's cousin: Yorrick" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     function dumpvars()",
+                "!mmm         chat: ${script...}",
+                "!mmm     end function",
+                "!mmm     set foo = 123",
+                "!mmm     set bar = 456",
+                "!mmm     do dumpvars()",
+                "!mmm end script",
+                { chat: "bar: 456, dumpvars: dumpvars(), foo: 123" },
+            ],
+            [
+                "!mmm script",
                 "!mmm     function multiplyAdd(a, b, c)",
                 "!mmm         return (a * b) + c",
                 "!mmm     end function",
@@ -1753,6 +1778,20 @@
                 type: "error",
                 message: escapeHTML(exception),
             });
+        };
+
+        MychScriptContext.prototype.$getAttributeNames = function(characterNameOrId)
+        {
+            characterNameOrId = MychExpression.coerceString(characterNameOrId);
+
+            let attributesForCharacter = attributes[characterNameOrId];
+
+            if (!attributesForCharacter)
+            {
+                return [];
+            }
+
+            return Object.keys(attributesForCharacter);
         };
 
         MychScriptContext.prototype.$getAttribute = function(characterNameOrId, attributeName, max = false)
