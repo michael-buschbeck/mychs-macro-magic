@@ -421,6 +421,10 @@
                 { result: "[unknown: Unknown attribute: XX]" },
             ],
             [
+                "'Char1'.XX & ''",
+                { result: "\"\"" },
+            ],
+            [
                 "isunknown(getattr('Char1', 'XX'))",
                 { result: "true" },
             ],
