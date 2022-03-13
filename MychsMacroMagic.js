@@ -4302,7 +4302,7 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
@@ -4341,7 +4341,7 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
@@ -4402,26 +4402,26 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
                 "structConstructor",
             ]),
         },
-        propertyDesignatorName:
+        propertyDesignatorKey:
         {
-            description: "property name (followed by a colon)",
+            description: "property key (followed by a colon)",
             tokenType: "identifier",
 
             processToken: function(token, state, context)
             {
-                function* propertyDesignationNameEvaluator(variables)
+                function* propertyDesignatorKeyEvaluator(variables)
                 {
                     return token.value;
                 }
 
-                state.pushEvaluator(token, propertyDesignationNameEvaluator, { isConstant: true });
+                state.pushEvaluator(token, propertyDesignatorKeyEvaluator, { isConstant: true });
             },
 
             nextRuleNames: new Set(
@@ -4431,7 +4431,7 @@ class MychExpression
         },
         propertyDesignator:
         {
-            description: "colon (between property name and its value)",
+            description: "colon (between property key and its value)",
             tokenType: "propertyDesignator",
 
             processToken: function(token, state, context)
@@ -4461,7 +4461,7 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
@@ -4496,13 +4496,13 @@ class MychExpression
 
             nextRuleNames: new Set(
             [
-                "propertyLookupName",
+                "propertyLookupKey",
                 "propertyLookupExpression",
             ]),
         },
-        propertyLookupName:
+        propertyLookupKey:
         {
-            description: "property name",
+            description: "property key",
             tokenType: "identifier",
 
             processToken: function(token, state, context)
@@ -4543,7 +4543,7 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
@@ -4595,7 +4595,7 @@ class MychExpression
             [
                 "unaryOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
@@ -4648,7 +4648,7 @@ class MychExpression
 
             nextRuleNames: new Set(
             [
-                "anonymousPropertyLookupName",
+                "anonymousPropertyLookupKey",
                 "anonymousPropertyLookupExpression",
                 "propertyDesignator",
                 "binaryOperator",
@@ -4660,15 +4660,15 @@ class MychExpression
                 "endOfExpression",
             ]),
         },
-        anonymousPropertyLookupName:
+        anonymousPropertyLookupKey:
         {
-            description: "property name",
+            description: "property key",
             tokenType: "identifier",
 
             processToken: function(token, state, context)
             {
                 state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
-                state.processRule(context, "propertyLookupName", token)
+                state.processRule(context, "propertyLookupKey", token)
             },
 
             nextRuleNames: new Set(
@@ -4770,7 +4770,7 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
@@ -4797,7 +4797,7 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
@@ -4881,7 +4881,7 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
@@ -4894,7 +4894,7 @@ class MychExpression
         },
         structDeconstructor:
         {
-            description: "three dots (to get list of property name-value pairs)",
+            description: "three dots (to get list of property key-value pairs)",
             tokenType: "ellipsis",
 
             processToken: function(token, state, context)
@@ -4979,7 +4979,7 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
-                "propertyDesignatorName",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
