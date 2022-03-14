@@ -4838,7 +4838,7 @@ class MychExpression
         ...Object.values(MychExpression.unaryOperatorDefs).map(operatorDef => operatorDef.precedence),
         ...Object.values(MychExpression.binaryOperatorDefs).map(operatorDef => operatorDef.precedence));
 
-    static
+    static createOperatorPrecedenceDefs()
     {
         for (let unaryOperatorDef of Object.values(MychExpression.unaryOperatorDefs))
         {
@@ -4868,6 +4868,8 @@ class MychExpression
             };
         }
     }
+
+    static _ = MychExpression.createOperatorPrecedenceDefs();
 
     static createTokenRegExp()
     {
