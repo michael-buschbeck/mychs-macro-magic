@@ -1168,37 +1168,114 @@ class MychScriptContext extends MychProperties
     {
         let context = this;
 
-        let attributeStruct =
+        if (attributeName == "repeating")
         {
-            toScalar: function()
-            {
-                return context.getattr(nameOrId, attributeName);
-            },
+            let repeatingStruct = new MychExpressionStruct();
 
-            $getProperty: function(key)
-            {
-                return (key == "max"
-                    ? context.getattrmax(nameOrId, attributeName)
-                    : context.getprop(context.getattr(nameOrId, attributeName), key));
-            },
+            let repeatingAttributeNames = this.$getAttributeNames(nameOrId);
+            let repeatingAttributeNameRegExp = /^repeating_(?<tableName>[^_]+)_(?<rowId>[-A-Za-z0-9]+)_(?<colName>\S+)$/u;
 
-            $getPropertyItems: function()
+            for (let repeatingAttributeName of repeatingAttributeNames)
             {
-                return [
-                    new MychExpressionStructItem("max", () => this.$getProperty("max"), true),
-                    ...context.getprops(context.getattr(nameOrId, attributeName))];
-            },
-        };
+                let repeatingAttributeNameMatch = repeatingAttributeNameRegExp.exec(repeatingAttributeName);
 
-        return attributeStruct;
+                if (repeatingAttributeNameMatch)
+                {
+                    let tableName = repeatingAttributeNameMatch.groups.tableName;
+                    let tableRows;
+
+                    if (repeatingStruct.$hasProperty(tableName))
+                    {
+                        tableRows = repeatingStruct.$getProperty(tableName);
+                    }
+                    else
+                    {
+                        tableRows = {};  // converted to list later
+                        repeatingStruct.$setProperty(tableName, tableRows);
+                    }
+
+                    let tableRowId = repeatingAttributeNameMatch.groups.rowId;
+                    let tableRowStruct = tableRows[tableRowId];
+
+                    if (!tableRowStruct)
+                    {
+                        tableRowStruct = new MychExpressionStruct();
+                        tableRows[tableRowId] = tableRowStruct;
+                    }
+
+                    let tableColName = repeatingAttributeNameMatch.groups.colName;
+                    
+                    let tableColStruct =
+                    {
+                        toScalar: function()
+                        {
+                            return context.getattr(nameOrId, repeatingAttributeName);
+                        },
+
+                        $getProperty: function(key)
+                        {
+                            return (key == "attribute"
+                                ? repeatingAttributeName
+                                : context.getprop(context.getattr(nameOrId, repeatingAttributeName), key));
+                        },
+
+                        $getPropertyItems: function()
+                        {
+                            return [
+                                new MychExpressionStructItems("attribute", () => this.$getProperty("attribute"), true),
+                                ...context.getprops(context.getattr(nameOrId, repeatingAttributeName))];
+                        },
+                    };
+
+                    tableRowStruct.$setProperty(tableColName, tableColStruct);
+                }
+            }
+
+            for (let tableName of repeatingStruct.$getPropertyKeys())
+            {
+                let tableRows = repeatingStruct.$getProperty(tableName);
+                repeatingStruct.$setProperty(tableName, Object.values(tableRows));
+            }
+
+            return repeatingStruct;
+        }
+        else
+        {
+            let attributeStruct =
+            {
+                toScalar: function()
+                {
+                    return context.getattr(nameOrId, attributeName);
+                },
+
+                $getProperty: function(key)
+                {
+                    return (key == "max"
+                        ? context.getattrmax(nameOrId, attributeName)
+                        : context.getprop(context.getattr(nameOrId, attributeName), key));
+                },
+
+                $getPropertyItems: function()
+                {
+                    return [
+                        new MychExpressionStructItem("max", () => this.$getProperty("max"), true),
+                        ...context.getprops(context.getattr(nameOrId, attributeName))];
+                },
+            };
+
+            return attributeStruct;
+        }
     }
 
     getprops(nameOrId)
     {
         let attributeNames = this.$getAttributeNames(MychExpression.coerceString(nameOrId));
-        
-        attributeNames = attributeNames.filter(attributeName => !attributeName.startsWith("repeating_"));
-        attributeNames.sort();
+
+        if (attributeNames.some(attributeName => attributeName.startsWith("repeating_")))
+        {
+            attributeNames = attributeNames.filter(attributeName => !attributeName.startsWith("repeating_"));
+            attributeNames.push("repeating");
+        }
 
         let attributeItems = attributeNames.map(attributeName => new MychExpressionStructItem(attributeName, () => this.getprop(nameOrId, attributeName), true));
 
