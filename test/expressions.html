@@ -575,6 +575,30 @@
                 { result: "(bar: 456, foo: 123, baz: 789)" },
             ],
             [
+                "nested.structA",
+                { result: "\"nested/structA\"" },
+            ],
+            [
+                "nested.structA.listB",
+                { result: "(\"nested/structA/listB0\", \"nested/structA/listB1\", \"nested/structA/listB2\")" },
+            ],
+            [
+                "nested.structA.listB[0].valueC",
+                { result: "\"nested/structA/listB0/valueC\"" },
+            ],
+            [
+                "nested.structA.listB[1].valueC",
+                { result: "\"nested/structA/listB1/valueC\"" },
+            ],
+            [
+                "nested.structA...",
+                { result: "(structX: \"nested/structA/structX\", listX: (\"nested/structA/listX0\", \"nested/structA/listX1\", \"nested/structA/listX2\"), valueX: \"nested/structA/valueX\")" },
+            ],
+            [
+                "nested.structA.listB[1]...",
+                { result: "(structX: \"nested/structA/listB1/structX\", listX: (\"nested/structA/listB1/listX0\", \"nested/structA/listB1/listX1\", \"nested/structA/listB1/listX2\"), valueX: \"nested/structA/listB1/valueX\")" },
+            ],
+            [
                 "getattr('Char1', 'HP')",
                 { result: "\"15\"" },
             ],
@@ -1054,6 +1078,47 @@
 
         let variables = new MychScriptVariables();
 
+        class RecursiveStruct
+        {
+            constructor(path)
+            {
+                this.path = path;
+            }
+
+            toScalar()
+            {
+                return this.path;
+            }
+
+            $getProperty(key)
+            {
+                let nestedPath = this.path + "/" + key;
+
+                if (key.startsWith("struct"))
+                {
+                    return new RecursiveStruct(nestedPath);
+                }
+
+                if (key.startsWith("list"))
+                {
+                    return [
+                        new RecursiveStruct(nestedPath + "0"),
+                        new RecursiveStruct(nestedPath + "1"),
+                        new RecursiveStruct(nestedPath + "2")];
+                }
+
+                return nestedPath;
+            }
+
+            $getPropertyKeys()
+            {
+                return [
+                    "structX",
+                    "listX",
+                    "valueX"];
+            }
+        }
+
         Object.assign(variables,
         {
             foo: 123,
@@ -1072,6 +1137,8 @@
                 propB: "B!",
                 propC: "C!",
             },
+
+            nested: new RecursiveStruct("nested"),
         });
 
         function getResultRepresentation(context, result)

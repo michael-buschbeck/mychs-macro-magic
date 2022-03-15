@@ -4664,7 +4664,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, propertyLookupOperator, { left: -1, right: -1 });
+                state.pushOperator(token, propertyLookupOperator, { left: 0, right: -1 });
             },
 
             nextRuleNames: new Set(
@@ -5045,7 +5045,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, listLookupOperator, { left: 0, right: 0 }, { isIdempotent: true });
+                state.pushOperator(token, listLookupOperator, { left: 0, right: -1 }, { isIdempotent: true });
                 state.startGroup(token);
             },
 
@@ -5105,7 +5105,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, structDeconstructorOperator, { left: 0 }, { isIdempotent: true });
+                state.pushOperator(token, structDeconstructorOperator, { left: -1 }, { isIdempotent: true });
             },
 
             nextRuleNames: new Set(
