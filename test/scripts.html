@@ -218,6 +218,38 @@
                 { chat: "579" },
             ],
             [
+                "!mmm chat: ${{foo: 123}}",
+                { chat: "foo: 123" },
+            ],
+            [
+                "!mmm chat: ${{unknown: unknown, denied: denied, default: default}}",
+                { chat: "default: <span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>, denied: <span class=\"mmm-denied\" style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>, unknown: <span class=\"mmm-unknown\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span>" },
+            ],
+            [
+                "!mmm chat: Foo $",
+                { chat: "Foo $" },
+            ],
+            [
+                "!mmm chat: Foo ${'}'}",
+                { chat: "Foo }" },
+            ],
+            [
+                "!mmm chat: Foo \\${'}'}",
+                { chat: "Foo ${'}'}" },
+            ],
+            [
+                "!mmm chat: Foo $\\{'}'}",
+                { chat: "Foo ${'}'}" },
+            ],
+            [
+                "!mmm chat: Foo ${bar",
+                { error: "During parse, runaway expression in template in script: !mmm chat: Foo ${❌bar" },
+            ],
+            [
+                "!mmm chat: Foo ${'\\",
+                { error: "During parse, runaway expression in template in script: !mmm chat: Foo ${❌'\\" },
+            ],
+            [
                 "!mmm set customizable 123",
                 { error: "During parse, syntax error in script: !mmm set customizable ❌123" },
             ],

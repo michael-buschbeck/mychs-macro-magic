@@ -3732,114 +3732,236 @@ class MychTemplate
         this.context = context;
         this.segments = [];
 
-        let segmentRegExp = MychTemplate.createSegmentRegExp(context);
-        let segmentMatch;
+        let template = this;
 
-        let segmentOffset = 0;
-
-        while (segmentMatch = segmentRegExp.exec(source))
+        function pushSegment(segment)
         {
-            if (segmentOffset < segmentMatch.index)
+            if (template.segments.length == 0 || segment.type != "literal")
             {
-                let stringValue = source.substring(segmentOffset, segmentMatch.index);
-                
-                let stringSegment =
-                {
-                    type: "string",
-                    value: stringValue,
-                    source: stringValue,
-                };
-
-                this.segments.push(stringSegment);
+                template.segments.push(segment);
             }
-
-            if (segmentMatch.groups.context)
+            else
             {
-                let contextKey = segmentMatch.groups.context;
-                let contextValue = context[contextKey];
+                let prevSegment = template.segments[template.segments.length - 1];
 
-                let contextSegment =
+                if (prevSegment.type == "literal")
                 {
-                    type: "context",
-                    value: contextValue,
-                    source: segmentMatch[0],
-                };
-
-                this.segments.push(contextSegment);
-            }
-            else if (segmentMatch.groups.escape)
-            {
-                let string = segmentMatch.groups.escape;
-
-                let stringSegment =
-                {
-                    type: "string",
-                    value: string,
-                    source: segmentMatch[0],
-                };
-
-                this.segments.push(stringSegment);
-            }
-            else if (segmentMatch.groups.expression)
-            {
-                let expressionLabel = segmentMatch.groups.label;
-                let expressionOffset = segmentMatch.index + "$".length + (segmentMatch.groups.labelToken ? segmentMatch.groups.labelToken.length : 0) + "{".length;
-
-                try
-                {
-                    let expression = new MychExpression(segmentMatch.groups.expression, context);
-
-                    let expressionSegment =
-                    {
-                        type: "expression",
-                        offset: expressionOffset,
-                        expression: expression,
-                        label: expressionLabel,
-                        source: segmentMatch[0],
-                    };
-
-                    if (expressionLabel)
-                    {
-                        this.expressionSegments[expressionLabel] = expressionSegment;
-                    }
-
-                    this.segments.push(expressionSegment);
+                    prevSegment.value += segment.value;
+                    prevSegment.source += segment.source;
                 }
-                catch (exception)
+                else
                 {
-                    this.rethrowExpressionError("parse", exception, expressionOffset);
+                    template.segments.push(segment);
                 }
             }
-            else if (segmentMatch.groups.label)
-            {
-                let referenceLabel = segmentMatch.groups.label;
-                
-                let referenceSegment =
-                {
-                    type: "reference",
-                    label: referenceLabel,
-                    source: segmentMatch[0],
-                };
-                
-                this.segments.push(referenceSegment);
-            }
-
-            segmentOffset = segmentMatch.index + segmentMatch[0].length;
         }
 
-        if (segmentOffset < source.length)
-        {
-            let stringValue = source.substring(segmentOffset);
+        let sourceOffset = 0;
 
-            let stringSegment =
+        let leaderRegExp = /(?<leader>[\\$])(?=.)/gu;
+        let leaderMatch;
+
+        while (leaderMatch = leaderRegExp.exec(source))
+        {
+            if (sourceOffset < leaderMatch.index)
             {
-                type: "string",
-                value: stringValue,
-                source: stringValue,
+                let literalValue = source.substring(sourceOffset, leaderMatch.index);
+                
+                let literalSegment =
+                {
+                    type: "literal",
+                    value: literalValue,
+                    source: literalValue,
+                };
+
+                pushSegment(literalSegment);
+            }
+
+            sourceOffset = leaderMatch.index + leaderMatch[0].length;
+
+            switch (leaderMatch.groups.leader)
+            {
+                case "\\":
+                {
+                    let literalValue = source[sourceOffset];
+
+                    sourceOffset += 1;
+
+                    let literalSegment =
+                    {
+                        type: "literal",
+                        value: literalValue,
+                        source: leaderMatch[0] + literalValue,
+                    };
+        
+                    pushSegment(literalSegment);
+                }
+                break;
+
+                case "$":
+                {
+                    let contextRegExp = /\[\[(?<identifier>\w+)\]\]/yu;
+                    let contextMatch;
+
+                    contextRegExp.lastIndex = sourceOffset;
+
+                    if (contextMatch = contextRegExp.exec(source))
+                    {
+                        sourceOffset += contextMatch[0].length;
+
+                        let contextKey = "$[[" + contextMatch.groups.identifier + "]]";
+                        let contextValue = context[contextKey];
+        
+                        let contextSegment =
+                        {
+                            type: "context",
+                            value: contextValue,
+                            source: leaderMatch[0] + contextMatch[0],
+                        };
+
+                        pushSegment(contextSegment);
+                    }
+                    else
+                    {
+                        let labelRegExp = /\[(?<label>\w+)\]/yu;
+                        let labelMatch;
+
+                        labelRegExp.lastIndex = sourceOffset;
+
+                        let label;
+
+                        if (labelMatch = labelRegExp.exec(source))
+                        {
+                            sourceOffset += labelMatch[0].length;
+
+                            label = labelMatch.groups.label;
+                        }
+
+                        let expressionOffset;
+                        let expressionOffsetEnd;
+
+                        if (source[sourceOffset] == "{")
+                        {
+                            expressionOffset = sourceOffset + 1;
+
+                            let tokenRegExp = /(?<openingBrace>\{)|(?<closingBrace>\})|"(\\.|[^\\"])*"?|'(\\.|[^\\'])*'?/gu;
+                            let tokenMatch;
+
+                            tokenRegExp.lastIndex = expressionOffset;
+
+                            let numOpenBraces = 0;
+
+                            while (tokenMatch = tokenRegExp.exec(source))
+                            {
+                                if (tokenMatch.groups.openingBrace)
+                                {
+                                    numOpenBraces += 1;
+                                }
+                                else if (tokenMatch.groups.closingBrace)
+                                {
+                                    if (numOpenBraces == 0)
+                                    {
+                                        expressionOffsetEnd = tokenMatch.index;
+                                        break;
+                                    }
+
+                                    numOpenBraces -= 1;
+                                }
+                            }
+
+                            if (expressionOffsetEnd == undefined)
+                            {
+                                throw new MychTemplateError("parse", "runaway expression", source, expressionOffset);
+                            }
+
+                            sourceOffset = expressionOffsetEnd + 1;
+                        }
+
+                        if (expressionOffset != undefined)
+                        {
+                            try
+                            {
+                                let expressionSource = source.substring(expressionOffset, expressionOffsetEnd);
+                                let expression = new MychExpression(expressionSource, context);
+
+                                if (label == undefined)
+                                {
+                                    let expressionSegment =
+                                    {
+                                        type: "expression",
+                                        expressionOffset: expressionOffset,
+                                        expression: expression,
+                                        source: "${" + expressionSource + "}",
+                                    };
+
+                                    pushSegment(expressionSegment);
+                                }
+                                else
+                                {
+                                    let expressionSegment =
+                                    {
+                                        type: "expression",
+                                        label: label,
+                                        expressionOffset: expressionOffset,
+                                        expression: expression,
+                                        source: "$[" + label + "]{" + expressionSource + "}",
+                                    };
+
+                                    this.expressionSegments[label] = expressionSegment;
+                                    
+                                    pushSegment(expressionSegment);
+                                }
+                            }
+                            catch (exception)
+                            {
+                                this.rethrowExpressionError("parse", exception, expressionOffset);
+                            }
+                        }
+                        else if (label != undefined)
+                        {
+                            let referenceSegment =
+                            {
+                                type: "reference",
+                                label: label,
+                                source: "$[" + label + "]",
+                            }
+
+                            pushSegment(referenceSegment);
+                        }
+                        else
+                        {
+                            let literalSegment =
+                            {
+                                type: "literal",
+                                value: leaderMatch[0],
+                                source: leaderMatch[0],
+                            };
+                
+                            pushSegment(literalSegment);
+                        }
+                    }
+                }
+                break;
+            }
+
+            leaderRegExp.lastIndex = sourceOffset;
+        }
+
+        if (sourceOffset < source.length)
+        {
+            let literalValue = source.substring(sourceOffset);
+
+            let literalSegment =
+            {
+                type: "literal",
+                value: literalValue,
+                source: literalValue,
             };
 
-            this.segments.push(stringSegment);
+            pushSegment(literalSegment);
         }
+
+        console.log("segments", this.segments);
     }
 
     getSourceWithReferences()
@@ -3865,10 +3987,10 @@ class MychTemplate
         {
             switch (segment.type)
             {
-                case "string":
+                case "literal":
                 {
-                    let evaluatedString = segment.value;
-                    evaluatedSegments.push(evaluatedString);
+                    let evaluatedLiteral = segment.value;
+                    evaluatedSegments.push(evaluatedLiteral);
                 }
                 break;
 
@@ -3888,7 +4010,7 @@ class MychTemplate
                     }
                     catch (exception)
                     {
-                        this.rethrowExpressionError("evaluate", exception, segment.offset);
+                        this.rethrowExpressionError("evaluate", exception, segment.expressionOffset);
                     }
                 }
                 break;
@@ -3940,13 +4062,13 @@ class MychTemplate
         {
             switch (segment.type)
             {
-                case "string":
+                case "literal":
                 {
                     let materializedString = segment.value;
 
                     let materializedStringSegment =
                     {
-                        type: "string",
+                        type: "literal",
                         value: materializedString,
                         source: materializedString,
                     };
@@ -3970,7 +4092,7 @@ class MychTemplate
 
                         let materializedExpressionSegment =
                         {
-                            type: "string",
+                            type: "literal",
                             value: materializedExpressionString,
                             source: materializedExpressionString,
                         };
@@ -3979,7 +4101,7 @@ class MychTemplate
                     }
                     catch (exception)
                     {
-                        this.rethrowExpressionError("materialize", exception, segment.offset);
+                        this.rethrowExpressionError("materialize", exception, segment.expressionOffset);
                     }
                 }
                 break;
