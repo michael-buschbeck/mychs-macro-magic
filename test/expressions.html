@@ -300,19 +300,19 @@
             ],
             [
                 "args(1)",
-                { result: "1" },
+                { result: "arg0: 1" },
             ],
             [
                 "args(1, 'two', 3, 'four')",
-                { result: "(1, \"two\", 3, \"four\")" },
+                { result: "(arg0: 1, arg1: \"two\", arg2: 3, arg3: \"four\")" },
             ],
             [
                 "args(list12, list345)",
-                { result: "((1, 2), (3, 4, 5))" },
+                { result: "(arg0: (1, 2), arg1: (3, 4, 5))" },
             ],
             [
                 "args((1, 'two'), (3, 'four'))",
-                { result: "(1, \"two\", 3, \"four\")" },
+                { result: "(arg0: 1, arg1: \"two\", arg2: 3, arg3: \"four\")" },
             ],
             [
                 "argnum()",
@@ -1014,7 +1014,7 @@
 
         MychScriptContext.prototype.args = function(...values)
         {
-            return values;
+            return values.map((value, index) => new MychExpressionStructItem("arg" + index, value));
         }
 
         MychScriptContext.prototype.argnum = function(...args)
