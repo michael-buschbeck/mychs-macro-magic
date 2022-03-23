@@ -544,6 +544,8 @@ class MychScriptContext extends MychProperties
         return super.$isValidPropertyKey(key) || /^\$\[\[\d+\]\]$/u.test(key);
     }
 
+    undef = undefined;
+
     pi = Math.PI;
 
     default = new MychScriptContext.Default();
