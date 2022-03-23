@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.27.1";
+const MMM_VERSION = "1.28.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1177,6 +1177,61 @@ class MychScriptContext extends MychProperties
     {
         log("MMM [" + MMM_STARTUP_INSTANCE + "] " + (exception.stack || exception));
         this.whisperback(this.literal(exception));
+    }
+
+    serialize(value)
+    {
+        return MychExpression.literal(value);
+    }
+
+    deserialize(string)
+    {
+        if (string instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return string;
+        }
+
+        string = MychExpression.coerceString(string);
+
+        let expression;
+
+        try
+        {
+            expression = new MychExpression(string, this, { resolveContextLookups: true });
+        }
+        catch (exception)
+        {
+            if (exception instanceof MychExpressionError)
+            {
+                let stringWithMarker =
+                    this.literal(string.substring(0, exception.offset)) + "\u274C" +
+                    this.literal(string.substring(exception.offset));
+
+                return new MychScriptContext.Unknown("invalid serialized data: " + stringWithMarker);
+            }
+
+            return new MychScriptContext.Unknown("error parsing serialized data: " + this.literal(exception));
+        }
+
+        if (!expression.isConstant())
+        {
+            return new MychScriptContext.Unknown("invalid non-constant serialized data: " + this.literal(string));
+        }
+
+        try
+        {
+            return expression.evaluateConstant();
+        }
+        catch (exception)
+        {
+            if (exception instanceof MychExpressionError)
+            {
+                let stringWithMarker = string.substring(0, exception.offset) + "\u274C" + string.substring(exception.offset);
+                return new MychScriptContext.Unknown("error deserializing data: " + this.literal(stringWithMarker))
+            }
+
+            return new MychScriptContext.Unknown("error deserializing data: " + this.literal(exception));
+        }
     }
 
     getprop(nameOrId, attributeName)

@@ -1243,6 +1243,27 @@
                         throw "Constant result not equal to variable result";
                     }
                 }
+
+                let serializedResult = expression.context.serialize(resultContainer.value);
+                let deserializedResult = expression.context.deserialize(serializedResult);
+                let reserializedResult = expression.context.serialize(deserializedResult);
+
+                if (serializedResult != reserializedResult)
+                {
+                    console.log("unserialized result:", resultContainer.value);
+                    console.log("serialized result:", serializedResult);
+                    console.log("deserialized result:", deserializedResult);
+                    console.log("reserialized result:", reserializedResult);
+
+                    if (expression.context.isunknown(deserializedResult))
+                    {
+                        throw "Error deserializing serialized result: " + expression.context.getreason(deserializedResult);
+                    }
+                    else
+                    {
+                        throw "Serialized result not equal to re-serialized result";
+                    }
+                }
             }
             catch (exception)
             {
