@@ -18,6 +18,11 @@
         {
             return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
+
+        function stripHTML(html)
+        {
+            return String(html).replace(/&#(\d+);/g, (_, codePoint) => String.fromCodePoint(parseInt(codePoint)));
+        }
     </script>
     <style type="text/css">
         body {
@@ -1166,13 +1171,13 @@
             if (context.isunknown(result))
             {
                 let reason = context.getreason(result);
-                return reason ? ("[unknown: " + reason + "]") : "[unknown]";
+                return reason ? ("[unknown: " + stripHTML(reason) + "]") : "[unknown]";
             }
 
             if (context.isdenied(result))
             {
                 let reason = context.getreason(result);
-                return reason ? ("[denied: " + reason + "]") : "[denied]";
+                return reason ? ("[denied: " + stripHTML(reason) + "]") : "[denied]";
             }
 
             return MychExpression.literal(result);
