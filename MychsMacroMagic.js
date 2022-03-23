@@ -391,6 +391,19 @@ class MychProperties
         return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
     }
 
+    $hasProperty(key)
+    {
+        for (let properties = this; properties; properties = properties.$parentProperties)
+        {
+            if (properties.$isValidPropertyKey(key) && key in properties)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     $getProperty(key, fallbackProperties, bindFunctionToProperties)
     {
         for (let properties = this; properties; properties = properties.$parentProperties)
@@ -4262,7 +4275,7 @@ class MychExpressionStructItem
 
 class MychExpression
 {
-    constructor(source, context)
+    constructor(source, context, options = {})
     {
         this.source = undefined;
         this.context = context;
@@ -4271,7 +4284,7 @@ class MychExpression
     
         if (source != undefined)
         {
-            this.parse(source, context);
+            this.parse(source, context, options);
         }
     }
 
@@ -4921,12 +4934,26 @@ class MychExpression
 
             processToken: function(token, state, context)
             {
-                function* symbolLookupEvaluator(variables)
+                if (state.options.resolveContextLookups && context.$hasProperty(token.value))
                 {
-                    return variables.$getProperty(token.value, context, true);
-                }
+                    let constant = context.$getProperty(token.value);
 
-                state.pushEvaluator(token, symbolLookupEvaluator);
+                    function* symbolConstantEvaluator(variables)
+                    {
+                        return constant;
+                    }
+
+                    state.pushEvaluator(token, symbolConstantEvaluator, { isConstant: true });
+                }
+                else
+                {
+                    function* symbolLookupEvaluator(variables)
+                    {
+                        return variables.$getProperty(token.value, context, true);
+                    }
+
+                    state.pushEvaluator(token, symbolLookupEvaluator);
+                }
             },
 
             nextRuleNames: new Set(
@@ -5684,8 +5711,13 @@ class MychExpression
 
     static ParseState = class
     {
-        evaluatorStack = [];
-        operatorStack = [{ precedence: MychExpression.maxOperatorPrecedence + 1, operator: undefined, sourceOffset: 0 }];
+        constructor(options)
+        {
+            this.options = options;
+
+            this.evaluatorStack = [];
+            this.operatorStack = [{ precedence: MychExpression.maxOperatorPrecedence + 1, operator: undefined, sourceOffset: 0 }];
+        }
 
         pushEvaluator(token, evaluator, attributes = {})
         {
@@ -5780,7 +5812,7 @@ class MychExpression
         }
     }
 
-    parse(source, context)
+    parse(source, context, options = {})
     {
         if (context == undefined)
         {
@@ -5976,7 +6008,7 @@ class MychExpression
             }
         }
 
-        let state = new MychExpression.ParseState();
+        let state = new MychExpression.ParseState(options);
 
         for (let token of this.tokens)
         {
