@@ -1248,6 +1248,11 @@ class MychScriptContext extends MychProperties
                     return context.getattr(nameOrId, attributeName);
                 },
 
+                toLiteral: function()
+                {
+                    return MychExpression.literal(this.toScalar());
+                },
+
                 $getProperty: function(key)
                 {
                     return (key == "max"
