@@ -4568,6 +4568,18 @@ class MychExpression
 
         switch (typeof(value))
         {
+            case "number":
+            {
+                let numberLiteral = String(value);
+                return numberLiteral;    
+            }
+
+            case "boolean":
+            {
+                let booleanLiteral = value ? "true" : "false";
+                return booleanLiteral;
+            }
+
             case "string":
             {
                 let stringLiteral = "\"" + value.replace(/(["\\])/ug, "\\$1") + "\"";
@@ -4580,7 +4592,7 @@ class MychExpression
             }
         }
 
-        return String(value);
+        throw "MychExpression internal error: cannot convert " + typeof(value) + " value to expression literal";
     }
 
     static rules =
