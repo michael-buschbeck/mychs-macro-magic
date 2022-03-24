@@ -604,6 +604,50 @@
                 { result: "(structX: \"nested/structA/listB1/structX\", listX: (\"nested/structA/listB1/listX0\", \"nested/structA/listB1/listX1\", \"nested/structA/listB1/listX2\"), valueX: \"nested/structA/listB1/valueX\")" },
             ],
             [
+                "serialize(undef)",
+                { result: "\"undef\"" },
+            ],
+            [
+                "deserialize('undef')",
+                { result: "undef" },
+            ],
+            [
+                "serialize(pi)",
+                { result: "\"3.141592653589793\"" },
+            ],
+            [
+                "deserialize('pi')",
+                { result: "3.141592653589793" },
+            ],
+            [
+                "serialize(abs)",
+                { result: "\"abs\"" },
+            ],
+            [
+                "deserialize('abs')",
+                { result: "abs" },
+            ],
+            [
+                "deserialize('abs(-123)')",
+                { result: "[unknown: invalid non-constant serialized data: abs(-123)]" },
+            ],
+            [
+                "serialize(not_defined)",
+                { result: "\"undef\"" },
+            ],
+            [
+                "deserialize('not_defined')",
+                { result: "[unknown: invalid non-constant serialized data: not_defined]" },
+            ],
+            [
+                "deserialize('')",
+                { result: "[unknown: invalid serialized data: ❌]" },
+            ],
+            [
+                "deserialize('+-*/')",
+                { result: "[unknown: invalid serialized data: +-❌*/]" },
+            ],
+            [
                 "getattr('Char1', 'HP')",
                 { result: "\"15\"" },
             ],
