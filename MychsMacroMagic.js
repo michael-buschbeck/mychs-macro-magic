@@ -4631,7 +4631,7 @@ class MychExpression
 
         if (value instanceof Function)
         {
-            return MychExpression.coerceString(value);
+            return value.functionName || value.name;
         }
 
         value = MychExpression.coerceScalar(value);
