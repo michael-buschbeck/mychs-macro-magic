@@ -629,7 +629,7 @@
             ],
             [
                 "deserialize('abs(-123)')",
-                { result: "[unknown: invalid non-constant serialized data: abs(-123)]" },
+                { result: "unknown 🗨️ \"invalid non-constant serialized data: abs(-123)\"" },
             ],
             [
                 "serialize(not_defined)",
@@ -637,15 +637,15 @@
             ],
             [
                 "deserialize('not_defined')",
-                { result: "[unknown: invalid non-constant serialized data: not_defined]" },
+                { result: "unknown 🗨️ \"invalid non-constant serialized data: not_defined\"" },
             ],
             [
                 "deserialize('')",
-                { result: "[unknown: invalid serialized data: ❌]" },
+                { result: "unknown 🗨️ \"invalid serialized data: ❌\"" },
             ],
             [
                 "deserialize('+-*/')",
-                { result: "[unknown: invalid serialized data: +-❌*/]" },
+                { result: "unknown 🗨️ \"invalid serialized data: +-❌*/\"" },
             ],
             [
                 "getattr('Char1', 'HP')",
@@ -657,11 +657,11 @@
             ],
             [
                 "getattr('Char1', 'XX')",
-                { result: "[unknown: Unknown attribute: XX]" },
+                { result: "unknown 🗨️ \"Unknown attribute: XX\"" },
             ],
             [
                 "'Char1'.XX",
-                { result: "[unknown: Unknown attribute: XX]" },
+                { result: "unknown 🗨️ \"Unknown attribute: XX\"" },
             ],
             [
                 "'Char1'.XX & ''",
@@ -707,11 +707,11 @@
             ],
             [
                 "noStruct.someProp",
-                { result: "[unknown: Unknown attribute: someProp]" },
+                { result: "unknown 🗨️ \"Unknown attribute: someProp\"" },
             ],
             [
                 "'literal string'.someProp",
-                { result: "[unknown: Unknown attribute: someProp]" },
+                { result: "unknown 🗨️ \"Unknown attribute: someProp\"" },
             ],
             [
                 "...",
@@ -1207,24 +1207,28 @@
 
         function getResultRepresentation(context, result)
         {
-            if (context.isdefault(result))
-            {
-                return "[default]";
-            }
+            let originalToLiteral = MychScriptContext.DiagnosticUndef.prototype.toLiteral;
 
-            if (context.isunknown(result))
+            try
             {
-                let reason = context.getreason(result);
-                return reason ? ("[unknown: " + stripHTML(reason) + "]") : "[unknown]";
-            }
+                MychScriptContext.DiagnosticUndef.prototype.toLiteral = function()
+                {
+                    if (this.reason == undefined)
+                    {
+                        return this.label;
+                    }
+                    else
+                    {
+                        return this.label + " \u{1F5E8}\uFE0F " + MychExpression.literal(stripHTML(this.reason));
+                    }
+                };
 
-            if (context.isdenied(result))
+                return MychExpression.literal(result);
+            }
+            finally
             {
-                let reason = context.getreason(result);
-                return reason ? ("[denied: " + stripHTML(reason) + "]") : "[denied]";
+                MychScriptContext.DiagnosticUndef.prototype.toLiteral = originalToLiteral;
             }
-
-            return MychExpression.literal(result);
         }
 
         let numTestsRun = 0;
