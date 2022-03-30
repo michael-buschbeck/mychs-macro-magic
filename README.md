@@ -16,7 +16,7 @@ You're here to yell at dice, not at macros, after all – right?
 ### Contents
 
 - [Scripts](#scripts) – [script commands](#mmm-script--end-script), [autorun macros](#autorun-macros)
-- [Expressions](#expressions) – [literals](#literals), [variables](#variables), [lists](#lists), [attributes](#attributes), [operators](#operators), [functions](#functions)
+- [Expressions](#expressions) – [literals](#literals), [variables](#variables), [lists](#lists), [structs](#structs), [attributes](#attributes), [operators](#operators), [functions](#functions)
 - [Recipes](#recipes)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [What's new?](#versions)
@@ -765,7 +765,7 @@ You can make a list simply by separating individual values with commas:
 | 3    | _!mmm_ **set** nextThreeRolls = [[1d20]], [[1d20]], [[1d20]] | *(three attack rolls)*
 
 Things you can put in lists:
-- Numbers, rolls, strings, `true`, `false`, the result of `highlight()`, and basically everything that renders as anything in chat.
+- Numbers, rolls, strings, `true`, `false`, key-value pairs, the result of `highlight()`, and basically everything that renders as anything in chat.
 - Special indicator values: `unknown` and `denied` (including their diagnostics) and `default`.
 
 Things you cannot put in lists:
@@ -802,6 +802,67 @@ You can access any specific item in a list by its index using brackets like in `
 Of course, lists are most useful together with the [**for** loop](#mmm-for-variable-in-expression--end-for), which allows you to execute a block of code once for each list element in turn.
 
 
+### Structs
+
+While lists allow you to look up individual items by index (see [previous section](#lists)), structs allow you to access items by string-valued keys that are meaningful to you, just like variable names.
+
+You can create and use a struct like this:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set** weapon = {type: "slingshot", ammo: 12} | *(create struct with keys `type` and `ammo`)*
+| 3    | _!mmm_     **chat:** My \${weapon.type} has \${weapon.ammo} shots left. | ***Finn:*** My slingshot has 12 shots left.
+| 4    | _!mmm_     **set** weapon = {weapon, ammo: (weapon.ammo - 1)} | *(keep `type` and reduce value of `ammo` by one)*
+| 5    | _!mmm_     **chat:** Down to \${weapon.ammo} \${weapon.type} shots now! | ***Finn:*** Down to 11 slingshot shots now!
+| 6    | _!mmm_ **end script**
+
+In this example, both `type: "slingshot"` and `ammo: 12` are so-called key-value pairs – with `type` and `ammo` being the lookup keys, and `"slingshot"` and `12` the corresponding values.
+
+- The key is always a string, and most often one that looks like a variable name.
+  - There's special support in the MMM expression parser to interpret something that looks like a variable name but followed by a `:` (colon) as the literal key of a key-value pair rather than "a variable followed by a colon".
+  - If you want a key that _doesn't_ look like a variable name, you'll have to put it in quotes:  `"!=": true`
+  - If you want to calculate the key from an expression or variable value, enclose it in parentheses:  `("foo" & bar): value`
+- The value can be anything you like: a string, number, boolean, list, roll result, the result of calling `highlight()`, another struct, another key-value pair (if that makes sense to you), `undef`, or one of the special indicator values `default`, `denied`, and `unknown` – if you can put it in a variable, you can put it in the value of a key-value pair.
+- Use `pair.key` to get the key from a key-value pair and `pair.value` to get the value.
+
+Enclosing a list of key-value pairs in braces `{`...`}` creates a struct. You can use `struct.foo` to directly look up the value corresponding to the `foo` key in a struct. If another struct is included between the braces, its keys and values are individually included in the newly created struct.
+
+Structs are most useful when you want to have a list of them. For just a single item like in the example above, you could just as well use individual normal variables like `weaponType` and `weaponAmmo`. But if you want to keep a list of several such items with several properties each, it's much more convenient to create a list of structs:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **script**
+| 2    | _!mmm_     **set** weapons = weapons, {type: "slingshot", ammo: 12} | *(add slingshot to `weapons` list)*
+| 3    | _!mmm_     **set** weapons = weapons, {type: "shortbow", ammo: 8} | *(add shortbow to `weapons` list)*
+| 4    | _!mmm_     **set** weapons = weapons, {type: "longsword"} | *(add longsword to `weapons` list – doesn't have `ammo`)*
+| ...  |
+| 20   | _!mmm_     **chat:** Behold my arsenal: | ***Finn:*** Behold my arsenal: 
+| 21   | _!mmm_     **for** weapon **in** weapons | *(loop over all weapons)*
+| 22   | _!mmm_         **combine chat** 
+| 23   | _!mmm_             **chat:** One ${weapon.type} | ***Finn:*** One *(weapon type)*...
+| 24   | _!mmm_             **if** weapon.ammo > 0 | *(include ammunition info only if there is any)*
+| 25   | _!mmm_                 **chat:** with ${weapon.ammo} shots | ...with *(ammo count)* shots
+| 26   | _!mmm_             **end if**
+| 27   | _!mmm_         **end combine**
+| 28   | _!mmm_     **end for** | ***Finn:*** One slingshot with 12 shots<br>***Finn:*** One shortbow with 8 shots<br>***Finn:*** One longsword
+| 29   | _!mmm_ **end script**
+
+Common operations on structs:
+
+- Create a struct:  `{key1: value1, key2: value2,` ...`}`
+- Add more keys to an existing struct:  `{struct, key3: value3,` ...`}`
+- Combine several structs (last value wins if keys are duplicated):  `{struct1, struct2,` ...`}`
+- Replace an existing key's value:  `{struct, key1: value4}`
+- Remove a key from a struct:  `{struct... where ...key ne "key1"}`
+
+If you use a struct in string context, it renders as a comma-separated list of its key-value pairs (with or without markup depending on context). Used as a number, a struct evaluates as the number of its keys (or values). As a boolean, a struct is `true` if it contains any keys at all and `false` if it is empty.
+
+The `...` postfix operator – unlike any other MMM operator put _after_ its operand, like `struct...` – applies to a struct and returns the list of key-value pairs in it. The key-value pairs extracted from a struct in this way are always in alphanumerical order of their keys, regardless of which order they were originally defined in. (You can also abuse this to sort arbitrary things by a string key.)
+
+This operator can also be used on anything else that supports the `obj.prop` property lookup syntax – most importantly characters and tokens, which return a list of key-value pairs enumerating the [attributes and pseudo-attributes](#attributes) stored for the character or token. If you use it on a list of things, it'll return the combined list of key-value pairs from all list elements including any duplicates. (It doesn't work on a single key-value pair though; it just returns the key-value pair as-is.)
+
+
 ### Attributes
 
 Like in macros, you can query *attributes* in MMM expressions – and even create and update them if you like:
@@ -833,6 +894,17 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `height`          | `70`                 | write  |       | Token's height (subject to its rotation)
 | `rotation`        | `45`                 | write  |       | Token's clockwise rotation in degrees
 | *(anything else)* |                      | write  | write | Character attribute – e.g. `HP` or any custom attribute
+
+
+**Tables:** MMM exposes a special character property named `repeating` that gives you access to the contents of all tabular data in the character sheet. The `repeating` property contains a struct with one key for each table; each table is a list of rows; each row is a struct whose keys are the column names in the table.
+
+For example, if there's a table named `Weapons` with columns named `Type` and `Skill`, you could read values from this table like so:
+
+- `char.repeating.Weapons[0].Type` – type of the character's first weapon
+- `(char.repeating.Weapons where ...Type eq "slingshot").Skill` – character's slingshot skill (or `unknown` if not found)
+- `(char.repeating.Weapons select ...Type)` – list of all of the character's weapon types
+
+The `repeating` character property makes the `findattr()` function mostly redundant (but the function is still there if you want it).
 
 **Status markers:** The `status_`... attributes show or hide token status markers. Most markers – with the notable exception of the "dead" marker, that big red cross covering the entire token – also support displaying a single digit as an overlay, which can be useful for counters and the like.
 
@@ -986,6 +1058,8 @@ Why (if you're curious): To properly impersonate you to the other API script, MM
 
 ### Using findattr() to determine character sheet attribute names
 
+*Starting with MMM 1.27.0, the `findattr()` function has mostly become redundant thanks to the introduction of the `repeating` character property – see [Attributes](#attributes), above.*
+
 The `findattr()` function helps you determine the attribute name to query (or update) anything that's in an extensible table in a character sheet.
 
 These attribute names always start with `repeating_`... followed by a table name (e.g. `attack`), followed by a soup of random characters (the row ID), and finally the name of column you're interested in (e.g. `damage`). Official [Roll20 guidance](https://help.roll20.net/hc/en-us/articles/360037256794-Macros#Macros-ReferencingRepeatingAttributes) says to break out your HTML debugger and dive into the character sheet's HTML source to figure out these IDs – but that's a pants-on-fire–grade way to have to go about this.
@@ -1097,6 +1171,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.27.0  | 2022-03-31 | Introduce structs, the `...` operator, and the `repeating` character property
 | 1.26.0  | 2022-01-23 | Introduce `publish to sender` and `publish to game` commands
 | 1.25.0  | 2022-01-20 | Introduce `!mmm-autorun` macros that auto-run on startup
 | 1.24.0  | 2021-12-25 | Support `function` and `return` commands for custom functions
