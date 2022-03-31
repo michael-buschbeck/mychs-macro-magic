@@ -50,6 +50,10 @@
             white-space: pre-wrap;
         }
 
+        #results-container {
+            margin-bottom: 8pt;
+        }
+
         div.results-success {
             padding: 0.5em 1em;
             border: 1px solid gray;
@@ -68,6 +72,19 @@
             font-size: 12pt;
             color: red;
             background: #FFC0C0;
+        }
+
+        div.results-failure a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        div.results-failure a:hover {
+            text-decoration: underline;
+        }
+
+        div.results-failure button {
+            margin-top: 5pt;
         }
 
         td {
@@ -154,6 +171,8 @@
     </style>
 </head>
 <body>
+    <div id="results-container"></div>
+
     <script>
         let includedScriptSources = [];
 
@@ -199,6 +218,38 @@
                 { chat: "579" },
             ],
             [
+                "!mmm chat: ${{foo: 123}}",
+                { chat: "foo: 123" },
+            ],
+            [
+                "!mmm chat: ${{unknown: unknown, denied: denied, default: default}}",
+                { chat: "default: <span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>, denied: <span class=\"mmm-denied\" style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>, unknown: <span class=\"mmm-unknown\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span>" },
+            ],
+            [
+                "!mmm chat: Foo $",
+                { chat: "Foo $" },
+            ],
+            [
+                "!mmm chat: Foo ${'}'}",
+                { chat: "Foo }" },
+            ],
+            [
+                "!mmm chat: Foo \\${'}'}",
+                { chat: "Foo ${'}'}" },
+            ],
+            [
+                "!mmm chat: Foo $\\{'}'}",
+                { chat: "Foo ${'}'}" },
+            ],
+            [
+                "!mmm chat: Foo ${bar",
+                { error: "During parse, runaway expression in template in script: !mmm chat: Foo ${❌bar" },
+            ],
+            [
+                "!mmm chat: Foo ${'\\",
+                { error: "During parse, runaway expression in template in script: !mmm chat: Foo ${❌'\\" },
+            ],
+            [
                 "!mmm set customizable 123",
                 { error: "During parse, syntax error in script: !mmm set customizable ❌123" },
             ],
@@ -231,7 +282,7 @@
             ],
             [
                 "!mmm chat: ${syntax error}",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in template in script: !mmm chat: ${syntax ❌error}" },
+                { error: "During parse, expected colon (between property key and its value), or binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or three dots (to get list of property key-value pairs), or end of expression in expression in template in script: !mmm chat: ${syntax ❌error}" },
             ],
             [
                 "!mmm do chat('correct')",
@@ -274,7 +325,7 @@
             ],
             [
                 "!mmm do chat 'missing parentheses'",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: !mmm do chat ❌'missing parentheses'" }
+                { error: "During parse, expected colon (between property key and its value), or binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or three dots (to get list of property key-value pairs), or end of expression in expression in script: !mmm do chat ❌'missing parentheses'" }
             ],
             [
                 "!mmm     unknown command",
@@ -412,7 +463,7 @@
                 "!mmm debug chat: undefined is ${undefined}",
                 { whisper: "🔎 undefined is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>undef</span>" },
                 "!mmm debug chat: list is ${1, 2, 3, 'foo', 'bar', 'baz', undefined}",
-                { whisper: "🔎 list is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>1, 2, 3, \"foo\", \"bar\", \"baz\"</span>" },
+                { whisper: "🔎 list is <span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>(1, 2, 3, \"foo\", \"bar\", \"baz\")</span>" },
                 "!mmm debug chat: default is ${default}",
                 { whisper: "🔎 default is <span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span>" },
                 "!mmm debug chat: denied is ${denied}",
@@ -443,7 +494,7 @@
             [
                 "!mmm if false",
                 "!mmm else if broken syntax in expression",
-                { error: "During parse, expected binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or end of expression in expression in script: !mmm else if broken ❌syntax in expression" },
+                { error: "During parse, expected colon (between property key and its value), or binary operator, or property lookup, or opening parenthesis (for function arguments), or opening bracket (for array subscript), or three dots (to get list of property key-value pairs), or end of expression in expression in script: !mmm else if broken ❌syntax in expression" },
                 "!mmm end if",
             ],
             [
@@ -1030,6 +1081,31 @@
                 { chat: "Finn says, it works!" },
                 { chat: "Finn says, quite well." },
                 { chat: "Yorric says, I agree!" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     for attr in (unknown)...",
+                "!mmm         chat: unknown's ${attr}",
+                "!mmm     end for",
+                "!mmm     for attr in ('Finn')...",
+                "!mmm         chat: Finn's ${attr}",
+                "!mmm     end for",
+                "!mmm end script",
+                { chat: "Finn's name: Finn MacRathgar" },
+                { chat: "Finn's HP: 19" },
+                { chat: "Finn's LP: 15" },
+                { chat: "Finn's cousin: Yorrick" },
+            ],
+            [
+                "!mmm script",
+                "!mmm     function dumpvars()",
+                "!mmm         chat: ${script...}",
+                "!mmm     end function",
+                "!mmm     set foo = 123",
+                "!mmm     set bar = 456",
+                "!mmm     do dumpvars()",
+                "!mmm end script",
+                { chat: "bar: 456, dumpvars: dumpvars(), foo: 123" },
             ],
             [
                 "!mmm script",
@@ -1736,6 +1812,20 @@
             });
         };
 
+        MychScriptContext.prototype.$getAttributeNames = function(characterNameOrId)
+        {
+            characterNameOrId = MychExpression.coerceString(characterNameOrId);
+
+            let attributesForCharacter = attributes[characterNameOrId];
+
+            if (!attributesForCharacter)
+            {
+                return [];
+            }
+
+            return Object.keys(attributesForCharacter);
+        };
+
         MychScriptContext.prototype.$getAttribute = function(characterNameOrId, attributeName, max = false)
         {
             if (characterNameOrId instanceof MychScriptContext.DiagnosticUndef)
@@ -1946,7 +2036,7 @@
 
             let scriptSource = scriptSources[scriptSourceIndex];
 
-            document.write("<div class='script'>");
+            document.write("<div class='script' id='script-" + scriptSourceIndex + "'>");
             document.write("<table>");
             document.write("<tr><td></td><td class='script-header'>test script " + scriptSourceIndex + "</td></tr>");
 
@@ -2169,17 +2259,50 @@
             }
         }
 
+        let tests = includedScriptSources.length ? includedScriptSources : [...Array(numTestsRun).keys()];
+        let testsFailedAsSet = new Set(testsFailed);
+        let testsSuccessful = tests.filter(index => !testsFailedAsSet.has(index));
+
         if (numTestsSuccessful == numTestsRun)
         {
-            document.write("<div class='results-success'>");
+            document.write("<div id='results' class='results-success'>");
             document.write("Success: Ran " + numTestsRun + " test scripts, all successful.");
             document.write("</div>");
         }
         else
         {
-            document.write("<div class='results-failure'>");
-            document.write("Failed: Ran " + numTestsRun + " test scripts, " + (numTestsRun - numTestsSuccessful) + " failed (script index " + testsFailed.join(", ") + ")");
+            document.write("<div id='results' class='results-failure'>");
+            document.write("Failed: Ran " + numTestsRun + " test scripts, " + (numTestsRun - numTestsSuccessful) + " failed (script index " + testsFailed.map(index => "<a href='#script-" + index + "'>" + index + "</a>").join(", ") + ")");
+            document.write("<br>");
+            document.write("<button id='show-successful-tests-button' onclick='showSuccessfulTests()'>Show all tests</button>");
+            document.write("<button id='hide-successful-tests-button' onclick='hideSuccessfulTests()'>Show only failed tests</button>");
             document.write("</div>");
+
+            hideSuccessfulTests();
+        }
+
+        document.getElementById("results-container").appendChild(document.getElementById("results"));
+
+        function showSuccessfulTests()
+        {
+            for (testSuccessfulIndex of testsSuccessful)
+            {
+                document.getElementById("script-" + testSuccessfulIndex).style = "display: auto";
+            }
+
+            document.getElementById("show-successful-tests-button").style = "display: none";
+            document.getElementById("hide-successful-tests-button").style = "display: auto";
+        }
+
+        function hideSuccessfulTests()
+        {
+            for (testSuccessfulIndex of testsSuccessful)
+            {
+                document.getElementById("script-" + testSuccessfulIndex).style = "display: none";
+            }
+
+            document.getElementById("show-successful-tests-button").style = "display: auto";
+            document.getElementById("hide-successful-tests-button").style = "display: none";
         }
     </script>
 </body>

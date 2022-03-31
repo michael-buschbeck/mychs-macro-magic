@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.26.6";
+const MMM_VERSION = "1.27.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -429,6 +429,27 @@ class MychProperties
         return undefined;
     }
 
+    $getPropertyKeys()
+    {
+        let keys = new Set();
+
+        for (let properties = this; properties; properties = properties.$parentProperties)
+        {
+            for (let key in properties)
+            {
+                if (!keys.has(key) && properties.$isValidPropertyKey(key))
+                {
+                    keys.add(key);
+                }
+            }
+        }
+
+        let sortedKeys = [...keys];
+        sortedKeys.sort();
+
+        return sortedKeys;
+    }
+
     $setProperty(key, value)
     {
         if (this.$isValidPropertyKey(key))
@@ -548,6 +569,11 @@ class MychScriptContext extends MychProperties
 
             return "<span style=\"" + style + "\">" + label + "</span>";
         }
+
+        toLiteral()
+        {
+            return "default";
+        }
     }
 
     static DiagnosticUndef = class
@@ -578,6 +604,11 @@ class MychScriptContext extends MychProperties
         
             let tooltip = this.reason.replace(/"/ug, "&quot;");
             return "<span class=\"mmm-" + this.label + " showtip tipsy-n-right\" title=\"" + tooltip + "\" style=\"" + style + "; cursor: help\">" + this.label + "</span>";
+        }
+
+        toLiteral()
+        {
+            return this.label;
         }
     }
 
@@ -1135,15 +1166,120 @@ class MychScriptContext extends MychProperties
 
     getprop(nameOrId, attributeName)
     {
-        let attributeValue = this.getattr(nameOrId, attributeName);
+        let context = this;
 
-        let attributeStruct =
+        if (attributeName == "repeating")
         {
-            toScalar: () => attributeValue,
-            $getProperty: key => (key == "max") ? this.getattrmax(nameOrId, attributeName) : this.getprop(attributeValue, key),
-        };
+            let repeatingStruct = new MychExpressionStruct();
 
-        return attributeStruct;
+            let repeatingAttributeNames = this.$getAttributeNames(nameOrId);
+            let repeatingAttributeNameRegExp = /^repeating_(?<tableName>[^_]+)_(?<rowId>[-A-Za-z0-9]+)_(?<colName>\S+)$/u;
+
+            for (let repeatingAttributeName of repeatingAttributeNames)
+            {
+                let repeatingAttributeNameMatch = repeatingAttributeNameRegExp.exec(repeatingAttributeName);
+
+                if (repeatingAttributeNameMatch)
+                {
+                    let tableName = repeatingAttributeNameMatch.groups.tableName;
+                    let tableRows;
+
+                    if (repeatingStruct.$hasProperty(tableName))
+                    {
+                        tableRows = repeatingStruct.$getProperty(tableName);
+                    }
+                    else
+                    {
+                        tableRows = {};  // converted to list later
+                        repeatingStruct.$setProperty(tableName, tableRows);
+                    }
+
+                    let tableRowId = repeatingAttributeNameMatch.groups.rowId;
+                    let tableRowStruct = tableRows[tableRowId];
+
+                    if (!tableRowStruct)
+                    {
+                        tableRowStruct = new MychExpressionStruct();
+                        tableRows[tableRowId] = tableRowStruct;
+                    }
+
+                    let tableColName = repeatingAttributeNameMatch.groups.colName;
+                    
+                    let tableColStruct =
+                    {
+                        toScalar: function()
+                        {
+                            return context.getattr(nameOrId, repeatingAttributeName);
+                        },
+
+                        $getProperty: function(key)
+                        {
+                            return (key == "attribute"
+                                ? repeatingAttributeName
+                                : context.getprop(context.getattr(nameOrId, repeatingAttributeName), key));
+                        },
+
+                        $getPropertyItems: function()
+                        {
+                            return [
+                                new MychExpressionStructItems("attribute", () => this.$getProperty("attribute"), true),
+                                ...context.getprops(context.getattr(nameOrId, repeatingAttributeName))];
+                        },
+                    };
+
+                    tableRowStruct.$setProperty(tableColName, tableColStruct);
+                }
+            }
+
+            for (let tableName of repeatingStruct.$getPropertyKeys())
+            {
+                let tableRows = repeatingStruct.$getProperty(tableName);
+                repeatingStruct.$setProperty(tableName, Object.values(tableRows));
+            }
+
+            return repeatingStruct;
+        }
+        else
+        {
+            let attributeStruct =
+            {
+                toScalar: function()
+                {
+                    return context.getattr(nameOrId, attributeName);
+                },
+
+                $getProperty: function(key)
+                {
+                    return (key == "max"
+                        ? context.getattrmax(nameOrId, attributeName)
+                        : context.getprop(context.getattr(nameOrId, attributeName), key));
+                },
+
+                $getPropertyItems: function()
+                {
+                    return [
+                        new MychExpressionStructItem("max", () => this.$getProperty("max"), true),
+                        ...context.getprops(context.getattr(nameOrId, attributeName))];
+                },
+            };
+
+            return attributeStruct;
+        }
+    }
+
+    getprops(nameOrId)
+    {
+        let attributeNames = this.$getAttributeNames(MychExpression.coerceString(nameOrId));
+
+        if (attributeNames.some(attributeName => attributeName.startsWith("repeating_")))
+        {
+            attributeNames = attributeNames.filter(attributeName => !attributeName.startsWith("repeating_"));
+            attributeNames.push("repeating");
+        }
+
+        let attributeItems = attributeNames.map(attributeName => new MychExpressionStructItem(attributeName, () => this.getprop(nameOrId, attributeName), true));
+
+        return attributeItems;
     }
 
     distunits()
@@ -1644,6 +1780,53 @@ class MychScriptContext extends MychProperties
         }
 
         return [character, token];
+    }
+
+    $getAttributeNames(nameOrId)
+    {
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+
+        if (!character && !token)
+        {
+            return [];
+        }
+
+        let attributeNames =
+        [
+            "permission",
+            "name",
+            "character_name",
+            "token_name",
+            "character_id",
+            "token_id",
+            "bar1",
+            "bar2",
+            "bar3",
+            "left",
+            "top",
+            "width",
+            "height",
+            "rotation",
+        ];
+
+        if (token)
+        {
+            let markers = token.get("statusmarkers");
+
+            if (markers && markers.length > 0)
+            {
+                let markerNames = markers.split(/,/u).map(marker => marker.replace(/@\d+$/u, ""));
+                attributeNames.push(...markerNames.map(markerName => "status_" + markerName.replace(/-/u, "_")));
+            }
+        }
+
+        if (this.$canControl(character))
+        {
+            let attributeObjs = findObjs({ type: "attribute", characterid: character.id });
+            attributeNames.push(...attributeObjs.map(attributeObj => attributeObj.get("name")));
+        }
+
+        return attributeNames;
     }
 
     $getAttribute(nameOrId, attributeName, max = false)
@@ -3549,114 +3732,236 @@ class MychTemplate
         this.context = context;
         this.segments = [];
 
-        let segmentRegExp = MychTemplate.createSegmentRegExp(context);
-        let segmentMatch;
+        let template = this;
 
-        let segmentOffset = 0;
-
-        while (segmentMatch = segmentRegExp.exec(source))
+        function pushSegment(segment)
         {
-            if (segmentOffset < segmentMatch.index)
+            if (template.segments.length == 0 || segment.type != "literal")
             {
-                let stringValue = source.substring(segmentOffset, segmentMatch.index);
-                
-                let stringSegment =
-                {
-                    type: "string",
-                    value: stringValue,
-                    source: stringValue,
-                };
-
-                this.segments.push(stringSegment);
+                template.segments.push(segment);
             }
-
-            if (segmentMatch.groups.context)
+            else
             {
-                let contextKey = segmentMatch.groups.context;
-                let contextValue = context[contextKey];
+                let prevSegment = template.segments[template.segments.length - 1];
 
-                let contextSegment =
+                if (prevSegment.type == "literal")
                 {
-                    type: "context",
-                    value: contextValue,
-                    source: segmentMatch[0],
-                };
-
-                this.segments.push(contextSegment);
-            }
-            else if (segmentMatch.groups.escape)
-            {
-                let string = segmentMatch.groups.escape;
-
-                let stringSegment =
-                {
-                    type: "string",
-                    value: string,
-                    source: segmentMatch[0],
-                };
-
-                this.segments.push(stringSegment);
-            }
-            else if (segmentMatch.groups.expression)
-            {
-                let expressionLabel = segmentMatch.groups.label;
-                let expressionOffset = segmentMatch.index + "$".length + (segmentMatch.groups.labelToken ? segmentMatch.groups.labelToken.length : 0) + "{".length;
-
-                try
-                {
-                    let expression = new MychExpression(segmentMatch.groups.expression, context);
-
-                    let expressionSegment =
-                    {
-                        type: "expression",
-                        offset: expressionOffset,
-                        expression: expression,
-                        label: expressionLabel,
-                        source: segmentMatch[0],
-                    };
-
-                    if (expressionLabel)
-                    {
-                        this.expressionSegments[expressionLabel] = expressionSegment;
-                    }
-
-                    this.segments.push(expressionSegment);
+                    prevSegment.value += segment.value;
+                    prevSegment.source += segment.source;
                 }
-                catch (exception)
+                else
                 {
-                    this.rethrowExpressionError("parse", exception, expressionOffset);
+                    template.segments.push(segment);
                 }
             }
-            else if (segmentMatch.groups.label)
-            {
-                let referenceLabel = segmentMatch.groups.label;
-                
-                let referenceSegment =
-                {
-                    type: "reference",
-                    label: referenceLabel,
-                    source: segmentMatch[0],
-                };
-                
-                this.segments.push(referenceSegment);
-            }
-
-            segmentOffset = segmentMatch.index + segmentMatch[0].length;
         }
 
-        if (segmentOffset < source.length)
-        {
-            let stringValue = source.substring(segmentOffset);
+        let sourceOffset = 0;
 
-            let stringSegment =
+        let leaderRegExp = /(?<leader>[\\$])(?=.)/gu;
+        let leaderMatch;
+
+        while (leaderMatch = leaderRegExp.exec(source))
+        {
+            if (sourceOffset < leaderMatch.index)
             {
-                type: "string",
-                value: stringValue,
-                source: stringValue,
+                let literalValue = source.substring(sourceOffset, leaderMatch.index);
+                
+                let literalSegment =
+                {
+                    type: "literal",
+                    value: literalValue,
+                    source: literalValue,
+                };
+
+                pushSegment(literalSegment);
+            }
+
+            sourceOffset = leaderMatch.index + leaderMatch[0].length;
+
+            switch (leaderMatch.groups.leader)
+            {
+                case "\\":
+                {
+                    let literalValue = source[sourceOffset];
+
+                    sourceOffset += 1;
+
+                    let literalSegment =
+                    {
+                        type: "literal",
+                        value: literalValue,
+                        source: leaderMatch[0] + literalValue,
+                    };
+        
+                    pushSegment(literalSegment);
+                }
+                break;
+
+                case "$":
+                {
+                    let contextRegExp = /\[\[(?<identifier>\w+)\]\]/yu;
+                    let contextMatch;
+
+                    contextRegExp.lastIndex = sourceOffset;
+
+                    if (contextMatch = contextRegExp.exec(source))
+                    {
+                        sourceOffset += contextMatch[0].length;
+
+                        let contextKey = "$[[" + contextMatch.groups.identifier + "]]";
+                        let contextValue = context[contextKey];
+        
+                        let contextSegment =
+                        {
+                            type: "context",
+                            value: contextValue,
+                            source: leaderMatch[0] + contextMatch[0],
+                        };
+
+                        pushSegment(contextSegment);
+                    }
+                    else
+                    {
+                        let labelRegExp = /\[(?<label>\w+)\]/yu;
+                        let labelMatch;
+
+                        labelRegExp.lastIndex = sourceOffset;
+
+                        let label;
+
+                        if (labelMatch = labelRegExp.exec(source))
+                        {
+                            sourceOffset += labelMatch[0].length;
+
+                            label = labelMatch.groups.label;
+                        }
+
+                        let expressionOffset;
+                        let expressionOffsetEnd;
+
+                        if (source[sourceOffset] == "{")
+                        {
+                            expressionOffset = sourceOffset + 1;
+
+                            let tokenRegExp = /(?<openingBrace>\{)|(?<closingBrace>\})|"(\\.|[^\\"])*"?|'(\\.|[^\\'])*'?/gu;
+                            let tokenMatch;
+
+                            tokenRegExp.lastIndex = expressionOffset;
+
+                            let numOpenBraces = 0;
+
+                            while (tokenMatch = tokenRegExp.exec(source))
+                            {
+                                if (tokenMatch.groups.openingBrace)
+                                {
+                                    numOpenBraces += 1;
+                                }
+                                else if (tokenMatch.groups.closingBrace)
+                                {
+                                    if (numOpenBraces == 0)
+                                    {
+                                        expressionOffsetEnd = tokenMatch.index;
+                                        break;
+                                    }
+
+                                    numOpenBraces -= 1;
+                                }
+                            }
+
+                            if (expressionOffsetEnd == undefined)
+                            {
+                                throw new MychTemplateError("parse", "runaway expression", source, expressionOffset);
+                            }
+
+                            sourceOffset = expressionOffsetEnd + 1;
+                        }
+
+                        if (expressionOffset != undefined)
+                        {
+                            try
+                            {
+                                let expressionSource = source.substring(expressionOffset, expressionOffsetEnd);
+                                let expression = new MychExpression(expressionSource, context);
+
+                                if (label == undefined)
+                                {
+                                    let expressionSegment =
+                                    {
+                                        type: "expression",
+                                        expressionOffset: expressionOffset,
+                                        expression: expression,
+                                        source: "${" + expressionSource + "}",
+                                    };
+
+                                    pushSegment(expressionSegment);
+                                }
+                                else
+                                {
+                                    let expressionSegment =
+                                    {
+                                        type: "expression",
+                                        label: label,
+                                        expressionOffset: expressionOffset,
+                                        expression: expression,
+                                        source: "$[" + label + "]{" + expressionSource + "}",
+                                    };
+
+                                    this.expressionSegments[label] = expressionSegment;
+                                    
+                                    pushSegment(expressionSegment);
+                                }
+                            }
+                            catch (exception)
+                            {
+                                this.rethrowExpressionError("parse", exception, expressionOffset);
+                            }
+                        }
+                        else if (label != undefined)
+                        {
+                            let referenceSegment =
+                            {
+                                type: "reference",
+                                label: label,
+                                source: "$[" + label + "]",
+                            }
+
+                            pushSegment(referenceSegment);
+                        }
+                        else
+                        {
+                            let literalSegment =
+                            {
+                                type: "literal",
+                                value: leaderMatch[0],
+                                source: leaderMatch[0],
+                            };
+                
+                            pushSegment(literalSegment);
+                        }
+                    }
+                }
+                break;
+            }
+
+            leaderRegExp.lastIndex = sourceOffset;
+        }
+
+        if (sourceOffset < source.length)
+        {
+            let literalValue = source.substring(sourceOffset);
+
+            let literalSegment =
+            {
+                type: "literal",
+                value: literalValue,
+                source: literalValue,
             };
 
-            this.segments.push(stringSegment);
+            pushSegment(literalSegment);
         }
+
+        console.log("segments", this.segments);
     }
 
     getSourceWithReferences()
@@ -3682,10 +3987,10 @@ class MychTemplate
         {
             switch (segment.type)
             {
-                case "string":
+                case "literal":
                 {
-                    let evaluatedString = segment.value;
-                    evaluatedSegments.push(evaluatedString);
+                    let evaluatedLiteral = segment.value;
+                    evaluatedSegments.push(evaluatedLiteral);
                 }
                 break;
 
@@ -3705,7 +4010,7 @@ class MychTemplate
                     }
                     catch (exception)
                     {
-                        this.rethrowExpressionError("evaluate", exception, segment.offset);
+                        this.rethrowExpressionError("evaluate", exception, segment.expressionOffset);
                     }
                 }
                 break;
@@ -3757,13 +4062,13 @@ class MychTemplate
         {
             switch (segment.type)
             {
-                case "string":
+                case "literal":
                 {
                     let materializedString = segment.value;
 
                     let materializedStringSegment =
                     {
-                        type: "string",
+                        type: "literal",
                         value: materializedString,
                         source: materializedString,
                     };
@@ -3787,7 +4092,7 @@ class MychTemplate
 
                         let materializedExpressionSegment =
                         {
-                            type: "string",
+                            type: "literal",
                             value: materializedExpressionString,
                             source: materializedExpressionString,
                         };
@@ -3796,7 +4101,7 @@ class MychTemplate
                     }
                     catch (exception)
                     {
-                        this.rethrowExpressionError("materialize", exception, segment.offset);
+                        this.rethrowExpressionError("materialize", exception, segment.expressionOffset);
                     }
                 }
                 break;
@@ -3833,6 +4138,121 @@ class MychExpressionError
 class MychExpressionArgs extends Array
 {
     // marker subclass for comma-separated argument lists in expressions
+}
+
+class MychExpressionStruct
+{
+    constructor()
+    {
+        this.properties = {};
+    }
+
+    $hasProperty(key)
+    {
+        return this.properties.hasOwnProperty(key);
+    }
+
+    $getProperty(key)
+    {
+        return this.$hasProperty(key) ? this.properties[key] : undefined;
+    }
+
+    $setProperty(key, value)
+    {
+        this.properties[key] = value;
+    }
+
+    $getPropertyKeys()
+    {
+        let sortedKeys = Object.keys(this.properties);
+        sortedKeys.sort();
+
+        return sortedKeys;
+    }
+
+    $getPropertyItems()
+    {
+        return this.$getPropertyKeys().map(key => new MychExpressionStructItem(key, this.$getProperty(key)));
+    }
+
+    toNumber()
+    {
+        return Object.keys(this.properties).length;
+    }
+
+    toBoolean()
+    {
+        return Object.keys(this.properties).length != 0;
+    }
+
+    toString()
+    {
+        return this.$getPropertyItems().map(MychExpression.coerceString).join(", ");
+    }
+
+    toMarkup()
+    {
+        return this.$getPropertyItems().map(MychExpression.coerceMarkup).join(", ");
+    }
+
+    toLiteral()
+    {
+        return "{" + this.$getPropertyItems().map(MychExpression.literal).join(", ") + "}";
+    }
+}
+
+class MychExpressionStructItem
+{
+    constructor(key, value, dynamic = false)
+    {
+        this.key = key;
+        this.getValue = dynamic ? value : (() => value);
+    }
+
+    $getProperty(key)
+    {
+        if (key == "key")
+        {
+            return this.key;
+        }
+
+        if (key == "value")
+        {
+            return this.getValue();
+        }
+
+        return undefined;
+    }
+
+    toNumber()
+    {
+        return MychExpression.coerceNumber(this.getValue());
+    }
+
+    toBoolean()
+    {
+        return MychExpression.coerceBoolean(this.getValue());
+    }
+
+    toString()
+    {
+        return MychExpression.coerceString(this.key) + ": " +
+               MychExpression.coerceString(this.getValue());
+    }
+
+    toMarkup()
+    {
+        return MychExpression.coerceMarkup(this.key) + ": " +
+               MychExpression.coerceMarkup(this.getValue());
+    }
+
+    toLiteral()
+    {
+        let keyAsString = MychExpression.coerceString(this.key);
+        let keyAsLiteral = /^[\p{L}_][\p{L}\p{N}_]*$/u.test(keyAsString) ? keyAsString : MychExpression.literal(keyAsString);
+
+        return keyAsLiteral + ": " + MychExpression.literal(this.getValue());
+    }
 }
 
 class MychExpression
@@ -3883,10 +4303,7 @@ class MychExpression
 
     static coerceScalar(value)
     {
-        if (Array.isArray(value))
-        {
-            return value[value.length - 1];
-        }
+        value = MychExpression.coerceListItem(value);
 
         if (value && value.toScalar instanceof Function)
         {
@@ -3941,6 +4358,11 @@ class MychExpression
     {
         value = MychExpression.coerceScalar(value);
 
+        if (value && value.toNumber instanceof Function)
+        {
+            return value.toNumber();
+        }
+
         switch (typeof(value))
         {
             case "number":
@@ -3967,6 +4389,11 @@ class MychExpression
     {
         value = MychExpression.coerceScalar(value);
 
+        if (value && value.toBoolean instanceof Function)
+        {
+            return value.toBoolean();
+        }
+
         switch (typeof(value))
         {
             case "boolean":
@@ -3985,7 +4412,7 @@ class MychExpression
             }
         }
 
-        return 0;
+        return false;
     }
 
     static coerceArgs(value)
@@ -4023,6 +4450,56 @@ class MychExpression
         return [value];
     }
 
+    static coerceListItem(value)
+    {
+        if (Array.isArray(value))
+        {
+            return value[value.length - 1];
+        }
+
+        return value;
+    }
+
+    static coerceStruct(value)
+    {
+        if (value instanceof MychExpressionStruct)
+        {
+            return value;
+        }
+
+        let struct = new MychExpressionStruct();
+
+        for (let valueItem of MychExpression.coerceList(value))
+        {
+            if (valueItem instanceof MychExpressionStruct)
+            {
+                for (let structItem of valueItem.$getPropertyItems())
+                {
+                    struct.$setProperty(structItem.key, structItem.getValue());
+                }
+            }
+            else
+            {
+                let structItem = MychExpression.coerceStructItem(valueItem);
+                struct.$setProperty(structItem.key, structItem.getValue());
+            }
+        }
+
+        return struct;
+    }
+
+    static coerceStructItem(value)
+    {
+        let valueAsScalar = MychExpression.coerceScalar(value);
+
+        if (valueAsScalar instanceof MychExpressionStructItem)
+        {
+            return valueAsScalar;
+        }
+
+        return new MychExpressionStructItem("", value);
+    }
+
     static *mapList(list, mapping = function*(item) {})
     {
         let mappedList = [];
@@ -4049,11 +4526,34 @@ class MychExpression
         return mappedList;
     }
 
+    static normalize(value)
+    {
+        if (value instanceof MychExpressionArgs)
+        {
+            return MychExpression.coerceList(value);
+        }
+
+        return value;
+    }
+
     static literal(value)
     {
+        if (value && value.toLiteral instanceof Function)
+        {
+            return value.toLiteral();
+        }
+
         if (Array.isArray(value))
         {
-            return value.map(MychExpression.literal).join(", ");
+            switch (value.length)
+            {
+                case 0:
+                    return "undef";
+                case 1:
+                    return MychExpression.literal(value[0]);
+                default:
+                    return "(" + value.map(MychExpression.literal).join(", ") + ")";
+            }
         }
 
         if (value instanceof Function)
@@ -4082,6 +4582,32 @@ class MychExpression
 
     static rules =
     {
+        startOfExpression:
+        {
+            description: "start of expression",
+            tokenType: "startOfExpression",
+    
+            processToken: function(token, state, context)
+            {
+                // nothing to do
+            },
+
+            nextRuleNames: new Set(
+            [
+                "unaryOperator",
+                "debugOperator",
+                "literal",
+                "propertyDesignatorKey",
+                "symbolLookup",
+                "anonymousLookup",
+                "openingParenthesis",
+                "structConstructor",
+            ]),
+            closeRuleNames: new Set(
+            [
+                "endOfExpression",
+            ]),
+        },
         unaryOperator:
         {
             description: "unary operator",
@@ -4102,7 +4628,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, unaryOperator, operatorDef.precedence, { isIdempotent: true });
+                state.pushOperator(token, unaryOperator, operatorDef.precedenceDef, { isIdempotent: true });
             },
 
             nextRuleNames: new Set(
@@ -4110,10 +4636,12 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
-            ]), 
+                "structConstructor",
+            ]),
         },
         binaryOperator:
         {
@@ -4161,7 +4689,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, binaryOperator, operatorDef.precedence, { isIdempotent: true });
+                state.pushOperator(token, binaryOperator, operatorDef.precedenceDef, { isIdempotent: true });
             },
 
             nextRuleNames: new Set(
@@ -4169,9 +4697,70 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
+            ]),
+        },
+        propertyDesignatorKey:
+        {
+            description: "property key (followed by a colon)",
+            tokenType: "identifier",
+
+            processToken: function(token, state, context)
+            {
+                function* propertyDesignatorKeyEvaluator(variables)
+                {
+                    return token.value;
+                }
+
+                state.pushEvaluator(token, propertyDesignatorKeyEvaluator, { isConstant: true });
+            },
+
+            nextRuleNames: new Set(
+            [
+                "propertyDesignator",
+            ]),
+        },
+        propertyDesignator:
+        {
+            description: "colon (between property key and its value)",
+            tokenType: "propertyDesignator",
+
+            processToken: function(token, state, context)
+            {
+                function propertyDesignatorOperator(evaluatorKey, evaluatorValue)
+                {
+                    return function* propertyDesignationEvaluator(variables)
+                    {
+                        let valueKey = yield* evaluatorKey(variables);
+                        let value = MychExpression.normalize(yield* evaluatorValue(variables));
+
+                        return new MychExpressionStructItem(valueKey, value);
+                    }
+                }
+
+                let precedenceDef =
+                {
+                    left: -1,
+                    right: MychExpression.binaryOperatorDefs[","].precedence - 1,
+                };
+
+                state.pushOperator(token, propertyDesignatorOperator, precedenceDef, { isIdempotent: true });
+            },
+
+            nextRuleNames: new Set(
+            [
+                "unaryOperator",
+                "debugOperator",
+                "literal",
+                "propertyDesignatorKey",
+                "symbolLookup",
+                "anonymousLookup",
+                "openingParenthesis",
+                "structConstructor",
             ]),
         },
         propertyLookup:
@@ -4185,7 +4774,7 @@ class MychExpression
                 {
                     return function* propertyLookupEvaluator(variables)
                     {
-                        let valueStruct = yield* evaluatorStruct(variables);
+                        let valueStruct = MychExpression.coerceListItem(yield* evaluatorStruct(variables));
                         let valueKey = MychExpression.coerceString(yield* evaluatorKey(variables));
 
                         if (valueStruct && valueStruct.$getProperty instanceof Function)
@@ -4197,28 +4786,28 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, propertyLookupOperator, -1);
+                state.pushOperator(token, propertyLookupOperator, { left: 0, right: -1 });
             },
 
             nextRuleNames: new Set(
             [
-                "propertyName",
-                "propertyExpression",
+                "propertyLookupKey",
+                "propertyLookupExpression",
             ]),
         },
-        propertyName:
+        propertyLookupKey:
         {
-            description: "property name",
+            description: "property key",
             tokenType: "identifier",
 
             processToken: function(token, state, context)
             {
-                function* propertyNameEvaluator(variables)
+                function* propertyLookupNameEvaluator(variables)
                 {
                     return token.value;
                 }
 
-                state.pushEvaluator(token, propertyNameEvaluator, { isConstant: true });
+                state.pushEvaluator(token, propertyLookupNameEvaluator, { isConstant: true });
             },
 
             nextRuleNames: new Set(
@@ -4227,12 +4816,14 @@ class MychExpression
                 "propertyLookup",
                 "call",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
-        propertyExpression:
+        propertyLookupExpression:
         {
             description: "opening parenthesis (for property expression)",
             tokenType: "openingParenthesis",
@@ -4247,9 +4838,11 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4288,16 +4881,20 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, debugOperator, Math.min(debugPrecedence, maxDebugPrecedence));
+                debugPrecedence = Math.min(debugPrecedence, maxDebugPrecedence);
+
+                state.pushOperator(token, debugOperator, { right: debugPrecedence });
             },
 
             nextRuleNames: new Set(
             [
                 "unaryOperator",
                 "literal",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
         },
         symbolLookup:
@@ -4321,15 +4918,17 @@ class MychExpression
                 "propertyLookup",
                 "call",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
         anonymousLookup:
         {
             description: "anonymous variable",
-            tokenType: "anonymousIdentifier",
+            tokenType: "ellipsis",
 
             processToken: function(token, state, context)
             {
@@ -4344,24 +4943,27 @@ class MychExpression
 
             nextRuleNames: new Set(
             [
-                "anonymousPropertyName",
-                "anonymousPropertyExpression",
+                "anonymousPropertyLookupKey",
+                "anonymousPropertyLookupExpression",
+                "propertyDesignator",
                 "binaryOperator",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
-        anonymousPropertyName:
+        anonymousPropertyLookupKey:
         {
-            description: "property name",
+            description: "property key",
             tokenType: "identifier",
 
             processToken: function(token, state, context)
             {
                 state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
-                state.processRule(context, "propertyName", token)
+                state.processRule(context, "propertyLookupKey", token)
             },
 
             nextRuleNames: new Set(
@@ -4370,12 +4972,14 @@ class MychExpression
                 "propertyLookup",
                 "call",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
-        anonymousPropertyExpression:
+        anonymousPropertyLookupExpression:
         {
             description: "opening parenthesis (for property expression)",
             tokenType: "openingParenthesis",
@@ -4383,7 +4987,7 @@ class MychExpression
             processToken: function(token, state, context)
             {
                 state.processRule(context, "propertyLookup", { offset: token.offset, length: 0 });
-                state.processRule(context, "propertyExpression", token)
+                state.processRule(context, "propertyLookupExpression", token)
             },
 
             nextRuleNames: new Set(
@@ -4394,6 +4998,7 @@ class MychExpression
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4418,9 +5023,11 @@ class MychExpression
             nextRuleNames: new Set(
             [
                 "binaryOperator",
+                "propertyDesignator",
                 "propertyLookup",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4435,7 +5042,7 @@ class MychExpression
                 {
                     return function* callEvaluator(variables)
                     {
-                        let func = yield* funcEvaluator(variables);
+                        let func = MychExpression.coerceListItem(yield* funcEvaluator(variables));
                         let args = argsEvaluator ? MychExpression.coerceArgs(yield* argsEvaluator(variables)) : [];
 
                         if (func instanceof Function)
@@ -4448,7 +5055,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, callOperator, -1);
+                state.pushOperator(token, callOperator, { left: -1, right: -1 });
                 state.startGroup(token);
             },
 
@@ -4458,9 +5065,11 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4483,9 +5092,11 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
@@ -4505,10 +5116,13 @@ class MychExpression
             nextRuleNames: new Set(
             [
                 "binaryOperator",
+                "propertyDesignator",
                 "propertyLookup",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4528,8 +5142,10 @@ class MychExpression
                 "binaryOperator",
                 "propertyLookup",
                 "listLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4551,7 +5167,7 @@ class MychExpression
                     }
                 }
 
-                state.pushOperator(token, listLookupOperator, 0, { isIdempotent: true });
+                state.pushOperator(token, listLookupOperator, { left: 0, right: -1 }, { isIdempotent: true });
                 state.startGroup(token);
             },
 
@@ -4560,13 +5176,70 @@ class MychExpression
                 "unaryOperator",
                 "debugOperator",
                 "literal",
+                "propertyDesignatorKey",
                 "symbolLookup",
                 "anonymousLookup",
                 "openingParenthesis",
+                "structConstructor",
             ]),
             closeRuleNames: new Set(
             [
                 "closingBracket",
+            ]),
+        },
+        structDeconstructor:
+        {
+            description: "three dots (to get list of property key-value pairs)",
+            tokenType: "ellipsis",
+
+            processToken: function(token, state, context)
+            {
+                function structDeconstructorOperator(structEvaluator)
+                {
+                    return function* structDeconstructorEvaluator(variables)
+                    {
+                        let structs = MychExpression.coerceList(yield* structEvaluator(variables));
+                        let structItems = [];
+
+                        for (let struct of structs)
+                        {
+                            if (struct instanceof MychExpressionStructItem)
+                            {
+                                structItems.push(struct);
+                            }
+                            else if (struct.$getPropertyItems instanceof Function)
+                            {
+                                structItems.push(...struct.$getPropertyItems());
+                            }
+                            else if (struct.$getPropertyKeys instanceof Function &&
+                                     struct.$getProperty     instanceof Function)
+                            {
+                                structItems.push(...struct.$getPropertyKeys()
+                                    .map(key => new MychExpressionStructItem(key, () => struct.$getProperty(key), true)));
+                            }
+                            else
+                            {
+                                structItems.push(...context.getprops(struct));
+                            }
+                        }
+
+                        return structItems;
+                    }
+                }
+
+                state.pushOperator(token, structDeconstructorOperator, { left: -1 }, { isIdempotent: true });
+            },
+
+            nextRuleNames: new Set(
+            [
+                "binaryOperator",
+                "propertyDesignator",
+                "propertyLookup",
+                "listLookup",
+                "closingParenthesis",
+                "closingBracket",
+                "closingBrace",
+                "endOfExpression",
             ]),
         },
         closingBracket:
@@ -4583,8 +5256,100 @@ class MychExpression
             [
                 "binaryOperator",
                 "propertyLookup",
+                "structDeconstructor",
                 "closingParenthesis",
                 "closingBracket",
+                "closingBrace",
+                "endOfExpression",
+            ]),
+        },
+        structConstructor:
+        {
+            description: "opening brace (for struct definition)",
+            tokenType: "openingBrace",
+
+            processToken: function(token, state, context)
+            {
+                function structConstructorOperator(itemsEvaluator)
+                {
+                    if (itemsEvaluator)
+                    {
+                        return function* structConstructorEvaluator(variables)
+                        {
+                            return MychExpression.coerceStruct(yield* itemsEvaluator(variables));
+                        }
+                    }
+                    else
+                    {
+                        return function* structConstructorEvaluator(variables)
+                        {
+                            return new MychExpressionStruct();
+                        }
+                    }
+                }
+
+                state.pushOperator(token, structConstructorOperator, { right: -1 }, { isIdempotent: true });
+                state.startGroup(token);
+            },
+
+            nextRuleNames: new Set(
+            [
+                "closingBraceEmpty",
+                "unaryOperator",
+                "debugOperator",
+                "literal",
+                "propertyDesignatorKey",
+                "symbolLookup",
+                "anonymousLookup",
+                "openingParenthesis",
+                "structConstructor",
+            ]),
+            closeRuleNames: new Set(
+            [
+                "closingBrace",
+                "closingBraceEmpty",
+            ]),
+        },
+        closingBrace:
+        {
+            description: "closing brace",
+            tokenType: "closingBrace",
+
+            processToken: function(token, state, context)
+            {
+                state.reduceGroup(token);
+            },
+
+            nextRuleNames: new Set(
+            [
+                "binaryOperator",
+                "propertyLookup",
+                "structDeconstructor",
+                "closingParenthesis",
+                "closingBracket",
+                "closingBrace",
+                "endOfExpression",
+            ]),
+        },
+        closingBraceEmpty:
+        {
+            description: "closing brace (for empty struct)",
+            tokenType: "closingBrace",
+
+            processToken: function(token, state, context)
+            {
+                state.pushEvaluator(token, undefined, { isConstant: true });
+                state.reduceGroup(token);
+            },
+
+            nextRuleNames: new Set(
+            [
+                "binaryOperator",
+                "propertyLookup",
+                "structDeconstructor",
+                "closingParenthesis",
+                "closingBracket",
+                "closingBrace",
                 "endOfExpression",
             ]),
         },
@@ -4819,30 +5584,38 @@ class MychExpression
         ...Object.values(MychExpression.unaryOperatorDefs).map(operatorDef => operatorDef.precedence),
         ...Object.values(MychExpression.binaryOperatorDefs).map(operatorDef => operatorDef.precedence));
 
-    static createPrecedenceIsRightAssociative()
+    static createOperatorPrecedenceDefs()
     {
-        let precedenceIsRightAssociative = [];
-
-        for (let operatorDef of Object.values(MychExpression.binaryOperatorDefs))
+        for (let unaryOperatorDef of Object.values(MychExpression.unaryOperatorDefs))
         {
-            let operatorPrecedence = operatorDef.precedence;
-            let operatorIsRightAssociative = !!operatorDef.rightAssociative;
-
-            if (precedenceIsRightAssociative[operatorPrecedence] == undefined)
+            unaryOperatorDef.precedenceDef =
             {
-                precedenceIsRightAssociative[operatorPrecedence] = operatorIsRightAssociative;
-            }
-            else if (precedenceIsRightAssociative[operatorPrecedence] != operatorIsRightAssociative)
-            {
-                // associativity must be consistent on each precedence level to avoid ambiguities
-                throw "MychExpression internal error: inconsistent associativity for precedence level " + operatorPrecedence;
-            }
+                right: unaryOperatorDef.precedence,
+            };
         }
 
-        return precedenceIsRightAssociative;
+        for (let binaryOperatorDef of Object.values(MychExpression.binaryOperatorDefs))
+        {
+            // operators collapse while deferred precedence <= precedence.left
+            // - if right-associative, stop collapsing at same-precedence deferred operator
+            // - if left-associative, collapse same-precedence deferred operators
+
+            let binaryOperatorLeftPrecedence =
+                (binaryOperatorDef.rightAssociative
+                    ? binaryOperatorDef.precedence - 0.5
+                    : binaryOperatorDef.precedence);
+
+            let binaryOperatorRightPrecedence = binaryOperatorDef.precedence;
+
+            binaryOperatorDef.precedenceDef =
+            {
+                left: binaryOperatorLeftPrecedence,
+                right: binaryOperatorRightPrecedence,
+            };
+        }
     }
 
-    static precedenceIsRightAssociative = MychExpression.createPrecedenceIsRightAssociative();
+    static _ = MychExpression.createOperatorPrecedenceDefs();
 
     static createTokenRegExp()
     {
@@ -4862,10 +5635,10 @@ class MychExpression
             literalStringDouble:    /"([^"\\]|\\.)*"?/u,
             literalStringSingle:    /'([^'\\]|\\.)*'?/u,
 
-            anonymousIdentifier:    /\.\.\./u,
+            ellipsis:               /\.\.\./u,
 
+            propertyDesignator:     /:/u,
             propertyOperator:       /\./u,
-            debugOperator:          /\?{1,3}/u,
 
             identifier:             /(?<![\p{L}\p{N}_])[\p{L}_][\p{L}\p{N}_]*(?![\p{L}\p{N}_])|\$\[\[\w+\]\]/u,
 
@@ -4873,6 +5646,10 @@ class MychExpression
             closingParenthesis:     /\)/u,
             openingBracket:         /\[/u,
             closingBracket:         /\]/u,
+            openingBrace:           /\{/u,
+            closingBrace:           /\}/u,
+
+            debugOperator:          /\?{1,3}/u,
 
             whitespace:             /\s+/u,
             unsupported:            /.+/u,
@@ -4937,31 +5714,25 @@ class MychExpression
             }
         }
 
-        pushOperator(token, operator, precedence, attributes = {})
+        pushOperator(token, operator, precedenceDef, attributes = {})
         {
-            if (operator.length > 1)
+            if (precedenceDef.left != undefined)
             {
-                // keep same-precedence operators if precedence level is right-associative
-                let stopPrecedence = MychExpression.precedenceIsRightAssociative[precedence] ? precedence : precedence + 0.5;
-
-                let operatorEntry;
-                let operatorEvaluator;
-
                 while (this.operatorStack.length > 0)
                 {
-                    operatorEntry = this.operatorStack.pop();
+                    let operatorEntry = this.operatorStack.pop();
 
-                    if (!operatorEntry.operator || operatorEntry.precedence >= stopPrecedence)
+                    if (!operatorEntry.operator || operatorEntry.precedence > precedenceDef.left)
                     {
                         this.operatorStack.push(operatorEntry);
                         break;
                     }
 
-                    operatorEvaluator = this.evaluateOperator(operatorEntry);
+                    this.evaluateOperator(operatorEntry);
                 }
             }
 
-            this.operatorStack.push({ precedence: precedence, operator: operator, sourceOffset: token.offset, sourceLength: token.length, ...attributes });
+            this.operatorStack.push({ precedence: precedenceDef.right, operator: operator, sourceOffset: token.offset, sourceLength: token.length, ...attributes });
         }
 
         evaluateOperator(operatorEntry)
@@ -5001,7 +5772,7 @@ class MychExpression
 
         this.source = source;
         this.context = context;
-        this.tokens = [];
+        this.tokens = [{ type: "startOfExpression", source: source, offset: 0, length: 0 }];
 
         let tokenMatch;
 
@@ -5076,60 +5847,125 @@ class MychExpression
 
         this.tokens.push({ type: "endOfExpression", source: source, offset: source.length, length: 0 });
 
-        let expectedNextRuleNames = MychExpression.rules.unaryOperator.nextRuleNames;
-        let expectedCloseRuleNamesStack = [ new Set([ "endOfExpression" ]) ];
+        let errorTokenIndex = 0;
+        let errorExpectedRuleNames;
+        let errorExpectedCloseRuleNames;
 
-        function expectedRuleName(ruleName)
         {
-            return expectedNextRuleNames.has(ruleName) && (!MychExpression.closeRuleNames.has(ruleName) || expectedCloseRuleNamesStack[0].has(ruleName));
+            let token = this.tokens[0];
+
+            token.ruleName = MychExpression.ruleNamesByTokenType[token.type][0];
+            token.rule = MychExpression.rules[token.ruleName];
+            token.prevCloseTokenIndex = undefined;
+        
+            errorExpectedRuleNames = [token.rule.nextRuleNames];
+            errorExpectedCloseRuleNames = [token.rule.closeRuleNames];
         }
 
-        for (let token of this.tokens)
+        let tokenIndex = 1;
+
+        while (tokenIndex < this.tokens.length)
         {
-            token.ruleName = MychExpression.ruleNamesByTokenType[token.type].find(expectedRuleName);
+            let token = this.tokens[tokenIndex];
 
-            if (!token.ruleName)
+            let prevTokenIndex = tokenIndex - 1;
+            let prevToken = this.tokens[prevTokenIndex];
+
+            let closeTokenIndex = (prevToken.rule.closeRuleNames
+                ? prevTokenIndex
+                : prevToken.prevCloseTokenIndex);
+
+            let closeToken = this.tokens[closeTokenIndex];
+
+            let expectedRuleNames = prevToken.rule.nextRuleNames;
+            let expectedCloseRuleNames = closeToken.rule.closeRuleNames;
+
+            if (token.pendingRuleNames == undefined)
             {
-                let expectedRuleDescriptions = [...expectedNextRuleNames].filter(expectedRuleName).map(ruleName => MychExpression.rules[ruleName].description);  
-                throw new MychExpressionError("parse", "expected " + expectedRuleDescriptions.join(", or "), source, token.offset);
+                function isExpectedRuleName(ruleName)
+                {
+                    if (!expectedRuleNames.has(ruleName))
+                    {
+                        return false;
+                    }
+
+                    if (MychExpression.closeRuleNames.has(ruleName))
+                    {
+                        return expectedCloseRuleNames.has(ruleName);
+                    }
+
+                    return true;
+                }
+
+                token.pendingRuleNames = MychExpression.ruleNamesByTokenType[token.type].filter(isExpectedRuleName);
             }
 
-            if (MychExpression.closeRuleNames.has(token.ruleName))
+            if (token.pendingRuleNames.length > 0)
             {
-                expectedCloseRuleNamesStack.shift();
+                token.ruleName = token.pendingRuleNames.shift();
+                token.rule = MychExpression.rules[token.ruleName];
+
+                if (expectedCloseRuleNames.has(token.ruleName))
+                {
+                    token.prevCloseTokenIndex = closeToken.prevCloseTokenIndex;
+                }
+                else if (prevToken.rule.closeRuleNames)
+                {
+                    token.prevCloseTokenIndex = prevTokenIndex;
+                }
+                else
+                {
+                    token.prevCloseTokenIndex = prevToken.prevCloseTokenIndex;
+                }
+
+                tokenIndex += 1;
+
+                if (token.ruleName != "endOfExpression")
+                {
+                    let nextExpectedRuleNames = token.rule.nextRuleNames;
+                    let nextExpectedCloseRuleNames = token.rule.closeRuleNames || this.tokens[token.prevCloseTokenIndex].rule.closeRuleNames;
+
+                    if (tokenIndex > errorTokenIndex)
+                    {
+                        errorTokenIndex = tokenIndex;
+                        errorExpectedRuleNames = [nextExpectedRuleNames];
+                        errorExpectedCloseRuleNames = [nextExpectedCloseRuleNames];
+                    }
+                    else if (tokenIndex == errorTokenIndex)
+                    {
+                        errorExpectedRuleNames.push(nextExpectedRuleNames);
+                        errorExpectedCloseRuleNames.push(nextExpectedCloseRuleNames);
+                    }
+                }
             }
-
-            let rule = MychExpression.rules[token.ruleName];
-
-            if (!rule)
+            else
             {
-                let extraneousRuleDescription = MychExpression.rules[token.ruleName].description;
-                throw new MychExpressionError("parse", "extraneous " + extraneousRuleDescription, source, token.offset);
+                delete token.pendingRuleNames;
+
+                tokenIndex -= 1;
+
+                if (tokenIndex == 0)
+                {
+                    errorExpectedRuleNames = new Set(errorExpectedRuleNames.flatMap(set => [...set]));
+                    errorExpectedCloseRuleNames = new Set(errorExpectedCloseRuleNames.flatMap(set => [...set]));
+
+                    errorExpectedRuleNames = [...errorExpectedRuleNames].filter(ruleName => !MychExpression.closeRuleNames.has(ruleName) || errorExpectedCloseRuleNames.has(ruleName));
+
+                    let errorToken = this.tokens[errorTokenIndex];
+                    let errorPendingRuleNameDescriptions = errorExpectedRuleNames.map(ruleName => MychExpression.rules[ruleName].description);
+
+                    throw new MychExpressionError("parse", "expected " + errorPendingRuleNameDescriptions.join(", or "), source, errorToken.offset);
+                }
             }
-
-            if (rule.closeRuleNames)
-            {
-                expectedCloseRuleNamesStack.unshift(rule.closeRuleNames);
-            }
-
-            expectedNextRuleNames = rule.nextRuleNames;
-        }
-
-        if (expectedCloseRuleNamesStack.length > 0)
-        {
-            console.log("stack of expected close rules not empty:", expectedCloseRuleNamesStack);
-            throw "MychExpression internal error: stack of expected close rules not empty";
         }
 
         let state = new MychExpression.ParseState();
 
         for (let token of this.tokens)
         {
-            let rule = MychExpression.rules[token.ruleName];
-
             try
             {
-                rule.processToken(token, state, context);
+                token.rule.processToken(token, state, context);
             }
             catch (exception)
             {
@@ -5171,12 +6007,7 @@ class MychExpression
             throw "MychExpression internal error: constant expression yields value prior to return";
         }
 
-        if (resultContainer.value instanceof MychExpressionArgs)
-        {
-            return MychExpression.coerceList(resultContainer.value);
-        }
-
-        return resultContainer.value;
+        return MychExpression.normalize(resultContainer.value);
     }
 
     *evaluate(variables)
@@ -5186,13 +6017,6 @@ class MychExpression
             throw new MychExpressionError("evaluate", "no expression parsed prior to evaluation", "", 0);
         }
 
-        let result = yield* this.evaluator(variables);
-
-        if (result instanceof MychExpressionArgs)
-        {
-            return MychExpression.coerceList(result);
-        }
-
-        return result;
+        return MychExpression.normalize(yield* this.evaluator(variables));
     }
 }

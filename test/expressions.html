@@ -33,6 +33,10 @@
             white-space: pre-wrap;
         }
 
+        #results-container {
+            margin-bottom: 8pt;
+        }
+
         div.results-success {
             padding: 0.5em 1em;
             border: 1px solid gray;
@@ -51,6 +55,19 @@
             font-size: 12pt;
             color: red;
             background: #FFC0C0;
+        }
+
+        div.results-failure a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        div.results-failure a:hover {
+            text-decoration: underline;
+        }
+
+        div.results-failure button {
+            margin-top: 5pt;
         }
 
         table {
@@ -98,6 +115,12 @@
             border-top: 1px solid #E8E8E8;
         }
 
+        tr.token td.group {
+            width: 5em;
+            font-family: Calibri, sans-serif;
+            border-top: 1px solid #E8E8E8;
+        }
+
         tr.token td.evaluation {
             padding-right: 1.5em;
             font-family: Calibri, sans-serif;
@@ -140,6 +163,8 @@
     </style>
 </head>
 <body>
+    <div id="results-container"></div>
+
     <script>
         let includedExpressionSources = [];
 
@@ -163,7 +188,8 @@
             ],
             [
                 "1 + .prop",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ❌.prop" }            ],
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + ❌.prop" }
+            ],
             [
                 "strlen('ookook')",
                 { result: "6" },
@@ -182,15 +208,15 @@
             ],
             [
                 "1 + ()",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + (❌)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + (❌)" },
             ],
             [
                 "1 * ()",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 * (❌)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 * (❌)" },
             ],
             [
                 "3 * (() + 2)",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 3 * ((❌) + 2)" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 3 * ((❌) + 2)" },
             ],
             [
                 "2 ** 8",
@@ -202,11 +228,11 @@
             ],
             [
                 "list12, list345",
-                { result: "1, 2, 3, 4, 5" },
+                { result: "(1, 2, 3, 4, 5)" },
             ],
             [
                 "list12[]",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: list12[❌]" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: list12[❌]" },
             ],
             [
                 "list12[0] + list345[1 + 1]",
@@ -214,11 +240,11 @@
             ],
             [
                 "list12[0][1]",
-                { error: "During parse, expected binary operator, or property lookup, or end of expression in expression: list12[0]❌[1]" },
+                { error: "During parse, expected binary operator, or property lookup, or three dots (to get list of property key-value pairs), or end of expression in expression: list12[0]❌[1]" },
             ],
             [
                 "list12[0)",
-                { error: "During parse, expected binary operator, or property lookup, or closing bracket in expression: list12[0❌)" },
+                { error: "During parse, expected binary operator, or colon (between property key and its value), or property lookup, or closing bracket in expression: list12[0❌)" },
             ],
             [
                 "(11, 22, 33)[2]",
@@ -226,19 +252,19 @@
             ],
             [
                 "list345 select ... + 1",
-                { result: "4, 5, 6" },
+                { result: "(4, 5, 6)" },
             ],
             [
                 "list345 select (..., ...)",
-                { result: "3, 3, 4, 4, 5, 5" },
+                { result: "(3, 3, 4, 4, 5, 5)" },
             ],
             [
                 "list345 select ..., ...",
-                { result: "3, 4, 5, \"anonymous!\"" },
+                { result: "(3, 4, 5, \"anonymous!\")" },
             ],
             [
                 "list345 where ... < 3",
-                { result: "" },
+                { result: "undef" },
             ],
             [
                 "list345 where ... < 4",
@@ -246,31 +272,31 @@
             ],
             [
                 "list345 where ... < 5",
-                { result: "3, 4" },
+                { result: "(3, 4)" },
             ],
             [
                 "list345 where true",
-                { result: "3, 4, 5" },
+                { result: "(3, 4, 5)" },
             ],
             [
                 "(22, 33, 44) where ... % 2 == 0",
-                { result: "22, 44" },
+                { result: "(22, 44)" },
             ],
             [
                 "list345 select ... + 10 where ... < 15",
-                { result: "13, 14" },
+                { result: "(13, 14)" },
             ],
             [
                 "list345 where ... < 5 select ... + 10",
-                { result: "13, 14" },
+                { result: "(13, 14)" },
             ],
             [
                 "args()",
-                { result: "" },
+                { result: "undef" },
             ],
             [
                 "args(())",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: args((❌))" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: args((❌))" },
             ],
             [
                 "args(1)",
@@ -278,15 +304,15 @@
             ],
             [
                 "args(1, 'two', 3, 'four')",
-                { result: "1, \"two\", 3, \"four\"" },
+                { result: "(1, \"two\", 3, \"four\")" },
             ],
             [
                 "args(list12, list345)",
-                { result: "1, 2, 3, 4, 5" },
+                { result: "((1, 2), (3, 4, 5))" },
             ],
             [
                 "args((1, 'two'), (3, 'four'))",
-                { result: "1, \"two\", 3, \"four\"" },
+                { result: "(1, \"two\", 3, \"four\")" },
             ],
             [
                 "argnum()",
@@ -405,6 +431,174 @@
                 { result: "true" },
             ],
             [
+                "foo: 123",
+                { result: "foo: 123" },
+            ],
+            [
+                "foo: 123 + 456",
+                { result: "foo: 579" },
+            ],
+            [
+                "1 + foo: 123 + 456",
+                { result: "580" },
+            ],
+            [
+                "not not foo: 1 == 1",
+                { result: "true" },
+            ],
+            [
+                "not not foo: 1 != 1",
+                { result: "false" },
+            ],
+            [
+                "(foo: 123, bar: 456) select ...key",
+                { result: "(\"foo\", \"bar\")" },
+            ],
+            [
+                "(foo: 123, bar: 456) select ...value",
+                { result: "(123, 456)" },
+            ],
+            [
+                "((foo: true, bar: false) where ...).key",
+                { result: "\"foo\"" },
+            ],
+            [
+                "((foo: true, bar: false) where not ...).key",
+                { result: "\"bar\"" },
+            ],
+            [
+                "(foo: 123).key",
+                { result: "\"foo\"" },
+            ],
+            [
+                "(foo: 123).value",
+                { result: "123" },
+            ],
+            [
+                "(foo: bar: 123).key",
+                { result: "\"foo\"" },
+            ],
+            [
+                "(foo: bar: 123).value",
+                { result: "bar: 123" },
+            ],
+            [
+                "(foo: bar: 123).value.key",
+                { result: "\"bar\"" },
+            ],
+            [
+                "(foo: bar: 123).value.value",
+                { result: "123" },
+            ],
+            [
+                "('f' & 'oo'): 123",
+                { result: "foo: 123" },
+            ],
+            [
+                "'foo': 123",
+                { result: "foo: 123" },
+            ],
+            [
+                "123.0: 456",
+                { result: "\"123\": 456" },
+            ],
+            [
+                "true: 123",
+                { result: "true: 123" },
+            ],
+            [
+                "list12[0]: 123",
+                { error: "During parse, expected binary operator, or property lookup, or three dots (to get list of property key-value pairs), or end of expression in expression: list12[0]❌: 123" },
+            ],
+            [
+                "{}.foo",
+                { result: "undef" },
+            ],
+            [
+                "{foo: 123, bar: 456}",
+                { result: "{bar: 456, foo: 123}" },
+            ],
+            [
+                "{foo: 123, bar: 456}.foo",
+                { result: "123" },
+            ],
+            [
+                "{foo: 123, bar: 456}.bar",
+                { result: "456" },
+            ],
+            [
+                "{foo: 123, bar: 456}.baz",
+                { result: "undef" },
+            ],
+            [
+                "{{foo: 123}, {bar: 456}}",
+                { result: "{bar: 456, foo: 123}" },
+            ],
+            [
+                "{{foo: 123, bar: 456}, foo: 789}",
+                { result: "{bar: 456, foo: 789}" },
+            ],
+            [
+                "{{foo: 123, bar: 456}, 789}",
+                { result: "{\"\": 789, bar: 456, foo: 123}" },
+            ],
+            [
+                "0 + {foo: 123, bar: 456}",
+                { result: "2" },
+            ],
+            [
+                "{foo: 123, bar: 456, baz: 789}...",
+                { result: "(bar: 456, baz: 789, foo: 123)" },
+            ],
+            [
+                "(foo: 123, bar: 456, baz: 789)...",
+                { result: "(foo: 123, bar: 456, baz: 789)" },
+            ],
+            [
+                "({foo: 123, bar: 456}, baz: 789)...",
+                { result: "(bar: 456, foo: 123, baz: 789)" },
+            ],
+            [
+                "{{foo: 123, bar: 456, baz: 789}... where ...value > 234}",
+                { result: "{bar: 456, baz: 789}" },
+            ],
+            [
+                "{{foo: 123, bar: 456, baz: 789}... where ...key ne 'baz'}",
+                { result: "{bar: 456, foo: 123}" },
+            ],
+            [
+                "{('foo', 'bar', 'baz') select (...: ... & '!')}",
+                { result: "{bar: \"bar!\", baz: \"baz!\", foo: \"foo!\"}" }, 
+            ],
+            [
+                "({foo: 123, bar: 456}, {baz: 789}) select ... ...",
+                { result: "(bar: 456, foo: 123, baz: 789)" },
+            ],
+            [
+                "nested.structA",
+                { result: "\"nested/structA\"" },
+            ],
+            [
+                "nested.structA.listB",
+                { result: "(\"nested/structA/listB0\", \"nested/structA/listB1\", \"nested/structA/listB2\")" },
+            ],
+            [
+                "nested.structA.listB[0].valueC",
+                { result: "\"nested/structA/listB0/valueC\"" },
+            ],
+            [
+                "nested.structA.listB[1].valueC",
+                { result: "\"nested/structA/listB1/valueC\"" },
+            ],
+            [
+                "nested.structA...",
+                { result: "(structX: \"nested/structA/structX\", listX: (\"nested/structA/listX0\", \"nested/structA/listX1\", \"nested/structA/listX2\"), valueX: \"nested/structA/valueX\")" },
+            ],
+            [
+                "nested.structA.listB[1]...",
+                { result: "(structX: \"nested/structA/listB1/structX\", listX: (\"nested/structA/listB1/listX0\", \"nested/structA/listB1/listX1\", \"nested/structA/listB1/listX2\"), valueX: \"nested/structA/listB1/valueX\")" },
+            ],
+            [
                 "getattr('Char1', 'HP')",
                 { result: "\"15\"" },
             ],
@@ -512,11 +706,11 @@
             ],
             [
                 "(((1)",
-                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or closing parenthesis in expression: (((1)❌" },
+                { error: "During parse, expected binary operator, or colon (between property key and its value), or property lookup, or opening bracket (for array subscript), or three dots (to get list of property key-value pairs), or closing parenthesis in expression: (((1)❌" },
             ],
             [
                 "(((1))",
-                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or closing parenthesis in expression: (((1))❌" },
+                { error: "During parse, expected binary operator, or colon (between property key and its value), or property lookup, or opening bracket (for array subscript), or three dots (to get list of property key-value pairs), or closing parenthesis in expression: (((1))❌" },
             ],
             [
                 "(((1)))",
@@ -524,15 +718,15 @@
             ],
             [
                 "(((1))))",
-                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or end of expression in expression: (((1)))❌)" },
+                { error: "During parse, expected binary operator, or colon (between property key and its value), or property lookup, or opening bracket (for array subscript), or three dots (to get list of property key-value pairs), or end of expression in expression: (((1)))❌)" },
             ],
             [
                 "(((1)))]",
-                { error: "During parse, expected binary operator, or property lookup, or opening bracket (for array subscript), or end of expression in expression: (((1)))❌]" },
+                { error: "During parse, expected binary operator, or colon (between property key and its value), or property lookup, or opening bracket (for array subscript), or three dots (to get list of property key-value pairs), or end of expression in expression: (((1)))❌]" },
             ],
             [
                 "(3 + (2 + (1) *",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: (3 + (2 + (1) *❌" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: (3 + (2 + (1) *❌" },
             ],
             [
                 "(1 + 2 * 3 + 4 ** 5) - foo / bar + (6 + 7, (8 + 9) * 10 - strlen('foo \\'bar\\' baz \\\\quux'))",
@@ -552,23 +746,23 @@
             ],
             [
                 ") + 123",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: ❌) + 123" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: ❌) + 123" },
             ],
             [
                 "* 456",
-                { error: "During parse, expected unary operator, or debug operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: ❌* 456" },
+                { error: "During parse, expected unary operator, or debug operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: ❌* 456" },
             ],
             [
                 "1 + ?",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ?❌" },
+                { error: "During parse, expected unary operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + ?❌" },
             ],
             [
                 "1 + ? ? 2",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ? ❌? 2" },
+                { error: "During parse, expected unary operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + ? ❌? 2" },
             ],
             [
                 "1 + ???? 2",
-                { error: "During parse, expected unary operator, or literal value, or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping) in expression: 1 + ???❌? 2" },
+                { error: "During parse, expected unary operator, or literal value, or property key (followed by a colon), or variable or function name, or anonymous variable, or opening parenthesis (for expression grouping), or opening brace (for struct definition) in expression: 1 + ???❌? 2" },
             ],
             [
                 "1 + ? 2 * 3 + 4",
@@ -653,17 +847,17 @@
             ],
             [
                 "? default + 123",
-                { debug: "❰undef❱ ← ? ❰default❱ + 123" },
+                { debug: "❰default❱ ← ? ❰default❱ + 123" },
                 { result: "123" },
             ],
             [
                 "? denied + 123",
-                { debug: "❰undef❱ ← ? ❰denied❱ + 123" },
+                { debug: "❰denied❱ ← ? ❰denied❱ + 123" },
                 { result: "123" },
             ],
             [
                 "? unknown + 123",
-                { debug: "❰undef❱ ← ? ❰unknown❱ + 123" },
+                { debug: "❰unknown❱ ← ? ❰unknown❱ + 123" },
                 { result: "123" },
             ],
             [
@@ -884,6 +1078,47 @@
 
         let variables = new MychScriptVariables();
 
+        class RecursiveStruct
+        {
+            constructor(path)
+            {
+                this.path = path;
+            }
+
+            toScalar()
+            {
+                return this.path;
+            }
+
+            $getProperty(key)
+            {
+                let nestedPath = this.path + "/" + key;
+
+                if (key.startsWith("struct"))
+                {
+                    return new RecursiveStruct(nestedPath);
+                }
+
+                if (key.startsWith("list"))
+                {
+                    return [
+                        new RecursiveStruct(nestedPath + "0"),
+                        new RecursiveStruct(nestedPath + "1"),
+                        new RecursiveStruct(nestedPath + "2")];
+                }
+
+                return nestedPath;
+            }
+
+            $getPropertyKeys()
+            {
+                return [
+                    "structX",
+                    "listX",
+                    "valueX"];
+            }
+        }
+
         Object.assign(variables,
         {
             foo: 123,
@@ -902,6 +1137,8 @@
                 propB: "B!",
                 propC: "C!",
             },
+
+            nested: new RecursiveStruct("nested"),
         });
 
         function getResultRepresentation(context, result)
@@ -921,11 +1158,6 @@
             {
                 let reason = context.getreason(result);
                 return reason ? ("[denied: " + reason + "]") : "[denied]";
-            }
-
-            if (result && result.toScalar instanceof Function)
-            {
-                return getResultRepresentation(context, result.toScalar());
             }
 
             return MychExpression.literal(result);
@@ -949,13 +1181,13 @@
             let expressionSource = expressionSources[expressionSourceIndex][0];
             let expectedOutputs = expressionSources[expressionSourceIndex].slice(1);
             
-            document.write("<div class='expression'>");
+            document.write("<div class='expression' id='expression-" + expressionSourceIndex + "'>");
             document.write("<table>");
-            document.write("<tr><td></td><td class='expression-header' colspan='4'>test expression " + expressionSourceIndex + "</td></tr>");
+            document.write("<tr><td></td><td class='expression-header' colspan='5'>test expression " + expressionSourceIndex + "</td></tr>");
 
             document.write("<tr>");
             document.write("<td class='lineno'>source</td>")
-            document.write("<td colspan='4'>" + escapeHTML(expressionSource) + "</td>");
+            document.write("<td colspan='5'>" + escapeHTML(expressionSource) + "</td>");
             document.write("</tr>");
 
             let expression = new MychExpression();
@@ -984,11 +1216,15 @@
 
                 if (expression.isConstant())
                 {
+                    let variableResult = resultContainer.value;
                     let constantResult = expression.evaluateConstant();
 
-                    if (resultContainer.value !== constantResult)
+                    let variableResultRepresentation = getResultRepresentation(expression.context, variableResult);
+                    let constantResultRepresentation = getResultRepresentation(expression.context, constantResult);
+
+                    if (variableResultRepresentation != constantResultRepresentation)
                     {
-                        console.log("result:", resultContainer.value, "constant:", constantResult);
+                        console.log("result:", variableResult, "constant:", constantResult);
                         throw "Constant result not equal to variable result";
                     }
                 }
@@ -1026,7 +1262,7 @@
                 {
                     document.write("<tr class='ok'>");
                     document.write("<td class='lineno'>" + receivedOutputType + "</td>")
-                    document.write("<td class='output " + receivedOutputType + "' colspan='4'>" + escapeHTML(receivedOutputText) + "</td>");
+                    document.write("<td class='output " + receivedOutputType + "' colspan='5'>" + escapeHTML(receivedOutputText) + "</td>");
                     document.write("</tr>");
                 }
                 else
@@ -1035,7 +1271,7 @@
 
                     document.write("<tr class='unexpected'>");
                     document.write("<td class='lineno'>" + receivedOutputType + "</td>")
-                    document.write("<td class='output " + receivedOutputType + "' colspan='4'>" + escapeHTML(receivedOutputText) + "</td>");
+                    document.write("<td class='output " + receivedOutputType + "' colspan='5'>" + escapeHTML(receivedOutputText) + "</td>");
                     document.write("</tr>");
 
                     console.log("received:", JSON.stringify({ [receivedOutputType]: receivedOutputText }));
@@ -1044,7 +1280,7 @@
                     {
                         document.write("<tr class='expected'>");
                         document.write("<td class='lineno'>" + expectedOutputType + "</td>")
-                        document.write("<td class='output " + expectedOutputType + "' colspan='4'>" + escapeHTML(expectedOutputText) + "</td>");
+                        document.write("<td class='output " + expectedOutputType + "' colspan='5'>" + escapeHTML(expectedOutputText) + "</td>");
                         document.write("</tr>");
 
                         console.log("expected:", JSON.stringify({ [expectedOutputType]: expectedOutputText }));
@@ -1060,7 +1296,7 @@
 
                 document.write("<tr class='expected'>");
                 document.write("<td class='lineno'>" + expectedOutputType + "</td>")
-                document.write("<td class='output " + expectedOutputType + "' colspan='4'>" + escapeHTML(expectedOutputText) + "</td>");
+                document.write("<td class='output " + expectedOutputType + "' colspan='5'>" + escapeHTML(expectedOutputText) + "</td>");
                 document.write("</tr>");
 
                 console.log("expected:", JSON.stringify({ [expectedOutputType]: expectedOutputText }));
@@ -1129,6 +1365,7 @@
             document.write("<td>token</td>");
             document.write("<td>type</td>");
             document.write("<td>rule</td>");
+            document.write("<td>group</td>");
 
             if (numDependencyLevels == 0)
             {
@@ -1151,6 +1388,7 @@
                 document.write("<td class='token-source'>" + escapeHTML(expression.source.substr(token.offset, token.length)) + "</td>")
                 document.write("<td class='token-type'>" + escapeHTML(token.type) + "</td>")
                 document.write("<td class='rule-name'>" + escapeHTML(token.ruleName || "") + "</td>")
+                document.write("<td class='group'>" + escapeHTML(token.prevCloseTokenIndex != undefined ? token.prevCloseTokenIndex : "") + "</td>")
 
                 let dependencyEntriesForRow = dependencyEntriesPerRow[tokenIndex];
 
@@ -1201,17 +1439,50 @@
             }
         }
 
+        let tests = includedExpressionSources.length ? includedExpressionSources : [...Array(numTestsRun).keys()];
+        let testsFailedAsSet = new Set(testsFailed);
+        let testsSuccessful = tests.filter(index => !testsFailedAsSet.has(index));
+
         if (numTestsSuccessful == numTestsRun)
         {
-            document.write("<div class='results-success'>");
+            document.write("<div id='results' class='results-success'>");
             document.write("Success: Evaluated " + numTestsRun + " test expressions, all successful.");
             document.write("</div>");
         }
         else
         {
-            document.write("<div class='results-failure'>");
-            document.write("Failed: Evaluated " + numTestsRun + " test expressions, " + (numTestsRun - numTestsSuccessful) + " failed (expression index " + testsFailed.join(", ") + ")");
+            document.write("<div id='results' class='results-failure'>");
+            document.write("Failed: Evaluated " + numTestsRun + " test expressions, " + (numTestsRun - numTestsSuccessful) + " failed (expression index " + testsFailed.map(index => "<a href='#expression-" + index + "'>" + index + "</a>").join(", ") + ")");
+            document.write("<br>");
+            document.write("<button id='show-successful-tests-button' onclick='showSuccessfulTests()'>Show all tests</button>");
+            document.write("<button id='hide-successful-tests-button' onclick='hideSuccessfulTests()'>Show only failed tests</button>");
             document.write("</div>");
+
+            hideSuccessfulTests();
+        }
+
+        document.getElementById("results-container").appendChild(document.getElementById("results"));
+
+        function showSuccessfulTests()
+        {
+            for (testSuccessfulIndex of testsSuccessful)
+            {
+                document.getElementById("expression-" + testSuccessfulIndex).style = "display: auto";
+            }
+
+            document.getElementById("show-successful-tests-button").style = "display: none";
+            document.getElementById("hide-successful-tests-button").style = "display: auto";
+        }
+
+        function hideSuccessfulTests()
+        {
+            for (testSuccessfulIndex of testsSuccessful)
+            {
+                document.getElementById("expression-" + testSuccessfulIndex).style = "display: none";
+            }
+
+            document.getElementById("show-successful-tests-button").style = "display: auto";
+            document.getElementById("hide-successful-tests-button").style = "display: none";
         }
     </script>
 </body>
