@@ -3960,8 +3960,6 @@ class MychTemplate
 
             pushSegment(literalSegment);
         }
-
-        console.log("segments", this.segments);
     }
 
     getSourceWithReferences()
