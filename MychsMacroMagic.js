@@ -589,6 +589,11 @@ class MychScriptContext extends MychProperties
         {
             return "default";
         }
+
+        toLiteralWithMarkup()
+        {
+            return this.toMarkup();
+        }
     }
 
     static DiagnosticUndef = class
@@ -624,6 +629,11 @@ class MychScriptContext extends MychProperties
         toLiteral()
         {
             return this.label;
+        }
+
+        toLiteralWithMarkup()
+        {
+            return this.toMarkup();
         }
     }
 
@@ -824,6 +834,11 @@ class MychScriptContext extends MychProperties
             return context.highlight(this, undefined, this.expression ? ("Rolling " + this.expression) : undefined).toMarkup();
         };
 
+        decoratedRoll.toLiteralWithMarkup = function()
+        {
+            return this.toMarkup();
+        }
+
         return decoratedRoll;
     }
 
@@ -955,7 +970,7 @@ class MychScriptContext extends MychProperties
 
     literal(value)
     {
-        return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";")
+        return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";");
     }
 
     highlight(value, type = undefined, tooltip = undefined)
@@ -1321,6 +1336,11 @@ class MychScriptContext extends MychProperties
                 toLiteral: function()
                 {
                     return MychExpression.literal(this.toScalar());
+                },
+
+                toLiteralWithMarkup: function()
+                {
+                    return MychExpression.literalWithMarkup(this.toScalar());
                 },
 
                 $getProperty: function(key)
@@ -2263,30 +2283,29 @@ class MychScriptContext extends MychProperties
         return this.$getAttribute(nameOrId, attributeName, max);
     }
 
-    $debugHighlight(value)
+    $debugHighlight(scalar)
     {
-        let literalValue = this.literal(value);
-
         let highlightStart = "<span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>";
         let highlightStop = "</span>";
 
-        let highlight =
+        let highlightScalar =
         {
-            toScalar: () => literalValue,
-            toMarkup: () => highlightStart + literalValue + highlightStop,
+            toScalar: () => scalar,
+            toMarkup: () => highlightStart + MychExpression.coerceMarkup(scalar) + highlightStop,
         };
 
-        return highlight;
+        return highlightScalar;
     }
 
-    $debugExpression(value)
+    $debugExpression(result)
     {
-        if (value && value.toMarkup instanceof Function)
+        let resultScalar =
         {
-            return value;
-        }
+            toScalar: () => MychExpression.literal(result),
+            toMarkup: () => MychExpression.literalWithMarkup(result),
+        };
 
-        return this.$debugHighlight(MychExpression.literal(value));
+        return this.$debugHighlight(resultScalar);
     }
 
     $debugSendExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
@@ -4272,6 +4291,11 @@ class MychExpressionStruct
     {
         return "{" + this.$getPropertyItems().map(MychExpression.literal).join(", ") + "}";
     }
+
+    toLiteralWithMarkup()
+    {
+        return "{" + this.$getPropertyItems().map(MychExpression.literalWithMarkup).join(", ") + "}";
+    }
 }
 
 class MychExpressionStructItem
@@ -4295,6 +4319,14 @@ class MychExpressionStructItem
         }
 
         return undefined;
+    }
+
+    $getKeyAsLiteral()
+    {
+        let keyAsString = MychExpression.coerceString(this.key);
+        let keyAsLiteral = /^[\p{L}_][\p{L}\p{N}_]*$/u.test(keyAsString) ? keyAsString : MychExpression.literal(keyAsString);
+
+        return keyAsLiteral;
     }
 
     toNumber()
@@ -4321,10 +4353,12 @@ class MychExpressionStructItem
 
     toLiteral()
     {
-        let keyAsString = MychExpression.coerceString(this.key);
-        let keyAsLiteral = /^[\p{L}_][\p{L}\p{N}_]*$/u.test(keyAsString) ? keyAsString : MychExpression.literal(keyAsString);
+        return this.$getKeyAsLiteral() + ": " + MychExpression.literal(this.getValue());
+    }
 
-        return keyAsLiteral + ": " + MychExpression.literal(this.getValue());
+    toLiteralWithMarkup()
+    {
+        return this.$getKeyAsLiteral() + ": " + MychExpression.literalWithMarkup(this.getValue());
     }
 }
 
@@ -4607,6 +4641,32 @@ class MychExpression
         }
 
         return value;
+    }
+
+    static literalWithMarkup(value)
+    {
+        if (value && value.toLiteralWithMarkup instanceof Function)
+        {
+            return value.toLiteralWithMarkup();
+        }
+
+        if (Array.isArray(value))
+        {
+            switch (value.length)
+            {
+                case 0:
+                    return "undef";
+                case 1:
+                    return MychExpression.literalWithMarkup(value[0]);
+                default:
+                    return "(" + value.map(MychExpression.literalWithMarkup).join(", ") + ")";
+            }
+        }
+
+        let literal = MychExpression.literal(value);
+        let literalWithMarkup = literal.replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";");
+    
+        return literalWithMarkup;
     }
 
     static literal(value)
