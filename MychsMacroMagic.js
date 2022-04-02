@@ -2285,7 +2285,7 @@ class MychScriptContext extends MychProperties
 
     $debugHighlight(scalar)
     {
-        let highlightStart = "<span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>";
+        let highlightStart = "<span style='background: #E0E0E0; padding: 0em 0.3em; outline: 2px solid silver; border-radius: 2px; color: black; white-space: pre-wrap'>";
         let highlightStop = "</span>";
 
         let highlightScalar =
