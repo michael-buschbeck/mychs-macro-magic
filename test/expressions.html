@@ -21,7 +21,7 @@
 
         function stripHTML(html)
         {
-            return String(html).replace(/&#(\d+);/g, (_, codePoint) => String.fromCodePoint(parseInt(codePoint)));
+            return String(html).replace(/<[^>]*>/g, "").replace(/&#(\d+);/g, (_, codePoint) => String.fromCodePoint(parseInt(codePoint)));
         }
     </script>
     <style type="text/css">
@@ -1316,6 +1316,21 @@
                     {
                         throw "Serialized result not equal to re-serialized result";
                     }
+                }
+
+                let literalResult = MychExpression.literal(resultContainer.value);
+                let literalResultWithMarkup = MychExpression.literalWithMarkup(resultContainer.value);
+                let literalResultWithMarkupStripped = stripHTML(literalResultWithMarkup);
+
+                if (literalResult != literalResultWithMarkupStripped)
+                {
+                    console.log("literal:", literalResult);
+                    console.log("literal with markup:", literalResultWithMarkup);
+                    console.log("literal with markup stripped:", literalResultWithMarkupStripped);
+
+                    throw "Result literal with markup stripped not equivalent to plain literal: " +
+                        JSON.stringify(literalResultWithMarkupStripped) + " vs " +
+                        JSON.stringify(literalResult);
                 }
             }
             catch (exception)
