@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.27.0";
+const MMM_VERSION = "1.27.1";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -4866,7 +4866,7 @@ class MychExpression
                 }
 
                 let prevOperator = state.operatorStack[state.operatorStack.length - 1];
-                let maxDebugPrecedence = prevOperator ? prevOperator.precedence : MychExpression.maxOperatorPrecedence + 1;
+                let maxDebugPrecedence = prevOperator && prevOperator.operator ? prevOperator.precedence : MychExpression.maxOperatorPrecedence + 1;
 
                 function debugOperator(evaluator)
                 {

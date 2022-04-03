@@ -846,6 +846,21 @@
                 { result: "false" },
             ],
             [
+                "(? 'Char1'.HP < 20)",
+                { debug: "❰\"Char1\"❱ ← (? ❰'Char1'❱.HP < 20)" },
+                { result: "true" },
+            ],
+            [
+                "(?? 'Char1'.HP < 20)",
+                { debug: "❰\"15\"❱ ← (?? ❰'Char1'.HP❱ < 20)" },
+                { result: "true" },
+            ],
+            [
+                "(??? 'Char1'.HP < 20)",
+                { debug: "❰true❱ ← (??? ❰'Char1'.HP < 20❱)" },
+                { result: "true" },
+            ],
+            [
                 "? default + 123",
                 { debug: "❰default❱ ← ? ❰default❱ + 123" },
                 { result: "123" },
