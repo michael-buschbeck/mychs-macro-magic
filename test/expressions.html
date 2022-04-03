@@ -18,6 +18,11 @@
         {
             return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
+
+        function stripHTML(html)
+        {
+            return String(html).replace(/<[^>]*>/g, "").replace(/&#(\d+);/g, (_, codePoint) => String.fromCodePoint(parseInt(codePoint)));
+        }
     </script>
     <style type="text/css">
         body {
@@ -300,19 +305,19 @@
             ],
             [
                 "args(1)",
-                { result: "1" },
+                { result: "arg0: 1" },
             ],
             [
                 "args(1, 'two', 3, 'four')",
-                { result: "(1, \"two\", 3, \"four\")" },
+                { result: "(arg0: 1, arg1: \"two\", arg2: 3, arg3: \"four\")" },
             ],
             [
                 "args(list12, list345)",
-                { result: "((1, 2), (3, 4, 5))" },
+                { result: "(arg0: (1, 2), arg1: (3, 4, 5))" },
             ],
             [
                 "args((1, 'two'), (3, 'four'))",
-                { result: "(1, \"two\", 3, \"four\")" },
+                { result: "(arg0: 1, arg1: \"two\", arg2: 3, arg3: \"four\")" },
             ],
             [
                 "argnum()",
@@ -599,6 +604,50 @@
                 { result: "(structX: \"nested/structA/listB1/structX\", listX: (\"nested/structA/listB1/listX0\", \"nested/structA/listB1/listX1\", \"nested/structA/listB1/listX2\"), valueX: \"nested/structA/listB1/valueX\")" },
             ],
             [
+                "serialize(undef)",
+                { result: "\"undef\"" },
+            ],
+            [
+                "deserialize('undef')",
+                { result: "undef" },
+            ],
+            [
+                "serialize(pi)",
+                { result: "\"3.141592653589793\"" },
+            ],
+            [
+                "deserialize('pi')",
+                { result: "3.141592653589793" },
+            ],
+            [
+                "serialize(abs)",
+                { result: "\"abs\"" },
+            ],
+            [
+                "deserialize('abs')",
+                { result: "abs" },
+            ],
+            [
+                "deserialize('abs(-123)')",
+                { result: "unknown 🗨️ \"invalid non-constant serialized data: abs(-123)\"" },
+            ],
+            [
+                "serialize(not_defined)",
+                { result: "\"undef\"" },
+            ],
+            [
+                "deserialize('not_defined')",
+                { result: "unknown 🗨️ \"invalid non-constant serialized data: not_defined\"" },
+            ],
+            [
+                "deserialize('')",
+                { result: "unknown 🗨️ \"invalid serialized data: ❌\"" },
+            ],
+            [
+                "deserialize('+-*/')",
+                { result: "unknown 🗨️ \"invalid serialized data: +-❌*/\"" },
+            ],
+            [
                 "getattr('Char1', 'HP')",
                 { result: "\"15\"" },
             ],
@@ -608,11 +657,11 @@
             ],
             [
                 "getattr('Char1', 'XX')",
-                { result: "[unknown: Unknown attribute: XX]" },
+                { result: "unknown 🗨️ \"Unknown attribute: XX\"" },
             ],
             [
                 "'Char1'.XX",
-                { result: "[unknown: Unknown attribute: XX]" },
+                { result: "unknown 🗨️ \"Unknown attribute: XX\"" },
             ],
             [
                 "'Char1'.XX & ''",
@@ -658,11 +707,11 @@
             ],
             [
                 "noStruct.someProp",
-                { result: "[unknown: Unknown attribute: someProp]" },
+                { result: "unknown 🗨️ \"Unknown attribute: someProp\"" },
             ],
             [
                 "'literal string'.someProp",
-                { result: "[unknown: Unknown attribute: someProp]" },
+                { result: "unknown 🗨️ \"Unknown attribute: someProp\"" },
             ],
             [
                 "...",
@@ -1014,7 +1063,7 @@
 
         MychScriptContext.prototype.args = function(...values)
         {
-            return values;
+            return values.map((value, index) => new MychExpressionStructItem("arg" + index, value));
         }
 
         MychScriptContext.prototype.argnum = function(...args)
@@ -1158,24 +1207,28 @@
 
         function getResultRepresentation(context, result)
         {
-            if (context.isdefault(result))
-            {
-                return "[default]";
-            }
+            let originalToLiteral = MychScriptContext.DiagnosticUndef.prototype.toLiteral;
 
-            if (context.isunknown(result))
+            try
             {
-                let reason = context.getreason(result);
-                return reason ? ("[unknown: " + reason + "]") : "[unknown]";
-            }
+                MychScriptContext.DiagnosticUndef.prototype.toLiteral = function()
+                {
+                    if (this.reason == undefined)
+                    {
+                        return this.label;
+                    }
+                    else
+                    {
+                        return this.label + " \u{1F5E8}\uFE0F " + MychExpression.literal(stripHTML(this.reason));
+                    }
+                };
 
-            if (context.isdenied(result))
+                return MychExpression.literal(result);
+            }
+            finally
             {
-                let reason = context.getreason(result);
-                return reason ? ("[denied: " + reason + "]") : "[denied]";
+                MychScriptContext.DiagnosticUndef.prototype.toLiteral = originalToLiteral;
             }
-
-            return MychExpression.literal(result);
         }
 
         let numTestsRun = 0;
@@ -1242,6 +1295,42 @@
                         console.log("result:", variableResult, "constant:", constantResult);
                         throw "Constant result not equal to variable result";
                     }
+                }
+
+                let serializedResult = expression.context.serialize(resultContainer.value);
+                let deserializedResult = expression.context.deserialize(serializedResult);
+                let reserializedResult = expression.context.serialize(deserializedResult);
+
+                if (serializedResult != reserializedResult)
+                {
+                    console.log("unserialized result:", resultContainer.value);
+                    console.log("serialized result:", serializedResult);
+                    console.log("deserialized result:", deserializedResult);
+                    console.log("reserialized result:", reserializedResult);
+
+                    if (expression.context.isunknown(deserializedResult))
+                    {
+                        throw "Error deserializing serialized result: " + expression.context.getreason(deserializedResult);
+                    }
+                    else
+                    {
+                        throw "Serialized result not equal to re-serialized result";
+                    }
+                }
+
+                let literalResult = MychExpression.literal(resultContainer.value);
+                let literalResultWithMarkup = MychExpression.literalWithMarkup(resultContainer.value);
+                let literalResultWithMarkupStripped = stripHTML(literalResultWithMarkup);
+
+                if (literalResult != literalResultWithMarkupStripped)
+                {
+                    console.log("literal:", literalResult);
+                    console.log("literal with markup:", literalResultWithMarkup);
+                    console.log("literal with markup stripped:", literalResultWithMarkupStripped);
+
+                    throw "Result literal with markup stripped not equivalent to plain literal: " +
+                        JSON.stringify(literalResultWithMarkupStripped) + " vs " +
+                        JSON.stringify(literalResult);
                 }
             }
             catch (exception)

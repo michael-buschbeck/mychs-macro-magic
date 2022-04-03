@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.27.1";
+const MMM_VERSION = "1.28.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -391,6 +391,19 @@ class MychProperties
         return /^[\p{L}_][\p{L}\p{N}_]*$/u.test(key);
     }
 
+    $hasProperty(key)
+    {
+        for (let properties = this; properties; properties = properties.$parentProperties)
+        {
+            if (properties.$isValidPropertyKey(key) && key in properties)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     $getProperty(key, fallbackProperties, bindFunctionToProperties)
     {
         for (let properties = this; properties; properties = properties.$parentProperties)
@@ -544,6 +557,8 @@ class MychScriptContext extends MychProperties
         return super.$isValidPropertyKey(key) || /^\$\[\[\d+\]\]$/u.test(key);
     }
 
+    undef = undefined;
+
     pi = Math.PI;
 
     default = new MychScriptContext.Default();
@@ -573,6 +588,11 @@ class MychScriptContext extends MychProperties
         toLiteral()
         {
             return "default";
+        }
+
+        toLiteralWithMarkup()
+        {
+            return this.toMarkup();
         }
     }
 
@@ -609,6 +629,11 @@ class MychScriptContext extends MychProperties
         toLiteral()
         {
             return this.label;
+        }
+
+        toLiteralWithMarkup()
+        {
+            return this.toMarkup();
         }
     }
 
@@ -809,6 +834,11 @@ class MychScriptContext extends MychProperties
             return context.highlight(this, undefined, this.expression ? ("Rolling " + this.expression) : undefined).toMarkup();
         };
 
+        decoratedRoll.toLiteralWithMarkup = function()
+        {
+            return this.toMarkup();
+        }
+
         return decoratedRoll;
     }
 
@@ -940,7 +970,7 @@ class MychScriptContext extends MychProperties
 
     literal(value)
     {
-        return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";")
+        return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";");
     }
 
     highlight(value, type = undefined, tooltip = undefined)
@@ -1164,6 +1194,61 @@ class MychScriptContext extends MychProperties
         this.whisperback(this.literal(exception));
     }
 
+    serialize(value)
+    {
+        return MychExpression.literal(value);
+    }
+
+    deserialize(string)
+    {
+        if (string instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return string;
+        }
+
+        string = MychExpression.coerceString(string);
+
+        let expression;
+
+        try
+        {
+            expression = new MychExpression(string, this, { resolveContextLookups: true });
+        }
+        catch (exception)
+        {
+            if (exception instanceof MychExpressionError)
+            {
+                let stringWithMarker =
+                    this.literal(string.substring(0, exception.offset)) + "\u274C" +
+                    this.literal(string.substring(exception.offset));
+
+                return new MychScriptContext.Unknown("invalid serialized data: " + stringWithMarker);
+            }
+
+            return new MychScriptContext.Unknown("error parsing serialized data: " + this.literal(exception));
+        }
+
+        if (!expression.isConstant())
+        {
+            return new MychScriptContext.Unknown("invalid non-constant serialized data: " + this.literal(string));
+        }
+
+        try
+        {
+            return expression.evaluateConstant();
+        }
+        catch (exception)
+        {
+            if (exception instanceof MychExpressionError)
+            {
+                let stringWithMarker = string.substring(0, exception.offset) + "\u274C" + string.substring(exception.offset);
+                return new MychScriptContext.Unknown("error deserializing data: " + this.literal(stringWithMarker))
+            }
+
+            return new MychScriptContext.Unknown("error deserializing data: " + this.literal(exception));
+        }
+    }
+
     getprop(nameOrId, attributeName)
     {
         let context = this;
@@ -1246,6 +1331,16 @@ class MychScriptContext extends MychProperties
                 toScalar: function()
                 {
                     return context.getattr(nameOrId, attributeName);
+                },
+
+                toLiteral: function()
+                {
+                    return MychExpression.literal(this.toScalar());
+                },
+
+                toLiteralWithMarkup: function()
+                {
+                    return MychExpression.literalWithMarkup(this.toScalar());
                 },
 
                 $getProperty: function(key)
@@ -2188,30 +2283,29 @@ class MychScriptContext extends MychProperties
         return this.$getAttribute(nameOrId, attributeName, max);
     }
 
-    $debugHighlight(value)
+    $debugHighlight(scalar)
     {
-        let literalValue = this.literal(value);
-
-        let highlightStart = "<span style='background: #E0E0E0; padding: 0em 0.3em; border: 2px solid silver; border-radius: 0.5em; color: black; white-space: pre-wrap'>";
+        let highlightStart = "<span style='background: #E0E0E0; padding: 0em 0.3em; outline: 2px solid silver; border-radius: 2px; color: black; white-space: pre-wrap'>";
         let highlightStop = "</span>";
 
-        let highlight =
+        let highlightScalar =
         {
-            toScalar: () => literalValue,
-            toMarkup: () => highlightStart + literalValue + highlightStop,
+            toScalar: () => scalar,
+            toMarkup: () => highlightStart + MychExpression.coerceMarkup(scalar) + highlightStop,
         };
 
-        return highlight;
+        return highlightScalar;
     }
 
-    $debugExpression(value)
+    $debugExpression(result)
     {
-        if (value && value.toMarkup instanceof Function)
+        let resultScalar =
         {
-            return value;
-        }
+            toScalar: () => MychExpression.literal(result),
+            toMarkup: () => MychExpression.literalWithMarkup(result),
+        };
 
-        return this.$debugHighlight(MychExpression.literal(value));
+        return this.$debugHighlight(resultScalar);
     }
 
     $debugSendExpression(result, source, resultSourceBegin = 0, resultSourceEnd = source.length)
@@ -3960,8 +4054,6 @@ class MychTemplate
 
             pushSegment(literalSegment);
         }
-
-        console.log("segments", this.segments);
     }
 
     getSourceWithReferences()
@@ -4199,6 +4291,11 @@ class MychExpressionStruct
     {
         return "{" + this.$getPropertyItems().map(MychExpression.literal).join(", ") + "}";
     }
+
+    toLiteralWithMarkup()
+    {
+        return "{" + this.$getPropertyItems().map(MychExpression.literalWithMarkup).join(", ") + "}";
+    }
 }
 
 class MychExpressionStructItem
@@ -4222,6 +4319,14 @@ class MychExpressionStructItem
         }
 
         return undefined;
+    }
+
+    $getKeyAsLiteral()
+    {
+        let keyAsString = MychExpression.coerceString(this.key);
+        let keyAsLiteral = /^[\p{L}_][\p{L}\p{N}_]*$/u.test(keyAsString) ? keyAsString : MychExpression.literal(keyAsString);
+
+        return keyAsLiteral;
     }
 
     toNumber()
@@ -4248,16 +4353,18 @@ class MychExpressionStructItem
 
     toLiteral()
     {
-        let keyAsString = MychExpression.coerceString(this.key);
-        let keyAsLiteral = /^[\p{L}_][\p{L}\p{N}_]*$/u.test(keyAsString) ? keyAsString : MychExpression.literal(keyAsString);
+        return this.$getKeyAsLiteral() + ": " + MychExpression.literal(this.getValue());
+    }
 
-        return keyAsLiteral + ": " + MychExpression.literal(this.getValue());
+    toLiteralWithMarkup()
+    {
+        return this.$getKeyAsLiteral() + ": " + MychExpression.literalWithMarkup(this.getValue());
     }
 }
 
 class MychExpression
 {
-    constructor(source, context)
+    constructor(source, context, options = {})
     {
         this.source = undefined;
         this.context = context;
@@ -4266,7 +4373,7 @@ class MychExpression
     
         if (source != undefined)
         {
-            this.parse(source, context);
+            this.parse(source, context, options);
         }
     }
 
@@ -4536,6 +4643,32 @@ class MychExpression
         return value;
     }
 
+    static literalWithMarkup(value)
+    {
+        if (value && value.toLiteralWithMarkup instanceof Function)
+        {
+            return value.toLiteralWithMarkup();
+        }
+
+        if (Array.isArray(value))
+        {
+            switch (value.length)
+            {
+                case 0:
+                    return "undef";
+                case 1:
+                    return MychExpression.literalWithMarkup(value[0]);
+                default:
+                    return "(" + value.map(MychExpression.literalWithMarkup).join(", ") + ")";
+            }
+        }
+
+        let literal = MychExpression.literal(value);
+        let literalWithMarkup = literal.replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";");
+    
+        return literalWithMarkup;
+    }
+
     static literal(value)
     {
         if (value && value.toLiteral instanceof Function)
@@ -4558,13 +4691,25 @@ class MychExpression
 
         if (value instanceof Function)
         {
-            return MychExpression.coerceString(value);
+            return value.functionName || value.name;
         }
 
         value = MychExpression.coerceScalar(value);
 
         switch (typeof(value))
         {
+            case "number":
+            {
+                let numberLiteral = String(value);
+                return numberLiteral;    
+            }
+
+            case "boolean":
+            {
+                let booleanLiteral = value ? "true" : "false";
+                return booleanLiteral;
+            }
+
             case "string":
             {
                 let stringLiteral = "\"" + value.replace(/(["\\])/ug, "\\$1") + "\"";
@@ -4577,7 +4722,7 @@ class MychExpression
             }
         }
 
-        return String(value);
+        throw "MychExpression internal error: cannot convert " + typeof(value) + " value to expression literal";
     }
 
     static rules =
@@ -4904,12 +5049,26 @@ class MychExpression
 
             processToken: function(token, state, context)
             {
-                function* symbolLookupEvaluator(variables)
+                if (state.options.resolveContextLookups && context.$hasProperty(token.value))
                 {
-                    return variables.$getProperty(token.value, context, true);
-                }
+                    let constant = context.$getProperty(token.value);
 
-                state.pushEvaluator(token, symbolLookupEvaluator);
+                    function* symbolConstantEvaluator(variables)
+                    {
+                        return constant;
+                    }
+
+                    state.pushEvaluator(token, symbolConstantEvaluator, { isConstant: true });
+                }
+                else
+                {
+                    function* symbolLookupEvaluator(variables)
+                    {
+                        return variables.$getProperty(token.value, context, true);
+                    }
+
+                    state.pushEvaluator(token, symbolLookupEvaluator);
+                }
             },
 
             nextRuleNames: new Set(
@@ -5667,8 +5826,13 @@ class MychExpression
 
     static ParseState = class
     {
-        evaluatorStack = [];
-        operatorStack = [{ precedence: MychExpression.maxOperatorPrecedence + 1, operator: undefined, sourceOffset: 0 }];
+        constructor(options)
+        {
+            this.options = options;
+
+            this.evaluatorStack = [];
+            this.operatorStack = [{ precedence: MychExpression.maxOperatorPrecedence + 1, operator: undefined, sourceOffset: 0 }];
+        }
 
         pushEvaluator(token, evaluator, attributes = {})
         {
@@ -5763,7 +5927,7 @@ class MychExpression
         }
     }
 
-    parse(source, context)
+    parse(source, context, options = {})
     {
         if (context == undefined)
         {
@@ -5959,7 +6123,7 @@ class MychExpression
             }
         }
 
-        let state = new MychExpression.ParseState();
+        let state = new MychExpression.ParseState(options);
 
         for (let token of this.tokens)
         {

@@ -1011,6 +1011,8 @@ This works in any place with an expression, of course, not just in **set** – y
 | highlight(*str*, *type*)                           | String    |  | ...with a colored outline depending on *type* = "normal", "important" (blue), "good" (green), "bad" (red), "info" (simple gray box)
 | highlight(*str*, *type*, *tooltip*)                | String    |  | ...with a tooltip popping up on mouse hover
 | highlight(*roll*, default, *tooltip*)              | String    | highlight(\[\[1d20]], default, "woo!") | ...with a colored outline depending on the roll result and a custom tooltip for the roll
+| serialize(*value*)                                 | String    | serialize({x:1}) = "{x: 1}" | Convert any MMM value or data structure to a string containing the equivalent MMM expression literal
+| deserialize(*string*)                              | String    | deserialize("{x: 1}") = {x:1} | Convert an MMM expression literal to the equivalent MMM value or data structure
 | roll(*expr*)                                       | Roll      | roll("1d20+12") = 23 | Run a roll expression through Roll20's dice engine and return its result
 | roll(*name\|id*, *expr*)                           | Roll      | roll("Finn", "@{HP}") = 15 | ...evaluated in context of character *name\|id* (instead of `sender`)
 | iscritical(*roll*)                                 | Roll      |  | Return `true` if any die in the roll had its greatest value (e.g. 20 on 1d20), else `false`
@@ -1171,6 +1173,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.28.0  | 2022-04-03 | Add `serialize(val)` and `deserialize(str)` for data storage
 | 1.27.0  | 2022-03-31 | Introduce structs, the `...` operator, and the `repeating` character property
 | 1.26.0  | 2022-01-23 | Introduce `publish to sender` and `publish to game` commands
 | 1.25.0  | 2022-01-20 | Introduce `!mmm-autorun` macros that auto-run on startup
