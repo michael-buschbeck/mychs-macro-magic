@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.28.0";
+const MMM_VERSION = "1.28.1";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1307,7 +1307,7 @@ class MychScriptContext extends MychProperties
                         $getPropertyItems: function()
                         {
                             return [
-                                new MychExpressionStructItems("attribute", () => this.$getProperty("attribute"), true),
+                                new MychExpressionStructItem("attribute", () => this.$getProperty("attribute"), true),
                                 ...context.getprops(context.getattr(nameOrId, repeatingAttributeName))];
                         },
                     };
