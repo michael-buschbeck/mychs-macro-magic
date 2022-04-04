@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.28.1";
+const MMM_VERSION = "1.28.2";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -4880,7 +4880,7 @@ class MychExpression
                 {
                     return function* propertyDesignationEvaluator(variables)
                     {
-                        let valueKey = yield* evaluatorKey(variables);
+                        let valueKey = MychExpression.coerceString(yield* evaluatorKey(variables));
                         let value = MychExpression.normalize(yield* evaluatorValue(variables));
 
                         return new MychExpressionStructItem(valueKey, value);
