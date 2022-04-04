@@ -296,6 +296,22 @@
                 { result: "(13, 14)" },
             ],
             [
+                "(-2, -7, 2, 7, 5) order (...left < ...right)",
+                { result: "(-7, -2, 2, 5, 7)" },
+            ],
+            [
+                "(-2, -7, 2, 7, 5) order (...left > ...right)",
+                { result: "(7, 5, 2, -2, -7)" },
+            ],
+            [
+                "(foo: 456, foo: 123, bar: 123) order (...left.key lt ...right.key, ...left.value < ...right.value)",
+                { result: "(bar: 123, foo: 123, foo: 456)" },
+            ],
+            [
+                "(foo: 456, foo: 123, bar: 123) order (...left.key gt ...right.key, ...left.value < ...right.value)",
+                { result: "(foo: 123, foo: 456, bar: 123)" },
+            ],
+            [
                 "args()",
                 { result: "undef" },
             ],

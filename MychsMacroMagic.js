@@ -4234,9 +4234,9 @@ class MychExpressionArgs extends Array
 
 class MychExpressionStruct
 {
-    constructor()
+    constructor(properties = {})
     {
-        this.properties = {};
+        this.properties = properties;
     }
 
     $hasProperty(key)
@@ -4631,6 +4631,33 @@ class MychExpression
         }
 
         return mappedList;
+    }
+
+    static *sortList(list, less = function*(itemA, itemB) {})
+    {
+        function* quicksort(items)
+        {
+            if (items.length <= 1)
+            {
+                return items;
+            }
+
+            let itemsLeft = [];
+            let itemsRight = [];
+
+            let pivotItem = items.pop();
+
+            for (let item of items)
+            {
+                (((yield* less(item, pivotItem)) < 0) ? itemsLeft : itemsRight).push(item);
+            }
+
+            return [
+                ...yield* quicksort(itemsLeft), pivotItem,
+                ...yield* quicksort(itemsRight)];
+        }
+
+        return yield* quicksort([...list]);
     }
 
     static normalize(value)
@@ -5715,6 +5742,37 @@ class MychExpression
             {
                 return yield* MychExpression.mapList(yield* evaluatorA(),
                     function*(itemA) { return (yield* evaluatorB(itemA)) ? itemA : undefined });
+            }
+        },
+        "order":
+        {
+            precedence: 11,
+            coerceValueA: MychExpression.coerceList,
+            coerceValueB: MychExpression.coerceList,
+            evaluate: function*(evaluatorA, evaluatorB)
+            {
+                function* compare(itemA, itemB)
+                {
+                    let compareAlessB = yield* evaluatorB(new MychExpressionStruct({ left: itemA, right: itemB }));
+                    let compareBlessA = yield* evaluatorB(new MychExpressionStruct({ left: itemB, right: itemA }));
+
+                    let numComparisons = Math.max(compareAlessB.length, compareBlessA.length);
+
+                    for (let comparisonIndex = 0; comparisonIndex < numComparisons; ++comparisonIndex)
+                    {
+                        let isAlessB = MychExpression.coerceBoolean(compareAlessB[comparisonIndex]);
+                        let isBlessA = MychExpression.coerceBoolean(compareBlessA[comparisonIndex]);
+
+                        if (isAlessB != isBlessA)
+                        {
+                            return isAlessB ? -1 : +1;
+                        }
+                    }
+
+                    return 0;
+                }
+
+                return yield* MychExpression.sortList(yield* evaluatorA(), compare);
             }
         },
         ",":

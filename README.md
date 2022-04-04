@@ -953,6 +953,7 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | *a* `or` *b*           | 10          | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
 | *list* `where` *expr*  | 11          | List     | For each *list* item in turn, set the special `...` variable to the item, evaluate *expr*, and return a list of all items for which the result of *expr* is true
 | *list* `select` *expr* | 11          | List     | For each *list* item in turn, set the special `...` variable to the item, evaluate *expr*, and return a list of the results of *expr*
+| *list* `order` *expr*  | 11          | List     | Order *list* such that *expr*, which is evaluated repeatedly with `...left` and `...right` set to pairs of list items, is `true` for all consecutive pairs of items – see below
 | *a*`,` *b*`,` *c*...   | 12 (lowest) | List     | Make an ordered list of *a*, *b*, *c*, and more – also used for function arguments
 
 If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
@@ -961,13 +962,23 @@ In the right-hand-side *expr* of the `where` and `select` operators, the special
 
 | Line | Commands | Result
 | ---- | -------- | ------
-| 1    | _!mmm_ **set** odd_numbers = (1, 2, 3, 4, 5) **where** ... % 1 == 1 | odd_numbers = 1, 3, 5
+| 1    | _!mmm_ **set** odd_numbers = (1, 2, 3, 4, 5) **where** ... % 1 == 1 | odd_numbers = (1, 3, 5)
 | 2    | _!mmm_ **set** nearly_dead = selected **where** ...HP < 5 | *(selected tokens with less than 5 HP)*
 | 3    | _!mmm_ **set** my_tokens = selected **where** ...permission **eq** "control" | *(selected tokens that can be controlled by the player)*
-| 4    | _!mmm_ **set** squares = (1, 2, 3, 4, 5) **select** ... ** 2 | squares = 1, 4, 9, 16, 25
-| 5    | _!mmm_ **set** pairs = (1, 2, 3) **select** (..., ...) | pairs = 1, 1, 2, 2, 3, 3
-| 6    | _!mmm_ **set** nearly_dead_HP = selected **select** ...HP **where** ... < 5 | nearly_dead_HP = 4, 1
-| 7    | _!mmm_ **set** nearly_dead_names = selected **where** ...HP < 5 **select** ...name | nearly_dead_names = "Finn", "Yorric"
+| 4    | _!mmm_ **set** squares = (1, 2, 3, 4, 5) **select** ... ** 2 | squares = (1, 4, 9, 16, 25)
+| 5    | _!mmm_ **set** pairs = (1, 2, 3) **select** (..., ...) | pairs = (1, 1, 2, 2, 3, 3)
+| 6    | _!mmm_ **set** nearly_dead_HP = selected **select** ...HP **where** ... < 5 | nearly_dead_HP = (4, 1)
+| 7    | _!mmm_ **set** nearly_dead_names = selected **where** ...HP < 5 **select** ...name | nearly_dead_names = ("Finn", "Yorric")
+
+The list-sorting operator `order` evaluates its right-hand-side *expr* repeatedly for pairs of list items passed in `...left` and `...right` to define the comparison that shall be `true` for each pair of consecutive *list* items. (If the *expr* won't return `true` for a pair of items regardless of which one is `...left` and which one `...right`, the two items are considered equal and their order in the sorted list is arbitrary.)
+
+If you have a primary sort key and a secondary one that decides the order only if the primary key is equal, you can specify both by having *expr* return a list that represents comparison results for the primary and the secondary key in turn – first list item the comparison result for the primary key, second for the secondary, and even more if there are more keys to compare.
+
+| Line | Commands | Result
+| ---- | -------- | ------
+| 1    | _!mmm_ **set** sorted = (-2, -7, 2, 7, 5) **order** (...left < ...right) | sorted = (-7, -2, 2, 5, 7)
+| 2    | _!mmm_ **set** reverse = (-2, -7, 2, 7, 5) **order** (...left > ...right) | reverse = (7, 5, 2, -2, -7)
+| 3    | _!mmm_ **set** pairs = (foo: 456, foo: 123, bar: 123) **order** (...left.key **lt** ...right.key, ...left.value < ...right.value) | pairs = (bar: 123, foo: 123, foo: 456)
 
 There are also three special debug operators: `?` *expr*, `??` *expr*, and `???` *expr*. They don't quite fit into the table above because they don't actually change the result of the expression they're used in. Instead, they just whisper a partial expression result back at you, and then continue evaluating the expression as if nothing happened.
 
