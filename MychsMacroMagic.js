@@ -5626,6 +5626,34 @@ class MychExpression
             coerceValueB: MychExpression.coerceNumber,
             evaluate: (valueA, valueB) => valueA >= valueB,
         },
+        "lt":
+        {
+            precedence: 6,
+            coerceValueA: MychExpression.coerceString,
+            coerceValueB: MychExpression.coerceString,
+            evaluate: (valueA, valueB) => valueA < valueB,
+        },
+        "le":
+        {
+            precedence: 6,
+            coerceValueA: MychExpression.coerceString,
+            coerceValueB: MychExpression.coerceString,
+            evaluate: (valueA, valueB) => valueA <= valueB,
+        },
+        "gt":
+        {
+            precedence: 6,
+            coerceValueA: MychExpression.coerceString,
+            coerceValueB: MychExpression.coerceString,
+            evaluate: (valueA, valueB) => valueA > valueB,
+        },
+        "ge":
+        {
+            precedence: 6,
+            coerceValueA: MychExpression.coerceString,
+            coerceValueB: MychExpression.coerceString,
+            evaluate: (valueA, valueB) => valueA >= valueB,
+        },
         "==":
         {
             precedence: 7,

@@ -940,6 +940,10 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | *a* `<=` *b*           | 6           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
 | *a* `>` *b*            | 6           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
 | *a* `>=` *b*           | 6           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
+| *a* `lt` *b*           | 6           | Logic    | Return `true` if *a* is alphanumerically less than *b*, else `false`
+| *a* `le` *b*           | 6           | Logic    | Return `true` if *a* is alphanumerically less than or equal to *b*, else `false`
+| *a* `gt` *b*           | 6           | Logic    | Return `true` if *a* is alphanumerically greater than *b*, else `false`
+| *a* `ge` *b*           | 6           | Logic    | Return `true` if *a* is alphanumerically greater than or equal to *b*, else `false`
 | *a* `==` *b*           | 7           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
 | *a* `!=` *b*           | 7           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
 | *a* `eq` *b*           | 7           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
