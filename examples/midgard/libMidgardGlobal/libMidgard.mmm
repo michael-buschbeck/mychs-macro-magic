@@ -1249,7 +1249,7 @@
 !mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)") & "&#13;"
 !mmm   set payload = payload & "!mmm end script&#13;"
 !mmm   set payload = payload & m3mgdDefenseInitPayload(tokenID)
-!mmm   set payload = payload & "&#x25;{MacroSheet|defenseMain}"
+!mmm   set payload = payload & "&#x25;{MacroSheet|defense}"
 !mmm   return payload
 !mmm end function
 !rem
@@ -1280,15 +1280,15 @@
 !mmm       set weaponsList = m3mgdListDefenseWeapons(tokenID)
 !mmm     end if
 !mmm     set selectorPrompt = "Auswahl: Abwehrwaffe"
-!mmm     set scriptCommand = m3mgdDefenseInitPayload(tokenID) & "&#x25;{MacroSheet|defenseMain}"
+!mmm     set scriptCommand = m3mgdDefenseInitPayload(tokenID) & "&#x25;{MacroSheet|defense}"
 !mmm   else if weaponsGroup eq "melee"
 !mmm     set weaponsList = m3mgdListMeleeAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Nahkampfwaffe"
-!mmm     set scriptCommand = "&#x25;{MacroSheet|meleeAttackMain}"
+!mmm     set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
 !mmm   else if weaponsGroup eq "ranged"
 !mmm     set weaponsList = m3mgdListRangedAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Fernkampfwaffe"
-!mmm     set scriptCommand = "&#x25;{MacroSheet|rangedAttackMain}"
+!mmm     set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
 !mmm   end if
 !mmm   
 !mmm   if isunknown(tokenID.PC)
@@ -1300,7 +1300,7 @@
 !mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "&#x25;{MacroSheet|defenseMain}"
+!mmm     set noDefensePayload = noDefensePayload & "&#x25;{MacroSheet|defense}"
 !mmm     set selectorPrompt = selectorPrompt & " [Wehrlos](" & noDefensePayload & cssTableHeaderButton & ") "
 !mmm   end if
 !mmm

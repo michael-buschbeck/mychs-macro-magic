@@ -68,7 +68,7 @@
 !mmm     set payload = "!mmm customize&#13;"
 !mmm     set payload = payload & literal("!mmm set cOwnID = \"@" & "{target|Wer verteidigt sich?|token_id}\"") & "&#13;"
 !mmm     set payload = payload & "!mmm end customize&#13;"
-!mmm     set payload = payload & "&#x25;{MacroSheet|defenseMain}"
+!mmm     set payload = payload & "&#x25;{MacroSheet|defense}"
 !mmm     do whisperback("<" & "br>Wer soll sich denn verteidigen?<" & "br>[**Token auswählen**](" & payload & ")")
 !mmm     exit script
 !mmm   else if not m3mgdValidateAttackData()
