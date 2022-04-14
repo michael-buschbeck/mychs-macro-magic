@@ -94,7 +94,7 @@
 !mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdShapeMoji
 !mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
-!mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth
+!mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth, m3mgdProcessInjury
 !mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
@@ -902,6 +902,64 @@
 !mmm   
 !mmm   end if
 !mmm   
+!mmm end function
+!rem 
+!rem // m3mgdProcessInjury(tokenID, healthDamageRoll, enduranceDamageRoll, armorApplicable)
+!rem // 
+!rem //   Executes an injury to tokenID (with or without processing currently worn armor, as per the armorApplicable flag).
+!rem //   Sends an update of tokenID's condition to its player.
+!rem // 
+!mmm function m3mgdProcessInjury(tokenID, healthDamageRoll, enduranceDamageRoll, armorApplicable)
+!mmm
+!mmm   if enduranceDamageRoll eq ""
+!mmm     set enduranceDamage = 0
+!mmm   else if enduranceDamageRoll ne "*"
+!mmm     set enduranceDamage = roll(enduranceDamageRoll)
+!mmm   else if enduranceDamageRoll eq "*" and healthDamageRoll ne "*" and healthDamageRoll ne ""
+!mmm     set healthDamage = roll(healthDamageRoll)
+!mmm     set enduranceDamage = healthDamage
+!mmm   end if
+!mmm   if not healthDamage and healthDamageRoll ne ""
+!mmm     set healthDamage = 0
+!mmm   else if not healthDamage and healthDamageRoll eq "*"
+!mmm     set healthDamage = enduranceDamage
+!mmm   else if not healthDamage
+!mmm     set healthDamage = roll(healthDamageRoll)
+!mmm   end if
+!mmm   
+!rem   // Process endurance loss, if tokenID is not an undead creature with unlimited endurance
+!mmm   if not tokenID.(m3mgdGetEnduranceAttribute(tokenID)).max == 0
+!mmm     set effEnduranceLoss = highlight(max(0, enduranceDamage), default)
+!mmm     set newEndurance = m3mgdModifyEndurance(-effEnduranceLoss, tokenID)
+!mmm   end if
+!mmm
+!rem   // Process health loss, if tokenID is not a ghost (max health > 0)
+!mmm   if not tokenID.(m3mgdGetHealthAttribute(tokenID)).max == 0
+!mmm     if armorApplicable
+!mmm       set effArmorProtection = m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
+!mmm     end if
+!mmm     set effHealthLoss = highlight(max(0, healthDamage - effArmorProtection), default, "RS: " & effArmorProtection)
+!mmm     set newHealth = m3mgdModifyHealth(-effHealthLoss, tokenID)
+!mmm     if effHealthLoss > 0 and newHealth < 0
+!mmm       set timeToDie = roll("1d6-" & abs(newHealth)) 
+!mmm     end if
+!mmm   end if
+!mmm 
+!mmm   if effHealthLoss > 0 or effEnduranceLoss > 0 
+!mmm     combine chat
+!mmm       chat: /w "${tokenID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji(tokenID) & tokenID.name}: Schaden}} 
+!mmm       chat: {{ Schaden = ${effHealthLoss} LP / ${effEnduranceLoss} AP }}
+!mmm       if newHealth < 0 and timeToDie < 0
+!mmm         chat: {{Zustand=**Sofortiger Tod &#10013;**}}
+!mmm       else
+!mmm         chat: {{${m3mgdHealthStatusLabel(tokenID)}=${m3mgdHealthStatusEffectsDesc(tokenID)}}}
+!mmm         chat: {{${m3mgdEnduranceStatusLabel(tokenID)}=${m3mgdEnduranceStatusEffectsDesc(tokenID)}}}
+!mmm       end if
+!mmm     end combine
+!mmm   end if
+!mmm
+!mmm   return true
+!mmm
 !mmm end function
 !rem
 !rem // m3mgdGetTokenDirection(fromTokenID, toTokenID)
