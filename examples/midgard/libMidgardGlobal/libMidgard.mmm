@@ -72,6 +72,10 @@
 !mmm       chat: **Tabelle der kritischen Kampfereignisse fehlt, bitte neu anlegen.**
 !mmm     end if
 !mmm   end if
+!mmm
+!mmm   if isunknown(m3mgdExchange.m3mgdActivePersistentEffects) or m3mgdExchange.m3mgdActivePersistentEffects eq ""
+!mmm     do setattr(m3mgdExchange, "m3mgdActivePersistentEffects", serialize({}))
+!mmm   end if
 !mmm   
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
@@ -91,6 +95,7 @@
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
 !mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
+!mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects
 !mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdIsUnfitToAttack
 !mmm   publish to game: m3mgdShapeMoji, m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
@@ -457,6 +462,22 @@
 !mmm   
 !mmm end function
 !rem
+!rem // m3mgdHasActivePersistentEffects(tokenID)
+!rem //
+!rem //   Returns true if tokenID has active persistent effects registered, otherwise false.
+!rem //
+!mmm function m3mgdHasActivePersistentEffects(tokenID)
+!mmm   return (not isunknown((deserialize(m3mgdExchange.m3mgdActivePersistentEffects)).(tokenID)))
+!mmm end function
+!rem
+!rem // m3mgdGetActivePersistentEffects(tokenID)
+!rem //
+!rem //   Returns a list of tokenID's active persistent effects.
+!rem //
+!mmm function m3mgdGetActivePersistentEffects(tokenID)
+!mmm   return deserialize(m3mgdExchange.m3mgdActivePersistentEffects).(tokenID)
+!mmm end function
+!rem
 !rem // m3mgdActiveStatusModifiers(tokenID, action)
 !rem //
 !rem //   Returns a list of tokenID's active status modifiers from severe injuries or critical effects for a given action (defense, meleeAttack, see, hear etc.).
@@ -471,8 +492,8 @@
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
-!mmm   if not isunknown(tokenID.m3mgdActivePersistentEffects)
-!mmm     set tokenActiveEffectsList = deserialize(tokenID.m3mgdActivePersistentEffects)
+!mmm   if not m3mgdHasActivePersistentEffects(tokenID)
+!mmm     set tokenActiveEffectsList = m3mgdGetActivePersistentEffects(tokenID)
 !mmm   end if
 !mmm 
 !mmm   for statusModRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
@@ -1732,14 +1753,13 @@
 !mmm   end if
 !mmm
 !mmm   do setattr(tokenID, "status_blue", tokenID.status_blue + 1)
-!mmm   if isunknown(tokenID.m3mgdActivePersistentEffects) or tokenID.m3mgdActivePersistentEffects eq ""
-!mmm     do setattr(tokenID, "m3mgdActivePersistentEffects", serialize(persistentEffect))
-!mmm   else 
-!mmm     set newList = deserialize(tokenID.m3mgdActivePersistentEffects), persistentEffect
-!mmm     do setattr(tokenID, "m3mgdActivePersistentEffects", serialize(newList))
-!mmm   end if
 !mmm
-!mmm   return deserialize(tokenID.m3mgdActivePersistentEffects)
+!mmm   set effectsDB = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
+!mmm   set newList = effectsDB.(tokenID), persistentEffect
+!mmm   set effectsDB = { effectsDB, (tokenID): newList }
+!mmm   do setattr(m3mgdExchange, "m3mgdActivePersistentEffects", serialize(effectsDB))
+!mmm
+!mmm   return m3mgdGetActivePersistentEffects(tokenID)
 !mmm
 !mmm end function
 !rem
@@ -1894,8 +1914,8 @@
 !rem //   For tokenID, counts every active persistent effect counter of the type actionType down by one, save if it is marked as "new" (then the "new" marker is removed).
 !rem // 
 !mmm function m3mgdUpdatePersistentEffectsCounters(tokenID, actionType)
-!mmm
-!mmm   if not tokenID.m3mgdActivePersistentEffects
+!mmm debug do tokenID, actionType
+!mmm   if not m3mgdHasActivePersistentEffects(tokenID)
 !mmm     return false
 !mmm   end if
 !mmm
@@ -1903,7 +1923,7 @@
 !mmm   set newEffectsRemoved = 0
 !mmm   set effectCountersDecreased = 0
 !mmm   set effectsExpired = 0
-!mmm   for activeEffect in deserialize(tokenID.m3mgdActivePersistentEffects)
+!mmm   for activeEffect in m3mgdGetActivePersistentEffects(tokenID)
 !mmm     if activeEffect.effect.expiry and activeEffect.effect.expiry.type eq actionType
 !mmm       set currentTypeEffects = currentTypeEffects + 1
 !mmm       if actionType eq "round" and activeEffect.effect.expiry.new 
@@ -1933,7 +1953,8 @@
 !mmm     end if
 !mmm   end for
 !mmm
-!mmm   do setattr(tokenID, "m3mgdActivePersistentEffects", serialize(updatedActiveEffects))
+!mmm   set effectsDB = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
+!mmm   do setattr(m3mgdExchange, "m3mgdActivePersistentEffects", serialize({ effectsDB, (tokenID): updatedActiveEffects }))
 !mmm
 !mmm   set summaryLog = "Von " & currentTypeEffects & " " & actionType & "-Effekten: " & newEffectsRemoved & " NEU-Marker entfernt, "
 !mmm   set summaryLog = summaryLog & effectCountersDecreased & " Zähler reduziert, " & effectsExpired & " Effekte beendet."

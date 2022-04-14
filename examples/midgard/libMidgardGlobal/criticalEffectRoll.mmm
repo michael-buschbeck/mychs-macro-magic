@@ -4,7 +4,7 @@
 !mmm
 !mmm function m3mgdChatActiveEffects(tokenID)
 !mmm
-!mmm       for statusRule in deserialize(tokenID.m3mgdActivePersistentEffects)
+!mmm       for statusRule in m3mgdGetActivePersistentEffects(tokenID)
 !mmm
 !mmm         set activeCounter = activeCounter + 1
 !mmm         chat: {{ #${activeCounter}, noch ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}

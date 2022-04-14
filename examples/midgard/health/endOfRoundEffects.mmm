@@ -2,18 +2,18 @@
 !mmm
 !mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe" }
 !mmm
-!mmm   for charName in m3mgdPlayerCharacters
+!mmm   for token in m3mgdPlayerCharacters, selected
 !mmm 
-!mmm     if not isdenied(charName.character_id)
+!mmm     if not isdenied(token.token_id)
 !mmm
-!mmm       set charID = charName.character_id
+!mmm       set tokenID = token.token_id
 !mmm   
 !mmm       combine chat using ""
 !mmm       
-!mmm         chat: /w "${charID.character_name}" ${"&"}{template:default} 
-!mmm         chat: {{name=${m3mgdShapeMoji(charID) & charID.name}: Rundeneffekte}} 
+!mmm         chat: /w "${tokenID.character_name}" ${"&"}{template:default} 
+!mmm         chat: {{name=${m3mgdShapeMoji(tokenID) & tokenID.name}: Rundeneffekte}} 
 !mmm
-!mmm         for statusRule in m3mgdInjuryStatus... where charID.("status_" & ...key) eq "shown"
+!mmm         for statusRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
 !mmm
 !mmm           if statusRule.value.combatRoundEffects and not timeToDie < 0
 !mmm
@@ -23,7 +23,7 @@
 !mmm
 !mmm               if roundEffect.key eq "health"
 !mmm 
-!mmm                 set newHealth = m3mgdModifyHealth(roundEffect.value, charID, m3mgdGetHealthAttribute(charID))
+!mmm                 set newHealth = m3mgdModifyHealth(roundEffect.value, tokenID, m3mgdGetHealthAttribute(tokenID))
 !mmm                 chat: ${" "}**LP:**&nbsp;${highlight(roundEffect.value, "bad", statusRule.value.desc)}&nbsp;=>&nbsp;${highlight(newHealth, "normal")}
 !mmm                 if newHealth < 0
 !mmm                   set timeToDie = roll("1d6-" & abs(newHealth)) 
@@ -32,14 +32,14 @@
 !mmm
 !mmm               else if roundEffect.key eq "endurance"
 !mmm
-!mmm                 set newEndurance = m3mgdModifyEndurance(roundEffect.value, charID, m3mgdGetEnduranceAttribute(charID))
+!mmm                 set newEndurance = m3mgdModifyEndurance(roundEffect.value, tokenID, m3mgdGetEnduranceAttribute(tokenID))
 !mmm                 chat: ${" "}**AP:**&nbsp;${highlight(roundEffect.value, "bad", statusRule.value.desc)}&nbsp;=>&nbsp;${highlight(newEndurance, "normal")}
 !mmm
 !mmm               else if roundEffect.key eq "death"
 !mmm
 !mmm                 set deathRoll = roll("1d100")
 !mmm                 if deathRoll < roundEffect.value
-!mmm                   chat: ${highlight(deathRoll, "bad", "<" & roundEffect.value)} war **tödlich:** ${charID.name} ist in diesem Moment von uns gegangen.
+!mmm                   chat: ${highlight(deathRoll, "bad", "<" & roundEffect.value)} war **tödlich:** ${tokenID.name} ist in diesem Moment von uns gegangen.
 !mmm                   set newHealth = -1
 !mmm                   set timeToDie = -1
 !mmm                 else
@@ -56,13 +56,13 @@
 !mmm
 !mmm         end for
 !mmm     
-!mmm         set counterUpdates = m3mgdUpdatePersistentEffectsCounters(charID, "round")
+!mmm         set counterUpdates = m3mgdUpdatePersistentEffectsCounters(tokenID, "round")
 !mmm         if counterUpdates
 !mmm           chat: {{ 🔵 Updates=${counterUpdates} }}
 !mmm         end if
 !mmm
-!mmm         if charID.m3mgdActivePersistentEffects
-!mmm           for statusRule in deserialize(charID.m3mgdActivePersistentEffects)
+!mmm         if m3mgdHasActivePersistentEffects(tokenID)
+!mmm           for statusRule in m3mgdGetActivePersistentEffects(tokenID)
 !mmm
 !mmm             set activeCounter = activeCounter + 1
 !mmm             chat: {{ #${activeCounter}, noch ${statusRule.effect.expiry.count} ${DE.(statusRule.effect.expiry.type & "s")}= ${highlight(statusRule.label, "info", statusRule.desc)} 
@@ -95,8 +95,8 @@
 !mmm         
 !mmm         else
 !mmm         
-!mmm           chat: {{${m3mgdHealthStatusLabel(charID)}=${m3mgdHealthStatusEffectsDesc(charID)}}}
-!mmm           chat: {{${m3mgdEnduranceStatusLabel(charID)}=${m3mgdEnduranceStatusEffectsDesc(charID)}}}
+!mmm           chat: {{${m3mgdHealthStatusLabel(tokenID)}=${m3mgdHealthStatusEffectsDesc(tokenID)}}}
+!mmm           chat: {{${m3mgdEnduranceStatusLabel(tokenID)}=${m3mgdEnduranceStatusEffectsDesc(tokenID)}}}
 !mmm         
 !mmm         end if
 !mmm         
