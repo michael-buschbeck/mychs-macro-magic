@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-03-04)"
+!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-03-16)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -50,7 +50,7 @@
 !mmm   set customizable cGMSilentMode = (cOwnID.PC != 1)
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
 !rem
-!rem   //  cAttackRoll          Override by player to see beautifully animated 3D dice
+!rem   //  cAttackRoll          Override in customize block to see beautifully animated 3D dice
 !rem   //
 !mmm   set customizable cTargetID = ""
 !mmm   set customizable cSemiManualModifiers = default
@@ -207,20 +207,21 @@
 !mmm   set criticalAttack = iscritical(cAttackRoll)
 !rem
 !mmm   if attackResult >= 20
-!rem     // Damage roll (cannot be lower than 0)
-!mmm     set damageRoll = roll(weaponDamageExpr)
-!mmm     set damageResult = damageRoll + weaponDamageBonus
+!rem     //  cDamageRoll: Override in customize block to see beautifully animated 3D dice
+!mmm     set customizable cDamageRoll = roll(weaponDamageExpr)
+!mmm     set damageResult = cDamageRoll + weaponDamageBonus
 !mmm     if damageResult < 0
 !mmm       set damageResult = highlight(0, "bad")
 !mmm     end if
-!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") " & weaponDamageBonus
+!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & cDamageRoll & ") " & weaponDamageBonus
 !mmm     if magicExtraDamageActive and cMagicExtraDamage ne ""
-!mmm       set magicExtraDamageRoll = roll(cMagicExtraDamage)
-!mmm       if magicExtraDamageRoll < 0
-!mmm         set magicExtraDamageRoll = highlight(0, "bad")
+!rem       //  cMagicExtraDamageRoll: Override in customize block to see beautifully animated 3D dice
+!mmm       set customizable cMagicExtraDamageRoll = roll(cMagicExtraDamage)
+!mmm       if cMagicExtraDamageRoll < 0
+!mmm         set cMagicExtraDamageRoll = highlight(0, "bad")
 !mmm       end if
-!mmm       set damageResult = highlight(damageResult + magicExtraDamageRoll, "normal")
-!mmm       set damageResultLog = damageResultLog & " + (" & cMagicExtraDamage & " = " & magicExtraDamageRoll & ")"
+!mmm       set damageResult = highlight(damageResult + cMagicExtraDamageRoll, "normal")
+!mmm       set damageResultLog = damageResultLog & " + (" & cMagicExtraDamage & " = " & cMagicExtraDamageRoll & ")"
 !mmm     end if 
 !mmm     set damageResultLog = damageResult & " = " & damageResultLog
 !mmm     set damageResult = highlight(damageResult, default, damageResultLog)
@@ -236,7 +237,7 @@
 !rem
 !rem   // Break down magic effects for player and GM
 !mmm   if magicExtraDamageActive and attackResult >= 20 and damageResult > 0
-!mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - magicExtraDamageRoll) & "**&nbsp;" & emojiMagic & " +&nbsp;**" & magicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "
+!mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - cMagicExtraDamageRoll) & "**&nbsp;" & emojiMagic & " +&nbsp;**" & cMagicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "
 !mmm   else if magicWeapon and attackResult >= 20 and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & damageResult & "**&nbsp;" & emojiMagic & " }} "
 !mmm   end if
@@ -292,7 +293,7 @@
 !mmm         else 
 !mmm           set damageDescription = "höchstens kosmetischer"
 !mmm         end if
-!mmm         if damageRoll >= 8 and not isdenied(cTargetID.(m3mgdGetEnduranceAttribute(cTargetID))) and cTargetID.(m3mgdGetEnduranceAttribute(cTargetID)) >= 8
+!mmm         if cDamageRoll >= 8 and not isdenied(cTargetID.(m3mgdGetEnduranceAttribute(cTargetID))) and cTargetID.(m3mgdGetEnduranceAttribute(cTargetID)) >= 8
 !mmm           set damageDescription = damageDescription & ", verheerender"
 !mmm         end if
 !mmm         if not magicExtraDamageActive
@@ -312,7 +313,9 @@
 !mmm     if cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
-!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
+!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}
+!mmm     do chat(m3mgdRerunButton(cOwnID, "melee", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll}))
+!mmm     chat:      }}
 !mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(cTargetID)}}}
 !mmm     if attackResult >= 20
 !mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{cAttackRoll})}}

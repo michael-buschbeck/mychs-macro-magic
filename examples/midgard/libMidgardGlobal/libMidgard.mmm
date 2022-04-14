@@ -1255,11 +1255,11 @@
 !mmm   return payload
 !mmm end function
 !rem
-!rem // _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel)
+!rem // _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, [rollData])
 !rem //
-!rem //   Returns payload code for a chat button for tokenID to use weaponLabel (offensive or defensive) with scriptCommand.
+!rem //   Returns payload code for a chat button for tokenID to use weaponLabel (offensive or defensive) with scriptCommand, (re)using rollData about previous die rolls.
 !rem //
-!mmm function _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel)
+!mmm function _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData)
 !mmm
 !mmm   set weaponScriptCommand = m3mgdScriptCommands.(weaponsGroup)
 !rem   // Overwrite weaponScriptCommand if there is a custom config script registered for weaponLabel in tokenID's character sheet
@@ -1285,9 +1285,21 @@
 !mmm     end if
 !mmm
 !mmm     set payload = payload & literal("!mmm set cManualModifiers=?" & "{Weitere spezielle Angriffsmodifikatoren|0}") & "&#13;"
+!mmm
+!mmm     if not isdefault(rollData)
+!mmm       for singleRoll in rollData...
+!rem         // For simple numbers, just hand them over
+!mmm         if singleRoll.value + 0 eq singleRoll.value
+!mmm           set payload = payload & literal("!mmm set " & singleRoll.key & "=roll(" & singleRoll.value & ")") & "&#13;"
+!rem         // Non-numbers should be dice syntax ("1d20"): roll them for player characters, otherwise the default will kick in
+!mmm         else if tokenID.PC
+!mmm           set payload = payload & "&amp;{template} &#91;[" & singleRoll.value & "]] &#123;{&#125;}&#13;"
+!mmm           set payload = payload & literal("!mmm set " & singleRoll.key & "=$[" & "[0]]") & "&#13;"
+!mmm         end if
+!mmm       end for
+!mmm     end if 
+!mmm
 !mmm     if tokenID.PC
-!mmm       set payload = payload & "&amp;{template} &#91;[1d20]] &#123;{&#125;}&#13;"
-!mmm       set payload = payload & literal("!mmm set cAttackRoll=$[" & "[0]]") & "&#13;"
 !mmm       set payload = payload & literal("!mmm set cGMSilentMode=false") & "&#13;"
 !mmm     else
 !mmm       set payload = payload & literal("!mmm set cGMSilentMode=true") & "&#13;"
@@ -1390,7 +1402,7 @@
 !mmm
 !mmm     if weaponUsable
 !mmm
-!mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, scriptCommand)
+!mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, {"cAttackRoll": "1d20"})
 !mmm       
 !mmm       if itemCounter % 2 == 0
 !mmm         set chatMenu = chatMenu & "{\{[" & weaponLabel & "](" & payload & ")="
@@ -1553,8 +1565,8 @@
 !rem
 !rem // m3mgdRerunButton(tokenID, weaponsGroup, weaponLabel, scriptCommand)
 !rem //
-!mmm function m3mgdRerunButton(tokenID, weaponsGroup, weaponLabel, scriptCommand)
-!mmm   set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, scriptCommand)
+!mmm function m3mgdRerunButton(tokenID, weaponsGroup, weaponLabel, rollData)
+!mmm   set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData)
 !mmm   return " [🗘](" & payload & cssTableHeaderButton & ") "
 !mmm end function
 !rem
