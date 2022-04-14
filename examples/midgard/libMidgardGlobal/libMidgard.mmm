@@ -126,6 +126,7 @@
 !rem // m3mgdGetEnduranceAttribute(tokenID)
 !rem //
 !rem //   Returns name of a valid, preferred attribute to access the token's endurance.
+!rem // 
 !mmm function m3mgdGetEnduranceAttribute(tokenID)
 !mmm   if m3mgdValidateTokenAttribute(tokenID, script.cEnduranceAttr)
 !mmm     return script.cEnduranceAttr
@@ -139,6 +140,7 @@
 !rem // m3mgdGetHealthAttr(tokenID)
 !rem //
 !rem //   Returns name of a valid, preferred attribute to access the token's health.
+!rem // 
 !mmm function m3mgdGetHealthAttribute(tokenID)
 !mmm   if m3mgdValidateTokenAttribute(tokenID, script.cHealthAttr)
 !mmm     return script.cHealthAttr
@@ -398,12 +400,7 @@
 !mmm     return unknown
 !mmm   end if
 !mmm   if isdefault(healthAttr)
-!mmm     if script.cHealthAttr
-!mmm       set healthAttr = script.cHealthAttr
-!mmm     else 
-!mmm       do whisperback("No health attribute provided as argument or at script level")
-!mmm       return unknown
-!mmm     end if
+!mmm     set healthAttr = m3mgdGetHealthAttribute(tokenID)
 !mmm   end if
 !mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3
 !mmm     return true
