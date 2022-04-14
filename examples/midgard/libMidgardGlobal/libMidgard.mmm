@@ -4,12 +4,12 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.3.1 (2022-03-20)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-09)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.27
-!mmm     do whisperback("Abbruch: MMM-Version 1.27.0 oder höher erforderlich.")
+!mmm   if version < 1.29
+!mmm     do whisperback("Abbruch: MMM-Version 1.29.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -64,6 +64,15 @@
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "broken_heart": { "noAttack": true, "noDefense": true, "label": "Schwere innere Verletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "white_tower": { "rollModifiers": { "melee": -4, "ranged": -4, "defense": -4 }, "label": "Rippen schwer verletzt", "icon": "", "desc": "alles -4" } }
 !mmm
+!mmm   if not m3mgdCriticalEffectsTable
+!mmm     if "MacroSheet".m3mgdCriticalEffectsTable ne ""
+!mmm       set m3mgdCriticalEffectsTable = deserialize("MacroSheet".m3mgdCriticalEffectsTable)
+!mmm       publish to game: m3mgdCriticalEffectsTable
+!mmm     else
+!mmm       chat: **Tabelle der kritischen Kampfereignisse fehlt, bitte neu anlegen.**
+!mmm     end if
+!mmm   end if
+!mmm   
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
@@ -92,7 +101,7 @@
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
 !mmm   publish to game: _m3mgdWeaponButtonPayload, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
-!mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX
+!mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdGetCriticalEffect
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -1510,6 +1519,18 @@
 !rem
 !mmm   return chatMenu
 !mmm   
+!mmm end function
+!rem
+!rem // m3mgdGetCriticalEffect(type, selectRoll)
+!rem //
+!rem //   Retrieves the critical (type) rolled with (selectRoll). Requires m3mgdCriticalEffectsTable to be in order.
+!rem //
+!mmm function m3mgdGetCriticalEffect(type, selectRoll)
+!mmm   for effectRow in m3mgdCriticalEffectsTable.(type)... order (...left.key < ...right.key)
+!mmm     if selectRoll <= effectRow.key
+!mmm       return effectRow.value
+!mmm     end if
+!mmm   end for
 !mmm end function
 !rem
 !rem // m3mgdProcessCombatPP(ownID, weaponLabel, [targetID])
