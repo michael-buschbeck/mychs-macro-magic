@@ -102,7 +102,7 @@
 !mmm   publish to game: _m3mgdWeaponButtonPayload, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
-!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdCriticalEffectPrompt
+!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect, m3mgdCriticalEffectPrompt
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -1627,6 +1627,79 @@
 !mmm   end if
 !mmm
 !mmm   return deserialize(tokenID.m3mgdActiveCriticalEffects)
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdExecuteCriticalEffect(tokenID, tableName, rollResult, [context], [foeID])
+!rem //
+!rem //   Pulls the criticalEffect struct defined by tableName and rollResult, and executes it for tokenID, context and foeID. 
+!rem //   Valid criticalEffect structs:
+!rem //   criticalEffect = {
+!rem //     weight: integer,
+!rem //     url: string,
+!rem //     label: "string",
+!rem //     desc: ["string" | { "context 1": "string", "context 2": "string", ...}],
+!rem //     [userInput]: {}, // key:value pairs defining the two sides of an MMM set statement, e.g. "myVar": "@" & "{Is the sky blue?|Yes,1|No,0}", made available to the code stored as immediate
+!rem //     [immediate]: *,  // Could be a string (Roll20 chat command), a list of strings, or a struct that maps context identifiers (keys, as in desc above) to either strings or list of strings holding chat commands (values)
+!rem //     [persistent]: {} // struct as documented in m3mgdStorePersistentEffect()
+!rem //   }
+!rem //
+!mmm function m3mgdExecuteCriticalEffect(tokenID, tableName, rollResult, context, foeID)
+!mmm   
+!mmm   if isdefault(tokenID) or not m3mgdValidateOwnTokenID(tokenID)
+!mmm     do whisperback("m3mgdExecuteCriticalEffect() called without a valid token ID.")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set criticalEffect = m3mgdGetCriticalEffect(tableName, rollResult)
+!mmm   set codeLines = undef
+!mmm   set sender = tokenID.token_name
+!mmm
+!mmm   combine chat
+!mmm     if isdefault(context)
+!mmm       chat: ${"&"}{template:default} {{name=${tokenID.token_name} würfelt ${criticalEffect.label}}}
+!mmm     else 
+!mmm       chat: ${"&"}{template:default} {{name=${tokenID.token_name} würfelt ${criticalEffect.label} (${context}) }}
+!mmm     end if
+!mmm     chat: {{Wurf=${highlight(rollResult, "normal", "Wurf mit 1W100")}}}
+!mmm     if criticalEffect.desc + 0 == 0
+!mmm       set descText = criticalEffect.desc
+!mmm     else 
+!mmm       set descText = criticalEffect.desc.(context)
+!mmm     end if
+!mmm     chat: {{Folgen=${descText}}}
+!mmm
+!mmm     if criticalEffect.immediate.(context)
+!mmm       set codeLines = criticalEffect.immediate.(context)
+!mmm     else if isdefault(context)
+!mmm       set codeLines = criticalEffect.immediate
+!mmm     end if
+!mmm     
+!mmm     if criticalEffect.persistent.expiry
+!mmm       set persistentEffectsList = criticalEffect.persistent
+!mmm     else if criticalEffect.persistent.(context).expiry or (criticalEffect.persistent.(context)[0].expiry and criticalEffect.persistent.(context)[1].expiry)
+!mmm       set persistentEffectsList = criticalEffect.persistent.(context)
+!mmm     end if
+!mmm     for persistentEffect in persistentEffectsList
+!mmm       set persistentEffect = { effect: persistentEffect, label: criticalEffect.label, desc: descText }
+!mmm       if persistentEffect.effect.focus eq "foe"
+!mmm         set targetID = foeID
+!mmm       else if persistentEffect
+!mmm         set targetID = tokenID
+!mmm       end if
+!mmm       set persistentEffect = m3mgdStorePersistentEffect(targetID, persistentEffect)
+!mmm       chat: {{ ${persistentEffect.label}=${persistentEffect.effect} }}
+!mmm     end for
+!mmm
+!mmm   end combine
+!mmm
+!mmm   if codeLines
+!mmm     set currentEffect = criticalEffect
+!mmm     publish to sender: currentEffect
+!mmm     do _m3mgdExecuteCode(codeLines, tokenID, foeID)
+!mmm   end if
+!mmm
+!mmm   do m3mgdChatActiveEffects(tokenID)
 !mmm
 !mmm end function
 !rem
