@@ -1,5 +1,5 @@
 !rem // showXPLog for selected token's character
-!rem // 2022-01-24
+!rem // 2022-03-19
 !mmm script
 !mmm
 !mmm   if version < 1.26 or not m3mgdExchange or not m3mgdExchangeAttrList
@@ -13,7 +13,12 @@
 !mmm   end if
 !mmm
 !mmm   combine chat
-!mmm     chat: /w GM ${"&"}{template:default} {{name=EP-Sitzungsprotokoll für **${selected.name}** (${selected.(m3mgdAttrXP)} EP)}}
+!mmm     if sender.character_name
+!mmm       chat: /w ${sender.character_name} 
+!mmm     else
+!mmm       chat: /w GM
+!mmm     end if
+!mmm     chat: ${"&"}{template:default} {{name=EP-Sitzungsprotokoll für **${selected.name}** (${selected.(m3mgdAttrXP)} EP)}}
 !mmm     if selected.(m3mgdAttrXPLog) eq ""
 !mmm       chat: {{Keine Einträge}}
 !mmm     else 
