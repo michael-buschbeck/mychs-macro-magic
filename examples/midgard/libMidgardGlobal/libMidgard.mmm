@@ -89,7 +89,7 @@
 !rem
 !mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
-!mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdFlushExchange
+!mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
 !mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdShapeMoji
 !mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
@@ -102,7 +102,7 @@
 !mmm   publish to game: _m3mgdWeaponButtonPayload, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
-!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStoreCriticalEffect, m3mgdCriticalEffectPrompt
+!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdCriticalEffectPrompt
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -250,6 +250,45 @@
 !mmm   for codeLine in codeLines 
 !mmm     chat: ${codeLine}
 !mmm   end for
+!mmm end function
+!rem
+!rem // m3mgdRollChanceEffect(tokenID, attribute, rollTemplate, rollModifiers, immediateEffect, [persistentEffect])
+!rem // 
+!rem //   If a rollTemplate roll exceeds tokenID.(attribute)+rollModifiers, executes Roll20 chat code immediateEffect and stores persistentEffect.
+!rem // 
+!mmm function m3mgdRollChanceEffect(tokenID, attribute, rollTemplate, rollModifiers, immediateEffect, persistentEffect)
+!mmm
+!rem   // Stop condition if recursion ends up here without a tokenID
+!mmm   if isdefault(tokenID) or isunknown(tokenID)
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   combine chat
+!mmm
+!mmm     chat: ${"&"}{template:default} 
+!mmm     if attribute + 0 eq attribute 
+!mmm       chat: {{name=${tokenID.name}: Zufallseffekt}}
+!mmm     else
+!mmm       chat: {{name=${tokenID.name}: Prüfwurf${sign(rollModifiers, "math")} gegen ${attribute} }}
+!mmm     end if
+!mmm 
+!mmm     set rollResult = roll(rollTemplate & sign(rollModifiers, "math"))
+!mmm 
+!mmm     if rollResult > tokenID.(attribute)
+!mmm       chat: {{ 🎲 = ${rollResult}: Effekt tritt ein (${literal(immediateEffect)}) }}
+!mmm     else 
+!mmm       chat: {{ 🎲 = ${rollResult}: Effekt tritt **nicht** ein }}
+!mmm     end if
+!mmm
+!mmm   end combine
+!mmm
+!mmm   if rollResult > tokenID.(attribute)
+!mmm     do _m3mgdExecuteCode(immediateEffect, tokenID)
+!mmm     if not isdefault(persistentEffect)
+!mmm       do m3mgdStorePersistentEffect(tokenID, { label: currentEffect.label, desc: currentEffect.desc, effect: persistentEffect })
+!mmm     end if
+!mmm   end if
+!mmm
 !mmm end function
 !rem
 !rem // m3mgdFlushExchange([dataExchangeID], [attrList])
@@ -1545,10 +1584,10 @@
 !mmm   end for
 !mmm end function
 !rem
-!rem // m3mgdStoreCriticalEffect(tokenID, critEffect)
+!rem // m3mgdStorePersistentEffect(tokenID, persistentEffect)
 !rem //
-!rem //   Stores a persistent critical effect for tokenID. Duration and effects are stored in the critEffect struct:
-!rem //   critEffect = { 
+!rem //   Stores a persistent effect for tokenID. Duration and effects are stored in the persistentEffect struct:
+!rem //   persistentEffect = { 
 !rem //     label: "string", 
 !rem //     desc: "string", 
 !rem //     effect: { 
@@ -1559,31 +1598,31 @@
 !rem //       [marker: "(valid status marker for tokenID)"]
 !rem //     }
 !rem //   }
-!rem //   Returns the stored critEffect struct, updated by whatever dice thrown to resolve effect.expiry.count.
+!rem //   Returns the stored persistentEffect struct, updated by whatever dice thrown to resolve effect.expiry.count.
 !rem //
-!mmm function m3mgdStoreCriticalEffect(tokenID, critEffect)
+!mmm function m3mgdStorePersistentEffect(tokenID, persistentEffect)
 !mmm
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
-!mmm     do whisperback("m3mgdStoreCriticalEffect() called without a valid tokenID. Exiting function.")
+!mmm     do whisperback("m3mgdStorePersistentEffect() called without a valid tokenID. Exiting function.")
 !mmm     return false
 !mmm   end if
 !mmm   
-!rem   // For variable expiry counts, make the roll and update critEffect with the result
-!mmm   if critEffect.effect.expiry.count and (critEffect.effect.expiry.count + 0 ne critEffect.effect.expiry.count)
-!mmm     set critEffect = { critEffect, effect: { critEffect.effect, expiry: { critEffect.effect.expiry, count: roll(critEffect.effect.expiry.count) } } }
+!rem   // For variable expiry counts, make the roll and update persistentEffect with the result
+!mmm   if persistentEffect.effect.expiry.count and (persistentEffect.effect.expiry.count + 0 ne persistentEffect.effect.expiry.count)
+!mmm     set persistentEffect = { persistentEffect, effect: { persistentEffect.effect, expiry: { persistentEffect.effect.expiry, count: roll(persistentEffect.effect.expiry.count) } } }
 !mmm   end if
 !mmm
 !rem   // New effects counting rounds need to be marked as new, so they are not immediately counted down at end of the current round
-!mmm   if critEffect.effect.expiry.type eq "round"
-!mmm     set critEffect = { critEffect, effect: { critEffect.effect, expiry: { critEffect.effect.expiry, new: true } } }
+!mmm   if persistentEffect.effect.expiry.type eq "round"
+!mmm     set persistentEffect = { persistentEffect, effect: { persistentEffect.effect, expiry: { persistentEffect.effect.expiry, new: true } } }
 !mmm   end if
 !mmm
 !mmm   do setattr(tokenID, "status_blue", tokenID.status_blue + 1)
 !mmm   if isunknown(tokenID.m3mgdActiveCriticalEffects) or tokenID.m3mgdActiveCriticalEffects eq ""
-!mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize(critEffect))
+!mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize(persistentEffect))
 !mmm   else 
-!mmm     set newList = deserialize(tokenID.m3mgdActiveCriticalEffects), critEffect
+!mmm     set newList = deserialize(tokenID.m3mgdActiveCriticalEffects), persistentEffect
 !mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize(newList))
 !mmm   end if
 !mmm
