@@ -68,7 +68,7 @@
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
-!mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdWeaponSelectorChatMenu, m3mgdDefenseDataTable
+!mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdWeaponSelectorChatMenu, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
@@ -1625,6 +1625,35 @@
 !mmm
 !mmm   end combine
 !mmm
+!mmm   return true
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdChatDefensePrompt(targetID, [attackerID], weaponType)
+!rem //
+!mmm function m3mgdChatDefensePrompt(targetID, attackerID, weaponType)
+!mmm   
+!mmm   if isdefault(targetID) or not m3mgdValidateOwnTokenID(targetID)
+!mmm     do whisperback("m3mgdChatDefensePrompt() called without a valid target ID.")
+!mmm     return false
+!mmm   end if
+!mmm   if (isdefault(attackerID) or not m3mgdValidateOwnTokenID(attackerID)) and m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm     set attackerID = script.cOwnID
+!mmm   else if isdefault(attackerID)
+!mmm     do whisperback("m3mgdChatDefensePrompt() called without a valid attacker ID, defaulting to script.cOwnID failed.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set sender = attackerID.token_name
+!mmm   if attackerID.PC 
+!mmm     chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", weaponType)}
+!mmm   else
+!mmm     set payload = "!mmm script&#13;"
+!mmm     set payload = payload & literal("!mmm set sender=\"" & attackerID.token_name & "\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm do chat('/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
+!mmm     set payload = payload & "!mmm end script&#13;"
+!mmm     chat: /w GM [🖅 **an ${targetID.character_name}**](${payload})
+!mmm   end if
 !mmm   return true
 !mmm   
 !mmm end function

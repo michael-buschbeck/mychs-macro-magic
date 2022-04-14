@@ -512,12 +512,7 @@
 !mmm   end if
 !mmm   
 !mmm   if attackResult >= 20
-!mmm     if cOwnID.PC 
-!mmm       chat: /w "${cOwnID.character_name}" ${m3mgdWeaponSelectorChatMenu(cTargetID, "defense", cWeaponType)}
-!mmm     else
-!mmm       set payload = literal("!mmm do chat('/w \"" & cTargetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & cTargetID & "\", \"defense\", \"" & cWeaponType & "\"))") & "&#13;"
-!mmm       chat: /w GM [🖅 **an ${cTargetID.character_name}**](${payload})
-!mmm     end if
+!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType)
 !mmm   end if
 !mmm
 !mmm end script
