@@ -1649,7 +1649,7 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   set sender = attackerID.token_name
+!mmm   set sender = targetID.token_name
 !mmm   if attackerID.PC 
 !mmm     chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", weaponType)}
 !mmm   else
