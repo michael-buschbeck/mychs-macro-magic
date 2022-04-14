@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0-pre (2022-03-18)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2022-04-11)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -89,18 +89,9 @@
 !mmm   if m3mgdExchange.(m3mgdAttrAttackWeaponType).max ne ""
 !mmm     set attackWeaponSpecialEffect = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
 !mmm   end if
-!rem   // Check for armor piercing projectiles
-!mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
 !mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
-!mmm   set armorLabel = cOwnID.(findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
-!mmm   set armorProtection = cOwnID.(findattr(cOwnID, "Ruestung", "RsGetragen", true, "RüsLP"))
-!mmm   if isunknown(armorLabel) or isunknown(armorProtection)
-!rem     // For NPC tokens where the search for "RsGetragen==true" doesn't work, just take first armor in sheet
-!mmm     set armorLabel = cOwnID.(findattr(cOwnID, "Ruestung", "Rüstung"))
-!mmm     set armorProtection = cOwnID.(findattr(cOwnID, "Ruestung", "RüsLP"))
-!mmm   end if
 !mmm   set endurance = cOwnID.(cEnduranceAttr)
 !mmm   set health = cOwnID.(cHealthAttr)
 !mmm   set maxHealth = cOwnID.(cHealthAttr).max
@@ -245,14 +236,9 @@
 !mmm     end if
 !mmm
 !rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health)
-!mmm     if not cOwnID.(cHealthAttr).max == 0 and armorProtection > 0
-!mmm       if armorProtection > 3 and armorPiercing == true
-!mmm         set armorProtection = 3
-!mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & ", reduziert wg. Geschosstyp (" & m3mgdExchange.(m3mgdAttrAttackWeaponType) & ")}} "
-!mmm       else
-!mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & "}} "
-!mmm       end if
-!mmm       set effHealthLoss = attackDamage - armorProtection
+!mmm     set effArmorProtection = m3mgdEffectiveArmorProtection(cOwnID, attackWeaponType)
+!mmm     if not cOwnID.(cHealthAttr).max == 0 and effArmorProtection
+!mmm       set effHealthLoss = attackDamage - effArmorProtection
 !mmm       if effHealthLoss < 0
 !mmm         set effHealthLoss = 0
 !mmm       end if
@@ -323,7 +309,7 @@
 !mmm         else if effHealthLoss > 0
 !mmm           chat     [DefenseFailureMinorHit]:   Au. Pieks. Na warte!
 !mmm         else 
-!mmm           chat     [DefenseFailureNoDamage]:   Doch kein Problem für meine $[armorLabel]{armorLabel}, außer Schweiß verliere ich nichts.
+!mmm           chat     [DefenseFailureNoDamage]:   Doch kein Problem für meine Rüstung, außer Schweiß verliere ich nichts.
 !mmm         end if
 !mmm         if newHealth < 0 and timeToDie < 0
 !mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{cOwnID.name}, out.${"<"}br>[x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)

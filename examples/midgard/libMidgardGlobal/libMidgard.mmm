@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-09)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-11)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -101,7 +101,7 @@
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
 !mmm   publish to game: _m3mgdWeaponButtonPayload, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
-!mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdGetCriticalEffect
+!mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection, m3mgdGetCriticalEffect
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -669,7 +669,7 @@
 !mmm
 !mmm   set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, enduranceAttr, "cEnduranceAttr")
 !mmm   if not enduranceAttr
-!mmm     return false
+!mmm     set enduranceAttr = m3mgdGetEnduranceAttribute(tokenID)
 !mmm   end if
 !mmm   
 !mmm   set prvEndurance = tokenID.(enduranceAttr)
@@ -755,7 +755,7 @@
 !mmm   
 !mmm   set healthAttr = m3mgdValidateTokenAttribute(tokenID, healthAttr, "cHealthAttr")
 !mmm   if not healthAttr
-!mmm     return false
+!mmm     set healthAttr = m3mgdGetHealthAttribute(tokenID)
 !mmm   end if
 !mmm   
 !rem   // Check if character is actually alive
@@ -1533,6 +1533,30 @@
 !mmm   end for
 !mmm end function
 !rem
+!rem // m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
+!rem //
+!rem //   Returns tokenID's current effective armor protection against attackWeapontype as a highlight() struct with metadata in the tooltip 
+!rem //
+!mmm function m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
+!mmm
+!mmm   set armorLabel = (tokenID.repeating.ruestung where ...RsGetragen == true).Rüstung
+!mmm   set nominalArmorProtection = (tokenID.repeating.ruestung where ...RsGetragen == true).RüsLP
+!mmm   if isunknown(nominalArmorProtection)
+!rem     // For NPC tokens where the search for "RsGetragen==true" doesn't work, just take first armor in sheet
+!mmm     set armorLabel = tokenID.repeating.ruestung.Rüstung
+!mmm     set nominalArmorProtection = tokenID.repeating.ruestung.RüsLP
+!mmm   end if
+!mmm   
+!mmm   if isunknown(nominalArmorProtection)
+!mmm     return false
+!mmm   else if nominalArmorProtection > 3 and ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
+!mmm     return highlight(3, "info", armorLabel & ", reduziert wg. Geschosstyp (" & attackWeaponType & ")")
+!mmm   else 
+!mmm     return highlight(nominalArmorProtection, "info", armorLabel)
+!mmm   end if
+!mmm 
+!mmm end function
+!rem
 !rem // m3mgdProcessCombatPP(ownID, weaponLabel, [targetID])
 !rem //
 !rem //   Processes gain of a practice point for ownID's critically successful attack or defense roll using weaponLabel (in case of an attack, to hit targetID).
@@ -1694,7 +1718,7 @@
 !mmm   end if
 !mmm   set attackDamage = highlight(m3mgdExchange.(m3mgdAttrAttackDamage), "info", m3mgdExchange.(m3mgdAttrAttackType))
 !mmm   set effEnduranceLoss = highlight(script.effEnduranceLoss, "normal")
-!mmm   set effHealthLoss = highlight(script.effHealthLoss, "normal")
+!mmm   set effHealthLoss = highlight(script.effHealthLoss, "normal", "RS: " & script.effArmorProtection)
 !mmm
 !mmm   set sender = script.cOwnID.token_name
 !rem
@@ -1721,9 +1745,7 @@
 !mmm     do chat(m3mgdRerunButton(script.cOwnID, "defense", script.cWeaponLabel, {"cDefenseRoll": cDefenseRoll}))
 !mmm     chat: }\}
 !mmm
-!mmm     if script.armorProtection > 3 and script.armorPiercing == true and attackDamage > 3
-!mmm       chat: {\{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (Rüstungsschutz wg. Geschosstyp auf 3 begrenzt)}\}
-!mmm     else if attackDamage & "" eq "0"
+!mmm     if attackDamage & "" eq "0"
 !mmm       chat: {\{Angriff=**${attackResult}&nbsp;/&nbsp;Sonderschaden**}\}
 !mmm     else if attackDamage > 0
 !mmm       chat: {\{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden**}\}
