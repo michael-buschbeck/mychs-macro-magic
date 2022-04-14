@@ -1,6 +1,0 @@
-!rem // Midgard melee attack wrapper for 3D dice
-!mmm customize
-&{template:none} [[1d20]] {{}}
-!mmm   set cAttackRoll = $[[0]]
-!mmm end customize
-%{MacroSheet|meleeAttackMain}
