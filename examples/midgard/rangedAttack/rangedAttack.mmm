@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2022-03-20)"
+!mmm   set scriptVersion = "2.0.0-pre (2022-04-12)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -278,7 +278,7 @@
 !mmm     set modifierTooltip = modifierTooltip & " " & rangeBracket & "&nbsp;&nbsp;&nbsp;+/-0 "
 !mmm   end if
 !rem   // 2. Attacker's active status markers for exhaustion, injury etc.
-!mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "ranged")
+!mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "rangedAttack")
 !mmm     set autoModifiers = autoModifiers + activeMod.value.rollModifiers.ranged
 !mmm     set modifierLog = modifierLog & " {{" & activeMod.value.label & "=" & activeMod.value.rollModifiers.ranged & "}} "
 !mmm     set modifierTooltip = modifierTooltip & " " & activeMod.value.label & "&nbsp;&nbsp;&nbsp;" & activeMod.value.rollModifiers.ranged & " "

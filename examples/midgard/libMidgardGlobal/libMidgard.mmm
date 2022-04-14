@@ -49,7 +49,7 @@
 !mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
 !mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln", "waffenlos"
 !mmm
-!mmm   set m3mgdInjuryStatus = { "green": { "rollModifiers": {"melee": -4, "ranged": -4, "defense": -4 }, "label": "Erschöpft", "icon": "🟢", "desc": "alles -4" } }
+!mmm   set m3mgdInjuryStatus = { "green": { "rollModifiers": {"meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Erschöpft", "icon": "🟢", "desc": "alles -4" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "yellow": { "label": "Schwer verwundet", "icon": "🟡", "desc": "Ausdauer begrenzt auf 50%" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "red": { "noAttack": true, "noDefense": true, "label": "Handlungsunfähig", "icon": "🔴", "desc": "B=4, PW:Kon nach 10min, sonst Schock" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "brown": { "noAttack": true, "noDefense": true, "label": "Schock", "icon": "🟤", "desc": "Keine Angriffe oder Abwehr" } }
@@ -57,12 +57,12 @@
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "ninja_mask": { "noAttack": true, "noDefense": true, "label": "Schwere Kopfverletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "back_pain": { "combatRoundEffects": { "death": 10 }, "label": "Schwere Halswirbelverletzung", "icon": "", "desc": "10% Sterberisiko pro Kampfrunde" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "sleepy": { "combatRoundEffects": { "health": -1, "endurance": -1 }, "label": "Schwere Halsverletzung", "icon": "", "desc": "-1 LP/AP pro Kampfrunde" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "grab": { "rollModifiers": { "melee": -4, "ranged": -4, "defense": -4 }, "label": "Arm schwer verletzt", "icon": "", "desc": "alles -4 (falsche Hand)" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "grab": { "rollModifiers": { "meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Arm schwer verletzt", "icon": "", "desc": "alles -4 (falsche Hand)" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "tread": { "rollModifiers": { "defense": -4 }, "label": "Bein schwer verletzt", "icon": "", "desc": "Abwehr -4" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "bleeding_eye": { "rollModifiers": { "Sehen": -2 }, "label": "Augen schwer verletzt", "icon": "", "desc": "Sehen -2" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "screaming": { "rollModifiers": { "Hören": -2 }, "label": "Ohren schwer verletzt", "icon": "", "desc": "Hören -2" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "broken_heart": { "noAttack": true, "noDefense": true, "label": "Schwere innere Verletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "white_tower": { "rollModifiers": { "melee": -4, "ranged": -4, "defense": -4 }, "label": "Rippen schwer verletzt", "icon": "", "desc": "alles -4" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "white_tower": { "rollModifiers": { "meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Rippen schwer verletzt", "icon": "", "desc": "alles -4" } }
 !mmm
 !mmm   if not m3mgdCriticalEffectsTable
 !mmm     if "MacroSheet".m3mgdCriticalEffectsTable ne ""

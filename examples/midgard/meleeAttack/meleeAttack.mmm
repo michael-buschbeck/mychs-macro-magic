@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-03-18)"
+!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-04-12)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -146,7 +146,7 @@
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !rem   // 1. Attacker's active status markers for exhaustion, injury etc.
-!mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "melee")
+!mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "meleeAttack")
 !mmm     set autoModifiers = autoModifiers + activeMod.value.rollModifiers.melee
 !mmm     set modifierLog = modifierLog & " {{" & activeMod.value.label & "=" & activeMod.value.rollModifiers.melee & "}} "
 !mmm     set modifierTooltip = modifierTooltip & " " & activeMod.value.label & "&nbsp;&nbsp;&nbsp;" & activeMod.value.rollModifiers.melee & " "
