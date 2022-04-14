@@ -163,7 +163,11 @@
 !rem       // Initialize: refetch token ID and get name and skills
 !mmm       set tokenID = id.token_id
 !mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "FW2")) + tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", cSense, "Fertigkeitsbonus2"))
+!mmm
 !mmm       set tokenSenseModifier = cSenseModifier
+!mmm       for activeStatusSenseModifier in m3mgdActiveStatusModifiers(tokenID, cSense)
+!mmm         set tokenSenseModifier = tokenSenseModifier + activeStatusSenseModifier.value.rollModifiers.(cSense)
+!mmm       end for
 !mmm       if cSense eq "Nachtsicht" and not tokenEffSkill
 !rem         // For characters without night vision, substitute Vision without a bonus & slap -2 on the modifier
 !mmm         set tokenEffSkill = tokenID.(findattr(tokenID, "sinne", "Fertigkeit2", "Sehen", "FW2"))

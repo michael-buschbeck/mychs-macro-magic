@@ -59,8 +59,8 @@
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "sleepy": { "combatRoundEffects": { "health": -1, "endurance": -1 }, "label": "Schwere Halsverletzung", "icon": "", "desc": "-1 LP/AP pro Kampfrunde" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "grab": { "rollModifiers": { "melee": -4, "ranged": -4, "defense": -4 }, "label": "Arm schwer verletzt", "icon": "", "desc": "alles -4 (falsche Hand)" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "tread": { "rollModifiers": { "defense": -4 }, "label": "Bein schwer verletzt", "icon": "", "desc": "Abwehr -4" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "bleeding_eye": { "rollModifiers": { "see": -2 }, "label": "Augen schwer verletzt", "icon": "", "desc": "Sehen -2" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "screaming": { "rollModifiers": { "hear": -2 }, "label": "Ohren schwer verletzt", "icon": "", "desc": "Hören -2" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "bleeding_eye": { "rollModifiers": { "Sehen": -2 }, "label": "Augen schwer verletzt", "icon": "", "desc": "Sehen -2" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "screaming": { "rollModifiers": { "Hören": -2 }, "label": "Ohren schwer verletzt", "icon": "", "desc": "Hören -2" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "broken_heart": { "noAttack": true, "noDefense": true, "label": "Schwere innere Verletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "white_tower": { "rollModifiers": { "melee": -4, "ranged": -4, "defense": -4 }, "label": "Rippen schwer verletzt", "icon": "", "desc": "alles -4" } }
 !mmm
