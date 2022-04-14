@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-03-03)"
+!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-03-04)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -323,13 +323,17 @@
 !mmm     if attackResult >= 20
 !mmm       set damageType = ""
 !mmm       if magicWeapon and damageResult > 0
-!mmm         set damageType = damageType & emojiMagic
+!mmm         if magicExtraDamageActive 
+!mmm           set damageType = cMagicExtraDamageLabel
+!mmm         else 
+!mmm           set damageType = emojiMagic
+!mmm         end if
 !mmm       end if 
 !mmm       chat:    {{Schaden=$[damageResult]{damageResult} **LP/AP** ${damageType}}}
 !mmm     end if
 !mmm   end combine
 !mmm
-!mmm   if modifiers != 0
+!mmm   if modifierLog ne "{{Boni/Mali=keine}}"
 !mmm     chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm     if not cGMSilentMode
 !mmm       chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}

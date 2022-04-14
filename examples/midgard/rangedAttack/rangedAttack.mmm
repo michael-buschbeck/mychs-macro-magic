@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2022-03-03)"
+!mmm   set scriptVersion = "2.0.0-pre (2022-03-04)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -113,6 +113,11 @@
 !mmm     end if
 !mmm   end if
 !mmm
+!mmm   if isdefault(cSemiManualModifiers) or isdefault(cManualModifiers)
+!mmm     do m3mgdWeaponSelectorChatMenu(cOwnID, "ranged")
+!mmm     exit script
+!mmm   end if
+!mmm
 !rem   // Pull missing weapon properties for chosen attack weapon (works only for standard weapons)
 !mmm
 !mmm   set weaponProperties = m3mgdRangedWeaponProperties(cWeaponLabel)
@@ -144,7 +149,7 @@
 !rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
 !mmm     do whisperback("Abbruch: " & cOwnID.name & " hat keine Waffe namens " & cWeaponLabel & ".")
 !mmm     exit script
-!mmm   else if cMagicEnduranceCost > 0 and cOwnID.(cEnduranceAttr) < cMagicEnduranceCost
+!mmm   else if cMagicEnduranceCost > 0 and cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)) < cMagicEnduranceCost
 !mmm     do whisperback("Abbruch: " & cOwnID.name & " ist zu erschöpft für diesen magischen Angriff.")
 !mmm     exit script
 !mmm   end if
@@ -347,7 +352,7 @@
 !mmm
 !rem   // For magic weapons: Process optional endurance cost
 !mmm   if cMagicEnduranceCost > 0
-!mmm     set effEnduranceLoss = cOwnID.(cEnduranceAttr) - m3mgdModifyEndurance(-1 * cMagicEnduranceCost, cOwnID, cEnduranceAttr)
+!mmm     set effEnduranceLoss = cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)) - m3mgdModifyEndurance(-1 * cMagicEnduranceCost, cOwnID, m3mgdGetEnduranceAttribute(cOwnID))
 !mmm     set modifierLog = modifierLog & "{{ " & cWeaponLabel & "=-" & cMagicEnduranceCost & " AP }}"
 !mmm   end if
 !rem
@@ -394,7 +399,7 @@
 !mmm         set magicExtraDamage = highlight(0, "bad")
 !mmm       end if
 !mmm       set damageResult = damageResult + magicExtraDamage
-!mmm       set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & magicExtraDamage & ")"
+!mmm       set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & magicExtraDamage & emojiMagic & ")"
 !mmm     end if 
 !rem     // Complete damage variables
 !mmm     set damageResultLog = damageResult & " = " & damageResultLog
@@ -499,7 +504,7 @@
 !mmm     end if
 !mmm   end combine
 !mmm
-!mmm   if modifiers != 0
+!mmm   if modifierLog ne "{{Boni/Mali=keine}}"
 !mmm     chat: /w GM ${"&"}{template:default} ${modifierLog}
 !mmm     if not cGMSilentMode
 !mmm       chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
@@ -508,7 +513,7 @@
 !mmm
 !rem   // Injury & exhaustion special effects
 !mmm   if effEnduranceLoss > 0
-!mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(cEnduranceAttr).max)
+!mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
 !mmm   end if
 !mmm   
 !mmm   if attackResult >= 20
