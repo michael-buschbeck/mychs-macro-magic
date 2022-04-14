@@ -89,7 +89,7 @@
 !rem
 !mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
-!mmm   publish to game: m3mgdValidateAttackData, m3mgdFlushExchange
+!mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
 !mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdShapeMoji
 !mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
@@ -102,7 +102,7 @@
 !mmm   publish to game: _m3mgdWeaponButtonPayload, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
-!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStoreCriticalEffect
+!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStoreCriticalEffect, m3mgdCriticalEffectPrompt
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -240,10 +240,21 @@
 !mmm
 !mmm end function
 !rem
+!rem // _m3mgdExecuteCode(codeLines, myID, foeID)
+!rem // 
+!rem //   Internal. Expects a line or list of lines ready to be piped to the chat (so "!mmm " is required!).
+!rem //   Variables myID and foeID are published to the sender, so they are available to the dynamic code.
+!rem // 
+!mmm function _m3mgdExecuteCode(codeLines, myID, foeID)
+!mmm   publish to sender: myID, foeID
+!mmm   for codeLine in codeLines 
+!mmm     chat: ${codeLine}
+!mmm   end for
+!mmm end function
+!rem
 !rem // m3mgdFlushExchange([dataExchangeID], [attrList])
 !rem // 
 !rem //   Expects a global data exchange character sheet as m3mgdExchange or as an argument
-!rem // 
 !rem //   Returns the number of attributes set to "" in both their current and max values
 !rem // 
 !mmm function m3mgdFlushExchange(dataExchangeID, attrList)
@@ -1578,6 +1589,66 @@
 !mmm
 !mmm   return deserialize(tokenID.m3mgdActiveCriticalEffects)
 !mmm
+!mmm end function
+!rem
+!rem // m3mgdCriticalEffectPrompt(tokenID, tableName, rollResult, foeID)
+!rem //
+!rem //   Chats a prompt to the GM that shows the critical effect selected from tableName by rollResult.
+!rem //   GM can approve the roll to be sent to the affected player, or re-roll.
+!rem //
+!mmm function m3mgdCriticalEffectPrompt(tokenID, tableName, rollResult, foeID)
+!mmm
+!mmm   if isdefault(tokenID) or not m3mgdValidateOwnTokenID(tokenID)
+!mmm     do whisperback("m3mgdCriticalEffectPrompt() called without a valid token ID.")
+!mmm     return false
+!mmm   end if
+!mmm   set criticalEffect = m3mgdGetCriticalEffect(tableName, rollResult)
+!mmm
+!mmm   set sender = tokenID.token_name
+!mmm
+!mmm   combine chat
+!mmm
+!mmm     chat: /w GM ${"&"}{template:default} {{name=${tokenID.token_name} würfelt ${criticalEffect.label}}}
+!mmm     if isdefault(foeID)
+!mmm       chat: {{Wurf=${rollResult}}}
+!mmm     else
+!mmm       chat: {{Wurf=${rollResult} &nbsp; **Gegner:** ${highlight(foeID.name,"info")}}}
+!mmm     end if
+!mmm 
+!mmm     if criticalEffect.desc + 0 == 0
+!mmm
+!mmm       set approvePayload = "!mmm script&#13;"
+!mmm       for var in criticalEffect.userInput...
+!mmm         set approvePayload = approvePayload & literal("!mmm set " & var.key & "=" & var.value) & "&#13;"
+!mmm         set approvePayload = approvePayload & literal("!mmm publish to sender: " & var.key) & "&#13;"
+!mmm       end for
+!mmm       set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",default,\"" & foeID & "\")") & "&#13;"
+!mmm       set approvePayload = approvePayload & "!mmm end script&#13;"
+!mmm       chat: {{ [🖅 **an ${tokenID.character_name}**](${approvePayload}) = ${criticalEffect.desc} }}
+!mmm
+!mmm     else 
+!mmm
+!mmm       for contextDesc in criticalEffect.desc...
+!mmm         set approvePayload = "!mmm script&#13;"
+!mmm         for var in criticalEffect.userInput...
+!mmm           set approvePayload = approvePayload & literal("!mmm set " & var.key & "=" & var.value) & "&#13;"
+!mmm           set approvePayload = approvePayload & literal("!mmm publish to sender: " & var.key) & "&#13;"
+!mmm         end for
+!mmm         set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",\"" & contextDesc.key & "\",\"" & foeID & "\")") & "&#13;"
+!mmm         set approvePayload = approvePayload & "!mmm end script&#13;"
+!mmm         chat: {{ ${contextDesc.key} [🖅 **an ${tokenID.character_name}**](${approvePayload}) = ${contextDesc.value} }}
+!mmm       end for
+!mmm
+!mmm     end if
+!mmm
+!mmm     set rerollPayload = "!mmm script&#13;"
+!mmm     set rerollPayload = rerollPayload & "&amp;{template} &#91;[1d100]] &#123;{&#125;}&#13;"
+!mmm     set rerollPayload = rerollPayload & literal("!mmm do m3mgdCriticalEffectPrompt(\"" & tokenID & "\",\"" & tableName & "\",$[" & "[0]],\"" & foeID & "\")") & "&#13;"
+!mmm     set rerollPayload = rerollPayload & "!mmm end script&#13;"
+!mmm     chat: {{  = [🎲 nochmal würfeln](${rerollPayload}) }}
+!mmm
+!mmm   end combine
+!mmm   
 !mmm end function
 !rem
 !rem // m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
