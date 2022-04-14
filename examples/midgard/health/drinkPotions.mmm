@@ -1,0 +1,20 @@
+!rem // Drink Potion 
+!mmm script
+!mmm
+!mmm   function payload(dice, type)
+!mmm     set payload = "!mmm customize&#13;"
+!mmm     set payload = payload & "&amp;{template} &#91;[" & dice & "d6]] &#123;{&#125;}&#13;"
+!mmm     set payload = payload & literal("!mmm set result=$[" & "[0]]+$[" & "[1]]") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set maxEnduranceGain=result") & "&#13;"
+!mmm     if type eq "healing"
+!mmm       set payload = payload & literal("!mmm set maxHealthGain=result") & "&#13;"
+!mmm     end if
+!mmm     set payload = payload & "!mmm end customize&#13;" & "&#x25;{MacroSheet|applyHealing}"
+!mmm     return payload
+!mmm   end function
+!mmm   
+!mmm   set chatOutput = "&" & "{template:default} {{name=Getränkekarte}} "
+!mmm   set chatOutput = chatOutput & "{{ [Krafttrunk 1W6](" & payload(1, "energy") & ") = [**Heiltrunk 1W6**](" & payload(1, "healing") & ") }}"
+!mmm   set chatOutput = chatOutput & "{{ [Krafttrunk 2W6](" & payload(2, "energy") & ") = [**Heiltrunk 2W6**](" & payload(2, "healing") & ") }}"
+!mmm   do whisperback(chatOutput)
+!mmm end script
