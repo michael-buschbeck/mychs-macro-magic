@@ -826,14 +826,14 @@
 !mmm
 !mmm end function
 !rem
-!rem // m3mgdExchangeStoreAttack(attackType)
+!rem // m3mgdExchangeStoreAttack(attackType, [magicSpell])
 !rem //
 !mmm function m3mgdExchangeStoreAttack(attackType, magicSpell)
 !mmm   
 !mmm   set dataExchangeID = m3mgdExchange
 !mmm   do m3mgdFlushExchange(dataExchangeID)
 !mmm
-!mmm   if attackType eq "magic" and magicSpell eq ""
+!mmm   if attackType eq "magic" and isdefault(magicSpell)
 !mmm     do whisperback("Incomplete data for a magic attack: spell argument missing")
 !mmm     return false
 !mmm   else if attackType ne "magic"
@@ -857,7 +857,7 @@
 !mmm   if setattr(dataExchangeID, m3mgdAttrAttackTargetID, script.cTargetID) eq script.cTargetID
 !mmm     set storeCounter = storeCounter + 1
 !mmm   end if
-!mmm 
+!mmm   
 !rem   // Store additional data only if present
 !mmm
 !mmm   if script.attackResult >= 20
@@ -866,7 +866,7 @@
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm   end if
-!mmm
+!mmm   
 !mmm   if script.criticalAttack == true or script.criticalAttack == false
 !mmm     set storeTarget = storeTarget + 1
 !rem     // normalize boolean variable to avoid setting the attribute to undef (which would evaluate as false above)
@@ -875,17 +875,17 @@
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm   end if
-!mmm
-!mmm   if script.damageResult > 0
+!mmm   
+!mmm   if script.damageResult ne undef
 !mmm     set storeTarget = storeTarget + 1
 !mmm     if setattr(dataExchangeID, m3mgdAttrAttackDamage, script.damageResult) == script.damageResult
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
 !mmm   end if
 !mmm   
-!mmm   if script.damageRoll > 0 or script.damageRoll < 0
+!mmm   if script.cDamageRoll ne undef
 !mmm     set storeTarget = storeTarget + 1
-!mmm     set damageRoll = script.damageRoll
+!mmm     set damageRoll = script.cDamageRoll
 !mmm     if damageRoll < 0
 !mmm       set damageRoll = 0
 !mmm     end if
@@ -1292,19 +1292,6 @@
 !mmm
 !mmm     set payload = payload & literal("!mmm set cManualModifiers=?" & "{Weitere spezielle Angriffsmodifikatoren|0}") & "&#13;"
 !mmm
-!mmm     if not isdefault(rollData)
-!mmm       for singleRoll in rollData...
-!rem         // For simple numbers, just hand them over
-!mmm         if singleRoll.value + 0 eq singleRoll.value
-!mmm           set payload = payload & literal("!mmm set " & singleRoll.key & "=roll(" & singleRoll.value & ")") & "&#13;"
-!rem         // Non-numbers should be dice syntax ("1d20"): roll them for player characters, otherwise the default will kick in
-!mmm         else if tokenID.PC and singleRoll.value
-!mmm           set payload = payload & "&amp;{template} &#91;[" & singleRoll.value & "]] &#123;{&#125;}&#13;"
-!mmm           set payload = payload & literal("!mmm set " & singleRoll.key & "=$[" & "[0]]") & "&#13;"
-!mmm         end if
-!mmm       end for
-!mmm     end if 
-!mmm
 !mmm     if tokenID.PC
 !mmm       set payload = payload & literal("!mmm set cGMSilentMode=false") & "&#13;"
 !mmm     else
@@ -1318,7 +1305,21 @@
 !mmm     set payload = payload & literal("!mmm set cNoDefense=\"false\"") & "&#13;"
 !mmm       
 !mmm   end if
-!mmm       
+!mmm
+!rem   // Make or pass on any rolls
+!mmm   if not isdefault(rollData)
+!mmm     for singleRoll in rollData...
+!rem       // For simple numbers, just hand them over
+!mmm       if singleRoll.value + 0 eq singleRoll.value
+!mmm         set payload = payload & literal("!mmm set " & singleRoll.key & "=roll(" & singleRoll.value & ")") & "&#13;"
+!rem       // Non-numbers should be dice syntax ("1d20"): roll them for player characters, otherwise the default will kick in
+!mmm       else if tokenID.PC and singleRoll.value
+!mmm         set payload = payload & "&amp;{template} &#91;[" & singleRoll.value & "]] &#123;{&#125;}&#13;"
+!mmm         set payload = payload & literal("!mmm set " & singleRoll.key & "=$[" & "[0]]") & "&#13;"
+!mmm       end if
+!mmm     end for
+!mmm   end if 
+!mmm
 !mmm   set payload = payload & "!mmm end customize&#13;"
 !mmm   set payload = payload & weaponScriptCommand
 !mmm
@@ -1608,14 +1609,17 @@
 !mmm     chat: ${"&"}{template:default} 
 !mmm
 !mmm     if script.cNoDefense
-!mmm       chat: {\{name=${shapeMoji}${script.cOwnID.name}: Keine Abwehr (wehrlos) }\}
+!mmm       set heading = "Keine Abwehr (wehrlos)"
 !mmm     else if m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
-!mmm       chat: {\{name=${shapeMoji}${script.cOwnID.name}: Abwehr gegen ${m3mgdExchange.(m3mgdAttrAttackType).max} }\}
+!mmm       set heading = "Abwehr gegen " & m3mgdExchange.(m3mgdAttrAttackType).max
 !mmm     else if script.cWeaponLabel eq "Abwehr ohne Schild"
-!mmm       chat: {\{name=${shapeMoji}${script.cOwnID.name}: Abwehr ohne Schild }\}
+!mmm       set heading = "Abwehr ohne Schild"
 !mmm     else
-!mmm       chat: {\{name=${shapeMoji}${script.cOwnID.name}: Abwehr mit ${script.cWeaponLabel} }\}
+!mmm       set heading = "Abwehr mit " & script.cWeaponLabel
 !mmm     end if 
+!mmm     chat: {\{name=${shapeMoji}${script.cOwnID.name}: ${heading}
+!mmm     do chat(m3mgdRerunButton(script.cOwnID, "defense", script.cWeaponLabel, {"cDefenseRoll": cDefenseRoll}))
+!mmm     chat: }\}
 !mmm
 !mmm     if script.armorProtection > 3 and script.armorPiercing == true and attackDamage > 3
 !mmm       chat: {\{Angriff=**${attackResult}&nbsp;/&nbsp;${attackDamage}&nbsp;Schaden** (Rüstungsschutz wg. Geschosstyp auf 3 begrenzt)}\}

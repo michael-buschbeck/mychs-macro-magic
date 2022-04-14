@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0-pre (2022-02-22)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2022-03-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -10,8 +10,8 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.26
-!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
+!mmm   if version < 1.27
+!mmm     do whisperback("Abbruch: MMM-Version 1.27.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
