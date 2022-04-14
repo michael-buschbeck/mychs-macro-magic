@@ -1649,8 +1649,7 @@
 !mmm     chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", weaponType)}
 !mmm   else
 !mmm     set payload = "!mmm script&#13;"
-!mmm     set payload = payload & literal("!mmm set sender=\"" & attackerID.token_name & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm do chat('/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
+!mmm     set payload = payload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
 !mmm     set payload = payload & "!mmm end script&#13;"
 !mmm     chat: /w GM [🖅 **an ${targetID.character_name}**](${payload})
 !mmm   end if
