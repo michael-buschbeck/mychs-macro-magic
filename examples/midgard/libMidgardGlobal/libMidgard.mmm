@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.3.0 (2022-03-16)"
+!mmm   set libVersion = "libMidgard v1.3.0 (2022-03-17)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -49,6 +49,21 @@
 !mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
 !mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln", "waffenlos"
 !mmm
+!mmm   set m3mgdInjuryStatus = { "green": { "rollModifiers": {"melee": -4, "ranged": -4, "defense": -4 }, "label": "Erschöpft", "icon": "🟢", "desc": "alles -4" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "yellow": { "label": "Schwer verwundet", "icon": "🟡", "desc": "Ausdauer begrenzt auf 50%" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "red": { "noAttack": true, "noDefense": true, "label": "Handlungsunfähig", "icon": "🔴", "desc": "B=4, PW:Kon nach 10min, sonst Schock" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "brown": { "noAttack": true, "noDefense": true, "label": "Schock", "icon": "🟤", "desc": "Keine Angriffe oder Abwehr" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "death_zone": { "noAttack": true, "noDefense": true, "label": "Dem Tode nah", "icon": "💀", "desc": "B=0, PW:Kon nach 10min, sonst Schock" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "ninja_mask": { "noAttack": true, "noDefense": true, "label": "Schwere Kopfverletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "back_pain": { "combatRoundEffects": { "death": 10 }, "label": "Schwere Halswirbelverletzung", "icon": "", "desc": "10% Sterberisiko pro Kampfrunde" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "sleepy": { "combatRoundEffects": { "health": -1, "endurance": -1 }, "label": "Schwere Halsverletzung", "icon": "", "desc": "-1 LP/AP pro Kampfrunde" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "grab": { "rollModifiers": { "melee": -4, "ranged": -4, "defense": -4 }, "label": "Arm schwer verletzt", "icon": "", "desc": "alles -4 (falsche Hand)" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "tread": { "rollModifiers": { "defense": -4 }, "label": "Bein schwer verletzt", "icon": "", "desc": "Abwehr -4" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "bleeding_eye": { "rollModifiers": { "see": -2 }, "label": "Augen schwer verletzt", "icon": "", "desc": "Sehen -2" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "screaming": { "rollModifiers": { "hear": -2 }, "label": "Ohren schwer verletzt", "icon": "", "desc": "Hören -2" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "broken_heart": { "noAttack": true, "noDefense": true, "label": "Schwere innere Verletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "white_tower": { "rollModifiers": { "melee": -4, "ranged": -4, "defense": -4 }, "label": "Rippen schwer verletzt", "icon": "", "desc": "alles -4" } }
+!mmm
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
@@ -59,7 +74,7 @@
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
-!mmm   publish to game: m3mgdAttrXP, m3mgdAttrXPLog
+!mmm   publish to game: m3mgdInjuryStatus, m3mgdAttrXP, m3mgdAttrXPLog
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
@@ -67,7 +82,7 @@
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
 !mmm   publish to game: m3mgdValidateAttackData, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
-!mmm   publish to game: m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdShapeMoji
+!mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdShapeMoji
 !mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
 !mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth
@@ -381,6 +396,35 @@
 !mmm   
 !mmm end function
 !rem
+!rem // m3mgdActiveStatusModifiers(tokenID, action)
+!rem //
+!rem // Returns a list of tokenID's active status modifiers, as defined in _libMidgard(), for a given action (defense, melee, see, hear etc.).
+!rem //
+!mmm function m3mgdActiveStatusModifiers(tokenID, action)
+!mmm
+!mmm   if isdefault(tokenID)
+!mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm   else
+!mmm     set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   end if
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   for statusModRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
+!mmm     
+!mmm     if statusModRule.value.rollModifiers.(action)
+!mmm
+!mmm       set activeStatusModifiers = activeStatusModifiers, statusModRule
+!mmm
+!mmm     end if
+!mmm     
+!mmm   end for
+!mmm   
+!mmm   return activeStatusModifiers
+!mmm
+!mmm end function
+!rem
 !rem // m3mgdIsExhausted(tokenID)
 !rem //
 !rem // Returns true if tokenID is exhausted (endurance is 0).
@@ -399,10 +443,11 @@
 !rem
 !rem // m3mgdIsDefenseless(tokenID, [healthAttr])
 !rem //
-!rem // Returns true if tokenID is defenseless because of close to zero health.
+!rem // Returns an m3mgdInjuryStatus struct if tokenID is defenseless.
 !rem // If healthAttr is not provided, the check defaults to script.cHealthAttr.
 !rem //
 !mmm function m3mgdIsDefenseless(tokenID, healthAttr)
+!mmm
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return unknown
@@ -410,11 +455,22 @@
 !mmm   if isdefault(healthAttr)
 !mmm     set healthAttr = m3mgdGetHealthAttribute(tokenID)
 !mmm   end if
+!mmm
+!mmm   for statusRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
+!mmm     if statusRule.value.noDefense
+!mmm       set defenselessStatus = defenselessStatus, statusRule
+!mmm     end if
+!mmm   end for
+!mmm   if defenselessStatus
+!mmm     return defenselessStatus
+!mmm   end if
+!mmm
 !mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3
-!mmm     return true
+!mmm     return m3mgdInjuryStatus.red
 !mmm   else
 !mmm     return false
 !mmm   end if
+!mmm
 !mmm end function
 !rem
 !rem // m3mgdShapeMoji([tokenID])

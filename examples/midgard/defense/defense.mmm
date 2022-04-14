@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0-pre (2022-03-16)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2022-03-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -92,9 +92,6 @@
 !rem   // Check for armor piercing projectiles
 !mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
 !mmm
-!rem   // Check if an active defense is even possible
-!mmm   set cNoDefense = (cNoDefense eq "true") or m3mgdIsDefenseless(cOwnID)
-!mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
 !mmm   set armorLabel = cOwnID.(findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
@@ -112,9 +109,22 @@
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !mmm
+!rem   // Check if an active defense is even possible
+!mmm   set defenseless = m3mgdIsDefenseless(cOwnID)
+!mmm   set cNoDefense = (cNoDefense eq "true") or defenseless
+!mmm
 !mmm   if cNoDefense
 !mmm
-!mmm     set modifierLog = modifierLog & " {{Wehrlos=keine Abwehr möglich}} "
+!mmm     set modifierLog = modifierLog & " {{Wehrlos="
+!mmm     set reasonCount = 0
+!mmm     for reason in defenseless
+!mmm       set reasonCount = reasonCount + 1
+!mmm       set modifierLog = modifierLog & reason.value.icon & reason.value.label & ": " & reason.value.desc 
+!mmm       if reasonCount < count(defenseless)
+!mmm         set modifierLog = modifierLog & " / "
+!mmm       end if
+!mmm     end for
+!mmm     set modifierLog = modifierLog & "}} "
 !mmm
 !mmm   else
 !mmm
@@ -166,12 +176,13 @@
 !rem     // Collect defense modifiers
 !mmm     set modifiers = 0
 !mmm     set autoModifiers = 0
-!rem     // 1. Defender exhausted or magically encumbered (runeBladeEarthBond)
-!mmm     if cOwnID.(cEnduranceAttr).max > 0 and endurance <= 0
-!mmm       set autoModifiers = autoModifiers - 4
-!mmm       set modifierLog = modifierLog & " {{Erschöpft=-4}} "
-!mmm       set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
-!mmm     end if
+!rem     // 1. Active status markers for exhaustion, injury etc.
+!mmm     for activeMod in m3mgdActiveStatusModifiers(cOwnID, "defense")
+!mmm       set autoModifiers = autoModifiers + activeMod.value.rollModifiers.defense
+!mmm       set modifierLog = modifierLog & " {{" & activeMod.value.label & "=" & activeMod.value.rollModifiers.defense & "}} "
+!mmm       set modifierTooltip = modifierTooltip & " " & activeMod.value.label & "&nbsp;&nbsp;&nbsp;" & activeMod.value.rollModifiers.defense & " "
+!mmm     end for
+!rem     // 1.a. TODO: get rune blade-related markers registered in the injury status struct so they get processed automatically by the lines above this one
 !mmm     if cOwnID.(m3mgdEarthBondStatusMarker) eq "shown"
 !mmm       set autoModifiers = autoModifiers - 2
 !mmm       set modifierLog = modifierLog & " {{Erdfessel=-2}} "
