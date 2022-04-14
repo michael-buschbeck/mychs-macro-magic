@@ -1298,7 +1298,7 @@
 !mmm         if singleRoll.value + 0 eq singleRoll.value
 !mmm           set payload = payload & literal("!mmm set " & singleRoll.key & "=roll(" & singleRoll.value & ")") & "&#13;"
 !rem         // Non-numbers should be dice syntax ("1d20"): roll them for player characters, otherwise the default will kick in
-!mmm         else if tokenID.PC
+!mmm         else if tokenID.PC and singleRoll.value
 !mmm           set payload = payload & "&amp;{template} &#91;[" & singleRoll.value & "]] &#123;{&#125;}&#13;"
 !mmm           set payload = payload & literal("!mmm set " & singleRoll.key & "=$[" & "[0]]") & "&#13;"
 !mmm         end if
