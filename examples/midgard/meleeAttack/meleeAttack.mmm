@@ -329,9 +329,9 @@
 !mmm     chat:      }}
 !mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(cTargetID)}}}
 !mmm     if attackResult >= 20
-!mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{cAttackRoll})}}
+!mmm       chat:    {{Erfolg=$[attackResult]{attackResult}}}
 !mmm     else 
-!mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{cAttackRoll})}}
+!mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult}}}
 !mmm     end if
 !mmm     chat:      {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
 !mmm     if attackResult >= 20

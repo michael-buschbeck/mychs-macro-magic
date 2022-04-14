@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.3.0 (2022-03-17)"
+!mmm   set libVersion = "libMidgard v1.3.1 (2022-03-20)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -1543,7 +1543,7 @@
 !mmm       return false
 !mmm     end if
 !mmm   
-!mmm     if targetID.(script.cEnduranceAttr) <= 0
+!mmm     if m3mgdIsExhausted(targetID)
 !mmm       do whisperback("m3mgdProcessCombatPP(): No practice point registered for critically successful attack on an exhausted target ('" & targetID.name & "')")
 !mmm       return false
 !mmm     end if
@@ -1567,7 +1567,7 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set logLine = "PP:" & weaponLabel & "(" & newPP & ")=Kritisch erfolgreicher Angriff auf " & targetID.name & " (AP=" & targetID.(script.cEnduranceAttr) & ")"
+!mmm   set logLine = "PP:" & weaponLabel & "(" & newPP & ")=Kritisch erfolgreicher Angriff auf " & targetID.name & " (AP=" & cTargetID.(m3mgdGetEnduranceAttribute(cTargetID)) & ")"
 !mmm   if isunknown(ownID.(m3mgdAttrXPLog))
 !mmm     do setattr(ownID, m3mgdAttrXPLog, "")
 !mmm   end if
@@ -1624,7 +1624,7 @@
 !mmm     end if
 !mmm   end if
 !rem   // Devastating hits
-!mmm   if attackDamageRoll >= 8 and targetID.(script.cEnduranceAttr) >= 8
+!mmm   if attackDamageRoll >= 8 and cTargetID.(m3mgdGetEnduranceAttribute(cTargetID)) >= 8
 !mmm     set xpGain = xpGain * 2
 !mmm     set xpTooltip = "(" & xpTooltip & ") x2[verheerend]"
 !mmm   end if
