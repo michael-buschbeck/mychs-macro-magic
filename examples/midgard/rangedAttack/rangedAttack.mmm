@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2022-03-04)"
+!mmm   set scriptVersion = "2.0.0-pre (2022-03-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -10,8 +10,8 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.26
-!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
+!mmm   if version < 1.27
+!mmm     do whisperback("Abbruch: MMM-Version 1.27.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -66,10 +66,10 @@
 !mmm   set customizable cGMSilentMode = (cOwnID.PC != 1)
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
 !rem
-!rem   //  cTargetID            ...
-!rem   //  cSemiManualModifiers ...
-!rem   //  cManualModifiers     ...
-!rem   //  cAttackRoll          Override by player to see beautifully animated 3D dice
+!rem   //  cTargetID            Target token: override in customize block with Roll20 target picker
+!rem   //  cSemiManualModifiers Override in customize block with nested dropdowns or preset value
+!rem   //  cManualModifiers     Override in customize block with input box or preset value
+!rem   //  cAttackRoll          Override in customize block to see beautifully animated 3D dice
 !rem   //  
 !mmm   set customizable cTargetID = ""
 !mmm   set customizable cSemiManualModifiers = default
@@ -365,10 +365,11 @@
 !mmm   end if
 !mmm 
 !mmm   if attackResult >= 20
-!rem     // Damage roll (and make sure it doesn't get negative)
-!mmm     set damageRoll = roll(weaponDamageExpr)
-!mmm     set damageResult = damageRoll + weaponDamageBonus
-!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") " & weaponDamageBonus
+!rem     // Damage roll: override in customize block
+!mmm     set customizable cDamageRoll = roll(weaponDamageExpr)
+!mmm     set damageResult = cDamageRoll + weaponDamageBonus
+!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & cDamageRoll & ") " & weaponDamageBonus
+!rem     // damageResult must not become negative, even for puny weapons causing 1d6-4 damage
 !mmm     if damageResult < 0
 !mmm       set damageResult = highlight(0, "bad")
 !mmm     end if
@@ -376,12 +377,12 @@
 !rem     // Special case: sharpshooting
 !mmm     set sharpExtraDamage = 0
 !mmm     if cSemiManualModifiers % 23 == 0
-!mmm       set sharpExtraRoll = roll("1d20")
-!mmm       set sharpExtraResult = sharpExtraRoll + effAttack + modifiers - 4 + sharpshootingSkill
-!mmm       set sharpExtraTooltip = sharpExtraResult & " = (1d20 = " & sharpExtraRoll & ") + (EW = " & effAttack & ") + " & modifiers - 4 & " + (FW:Scharfschießen = " & sharpshootingSkill & ")"
-!mmm       if iscritical(sharpExtraRoll)
+!mmm       set customizable cSharpExtraRoll = roll("1d20")
+!mmm       set sharpExtraResult = cSharpExtraRoll + effAttack + modifiers - 4 + sharpshootingSkill
+!mmm       set sharpExtraTooltip = sharpExtraResult & " = (1d20 = " & cSharpExtraRoll & ") + (EW = " & effAttack & ") + " & modifiers - 4 & " + (FW:Scharfschießen = " & sharpshootingSkill & ")"
+!mmm       if iscritical(cSharpExtraRoll)
 !mmm         set sharpExtraResult = highlight(sharpExtraResult, "good", sharpExtraTooltip)
-!mmm       else if isfumble(sharpExtraRoll)
+!mmm       else if isfumble(cSharpExtraRoll)
 !mmm         set sharpExtraResult = highlight(sharpExtraResult, "bad", sharpExtraTooltip)
 !mmm       else
 !mmm         set sharpExtraResult = highlight(sharpExtraResult, "normal", sharpExtraTooltip)
@@ -394,12 +395,12 @@
 !mmm     end if
 !rem     // Special case: magic ammunition with extra damage
 !mmm     if cAmmoMagic and cAmmoMagicDamage ne ""
-!mmm       set magicExtraDamage = roll(cAmmoMagicDamage)
-!mmm       if magicExtraDamage < 0
-!mmm         set magicExtraDamage = highlight(0, "bad")
+!mmm       set cMagicExtraDamageRoll = roll(cAmmoMagicDamage)
+!mmm       if cMagicExtraDamageRoll < 0
+!mmm         set cMagicExtraDamageRoll = highlight(0, "bad")
 !mmm       end if
-!mmm       set damageResult = damageResult + magicExtraDamage
-!mmm       set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & magicExtraDamage & emojiMagic & ")"
+!mmm       set damageResult = damageResult + cMagicExtraDamageRoll
+!mmm       set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & cMagicExtraDamageRoll & emojiMagic & ")"
 !mmm     end if 
 !rem     // Complete damage variables
 !mmm     set damageResultLog = damageResult & " = " & damageResultLog
@@ -478,7 +479,9 @@
 !mmm     if cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
-!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff mit ${cWeaponType[0]} * ${cWeaponName} *}} 
+!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff mit ${cWeaponType[0]} * ${cWeaponName} *
+!mmm     do chat(m3mgdRerunButton(cOwnID, "ranged", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cSharpExtraRoll": cSharpExtraRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll}))
+!mmm     chat:      }} 
 !mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(cTargetID)}}}
 !mmm     if iscritical(cAttackRoll)
 !mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${cAttackRoll})}}
@@ -505,10 +508,7 @@
 !mmm   end combine
 !mmm
 !mmm   if modifierLog ne "{{Boni/Mali=keine}}"
-!mmm     chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm     if not cGMSilentMode
-!mmm       chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
-!mmm     end if
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm
 !rem   // Injury & exhaustion special effects
