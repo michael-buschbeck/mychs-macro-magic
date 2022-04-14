@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.4.0 (2022-03-12)"
+!mmm   set scriptVersion = "defendFrostball 1.5.0 (2022-03-24)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -47,6 +47,7 @@
 !mmm   else 
 !mmm     set attackResult = highlight(attackResult, "normal")
 !mmm   end if 
+!mmm   set enduranceDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
 !mmm
 !mmm   set defenseModifier = 0
 !mmm   if endurance <= 0
@@ -75,7 +76,7 @@
 !mmm
 !rem     // AP loss: 1d6, if not an undead creature with unlimited endurance
 !mmm     if not cOwnID.(cEnduranceAttr).max == 0
-!mmm       set effEnduranceLoss = roll("1d6")
+!mmm       set effEnduranceLoss = enduranceDamage
 !mmm     end if
 !mmm
 !rem     // Health loss: 2, regardless of armor but only for non-ghosts (max health > 0)

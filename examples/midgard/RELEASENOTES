@@ -9,7 +9,7 @@ What's new?
 * Combat and sense scripts automatically process severe injuries indicated by status markers
 * new endOfRoundEffects script processes periodic effects of severe injuries
 * new drinkPotions script processes the effects of standard healing and energy potions
-* defenseFrostball accrues experience to the attacker
+* defenseFrostball accrues experience to the attacker, fixes bug where endurance damage wasn't transmitted from the magic script
 * earthBond* no longer require customize scripts
 
 What needs to change outside MacroSheet*?
