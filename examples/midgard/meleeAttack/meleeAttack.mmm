@@ -334,10 +334,7 @@
 !mmm   end combine
 !mmm
 !mmm   if modifierLog ne "{{Boni/Mali=keine}}"
-!mmm     chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm     if not cGMSilentMode
-!mmm       chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
-!mmm     end if
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm
 !mmm   if attackResult >= 20
