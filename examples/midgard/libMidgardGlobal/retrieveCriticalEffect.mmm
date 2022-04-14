@@ -1,9 +1,0 @@
-!mmm script
-!mmm
-!mmm   set cOwnID = "Yorric MacRathgar".token_id
-!mmm   if cOwnID.m3mgdActiveCriticalEffects
-!mmm     set activeEffects = deserialize(cOwnID.m3mgdActiveCriticalEffects)
-!mmm     debug do activeEffects
-!mmm   end if
-!mmm
-!mmm end script

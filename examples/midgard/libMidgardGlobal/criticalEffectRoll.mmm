@@ -4,13 +4,8 @@
 !mmm
 !mmm function m3mgdChatActiveEffects(tokenID)
 !mmm
-!mmm   combine chat
-!mmm     chat: ${"&"}{template:default} {{name=Aktive Effekte für ${tokenID.name} }}
+!mmm       for statusRule in deserialize(tokenID.m3mgdActivePersistentEffects)
 !mmm
-!mmm     if tokenID.m3mgdActiveCriticalEffects
-!mmm       
-!mmm       set activeEffects = deserialize(tokenID.m3mgdActiveCriticalEffects)
-!mmm       for statusRule in activeEffects
 !mmm         set activeCounter = activeCounter + 1
 !mmm         chat: {{ #${activeCounter}, noch ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}
 !mmm         for mod in statusRule.rollModifiers...
@@ -35,26 +30,9 @@
 !mmm         
 !mmm       end for
 !mmm       
-!mmm     else
-!mmm       
-!mmm       chat: {{ (*keine*) }}
-!mmm       
-!mmm     end if
-!mmm       
-!mmm   end combine
-!mmm
 !mmm end function
 !mmm publish to game: m3mgdChatActiveEffects
 !mmm
-!mmm function executeCode(codeLines, vars)
-!mmm   set myID = vars.myID
-!mmm   set foeID = vars.foeID
-!mmm   publish to sender: myID, foeID
-!mmm   for codeLine in codeLines 
-!mmm     chat: ${codeLine}
-!mmm   end for
-!mmm end function
-!mmm publish to sender: executeCode
 !mmm
 !rem // moveToken() moves a token by fwd/rgtOffset from its own perspective
 !mmm function moveToken(tokenID, fwdOffset, rgtOffset)
@@ -71,93 +49,6 @@
 !mmm end function
 !mmm publish to sender: moveToken
 !mmm
-!mmm function processInjury(tokenID, healthDamageRoll, enduranceDamageRoll, armorApplicable)
-!mmm
-!mmm   if enduranceDamageRoll eq ""
-!mmm     set enduranceDamage = 0
-!mmm   else if enduranceDamageRoll ne "*"
-!mmm     set enduranceDamage = roll(enduranceDamageRoll)
-!mmm   else if enduranceDamageRoll eq "*" and healthDamageRoll ne "*" and healthDamageRoll ne ""
-!mmm     set healthDamage = roll(healthDamageRoll)
-!mmm     set enduranceDamage = healthDamage
-!mmm   end if
-!mmm   if not healthDamage and healthDamageRoll ne ""
-!mmm     set healthDamage = 0
-!mmm   else if not healthDamage and healthDamageRoll eq "*"
-!mmm     set healthDamage = enduranceDamage
-!mmm   else if not healthDamage
-!mmm     set healthDamage = roll(healthDamageRoll)
-!mmm   end if
-!mmm   
-!rem   // Process endurance loss, if tokenID is not an undead creature with unlimited endurance
-!mmm   if not tokenID.(m3mgdGetEnduranceAttribute(tokenID)).max == 0
-!mmm     set effEnduranceLoss = highlight(max(0, enduranceDamage), default)
-!mmm     set newEndurance = m3mgdModifyEndurance(-effEnduranceLoss, tokenID)
-!mmm   end if
-!mmm
-!rem   // Process health loss, if tokenID is not a ghost (max health > 0)
-!mmm   if not tokenID.(m3mgdGetHealthAttribute(tokenID)).max == 0
-!mmm     if armorApplicable
-!mmm       set effArmorProtection = m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
-!mmm     end if
-!mmm     set effHealthLoss = highlight(max(0, healthDamage - effArmorProtection), default, "RS: " & effArmorProtection)
-!mmm     set newHealth = m3mgdModifyHealth(-effHealthLoss, tokenID)
-!mmm     if effHealthLoss > 0 and newHealth < 0
-!mmm       set timeToDie = roll("1d6-" & abs(newHealth)) 
-!mmm     end if
-!mmm   end if
-!mmm 
-!mmm   if effHealthLoss > 0 or effEnduranceLoss > 0 
-!mmm     combine chat
-!mmm       chat: /w "${tokenID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji(tokenID) & tokenID.name}: Schaden}} 
-!mmm       chat: {{ Schaden = ${effHealthLoss} LP / ${effEnduranceLoss} AP }}
-!mmm     
-!mmm       if newHealth < 0 and timeToDie < 0
-!mmm         chat: {{Zustand=**Sofortiger Tod &#10013;**}}
-!mmm       else
-!mmm         chat: {{${m3mgdHealthStatusLabel(tokenID)}=${m3mgdHealthStatusEffectsDesc(tokenID)}}}
-!mmm         chat: {{${m3mgdEnduranceStatusLabel(tokenID)}=${m3mgdEnduranceStatusEffectsDesc(tokenID)}}}
-!mmm       end if
-!mmm     
-!mmm     end combine
-!mmm   end if
-!mmm
-!mmm   return true
-!mmm
-!mmm end function
-!mmm publish to sender: processInjury
-!mmm
-!mmm function rollChanceEffect(tokenID, attribute, rollTemplate, rollModifiers, immediateEffect, persistentEffect)
-!mmm
-!mmm   combine chat
-!mmm
-!mmm     chat: ${"&"}{template:default} 
-!mmm     if attribute + 0 eq attribute 
-!mmm       chat: {{name=${tokenID.name}: Zufallseffekt}}
-!mmm     else
-!mmm       chat: {{name=${tokenID.name}: Prüfwurf${sign(rollModifiers, "math")} gegen ${attribute} }}
-!mmm     end if
-!mmm 
-!mmm     set rollResult = roll(rollTemplate & sign(rollModifiers, "math"))
-!mmm
-!mmm     if rollResult > tokenID.(attribute)
-!mmm       chat: {{ 🎲 = ${rollResult}: Effekt tritt ein }}
-!mmm     else 
-!mmm       chat: {{ 🎲 = ${rollResult}: Effekt tritt **nicht** ein }}
-!mmm     end if
-!mmm
-!mmm   end combine
-!mmm
-!mmm   if rollResult > tokenID.(attribute)
-!mmm     do executeCode(immediateEffect, { myID: tokenID } )
-!mmm     if not isdefault(persistentEffect)
-!mmm       do m3mgdStoreCriticalEffect(tokenID, { label: m3mgdTentativeCriticalEffects.(tokenID).label, desc: m3mgdTentativeCriticalEffects.(tokenID).desc, effect: persistentEffect })
-!mmm     end if
-!mmm   end if
-!mmm
-!mmm end function
-!mmm publish to sender: rollChanceEffect
-!mmm
 !mmm function spawnWeaponToken(ownerID, offsetRight, offsetForward)
 !rem   // ISSUE: This call requires the owner token to be selected by the player executing the code. See mych#204.
 !rem   // TODO: redefine args as seen from ownerID's direction of view and recalculate offsets: 0/1 should be the field in front of ownerID, 0/-1 behind, 1/0 to my right, -1/0 to my left
@@ -165,87 +56,12 @@
 !mmm end function
 !mmm publish to sender: spawnWeaponToken
 !mmm
-!rem
-!rem // m3mgdExecuteCriticalEffect(tokenID, context, [rollResult])
-!rem //
-!rem //   Takes a criticalEffect struct from the global m3mgdTentativeCriticalEffects.(tokenID) and executes it for context. 
-!rem //   The rollResult with which this particular effect was selected is purely for user output.
-!rem //
-!mmm function m3mgdExecuteCriticalEffect(tokenID, tableName, rollResult, context, foeID, userInput)
-!mmm   
-!mmm   if isdefault(tokenID) or not m3mgdValidateOwnTokenID(tokenID)
-!mmm     do whisperback("m3mgdExecuteCriticalEffect() called without a valid token ID.")
-!mmm     return false
-!mmm   end if
-!mmm
-!mmm   set criticalEffect = m3mgdGetCriticalEffect(tableName, rollResult)
-!mmm   set codeLines = undef
-!mmm   set sender = tokenID.token_name
-!mmm
-!mmm   combine chat
-!mmm     if isdefault(context)
-!mmm       chat: ${"&"}{template:default} {{name=${tokenID.token_name} würfelt ${criticalEffect.label}}}
-!mmm     else 
-!mmm       chat: ${"&"}{template:default} {{name=${tokenID.token_name} würfelt ${criticalEffect.label} (${context}) }}
-!mmm     end if
-!mmm     chat: {{Wurf=${highlight(rollResult, "normal", "Wurf mit 1W100")}}}
-!mmm     if criticalEffect.desc + 0 == 0
-!mmm       set descText = criticalEffect.desc
-!mmm     else 
-!mmm       set descText = criticalEffect.desc.(context)
-!mmm     end if
-!mmm     chat: {{Folgen=${descText}}}
-!mmm
-!mmm     if criticalEffect.immediate.(context)
-!mmm       set codeLines = criticalEffect.immediate.(context)
-!mmm     else if isdefault(context)
-!mmm       set codeLines = criticalEffect.immediate
-!mmm     end if
-!mmm     
-!mmm     if criticalEffect.persistent.expiry
-!mmm       set persistentEffectsList = criticalEffect.persistent
-!mmm     else if criticalEffect.persistent.(context).expiry or (criticalEffect.persistent.(context)[0].expiry and criticalEffect.persistent.(context)[1].expiry)
-!mmm       set persistentEffectsList = criticalEffect.persistent.(context)
-!mmm     end if
-!mmm     for persistentEffect in persistentEffectsList
-!mmm       set persistentEffect = { effect: persistentEffect, label: criticalEffect.label, desc: descText }
-!mmm       if persistentEffect.effect.focus eq "foe"
-!mmm         set targetID = foeID
-!mmm       else if persistentEffect
-!mmm         set targetID = tokenID
-!mmm       end if
-!mmm       set persistentEffect = m3mgdStoreCriticalEffect(targetID, persistentEffect)
-!mmm       chat: {{ ${persistentEffect.label}=${persistentEffect.effect} }}
-!mmm     end for
-!mmm
-!mmm   end combine
-!mmm
-!mmm   if codeLines
-!mmm     do executeCode(codeLines, { myID: tokenID, foeID: foeID } )
-!mmm   end if
-!mmm
-!rem   // Process chance the effect spreads to my opponent
-!mmm   if criticalEffect.affectsFoe
-!mmm     set foeAffectedRoll = roll("1d100")
-!mmm     set foeAffected = (foeAffectedRoll > foeID.(criticalEffect.affectsFoe))
-!mmm     debug chat: contagion risk to ${foeID.name} processed, result ${foeAffected} (${foeAffectedRoll} vs. ${foeID.(criticalEffect.affectsFoe)})
-!mmm     if foeAffected
-!mmm       set m3mgdTentativeCriticalEffects = { m3mgdTentativeCriticalEffects, (foeID): { criticalEffect... where ...key ne "affectsFoe" } }
-!mmm       publish to game: m3mgdTentativeCriticalEffects
-!mmm       do m3mgdExecuteCriticalEffect(foeID, tableName, rollResult, context)
-!mmm     end if
-!mmm   end if
-!mmm
-!mmm   do m3mgdChatActiveEffects(tokenID)
-!mmm
-!mmm end function
-!mmm publish to game: m3mgdExecuteCriticalEffect
 !mmm
 !rem // MAIN
 !mmm
-!mmm   for tableName in "meleeAttackFailure"
+!mmm   for tableName in "defenseFailure"
 !rem // !mmm     set effectRoll = highlight(roll("1d100"), "normal", "Wurf 1W100")
-!mmm     set effectRoll = highlight(77, "normal", "Wurf 1W100")
+!mmm     set effectRoll = highlight(57, "normal", "Wurf 1W100")
 !rem //!mmm     for effectDataRow in m3mgdCriticalEffectsTable.(tableName)... order (...left.key < ...right.key)
 !rem //!mmm       set effectRoll = highlight(effectDataRow.key, "normal", "Wurf 1W100")
 !mmm       chat: Rolling ${effectRoll} for testing.

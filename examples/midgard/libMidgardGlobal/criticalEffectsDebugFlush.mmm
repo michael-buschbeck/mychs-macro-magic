@@ -1,0 +1,8 @@
+!mmm script
+!mmm   chat: Flushing Yorric's and Druide 2's active effects attributes
+!mmm   do setattr("Yorric MacRathgar", "m3mgdActivePersistentEffects", "")
+!mmm   do setattr("Yorric MacRathgar", "status_blue", false)
+!mmm   do setattr("-M_a1Zy8w8jDCc0qt172", "m3mgdActivePersistentEffects", "")
+!mmm   do setattr("-M_a1Zy8w8jDCc0qt172", "status_blue", false)
+!mmm   chat: done.
+!mmm end script
