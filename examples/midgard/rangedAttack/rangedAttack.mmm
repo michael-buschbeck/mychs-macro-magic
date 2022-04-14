@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2022-03-18)"
+!mmm   set scriptVersion = "2.0.0-pre (2022-03-20)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -369,6 +369,18 @@
 !rem
 !rem   // Run & format rolls
 !rem
+!mmm   if cSemiManualModifiers % 23 == 0
+!rem     // Sharpshooting: if one of the two rolls is a critical successes, the other gets +4
+!mmm     set customizable cSharpExtraRoll = roll("1d20")
+!mmm     if iscritical(cSharpExtraRoll) and not iscritical(cAttackRoll) and not isfumble(cAttackRoll)
+!mmm       set modifiers = modifiers + 4
+!mmm       set modifierLog = modifierLog & " {{Kritischer Erfolg Scharfschießen=+4}} "
+!mmm     else if iscritical(cAttackRoll) and not iscritical(cSharpExtraRoll) and not isfumble(cSharpExtraRoll)
+!mmm       set sharpExtraResult = rollResult(cSharpExtraRoll, effAttack, { "Modifikatoren": modifiers - 4, "FW:Scharfschießen": sharpshootingSkill, "Krit.Erfolg": 4 } )
+!mmm     else
+!mmm       set sharpExtraResult = rollResult(cSharpExtraRoll, effAttack, { "Modifikatoren": modifiers - 4, "FW:Scharfschießen": sharpshootingSkill } )
+!mmm     end if
+!mmm   end if
 !mmm   set attackResult = rollResult(cAttackRoll, effAttack, modifiers)
 !mmm   set modifiers = highlight(sign(modifiers, "display"), "info", modifierTooltip)
 !mmm   if modifierLog eq ""
@@ -387,22 +399,10 @@
 !mmm     set damageResultBasic = highlight(damageResult, damageResult, damageResultLog)
 !rem     // Special case: sharpshooting
 !mmm     set sharpExtraDamage = 0
-!mmm     if cSemiManualModifiers % 23 == 0
-!mmm       set customizable cSharpExtraRoll = roll("1d20")
-!mmm       set sharpExtraResult = cSharpExtraRoll + effAttack + modifiers - 4 + sharpshootingSkill
-!mmm       set sharpExtraTooltip = sharpExtraResult & " = (1d20 = " & cSharpExtraRoll & ") + (EW = " & effAttack & ") + " & modifiers - 4 & " + (FW:Scharfschießen = " & sharpshootingSkill & ")"
-!mmm       if iscritical(cSharpExtraRoll)
-!mmm         set sharpExtraResult = highlight(sharpExtraResult, "good", sharpExtraTooltip)
-!mmm       else if isfumble(cSharpExtraRoll)
-!mmm         set sharpExtraResult = highlight(sharpExtraResult, "bad", sharpExtraTooltip)
-!mmm       else
-!mmm         set sharpExtraResult = highlight(sharpExtraResult, "normal", sharpExtraTooltip)
-!mmm       end if
-!mmm       if sharpExtraResult >= 20
-!mmm         set sharpExtraDamage = round(sharpExtraResult * .1)
-!mmm         set damageResult = damageResult + sharpExtraDamage
-!mmm         set damageResultLog = damageResultLog & " + (Scharfschuss-Bonus = " & sharpExtraDamage & ")"
-!mmm       end if
+!mmm     if cSemiManualModifiers % 23 == 0 and sharpExtraResult >= 20
+!mmm       set sharpExtraDamage = round(sharpExtraResult * .1)
+!mmm       set damageResult = damageResult + sharpExtraDamage
+!mmm       set damageResultLog = damageResultLog & " + (Scharfschuss-Bonus = " & sharpExtraDamage & ")"
 !mmm     end if
 !rem     // Special case: magic ammunition with extra damage
 !mmm     if cAmmoMagic and cAmmoMagicDamage ne ""
@@ -490,26 +490,43 @@
 !mmm     if cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
-!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff mit ${cWeaponType[0]} * ${cWeaponName} *
+!mmm     if cSemiManualModifiers % 23 == 0
+!mmm       set sharpShootingInsert = " (🎯 Scharfschießen) "
+!mmm     end if
+!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff ${sharpShootingInsert} mit ${cWeaponType[0]} * ${cWeaponName} *
 !mmm     do chat(m3mgdRerunButton(cOwnID, "ranged", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cSharpExtraRoll": cSharpExtraRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll}))
 !mmm     chat:      }} 
 !mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(cTargetID)}}}
-!mmm     if iscritical(cAttackRoll)
-!mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${cAttackRoll})}}
+!mmm     if iscritical(cAttackRoll) and cSemiManualModifiers % 23 == 0
+!mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${sharpExtraResult}}}
+!mmm     else if attackResult >= 20 and cSemiManualModifiers % 23 == 0
+!mmm       chat:    {{Erfolg=${attackResult}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${sharpExtraResult}}}
+!mmm     else if iscritical(cAttackRoll) and cSemiManualModifiers % 23 != 0
+!mmm       chat:    {{Kritischer Erfolg=${attackResult}}}
 !mmm     else if attackResult >= 20
-!mmm       chat:    {{Erfolg=${attackResult} (**Wurf** ${cAttackRoll})}}
+!mmm       chat:    {{Erfolg=${attackResult}}}
 !mmm     else 
-!mmm       chat:    {{Fehlschlag=${attackResult} (**Wurf** ${cAttackRoll})}}
+!mmm       chat:    {{Fehlschlag=${attackResult}}}
 !mmm     end if
-!mmm     chat:      {{Boni/Mali=**${modifiers}**}}
+!mmm     if cSemiManualModifiers % 23 == 0 and attackResult >= 20
+!mmm       chat:      {{Boni/Mali=${modifiers}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${highlight(sign(modifiers-4,"display"),"info")}}}
+!mmm     else
+!mmm       chat:      {{Boni/Mali=${modifiers}}}
+!mmm     end if
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
 !mmm     if attackFromBehind
 !mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** (${foeViewAngle}°)}}
 !mmm     end if 
-!mmm     if attackResult >= 20 and cSemiManualModifiers % 23 == 0
-!mmm       chat:    {{Basisschaden=${damageResultBasic}}}
-!mmm       chat:    {{Scharfschießen=${sharpExtraResult}}}
-!mmm       chat:    {{Vollschaden=${damageResult}}}
+!mmm     if attackResult >= 20 and cSemiManualModifiers % 23 == 0 and not isfumble(sharpExtraResult)
+!mmm       if (attackResult >= 40 and sharpExtraResult >= 40)
+!mmm         chat:  {{Schaden=🎯 HAMMMER!! <1cm genau: 💀&nbsp;oder&nbsp;${damageResult}}}
+!mmm       else if (attackResult >= 30 and sharpExtraResult >= 30) or (iscritical(cAttackRoll) and iscritical(cSharpExtraRoll))
+!mmm         chat:  {{Schaden=🎯 AUGE! 💀&nbsp;oder&nbsp;${damageResult}}}
+!mmm       else if attackResult >= 25 and sharpExtraResult >= 25
+!mmm         chat:  {{Schaden=🎯 Zentrum: 💀&nbsp;oder&nbsp;${damageResult}}}
+!mmm       else 
+!mmm         chat:  {{Schaden=${damageResult} 🎯&nbsp;${(25-min(attackResult, sharpExtraResult))*5}cm&nbsp;daneben}}
+!mmm       end if
 !mmm     else if attackResult >= 20
 !mmm       chat:    {{Schaden=${damageResult}}}
 !mmm     end if
