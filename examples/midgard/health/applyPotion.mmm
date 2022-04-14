@@ -16,5 +16,11 @@
 !mmm   set chatOutput = "&" & "{template:default} {{name=Getränkekarte}} "
 !mmm   set chatOutput = chatOutput & "{{ [Ausdauer 1W6](" & payload(1, "energy") & ") = [**Heilung 1W6**](" & payload(1, "healing") & ") }}"
 !mmm   set chatOutput = chatOutput & "{{ [Ausdauer 2W6](" & payload(2, "energy") & ") = [**Heilung 2W6**](" & payload(2, "healing") & ") }}"
+!mmm
 !mmm   do whisperback(chatOutput)
+!mmm
+!mmm   if selected.PC
+!mmm     do chat("GM", chatOutput)
+!mmm   end if
+!mmm
 !mmm end script
