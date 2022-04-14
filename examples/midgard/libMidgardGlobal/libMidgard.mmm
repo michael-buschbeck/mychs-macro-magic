@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.1.0 (2022-02-26)"
+!mmm   set libVersion = "libMidgard v1.2.0 (2022-03-03)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Game-global constants for publication
@@ -60,11 +60,11 @@
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
 !mmm   publish to game: m3mgdValidateAttackData, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
+!mmm   publish to game: m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdShapeMoji
 !mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
 !mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth
 !mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
-!mmm   publish to game: m3mgdShapeMoji, m3mgdIsDefenseless
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
@@ -369,6 +369,83 @@
 !mmm   
 !mmm   return true
 !mmm   
+!mmm end function
+!rem
+!rem // m3mgdIsExhausted(tokenID)
+!rem //
+!rem // Returns true if tokenID is exhausted (endurance is 0).
+!rem //
+!mmm function m3mgdIsExhausted(tokenID)
+!mmm   if isdefault(tokenID)
+!mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm   else
+!mmm     set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   end if
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   return (tokenID.(m3mgdGetEnduranceAttribute(tokenID)).max > 0 and tokenID.(m3mgdGetEnduranceAttribute(tokenID)) <= 0)
+!mmm end function
+!rem
+!rem // m3mgdIsDefenseless(tokenID, [healthAttr])
+!rem //
+!rem // Returns true if tokenID is defenseless because of close to zero health.
+!rem // If healthAttr is not provided, the check defaults to script.cHealthAttr.
+!rem //
+!mmm function m3mgdIsDefenseless(tokenID, healthAttr)
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return unknown
+!mmm   end if
+!mmm   if isdefault(healthAttr)
+!mmm     if script.cHealthAttr
+!mmm       set healthAttr = script.cHealthAttr
+!mmm     else 
+!mmm       do whisperback("No health attribute provided as argument or at script level")
+!mmm       return unknown
+!mmm     end if
+!mmm   end if
+!mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3
+!mmm     return true
+!mmm   else
+!mmm     return false
+!mmm   end if
+!mmm end function
+!rem
+!rem // m3mgdShapeMoji([tokenID])
+!rem //
+!rem // Returns visual indicator of health and exhaustion.
+!rem //
+!mmm function m3mgdShapeMoji(tokenID)
+!mmm     
+!mmm   if isdefault(tokenID)
+!mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm   else
+!mmm     set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   end if
+!mmm   if not tokenID
+!mmm     return false
+!mmm   end if
+!mmm   set healthAttr = m3mgdGetHealthAttribute(tokenID)
+!mmm   set enduranceAttr = m3mgdGetEnduranceAttribute(tokenID)
+!mmm
+!mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 0
+!mmm     return highlight("💀", "bad", "Dem Tode nah... jetzt zählt jede Sekunde!")
+!mmm   end if
+!mmm
+!mmm   set shapeMoji = ""
+!mmm   if tokenID.(healthAttr).max != 0 and tokenID.(healthAttr) < .5 * tokenID.(healthAttr).max
+!mmm     set shapeMoji = shapeMoji & "🤕"
+!mmm   end if 
+!mmm   if tokenID.(enduranceAttr).max != 0 and tokenID.(enduranceAttr) <= 0
+!mmm     set shapeMoji = shapeMoji & "🥴"
+!mmm   end if 
+!mmm   if shapeMoji eq ""
+!mmm     set shapeMoji = "😀"
+!mmm   end if 
+!mmm     
+!mmm   return shapeMoji
+!mmm     
 !mmm end function
 !rem 
 !rem // m3mgdEnduranceStatusLabel(tokenID)
@@ -742,67 +819,6 @@
 !mmm
 !mmm   return round(max(absDistY, absDistX))
 !mmm
-!mmm end function
-!rem
-!rem // m3mgdIsDefenseless(tokenID, [healthAttr])
-!rem //
-!rem // Returns true if tokenID is defenseless because of close to zero health.
-!rem // If healthAttr is not provided, the check defaults to script.cHealthAttr.
-!rem //
-!mmm function m3mgdIsDefenseless(tokenID, healthAttr)
-!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
-!mmm   if not tokenID
-!mmm     return unknown
-!mmm   end if
-!mmm   if isdefault(healthAttr)
-!mmm     if script.cHealthAttr
-!mmm       set healthAttr = script.cHealthAttr
-!mmm     else 
-!mmm       do whisperback("No health attribute provided as argument or at script level")
-!mmm       return unknown
-!mmm     end if
-!mmm   end if
-!mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3
-!mmm     return true
-!mmm   else
-!mmm     return false
-!mmm   end if
-!mmm end function
-!rem
-!rem // m3mgdShapeMoji([tokenID])
-!rem //
-!rem // Returns visual indicator of health and exhaustion.
-!rem //
-!mmm function m3mgdShapeMoji(tokenID)
-!mmm     
-!mmm   if isdefault(tokenID)
-!mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
-!mmm   else
-!mmm     set tokenID = m3mgdValidateOwnTokenID(tokenID)
-!mmm   end if
-!mmm   if not tokenID
-!mmm     return false
-!mmm   end if
-!mmm   set healthAttr = m3mgdGetHealthAttribute(tokenID)
-!mmm   set enduranceAttr = m3mgdGetEnduranceAttribute(tokenID)
-!mmm
-!mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 0
-!mmm     return highlight("💀", "bad", "Dem Tode nah... jetzt zählt jede Sekunde!")
-!mmm   end if
-!mmm
-!mmm   set shapeMoji = ""
-!mmm   if tokenID.(healthAttr).max != 0 and tokenID.(healthAttr) < .5 * tokenID.(healthAttr).max
-!mmm     set shapeMoji = shapeMoji & "🤕"
-!mmm   end if 
-!mmm   if tokenID.(enduranceAttr).max != 0 and tokenID.(enduranceAttr) <= 0
-!mmm     set shapeMoji = shapeMoji & "🥴"
-!mmm   end if 
-!mmm   if shapeMoji eq ""
-!mmm     set shapeMoji = "😀"
-!mmm   end if 
-!mmm     
-!mmm   return shapeMoji
-!mmm     
 !mmm end function
 !rem
 !rem // m3mgdExchangeStoreAttack(attackType)
