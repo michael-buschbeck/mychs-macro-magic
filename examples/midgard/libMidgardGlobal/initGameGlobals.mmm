@@ -17,7 +17,7 @@
 !rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.2.1 (2022-03-20)"
+!mmm   set scriptVersion = "initGameGlobals 1.2.2 (2022-04-14)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -65,7 +65,8 @@
 !mmm   publish to game: m3mgdPlayerCharacters
 !mmm   
 !mmm   set cssTableHeaderButton = "\" style=\"border:1px solid #FFFFFF;float:right; background-color:#ce0f69;margin:0px 0px 0px 8px;padding:3px;font-style:normal;font-size:12px;line-height:12px;vertical-align:sub; color:#FFFFFF;text-decoration:none;text-transform:uppercase"
-!mmm   publish to game: cssTableHeaderButton
+!mmm   set cssTableCellButton = "\" style=\"border:1px solid #FFFFFF;background-color:#ce0f69;padding:1px;font-style:normal;font-size:1em;color:#FFFFFF;text-decoration:none;text-transform:uppercase"
+!mmm   publish to game: cssTableHeaderButton, cssTableCellButton
 !mmm
 !mmm   function sudo(cmd)
 !mmm     do whisperback("sudo: executing (privileged=" & privileged & ") '" & cmd & "' as '!mmm " & cmd & "'")
