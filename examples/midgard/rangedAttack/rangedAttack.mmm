@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2022-04-12)"
+!mmm   set scriptVersion = "2.0.0-pre (2022-04-14)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -274,7 +274,7 @@
 !rem   // 2. Attacker's active status markers for exhaustion, injury etc.
 !mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "rangedAttack")
 !mmm     set autoModifiers = autoModifiers + activeMod.rollModifiers.rangedAttack
-!mmm     set modifierLog = modifierLog & " {{" & activeMod.label & "=" & activeMod.rollModifiers.rangedAttack & "}} "
+!mmm     set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.rangedAttack, "display") & "}} "
 !mmm     set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.rangedAttack & " "
 !mmm   end for
 !rem   // 3. Target exhausted
@@ -380,6 +380,7 @@
 !mmm   if modifierLog eq ""
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
 !mmm   end if
+!mmm   set criticalAttack = iscritical(cAttackRoll)
 !mmm 
 !mmm   if attackResult >= 20
 !rem     // Damage roll: override in customize block
@@ -496,9 +497,11 @@
 !mmm     else if attackResult >= 20 and cSemiManualModifiers % 23 == 0
 !mmm       chat:    {{Erfolg=${attackResult}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${sharpExtraResult}}}
 !mmm     else if iscritical(cAttackRoll) and cSemiManualModifiers % 23 != 0
-!mmm       chat:    {{Kritischer Erfolg=${attackResult}}}
+!mmm       chat:    {{Kritischer Erfolg=${attackResult} }}
 !mmm     else if attackResult >= 20
 !mmm       chat:    {{Erfolg=${attackResult}}}
+!mmm     else if isfumble(cAttackRoll)
+!mmm       chat:    {{Kritischer Fehlschlag=${attackResult} [🎲](${m3mgdCriticalEffectRollPayload(cOwnID, "rangedAttackFailure", cTargetID)}${cssTableCellButton}) }}
 !mmm     else 
 !mmm       chat:    {{Fehlschlag=${attackResult}}}
 !mmm     end if

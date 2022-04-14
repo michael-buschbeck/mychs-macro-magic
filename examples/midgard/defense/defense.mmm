@@ -170,7 +170,7 @@
 !rem     // 1. Active status markers for exhaustion, injury etc.
 !mmm     for activeMod in m3mgdActiveStatusModifiers(cOwnID, "defense")
 !mmm       set autoModifiers = autoModifiers + activeMod.rollModifiers.defense
-!mmm       set modifierLog = modifierLog & " {{" & activeMod.label & "=" & activeMod.rollModifiers.defense & "}} "
+!mmm       set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.defense, "display") & "}} "
 !mmm       set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.defense & " "
 !mmm     end for
 !rem     // 2. Dropdown prompt: Focused defense, surprise (taken from prior user input customize block)

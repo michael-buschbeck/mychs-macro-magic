@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-04-12)"
+!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-04-14)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -142,7 +142,7 @@
 !rem   // 1. Attacker's active status markers for exhaustion, injury etc.
 !mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "meleeAttack")
 !mmm     set autoModifiers = autoModifiers + activeMod.rollModifiers.meleeAttack
-!mmm     set modifierLog = modifierLog & " {{" & activeMod.label & "=" & activeMod.rollModifiers.meleeAttack & "}} "
+!mmm     set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.meleeAttack, "display") & "}} "
 !mmm     set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.meleeAttack & " "
 !mmm   end for
 !rem   // 2. Target exhausted
@@ -322,10 +322,14 @@
 !mmm     do chat(m3mgdRerunButton(cOwnID, "melee", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll}))
 !mmm     chat:      }}
 !mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(cTargetID)}}}
-!mmm     if attackResult >= 20
-!mmm       chat:    {{Erfolg=$[attackResult]{attackResult}}}
+!mmm     if criticalAttack
+!mmm       chat:    {{Kritischer Erfolg=$[attackResult]{attackResult} }}
+!mmm     else if attackResult >= 20
+!mmm       chat:    {{Erfolg=$[attackResult]{attackResult} }}
+!mmm     else if isfumble(cAttackRoll)
+!mmm       chat:    {{Kritischer Fehlschlag=$[attackResult]{attackResult} [🎲](${m3mgdCriticalEffectRollPayload(cOwnID, "meleeAttackFailure", cTargetID)}${cssTableCellButton}) }}
 !mmm     else 
-!mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult}}}
+!mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult} }}
 !mmm     end if
 !mmm     chat:      {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
 !mmm     if attackResult >= 20
