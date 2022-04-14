@@ -1,4 +1,4 @@
-!rem // Drink Potion 
+!rem // Apply Potion 
 !mmm script
 !mmm
 !mmm   function payload(dice, type)
@@ -14,7 +14,7 @@
 !mmm   end function
 !mmm   
 !mmm   set chatOutput = "&" & "{template:default} {{name=Getränkekarte}} "
-!mmm   set chatOutput = chatOutput & "{{ [Krafttrunk 1W6](" & payload(1, "energy") & ") = [**Heiltrunk 1W6**](" & payload(1, "healing") & ") }}"
-!mmm   set chatOutput = chatOutput & "{{ [Krafttrunk 2W6](" & payload(2, "energy") & ") = [**Heiltrunk 2W6**](" & payload(2, "healing") & ") }}"
+!mmm   set chatOutput = chatOutput & "{{ [Ausdauer 1W6](" & payload(1, "energy") & ") = [**Heilung 1W6**](" & payload(1, "healing") & ") }}"
+!mmm   set chatOutput = chatOutput & "{{ [Ausdauer 2W6](" & payload(2, "energy") & ") = [**Heilung 2W6**](" & payload(2, "healing") & ") }}"
 !mmm   do whisperback(chatOutput)
 !mmm end script
