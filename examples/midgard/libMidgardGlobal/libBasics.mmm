@@ -6,12 +6,12 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.1.0 (2022-03-20)"
+!mmm   set libVersion = "libMidgardBasics v1.2.0 (2022-04-09)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: count, isChar, sign, stringify, rollResult
+!mmm   publish to game: count, isChar, sign, stringify, sum, rollResult
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -82,6 +82,23 @@
 !mmm     set string = string & quotemark & item & quotemark
 !mmm   end for
 !mmm   return string
+!mmm end function
+!rem
+!rem // sum(list)
+!rem //
+!rem //   Calculates the sum of items in list, which must be defined as a list before (set foo = 1, 2, 3). 
+!rem //   If the arguments are not a list, returns the value of the first argument.
+!rem //
+!mmm function sum(list)
+!mmm   set sumVal = 0
+!mmm   if count(list) > 1
+!mmm     for i in list
+!mmm       set sumVal = sumVal + i
+!mmm     end for
+!mmm   else
+!mmm     set sumVal = list
+!mmm   end if
+!mmm   return sumVal
 !mmm end function
 !rem
 !rem // rollResult(roll, baseSkill, [modifiers])
