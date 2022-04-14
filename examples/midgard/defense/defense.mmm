@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0-pre (2022-04-11)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2022-04-12)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -10,8 +10,8 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.27
-!mmm     do whisperback("Abbruch: MMM-Version 1.27.0 oder höher erforderlich.")
+!mmm   if version < 1.28
+!mmm     do whisperback("Abbruch: MMM-Version 1.28.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -110,7 +110,7 @@
 !mmm     set reasonCount = 0
 !mmm     for reason in defenseless
 !mmm       set reasonCount = reasonCount + 1
-!mmm       set modifierLog = modifierLog & reason.value.icon & reason.value.label & ": " & reason.value.desc 
+!mmm       set modifierLog = modifierLog & reason.icon & reason.label & ": " & reason.desc 
 !mmm       if reasonCount < count(defenseless)
 !mmm         set modifierLog = modifierLog & " / "
 !mmm       end if
@@ -169,14 +169,21 @@
 !mmm     set autoModifiers = 0
 !rem     // 1. Active status markers for exhaustion, injury etc.
 !mmm     for activeMod in m3mgdActiveStatusModifiers(cOwnID, "defense")
-!mmm       set autoModifiers = autoModifiers + activeMod.value.rollModifiers.defense
-!mmm       set modifierLog = modifierLog & " {{" & activeMod.value.label & "=" & activeMod.value.rollModifiers.defense & "}} "
-!mmm       set modifierTooltip = modifierTooltip & " " & activeMod.value.label & "&nbsp;&nbsp;&nbsp;" & activeMod.value.rollModifiers.defense & " "
+!mmm       set autoModifiers = autoModifiers + activeMod.rollModifiers.defense
+!mmm       set modifierLog = modifierLog & " {{" & activeMod.label & "=" & activeMod.rollModifiers.defense & "}} "
+!mmm       set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.defense & " "
 !mmm     end for
 !rem     // 2. Dropdown prompt: Focused defense, surprise (taken from prior user input customize block)
-!mmm     if cSemiManualModifiers == 4
-!mmm       set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
-!mmm       set modifierTooltip = modifierTooltip & " Konzentrierte&nbsp;Abwehr&nbsp;&nbsp;&nbsp;+4 "
+!mmm     if cSemiManualModifiers == 4 
+!mmm       set noFocusedDefenseReasons = m3mgdActiveStatusModifiers(cOwnID, "noFocusedDefense")
+!mmm       if not noFocusedDefenseReasons
+!mmm         set autoModifiers = autoModifiers + 4
+!mmm         set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
+!mmm         set modifierTooltip = modifierTooltip & " Konzentrierte&nbsp;Abwehr&nbsp;&nbsp;&nbsp;+4 "
+!mmm       else
+!mmm         set modifierLog = modifierLog & " {{Konzentrierte Abwehr=**Derzeit nicht möglich:** " & (noFocusedDefenseReasons... where (...key eq "label" or ...key eq "desc")) & "}} "
+!mmm         set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.defense & " "
+!mmm       end if
 !mmm     else if cSemiManualModifiers == -2
 !mmm       set modifierLog = modifierLog & " {{Überstürzter eigener Angriff=-2}} "
 !mmm       set modifierTooltip = modifierTooltip & " Überstürzter&nbsp;eigener&nbsp;Angriff&nbsp;&nbsp;&nbsp;-2 "
@@ -323,8 +330,14 @@
 !rem   // Output data table using data table execution code from library
 !mmm   do m3mgdDefenseDataTable()
 !mmm
+!rem   // If present, reduce counters for defense-specific modifier effects
+!mmm   set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(cOwnID, "defense")
+!mmm   if endOfActionSummary
+!mmm     set modifierLog = modifierLog & " {{ Zähler=" & endOfActionSummary & " }}"
+!mmm   end if
+!mmm
 !rem   // Output modifier log and PP reminder
-!mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
+!mmm   chat: /w GM ${"&"}{template:default} ${modifierLog} 
 !mmm   if not cGMSilentMode
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if

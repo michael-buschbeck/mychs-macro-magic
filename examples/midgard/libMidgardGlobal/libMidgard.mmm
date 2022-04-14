@@ -91,8 +91,8 @@
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
 !mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
-!mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdShapeMoji
-!mmm   publish to game: m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
+!mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdIsUnfitToAttack
+!mmm   publish to game: m3mgdShapeMoji, m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
 !mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth, m3mgdProcessInjury
 !mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
@@ -102,7 +102,7 @@
 !mmm   publish to game: _m3mgdWeaponButtonPayload, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
-!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect, m3mgdCriticalEffectPrompt
+!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect, m3mgdCriticalEffectPrompt, m3mgdUpdatePersistentEffectsCounters
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -267,17 +267,17 @@
 !mmm
 !mmm     chat: ${"&"}{template:default} 
 !mmm     if attribute + 0 eq attribute 
-!mmm       chat: {{name=${tokenID.name}: Zufallseffekt}}
+!mmm       chat: {\{name=${tokenID.name}: Zufallseffekt}\}
 !mmm     else
-!mmm       chat: {{name=${tokenID.name}: Prüfwurf${sign(rollModifiers, "math")} gegen ${attribute} }}
+!mmm       chat: {\{name=${tokenID.name}: Prüfwurf${sign(rollModifiers, "math")} gegen ${attribute} }\}
 !mmm     end if
 !mmm 
 !mmm     set rollResult = roll(rollTemplate & sign(rollModifiers, "math"))
 !mmm 
 !mmm     if rollResult > tokenID.(attribute)
-!mmm       chat: {{ 🎲 = ${rollResult}: Effekt tritt ein (${literal(immediateEffect)}) }}
+!mmm       chat: {\{ 🎲 = ${rollResult}: Effekt tritt ein (${literal(immediateEffect)}) }\}
 !mmm     else 
-!mmm       chat: {{ 🎲 = ${rollResult}: Effekt tritt **nicht** ein }}
+!mmm       chat: {\{ 🎲 = ${rollResult}: Effekt tritt **nicht** ein }\}
 !mmm     end if
 !mmm
 !mmm   end combine
@@ -458,7 +458,7 @@
 !rem
 !rem // m3mgdActiveStatusModifiers(tokenID, action)
 !rem //
-!rem // Returns a list of tokenID's active status modifiers, as defined in _libMidgard(), for a given action (defense, melee, see, hear etc.).
+!rem //   Returns a list of tokenID's active status modifiers from severe injuries or critical effects for a given action (defense, meleeAttack, see, hear etc.).
 !rem //
 !mmm function m3mgdActiveStatusModifiers(tokenID, action)
 !mmm
@@ -470,17 +470,25 @@
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
-!mmm
+!mmm   if not isunknown(tokenID.m3mgdActivePersistentEffects)
+!mmm     set tokenActiveEffectsList = deserialize(tokenID.m3mgdActivePersistentEffects)
+!mmm   end if
+!mmm 
 !mmm   for statusModRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
-!mmm     
 !mmm     if statusModRule.value.rollModifiers.(action) and count(statusModRule.value.excluded where ...token_id eq tokenID) == 0
-!mmm
-!mmm       set activeStatusModifiers = activeStatusModifiers, statusModRule
-!mmm
+!mmm       set activeStatusModifiers = activeStatusModifiers, { marker: statusModRule.key, statusModRule.value... }
 !mmm     end if
-!mmm     
+!mmm     if statusModRule.value.(action)
+!mmm       set activeStatusModifiers = activeStatusModifiers, { marker: statusModRule.key, statusModRule.value... }
+!mmm     end if
 !mmm   end for
 !mmm   
+!mmm   for statusModRule in tokenActiveEffectsList
+!mmm     if statusModRule.effect.(action) or statusModRule.effect.rollModifiers.(action)
+!mmm       set activeStatusModifiers = activeStatusModifiers, { label: statusModRule.label, desc: statusModRule.desc, statusModRule.effect... }
+!mmm     end if
+!mmm   end for
+!mmm
 !mmm   return activeStatusModifiers
 !mmm
 !mmm end function
@@ -516,20 +524,52 @@
 !mmm     set healthAttr = m3mgdGetHealthAttribute(tokenID)
 !mmm   end if
 !mmm
-!mmm   for statusRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
-!mmm     if statusRule.value.noDefense
-!mmm       set defenselessStatus = defenselessStatus, statusRule
-!mmm     end if
-!mmm   end for
+!mmm   set defenselessStatus = m3mgdActiveStatusModifiers(tokenID, "noDefense")
 !mmm   if defenselessStatus
 !mmm     return defenselessStatus
-!mmm   end if
-!mmm
-!mmm   if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3
+!mmm   else if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3
 !mmm     return m3mgdInjuryStatus.red
 !mmm   else
 !mmm     return false
 !mmm   end if
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdIsUnfitToAttack(tokenID)
+!rem // 
+!rem //   Returns true (and outputs the reasons to the chat) if tokenID is unable to attack. Otherwise returns false.
+!rem // 
+!mmm function m3mgdIsUnfitToAttack(tokenID)
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return unknown
+!mmm   end if
+!mmm
+!mmm   set noAttackStatusList = m3mgdActiveStatusModifiers(tokenID, "noAttack")
+!mmm   if noAttackStatusList
+!mmm     combine chat
+!mmm       if script.cGMSilentMode
+!mmm         chat: /w GM 
+!mmm       end if
+!mmm       chat: ${"&"}{template:default} {\{name=${tokenID.name}: Angriff nicht möglich }\}
+!mmm       for reason in noAttackStatusList
+!mmm         set counter = counter + 1
+!mmm         if reason.expiry
+!mmm           chat: {\{ #${counter} (noch ${reason.expiry.count} ${reason.expiry.type})=${reason.label}: ${reason.desc} }\}
+!mmm         else
+!mmm           chat: {\{ #${counter}=${reason.label}: ${reason.desc}  }\}
+!mmm         end if
+!mmm       end for
+!mmm       set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(tokenID, "attack")
+!mmm       if endOfActionSummary
+!mmm         chat: {\{ Angriff beendet=${endOfActionSummary} }\}
+!mmm       end if
+!mmm     end combine
+!mmm     return true
+!mmm   end if
+!mmm
+!mmm   return false
 !mmm
 !mmm end function
 !rem
@@ -947,13 +987,13 @@
 !mmm 
 !mmm   if effHealthLoss > 0 or effEnduranceLoss > 0 
 !mmm     combine chat
-!mmm       chat: /w "${tokenID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji(tokenID) & tokenID.name}: Schaden}} 
-!mmm       chat: {{ Schaden = ${effHealthLoss} LP / ${effEnduranceLoss} AP }}
+!mmm       chat: /w "${tokenID.character_name}" ${"&"}{template:default} {\{name=${m3mgdShapeMoji(tokenID) & tokenID.name}: Schaden}\} 
+!mmm       chat: {\{ Schaden = ${effHealthLoss} LP / ${effEnduranceLoss} AP }\}
 !mmm       if newHealth < 0 and timeToDie < 0
-!mmm         chat: {{Zustand=**Sofortiger Tod &#10013;**}}
+!mmm         chat: {\{Zustand=**Sofortiger Tod &#10013;**}\}
 !mmm       else
-!mmm         chat: {{${m3mgdHealthStatusLabel(tokenID)}=${m3mgdHealthStatusEffectsDesc(tokenID)}}}
-!mmm         chat: {{${m3mgdEnduranceStatusLabel(tokenID)}=${m3mgdEnduranceStatusEffectsDesc(tokenID)}}}
+!mmm         chat: {\{${m3mgdHealthStatusLabel(tokenID)}=${m3mgdHealthStatusEffectsDesc(tokenID)} }\}
+!mmm         chat: {\{${m3mgdEnduranceStatusLabel(tokenID)}=${m3mgdEnduranceStatusEffectsDesc(tokenID)} }\}
 !mmm       end if
 !mmm     end combine
 !mmm   end if
@@ -1437,7 +1477,7 @@
 !rem
 !rem // _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, [rollData], [rollConfig])
 !rem //
-!rem //   Returns payload code for a chat button for tokenID to use weaponLabel (offensive or defensive) with scriptCommand, (re)using rollData/rollConfig about previous die rolls.
+!rem //   Returns payload code for a chat button for tokenID to use weaponLabel (offensive or defensive), (re)using rollData/rollConfig about previous die rolls.
 !rem //
 !mmm function _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData, rollConfig)
 !mmm
@@ -1446,6 +1486,9 @@
 !mmm   set customCall = tokenID.("m3mgd_configCall_" & weaponLabel)
 !mmm   if not isunknown(customCall)
 !mmm     set weaponScriptCommand = "&#x25;{" & tokenID.character_name & "|" & customCall & "}"
+!mmm   end if
+!mmm   if weaponsGroup eq "defense"
+!mmm     set weaponScriptCommand = m3mgdDefenseInitPayload(tokenID) & weaponScriptCommand
 !mmm   end if
 !mmm
 !mmm   set payload = "!mmm customize&#13;"
@@ -1551,15 +1594,12 @@
 !mmm       set weaponsList = m3mgdListDefenseWeapons(tokenID)
 !mmm     end if
 !mmm     set selectorPrompt = "Auswahl: Abwehrwaffe"
-!mmm     set scriptCommand = m3mgdDefenseInitPayload(tokenID) & m3mgdScriptCommands.defense
 !mmm   else if weaponsGroup eq "melee"
 !mmm     set weaponsList = m3mgdListMeleeAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Nahkampfwaffe"
-!mmm     set scriptCommand = m3mgdScriptCommands.melee
 !mmm   else if weaponsGroup eq "ranged"
 !mmm     set weaponsList = m3mgdListRangedAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Fernkampfwaffe"
-!mmm     set scriptCommand = m3mgdScriptCommands.ranged
 !mmm   end if
 !mmm   
 !mmm   if isunknown(tokenID.PC)
@@ -1677,14 +1717,14 @@
 !mmm   end if
 !mmm
 !mmm   do setattr(tokenID, "status_blue", tokenID.status_blue + 1)
-!mmm   if isunknown(tokenID.m3mgdActiveCriticalEffects) or tokenID.m3mgdActiveCriticalEffects eq ""
-!mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize(persistentEffect))
+!mmm   if isunknown(tokenID.m3mgdActivePersistentEffects) or tokenID.m3mgdActivePersistentEffects eq ""
+!mmm     do setattr(tokenID, "m3mgdActivePersistentEffects", serialize(persistentEffect))
 !mmm   else 
-!mmm     set newList = deserialize(tokenID.m3mgdActiveCriticalEffects), persistentEffect
-!mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize(newList))
+!mmm     set newList = deserialize(tokenID.m3mgdActivePersistentEffects), persistentEffect
+!mmm     do setattr(tokenID, "m3mgdActivePersistentEffects", serialize(newList))
 !mmm   end if
 !mmm
-!mmm   return deserialize(tokenID.m3mgdActiveCriticalEffects)
+!mmm   return deserialize(tokenID.m3mgdActivePersistentEffects)
 !mmm
 !mmm end function
 !rem
@@ -1715,17 +1755,17 @@
 !mmm
 !mmm   combine chat
 !mmm     if isdefault(context)
-!mmm       chat: ${"&"}{template:default} {{name=${tokenID.token_name} würfelt ${criticalEffect.label}}}
+!mmm       chat: ${"&"}{template:default} {\{name=${tokenID.token_name} würfelt ${criticalEffect.label} }\}
 !mmm     else 
-!mmm       chat: ${"&"}{template:default} {{name=${tokenID.token_name} würfelt ${criticalEffect.label} (${context}) }}
+!mmm       chat: ${"&"}{template:default} {\{name=${tokenID.token_name} würfelt ${criticalEffect.label} (${context}) }\}
 !mmm     end if
-!mmm     chat: {{Wurf=${highlight(rollResult, "normal", "Wurf mit 1W100")}}}
+!mmm     chat: {\{Wurf=${highlight(rollResult, "normal", "Wurf mit 1W100")} }\}
 !mmm     if criticalEffect.desc + 0 == 0
 !mmm       set descText = criticalEffect.desc
 !mmm     else 
 !mmm       set descText = criticalEffect.desc.(context)
 !mmm     end if
-!mmm     chat: {{Folgen=${descText}}}
+!mmm     chat: {\{Folgen=${descText} }\}
 !mmm
 !mmm     if criticalEffect.immediate.(context)
 !mmm       set codeLines = criticalEffect.immediate.(context)
@@ -1746,7 +1786,7 @@
 !mmm         set targetID = tokenID
 !mmm       end if
 !mmm       set persistentEffect = m3mgdStorePersistentEffect(targetID, persistentEffect)
-!mmm       chat: {{ ${persistentEffect.label}=${persistentEffect.effect} }}
+!mmm       chat: {\{ ${persistentEffect.label}=${persistentEffect.effect} }\}
 !mmm     end for
 !mmm
 !mmm   end combine
@@ -1778,11 +1818,11 @@
 !mmm
 !mmm   combine chat
 !mmm
-!mmm     chat: /w GM ${"&"}{template:default} {{name=${tokenID.token_name} würfelt ${criticalEffect.label}}}
+!mmm     chat: /w GM ${"&"}{template:default} {\{name=${tokenID.token_name} würfelt ${criticalEffect.label} }\}
 !mmm     if isdefault(foeID)
-!mmm       chat: {{Wurf=${rollResult}}}
+!mmm       chat: {\{Wurf=${rollResult} }\}
 !mmm     else
-!mmm       chat: {{Wurf=${rollResult} &nbsp; **Gegner:** ${highlight(foeID.name,"info")}}}
+!mmm       chat: {\{Wurf=${rollResult} &nbsp; **Gegner:** ${highlight(foeID.name,"info")} }\}
 !mmm     end if
 !mmm 
 !mmm     if criticalEffect.desc + 0 == 0
@@ -1794,7 +1834,7 @@
 !mmm       end for
 !mmm       set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",default,\"" & foeID & "\")") & "&#13;"
 !mmm       set approvePayload = approvePayload & "!mmm end script&#13;"
-!mmm       chat: {{ [🖅 **an ${tokenID.character_name}**](${approvePayload}) = ${criticalEffect.desc} }}
+!mmm       chat: {\{ [🖅 **an ${tokenID.character_name}**](${approvePayload}) = ${criticalEffect.desc} }\}
 !mmm
 !mmm     else 
 !mmm
@@ -1806,7 +1846,7 @@
 !mmm         end for
 !mmm         set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",\"" & contextDesc.key & "\",\"" & foeID & "\")") & "&#13;"
 !mmm         set approvePayload = approvePayload & "!mmm end script&#13;"
-!mmm         chat: {{ ${contextDesc.key} [🖅 **an ${tokenID.character_name}**](${approvePayload}) = ${contextDesc.value} }}
+!mmm         chat: {\{ ${contextDesc.key} [🖅 **an ${tokenID.character_name}**](${approvePayload}) = ${contextDesc.value} }\}
 !mmm       end for
 !mmm
 !mmm     end if
@@ -1815,10 +1855,63 @@
 !mmm     set rerollPayload = rerollPayload & "&amp;{template} &#91;[1d100]] &#123;{&#125;}&#13;"
 !mmm     set rerollPayload = rerollPayload & literal("!mmm do m3mgdCriticalEffectPrompt(\"" & tokenID & "\",\"" & tableName & "\",$[" & "[0]],\"" & foeID & "\")") & "&#13;"
 !mmm     set rerollPayload = rerollPayload & "!mmm end script&#13;"
-!mmm     chat: {{  = [🎲 nochmal würfeln](${rerollPayload}) }}
+!mmm     chat: {\{  = [🎲 nochmal würfeln](${rerollPayload}) }\}
 !mmm
 !mmm   end combine
 !mmm   
+!mmm end function
+!rem
+!rem // m3mgdUpdatePersistentEffectsCounters(tokenID, actionType)
+!rem // 
+!rem //   For tokenID, counts every active persistent effect counter of the type actionType down by one, save if it is marked as "new" (then the "new" marker is removed).
+!rem // 
+!mmm function m3mgdUpdatePersistentEffectsCounters(tokenID, actionType)
+!mmm
+!mmm   if not tokenID.m3mgdActivePersistentEffects
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set currentTypeEffects = 0
+!mmm   set newEffectsRemoved = 0
+!mmm   set effectCountersDecreased = 0
+!mmm   set effectsExpired = 0
+!mmm   for activeEffect in deserialize(tokenID.m3mgdActivePersistentEffects)
+!mmm     if activeEffect.effect.expiry and activeEffect.effect.expiry.type eq actionType
+!mmm       set currentTypeEffects = currentTypeEffects + 1
+!mmm       if actionType eq "round" and activeEffect.effect.expiry.new 
+!mmm         set activeEffect = { activeEffect, effect: { activeEffect.effect, expiry: { activeEffect.effect.expiry... where ...key ne "new" } } }
+!mmm         set newEffectsRemoved = newEffectsRemoved + 1
+!mmm       else if activeEffect.effect.expiry.count > 1
+!mmm         set activeEffect = { activeEffect, effect: { activeEffect.effect, expiry: { activeEffect.effect.expiry, count: activeEffect.effect.expiry.count - 1 } } }
+!mmm         set effectCountersDecreased = effectCountersDecreased + 1
+!mmm       else
+!mmm         if activeEffect.effect.cappedAttribute
+!mmm           do setattr(tokenID, activeEffect.effect.cappedAttribute, tokenID.(activeEffect.effect.cappedAttribute).max)
+!mmm         end if
+!mmm         if activeEffect.effect.marker
+!mmm           do setattr(tokenID, activeEffect.effect.marker, false)
+!mmm         end if
+!mmm         set activeEffect = undef
+!mmm         if tokenID.status_blue > 1
+!mmm           do setattr(tokenID, "status_blue", tokenID.status_blue - 1)
+!mmm         else
+!mmm           do setattr(tokenID, "status_blue", false)
+!mmm         end if 
+!mmm         set effectsExpired = effectsExpired + 1
+!mmm       end if
+!mmm     end if
+!mmm     if activeEffect
+!mmm       set updatedActiveEffects = updatedActiveEffects, activeEffect
+!mmm     end if
+!mmm   end for
+!mmm
+!mmm   do setattr(tokenID, "m3mgdActivePersistentEffects", serialize(updatedActiveEffects))
+!mmm
+!mmm   set summaryLog = "Von " & currentTypeEffects & " " & actionType & "-Effekten: " & newEffectsRemoved & " NEU-Marker entfernt, "
+!mmm   set summaryLog = summaryLog & effectCountersDecreased & " Zähler reduziert, " & effectsExpired & " Effekte beendet."
+!mmm
+!mmm   return summaryLog
+!mmm
 !mmm end function
 !rem
 !rem // m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
@@ -1982,7 +2075,7 @@
 !mmm
 !mmm end function
 !rem
-!rem // m3mgdRerunButton(tokenID, weaponsGroup, weaponLabel, scriptCommand)
+!rem // m3mgdRerunButton(tokenID, weaponsGroup, weaponLabel, rollData)
 !rem //
 !mmm function m3mgdRerunButton(tokenID, weaponsGroup, weaponLabel, rollData)
 !mmm   set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData)
