@@ -188,13 +188,10 @@
 !mmm     set modifierLog = modifierLog & " {{Angriff von oben=+2}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;von&nbsp;oben&nbsp;&nbsp;&nbsp;+2 "
 !mmm   end if
-!rem   // Ask for individual modifiers and sum up the various modifiers
+!rem   // Process manual modifiers and sum up the various modifiers
 !mmm   if cManualModifiers != 0
-!mmm     if cManualModifiers > 0
-!mmm       set cManualModifiers = "+" & (cManualModifiers * 1)
-!mmm     end if
-!mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & cManualModifiers & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & cManualModifiers & " "
+!mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & sign(cManualModifiers, "display") & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & sign(cManualModifiers, "display") & " "
 !mmm   end if
 !mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + cManualModifiers
 !rem
@@ -209,23 +206,25 @@
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & cAttackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
 !mmm   set criticalAttack = iscritical(cAttackRoll)
 !rem
-!rem   // Damage roll (cannot be lower than 0)
-!mmm   set damageRoll = roll(weaponDamageExpr)
-!mmm   set damageResult = damageRoll + weaponDamageBonus
-!mmm   if damageResult < 0
-!mmm     set damageResult = highlight(0, "bad")
-!mmm   end if
-!mmm   set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") " & weaponDamageBonus
-!mmm   if magicExtraDamageActive and cMagicExtraDamage ne ""
-!mmm     set magicExtraDamageRoll = roll(cMagicExtraDamage)
-!mmm     if magicExtraDamageRoll < 0
-!mmm       set magicExtraDamageRoll = highlight(0, "bad")
+!mmm   if attackResult >= 20
+!rem     // Damage roll (cannot be lower than 0)
+!mmm     set damageRoll = roll(weaponDamageExpr)
+!mmm     set damageResult = damageRoll + weaponDamageBonus
+!mmm     if damageResult < 0
+!mmm       set damageResult = highlight(0, "bad")
 !mmm     end if
-!mmm     set damageResult = highlight(damageResult + magicExtraDamageRoll, "normal")
-!mmm     set damageResultLog = damageResultLog & " + (" & cMagicExtraDamage & " = " & magicExtraDamageRoll & ")"
-!mmm   end if 
-!mmm   set damageResultLog = damageResult & " = " & damageResultLog
-!mmm   set damageResult = highlight(damageResult, default, damageResultLog)
+!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") " & weaponDamageBonus
+!mmm     if magicExtraDamageActive and cMagicExtraDamage ne ""
+!mmm       set magicExtraDamageRoll = roll(cMagicExtraDamage)
+!mmm       if magicExtraDamageRoll < 0
+!mmm         set magicExtraDamageRoll = highlight(0, "bad")
+!mmm       end if
+!mmm       set damageResult = highlight(damageResult + magicExtraDamageRoll, "normal")
+!mmm       set damageResultLog = damageResultLog & " + (" & cMagicExtraDamage & " = " & magicExtraDamageRoll & ")"
+!mmm     end if 
+!mmm     set damageResultLog = damageResult & " = " & damageResultLog
+!mmm     set damageResult = highlight(damageResult, default, damageResultLog)
+!mmm   end if
 !mmm
 !rem   // Save key attack data for defense script
 !rem
