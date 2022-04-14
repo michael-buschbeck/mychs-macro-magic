@@ -1,0 +1,50 @@
+!mmm script
+!mmm
+!rem // dev code for handling combat critical effects
+!mmm
+!mmm function getCriticalEffect(type, selectRoll)
+!mmm 
+!mmm   set effectTable = m3mgdCriticalEffectsTable.(type)
+!mmm
+!mmm   for effectRow in effectTable...
+!mmm     if selectRoll <= effectRow.key
+!mmm       return effectRow.value
+!mmm     end if
+!mmm   end for
+!mmm 
+!mmm end function
+!mmm
+!mmm function addCriticalEffect(tokenID, critEffect)
+!mmm   debug chat: adding critical effect to token ${tokenID.name}
+!mmm   do setattr(tokenID, "status_blue", tokenID.status_blue + 1)
+!mmm   if isunknown(tokenID.m3mgdActiveCriticalEffects)
+!mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize(critEffect))
+!mmm   else 
+!mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize((deserialize(tokenID.m3mgdActiveCriticalEffects), critEffect)))
+!mmm   end if
+!mmm end function
+!mmm publish to sender: addCriticalEffect
+!mmm
+!mmm   if not m3mgdCriticalEffectsTable
+!mmm     if "MacroSheet".m3mgdCriticalEffectsTable ne ""
+!mmm       set m3mgdCriticalEffectsTable = deserialize("MacroSheet".m3mgdCriticalEffectsTable)
+!mmm     else
+!mmm       set m3mgdCriticalEffectsTable = {}
+!mmm     end if
+!mmm     publish to game: m3mgdCriticalEffectsTable
+!mmm   end if
+!mmm   
+!mmm   set tableName = "defenseFailure"
+!mmm   set effectRoll = highlight(roll("1d100"), "normal", "Wurf 1W100")
+!mmm   chat: So you rolled a critical ${tableName} ...
+!mmm   set myCriticalEffect = getCriticalEffect(tableName, effectRoll)
+!mmm   chat: You rolled your D100 for a result of ${effectRoll} which means:
+!mmm   chat: ${myCriticalEffect.desc}
+!mmm   chat: Executing...
+!mmm
+!rem   // publish variables that should be available for critical effect code
+!mmm   set myID = "Yorric MacRathgar".token_id
+!mmm   publish to sender: myID
+!mmm   chat: ${myCriticalEffect.code}
+!mmm
+!mmm end script

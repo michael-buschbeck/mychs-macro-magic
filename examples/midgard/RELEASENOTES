@@ -14,6 +14,6 @@ What's new?
 
 What needs to change outside MacroSheet*?
 
-* make sure everyone uses weaponSelect
+* make sure everyone uses weaponSelect OR adds the 3D dice rolls to their config scripts
 * rename *Main scripts to just their original name, delete deprecated wrappers
 * delete waterWalkerBlastEffect script

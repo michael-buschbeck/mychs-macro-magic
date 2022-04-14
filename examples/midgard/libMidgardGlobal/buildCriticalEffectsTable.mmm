@@ -1,0 +1,119 @@
+!mmm script
+!mmm
+!rem // buildCriticalEffectsTable
+!mmm
+!mmm   set customizable cmd = default
+!mmm   set customizable tableName = default
+!mmm   set customizable entryID = default
+!mmm   set customizable entryWeight = default
+!mmm   set customizable entryDesc = default
+!mmm   set customizable entryUrl = default
+!mmm   set customizable entryCode = default
+!mmm   set customizable deleteConfirm = false
+!mmm
+!mmm function newTablePayload()
+!mmm   set payload = literal("!mmm customize") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set cmd=\"newTable\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set tableName=\"?" & "{Bezeichnung|}\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{TestStuff|buildCriticalEffectsTable}" 
+!mmm   return payload
+!mmm end function
+!mmm
+!mmm function deleteTablePayload(tableName)
+!mmm   set payload = literal("!mmm customize") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set cmd=\"deleteTable\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set tableName=\"" & tableName & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Wirklich löschen?|Nein,false|Ja,true}") & "&#13;"
+!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{TestStuff|buildCriticalEffectsTable}" & "&#13;"
+!mmm   return payload
+!mmm end function
+!mmm
+!mmm function newEntryPayload(tableName)
+!mmm   set payload = literal("!mmm customize") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set cmd=\"newEntry\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set tableName=\"" & tableName & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set entryWeight=\"?" & "{Gewicht (von 100)|1}\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set entryDesc=\"?" & "{Text|}\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set entryUrl=\"?" & "{Image URL|}\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set entryCode=\"?" & "{Code|}\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{TestStuff|buildCriticalEffectsTable}" & "&#13;"
+!mmm   return payload
+!mmm end function
+!mmm
+!mmm function deleteEntryPayload(tableName, entryID)
+!mmm   set payload = literal("!mmm customize") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set cmd=\"deleteEntry\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set tableName=\"" & tableName & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set entryID=\"" & entryID & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Wirklich löschen?|Nein,false|Ja,true}") & "&#13;"
+!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{TestStuff|buildCriticalEffectsTable}" & "&#13;"
+!mmm   return payload
+!mmm end function
+!mmm
+!mmm
+!mmm
+!rem   // MAIN
+!mmm
+!mmm   if not m3mgdCriticalEffectsTable
+!mmm     if "MacroSheet".m3mgdCriticalEffectsTable ne ""
+!mmm       set m3mgdCriticalEffectsTable = deserialize("MacroSheet".m3mgdCriticalEffectsTable)
+!mmm     else
+!mmm       set m3mgdCriticalEffectsTable = {}
+!mmm     end if
+!mmm     publish to game: m3mgdCriticalEffectsTable
+!mmm   end if
+!mmm
+!rem   // Handle cmd
+!mmm
+!mmm   if cmd eq "newTable" and not isdefault(tableName)
+!mmm     
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): {} }
+!mmm     publish to game: m3mgdCriticalEffectsTable
+!mmm
+!mmm   else if cmd eq "deleteTable" and not isdefault(tableName) and deleteConfirm
+!mmm
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable... where ...key ne tableName }
+!mmm     publish to game: m3mgdCriticalEffectsTable
+!mmm
+!mmm   else if cmd eq "newEntry" and not isdefault(tableName) and not isdefault(entryWeight)
+!mmm
+!mmm     if m3mgdCriticalEffectsTable.(tableName) == 0
+!mmm       set newEntryID = entryWeight
+!mmm     else 
+!mmm       set newEntryID = 0
+!mmm       for row in m3mgdCriticalEffectsTable.(tableName)...
+!mmm         set newEntryID = newEntryID + row.value.weight
+!mmm       end for
+!mmm       set newEntryID = newEntryID + entryWeight
+!mmm     end if
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): { m3mgdCriticalEffectsTable.(tableName), (newEntryID): { weight: entryWeight, desc: entryDesc, url: entryUrl, code: entryCode } } }
+!mmm     publish to game: m3mgdCriticalEffectsTable
+!mmm
+!mmm   else if cmd eq "deleteEntry" and not isdefault(tableName) and not isdefault(entryID) and m3mgdCriticalEffectsTable.(tableName).(entryID) and deleteConfirm
+!mmm
+!mmm     set tableWithoutEntry = { m3mgdCriticalEffectsTable.(tableName)... where ...key ne entryID }
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): tableWithoutEntry }
+!mmm     publish to game: m3mgdCriticalEffectsTable
+!mmm
+!mmm   end if
+!mmm
+!rem   // Save table
+!mmm
+!mmm   do setattr("MacroSheet", "m3mgdCriticalEffectsTable", serialize(m3mgdCriticalEffectsTable))
+!mmm
+!rem   // Output tables summary
+!mmm
+!mmm   combine chat
+!mmm     chat: /w "Yorric MacRathgar"
+!mmm     chat: ${"&"}{template:default} {{name=Kritische Effekte: Tabellen}}
+!mmm     for effectType in m3mgdCriticalEffectsTable...
+!mmm       chat: {{ [X](${deleteTablePayload(effectType.key)})[+](${newEntryPayload(effectType.key)}) ${effectType.key}=
+!mmm       for row in effectType.value...
+!mmm         chat: [X](${deleteEntryPayload(effectType.key, row.key)})${row.key}(${row.value.weight}):${row.value.desc}
+!mmm       end for
+!mmm       chat: }}
+!mmm     end for
+!mmm     chat: {{ [Neue Tabelle](${newTablePayload()}) = }}
+!mmm   end combine
+!mmm 
+!mmm end script
