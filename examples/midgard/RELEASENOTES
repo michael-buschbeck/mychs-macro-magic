@@ -7,8 +7,9 @@ What's new?
 * Combat scripts allow anyone to rerun the same rolls of dice (if, for example, the wrong target token has been selected)
 * Combat scripts give the GM the option of secretly rerolling the dice for the same target and modifiers
 * Combat and sense scripts automatically process severe injuries indicated by status markers
-* new endOfRoundEffects script processes periodic effects of severe injuries
-* new drinkPotions script processes the effects of standard healing and energy potions
+* Combat scripts automate the effects of critical successes and failures
+* new endOfRoundEffects script processes periodic effects of severe injuries or previous critical effects
+* new applyPotions script processes the effects of standard healing and energy potions
 * defenseFrostball accrues experience to the attacker, fixes bug where endurance damage wasn't transmitted from the magic script
 * earthBond* no longer require customize scripts
 
