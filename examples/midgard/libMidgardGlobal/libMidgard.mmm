@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-12)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-14)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -102,7 +102,8 @@
 !mmm   publish to game: _m3mgdWeaponButtonPayload, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
-!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect, m3mgdCriticalEffectPrompt, m3mgdUpdatePersistentEffectsCounters
+!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect
+!mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdUpdatePersistentEffectsCounters
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -1542,7 +1543,6 @@
 !mmm       
 !mmm     set payload = payload & literal("!mmm set cWeaponLabel=\"@" & "{" & tokenID.character_name & "|" & findattr(tokenID, "Abwehr", "AbwWaffe", weaponLabel) & "}\"") & "&#13;"
 !mmm     set payload = payload & literal("!mmm set cWeaponType=\"" & m3mgdDefenseWeaponType(weaponLabel) & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set cNoDefense=\"false\"") & "&#13;"
 !mmm       
 !mmm   end if
 !mmm
@@ -1552,6 +1552,19 @@
 !rem       // For simple numbers, just hand them over
 !mmm       if singleRoll.value + 0 eq singleRoll.value
 !mmm         set payload = payload & literal("!mmm set " & singleRoll.key & "=roll(" & singleRoll.value & ")") & "&#13;"
+!mmm       else if singleRoll.value eq "1d20cs" or singleRoll.value eq "1d20cf"
+!mmm         set payload = payload & literal("!mmm for r in roll('1d20')")
+!mmm         for i in 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+!mmm           set payload = payload & literal(",roll('1d20')")
+!mmm         end for
+!mmm         set payload = payload & "&#13;"
+!mmm         if singleRoll.value eq "1d20cs"
+!mmm           set payload = payload & literal("!mmm exit for if iscritical(r)") & "&#13;"
+!mmm         else if singleRoll.value eq "1d20cf"
+!mmm           set payload = payload & literal("!mmm exit for if isfumble(r)") & "&#13;"
+!mmm         end if
+!mmm         set payload = payload & "!mmm end for&#13;"
+!mmm         set payload = payload & literal("!mmm set " & singleRoll.key & "=r") & "&#13;"
 !rem       // Non-numbers should be dice syntax ("1d20"): roll them for player characters, otherwise the default will kick in
 !mmm       else if tokenID.PC and singleRoll.value
 !mmm         set payload = payload & "&amp;{template} &#91;[" & singleRoll.value & "]] &#123;{&#125;}&#13;"
@@ -1637,16 +1650,18 @@
 !mmm           set weaponUsable = true
 !mmm         end if
 !mmm       end if
+!mmm       set rollSpecs = {}
 !mmm       
 !mmm     else if weaponsGroup eq "melee" or weaponsGroup eq "ranged"
 !mmm     
 !mmm       set weaponUsable = true
+!mmm       set rollSpecs = { "cAttackRoll": "1d20", "cDamageRoll": tokenID.(findattr(tokenID, "Angriff", "Waffe", weaponLabel, "WaffeSchaden")) }
 !mmm     
 !mmm     end if
 !mmm
 !mmm     if weaponUsable
 !mmm
-!mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, {"cAttackRoll": "1d20", "cDamageRoll": tokenID.(findattr(tokenID, "Angriff", "Waffe", weaponLabel, "WaffeSchaden"))})
+!mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollSpecs)
 !mmm       
 !mmm       if itemCounter % 2 == 0
 !mmm         set chatMenu = chatMenu & "{\{[" & weaponLabel & "](" & payload & ")="
@@ -1799,6 +1814,24 @@
 !mmm
 !mmm end function
 !rem
+!rem // m3mgdCriticalEffectRollPayload(tokenID, tableName, rollResult, foeID)
+!rem //
+!rem //   Chats a prompt to the GM that shows the critical effect selected from tableName by rollResult.
+!rem //   GM can approve the roll to be sent to the affected player, or re-roll.
+!rem //
+!mmm function m3mgdCriticalEffectRollPayload(tokenID, tableName, foeID)
+!mmm   set rollPayload = "!mmm script&#13;"
+!mmm   if tokenID.PC
+!mmm     set rollPayload = rollPayload & "&amp;{template} &#91;[1d100]] &#123;{&#125;}&#13;"
+!mmm     set rollPayload = rollPayload & literal("!mmm set critRoll = $[" & "[0]]") & "&#13;"
+!mmm   else 
+!mmm     set rollPayload = rollPayload & literal("!mmm set critRoll = roll('1d100')") & "&#13;"
+!mmm   end if
+!mmm   set rollPayload = rollPayload & literal("!mmm do m3mgdCriticalEffectPrompt(\"" & tokenID & "\",\"" & tableName & "\",critRoll,\"" & foeID & "\")") & "&#13;"
+!mmm   set rollPayload = rollPayload & "!mmm end script&#13;"
+!mmm   return rollPayload
+!mmm end function
+!rem
 !rem // m3mgdCriticalEffectPrompt(tokenID, tableName, rollResult, foeID)
 !rem //
 !rem //   Chats a prompt to the GM that shows the critical effect selected from tableName by rollResult.
@@ -1813,6 +1846,7 @@
 !mmm   set criticalEffect = m3mgdGetCriticalEffect(tableName, rollResult)
 !mmm
 !mmm   set sender = tokenID.token_name
+!mmm   set rollResult = highlight(rollResult, default, "1W100: " & tableName)
 !mmm
 !mmm   combine chat
 !mmm
@@ -1832,7 +1866,7 @@
 !mmm       end for
 !mmm       set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",default,\"" & foeID & "\")") & "&#13;"
 !mmm       set approvePayload = approvePayload & "!mmm end script&#13;"
-!mmm       chat: {\{ [🖅 **an ${tokenID.character_name}**](${approvePayload}) = ${criticalEffect.desc} }\}
+!mmm       chat: {\{ Effekte = ${criticalEffect.desc}${"<"&"br>"}[🖅 **an ${tokenID.character_name}**](${approvePayload}) }\}
 !mmm
 !mmm     else 
 !mmm
@@ -1844,16 +1878,12 @@
 !mmm         end for
 !mmm         set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",\"" & contextDesc.key & "\",\"" & foeID & "\")") & "&#13;"
 !mmm         set approvePayload = approvePayload & "!mmm end script&#13;"
-!mmm         chat: {\{ ${contextDesc.key} [🖅 **an ${tokenID.character_name}**](${approvePayload}) = ${contextDesc.value} }\}
+!mmm         chat: {\{ ${contextDesc.key} = ${contextDesc.value}${"<"&"br>"}[🖅 **an ${tokenID.character_name}**](${approvePayload}) }\}
 !mmm       end for
 !mmm
 !mmm     end if
 !mmm
-!mmm     set rerollPayload = "!mmm script&#13;"
-!mmm     set rerollPayload = rerollPayload & "&amp;{template} &#91;[1d100]] &#123;{&#125;}&#13;"
-!mmm     set rerollPayload = rerollPayload & literal("!mmm do m3mgdCriticalEffectPrompt(\"" & tokenID & "\",\"" & tableName & "\",$[" & "[0]],\"" & foeID & "\")") & "&#13;"
-!mmm     set rerollPayload = rerollPayload & "!mmm end script&#13;"
-!mmm     chat: {\{  = [🎲 nochmal würfeln](${rerollPayload}) }\}
+!mmm     chat: {\{  = [🎲 nochmal würfeln](${m3mgdCriticalEffectRollPayload(tokenID, tableName, foeID)}) }\}
 !mmm
 !mmm   end combine
 !mmm   
@@ -2132,10 +2162,18 @@
 !mmm       chat: {\{Angriff=${attackResult} }\}
 !mmm     end if
 !mmm
-!mmm     if script.defenseSuccess
-!mmm       chat: {\{Ergebnis=${script.defenseResult} **Leichter Treffer**}\}
+!mmm     if script.defenseSuccess and iscritical(script.cDefenseRoll) and not script.criticalAttack
+!mmm       chat: {\{Kritischer Abwehrerfolg=${script.defenseResult} **Leichter Treffer** [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseSuccess", m3mgdExchange.(m3mgdAttrAttackerID))}${cssTableCellButton}) }\}
+!mmm     else if script.defenseSuccess
+!mmm       chat: {\{Abwehrerfolg=${script.defenseResult} **Leichter Treffer**}\}
+!mmm     else if script.criticalAttack == true and isfumble(script.cDefenseRoll)
+!mmm       chat: {\{Kritischer Fehlschlag bei Abwehr eines kritischen Treffers=${script.defenseResult} **Schwerer kritischer Treffer** 
+!mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "attackSuccess", script.cOwnID)}${cssTableCellButton})
+!mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", m3mgdExchange.(m3mgdAttrAttackerID))}${cssTableCellButton}) }\}
 !mmm     else if script.criticalAttack == true
-!mmm       chat: {\{Ergebnis=${script.defenseResult} **Schwerer kritischer Treffer**}\}
+!mmm       chat: {\{Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "attackSuccess", script.cOwnID)}${cssTableCellButton}) }\}
+!mmm     else if isfumble(script.cDefenseRoll)
+!mmm       chat: {\{Kritischer Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "defenseFailure", script.cOwnID)}${cssTableCellButton}) }\}
 !mmm     else 
 !mmm       chat: {\{Ergebnis=${script.defenseResult} **Schwerer Treffer**}\}
 !mmm     end if
@@ -2150,8 +2188,6 @@
 !mmm
 !mmm     if script.criticalAttack == true and m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
 !mmm       chat: {\{Kritischer Zaubererfolg=Zauber wirkt **doppelt so stark** oder ist **halb so teuer**: Nach Wahl des Zauberers umsetzen.}\}
-!mmm     else if script.criticalAttack == true
-!mmm       chat: {\{Kritischer Schaden=🎲🎲🎲}\}
 !mmm     end if
 !mmm
 !mmm     if script.newHealth < 0 and script.timeToDie < 0
