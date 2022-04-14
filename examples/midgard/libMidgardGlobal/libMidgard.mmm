@@ -9,6 +9,7 @@
 !mmm
 !rem   // Game-global constants for publication
 !rem
+!mmm   set m3mgdScriptCommands = { "defense": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}" }
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm 
@@ -45,7 +46,7 @@
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
-!mmm   publish to game: m3mgdExchange
+!mmm   publish to game: m3mgdScriptCommands, m3mgdExchange
 !mmm   publish to game: m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
 !mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
 !mmm   publish to game: m3mgdExchangeAttrList
@@ -1250,17 +1251,17 @@
 !mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)") & "&#13;"
 !mmm   set payload = payload & "!mmm end script&#13;"
 !mmm   set payload = payload & m3mgdDefenseInitPayload(tokenID)
-!mmm   set payload = payload & "&#x25;{MacroSheet|defense}"
+!mmm   set payload = payload & m3mgdScriptCommands.defense
 !mmm   return payload
 !mmm end function
 !rem
-!rem // _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, weaponType, scriptCommand)  
+!rem // _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel)
 !rem //
 !rem //   Returns payload code for a chat button for tokenID to use weaponLabel (offensive or defensive) with scriptCommand.
 !rem //
-!mmm function _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, scriptCommand)
+!mmm function _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel)
 !mmm
-!mmm   set weaponScriptCommand = scriptCommand
+!mmm   set weaponScriptCommand = m3mgdScriptCommands.(weaponsGroup)
 !rem   // Overwrite weaponScriptCommand if there is a custom config script registered for weaponLabel in tokenID's character sheet
 !mmm   set customCall = tokenID.("m3mgd_configCall_" & weaponLabel)
 !mmm   if not isunknown(customCall)
@@ -1334,15 +1335,15 @@
 !mmm       set weaponsList = m3mgdListDefenseWeapons(tokenID)
 !mmm     end if
 !mmm     set selectorPrompt = "Auswahl: Abwehrwaffe"
-!mmm     set scriptCommand = m3mgdDefenseInitPayload(tokenID) & "&#x25;{MacroSheet|defense}"
+!mmm     set scriptCommand = m3mgdDefenseInitPayload(tokenID) & m3mgdScriptCommands.defense
 !mmm   else if weaponsGroup eq "melee"
 !mmm     set weaponsList = m3mgdListMeleeAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Nahkampfwaffe"
-!mmm     set scriptCommand = "&#x25;{MacroSheet|meleeAttack}"
+!mmm     set scriptCommand = m3mgdScriptCommands.melee
 !mmm   else if weaponsGroup eq "ranged"
 !mmm     set weaponsList = m3mgdListRangedAttackWeapons(tokenID)
 !mmm     set selectorPrompt = "Auswahl: Fernkampfwaffe"
-!mmm     set scriptCommand = "&#x25;{MacroSheet|rangedAttack}"
+!mmm     set scriptCommand = m3mgdScriptCommands.ranged
 !mmm   end if
 !mmm   
 !mmm   if isunknown(tokenID.PC)
@@ -1354,7 +1355,7 @@
 !mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "&#x25;{MacroSheet|defense}"
+!mmm     set noDefensePayload = noDefensePayload & m3mgdScriptCommands.defense
 !mmm     set selectorPrompt = selectorPrompt & " [Wehrlos](" & noDefensePayload & cssTableHeaderButton & ") "
 !mmm   end if
 !mmm
