@@ -10,8 +10,8 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.26
-!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
+!mmm   if version < 1.27
+!mmm     do whisperback("Abbruch: MMM-Version 1.27.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm

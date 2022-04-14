@@ -7,6 +7,12 @@
 !mmm   set libVersion = "libMidgard v1.3.0 (2022-03-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.27
+!mmm     do whisperback("Abbruch: MMM-Version 1.27.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm
 !rem   // Game-global constants for publication
 !rem
 !mmm   set m3mgdScriptCommands = { "defense": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}" }
@@ -1402,7 +1408,7 @@
 !mmm
 !mmm     if weaponUsable
 !mmm
-!mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, {"cAttackRoll": "1d20"})
+!mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, {"cAttackRoll": "1d20", "cDamageRoll": tokenID.(findattr(tokenID, "Angriff", "Waffe", weaponLabel, "WaffeSchaden"))})
 !mmm       
 !mmm       if itemCounter % 2 == 0
 !mmm         set chatMenu = chatMenu & "{\{[" & weaponLabel & "](" & payload & ")="
