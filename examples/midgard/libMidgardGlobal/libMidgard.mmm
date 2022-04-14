@@ -413,7 +413,7 @@
 !mmm
 !mmm   for statusModRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
 !mmm     
-!mmm     if statusModRule.value.rollModifiers.(action)
+!mmm     if statusModRule.value.rollModifiers.(action) and count(statusModRule.value.excluded where ...token_id eq tokenID) == 0
 !mmm
 !mmm       set activeStatusModifiers = activeStatusModifiers, statusModRule
 !mmm

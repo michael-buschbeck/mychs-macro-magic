@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0-pre (2022-03-17)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2022-03-18)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -182,12 +182,6 @@
 !mmm       set modifierLog = modifierLog & " {{" & activeMod.value.label & "=" & activeMod.value.rollModifiers.defense & "}} "
 !mmm       set modifierTooltip = modifierTooltip & " " & activeMod.value.label & "&nbsp;&nbsp;&nbsp;" & activeMod.value.rollModifiers.defense & " "
 !mmm     end for
-!rem     // 1.a. TODO: get rune blade-related markers registered in the injury status struct so they get processed automatically by the lines above this one
-!mmm     if cOwnID.(m3mgdEarthBondStatusMarker) eq "shown"
-!mmm       set autoModifiers = autoModifiers - 2
-!mmm       set modifierLog = modifierLog & " {{Erdfessel=-2}} "
-!mmm       set modifierTooltip = modifierTooltip & " Erdfessel&nbsp;&nbsp;&nbsp;-2 "
-!mmm     end if
 !rem     // 2. Dropdown prompt: Focused defense, surprise (taken from prior user input customize block)
 !mmm     if cSemiManualModifiers == 4
 !mmm       set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
