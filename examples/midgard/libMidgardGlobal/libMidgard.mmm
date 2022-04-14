@@ -4,12 +4,12 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-11)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-12)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.29
-!mmm     do whisperback("Abbruch: MMM-Version 1.29.0 oder höher erforderlich.")
+!mmm   if version < 1.28
+!mmm     do whisperback("Abbruch: MMM-Version 1.28.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -101,7 +101,8 @@
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
 !mmm   publish to game: _m3mgdWeaponButtonPayload, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
-!mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection, m3mgdGetCriticalEffect
+!mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
+!mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStoreCriticalEffect
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -1531,6 +1532,52 @@
 !mmm       return effectRow.value
 !mmm     end if
 !mmm   end for
+!mmm end function
+!rem
+!rem // m3mgdStoreCriticalEffect(tokenID, critEffect)
+!rem //
+!rem //   Stores a persistent critical effect for tokenID. Duration and effects are stored in the critEffect struct:
+!rem //   critEffect = { 
+!rem //     label: "string", 
+!rem //     desc: "string", 
+!rem //     effect: { 
+!rem //       expiry: { type: "[round|attack|defense]", count: integer or dice formula ("1d6+3") },   // plus one or more of the following:
+!rem //       [rollModifiers: { [attack|meleeAttack|rangedAttack|defense]: integer },]
+!rem //       [noAttack|noDefense|noFocusedDefense: true,]
+!rem //       [cappedAttribute: "(valid attribute for tokenID)",]
+!rem //       [marker: "(valid status marker for tokenID)"]
+!rem //     }
+!rem //   }
+!rem //   Returns the stored critEffect struct, updated by whatever dice thrown to resolve effect.expiry.count.
+!rem //
+!mmm function m3mgdStoreCriticalEffect(tokenID, critEffect)
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     do whisperback("m3mgdStoreCriticalEffect() called without a valid tokenID. Exiting function.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!rem   // For variable expiry counts, make the roll and update critEffect with the result
+!mmm   if critEffect.effect.expiry.count and (critEffect.effect.expiry.count + 0 ne critEffect.effect.expiry.count)
+!mmm     set critEffect = { critEffect, effect: { critEffect.effect, expiry: { critEffect.effect.expiry, count: roll(critEffect.effect.expiry.count) } } }
+!mmm   end if
+!mmm
+!rem   // New effects counting rounds need to be marked as new, so they are not immediately counted down at end of the current round
+!mmm   if critEffect.effect.expiry.type eq "round"
+!mmm     set critEffect = { critEffect, effect: { critEffect.effect, expiry: { critEffect.effect.expiry, new: true } } }
+!mmm   end if
+!mmm
+!mmm   do setattr(tokenID, "status_blue", tokenID.status_blue + 1)
+!mmm   if isunknown(tokenID.m3mgdActiveCriticalEffects) or tokenID.m3mgdActiveCriticalEffects eq ""
+!mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize(critEffect))
+!mmm   else 
+!mmm     set newList = deserialize(tokenID.m3mgdActiveCriticalEffects), critEffect
+!mmm     do setattr(tokenID, "m3mgdActiveCriticalEffects", serialize(newList))
+!mmm   end if
+!mmm
+!mmm   return deserialize(tokenID.m3mgdActiveCriticalEffects)
+!mmm
 !mmm end function
 !rem
 !rem // m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
