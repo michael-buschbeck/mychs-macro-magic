@@ -1797,8 +1797,6 @@
 !mmm     do _m3mgdExecuteCode(codeLines, tokenID, foeID)
 !mmm   end if
 !mmm
-!mmm   do m3mgdChatActiveEffects(tokenID)
-!mmm
 !mmm end function
 !rem
 !rem // m3mgdCriticalEffectPrompt(tokenID, tableName, rollResult, foeID)
