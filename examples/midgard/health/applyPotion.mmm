@@ -1,0 +1,26 @@
+!rem // Apply Potion 
+!mmm script
+!mmm
+!mmm   function payload(dice, type)
+!mmm     set payload = "!mmm customize&#13;"
+!mmm     set payload = payload & "&amp;{template} &#91;[" & dice & "d6]] &#123;{&#125;}&#13;"
+!mmm     set payload = payload & literal("!mmm set result=$[" & "[0]]+$[" & "[1]]") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set maxEnduranceGain=result") & "&#13;"
+!mmm     if type eq "healing"
+!mmm       set payload = payload & literal("!mmm set maxHealthGain=result") & "&#13;"
+!mmm     end if
+!mmm     set payload = payload & "!mmm end customize&#13;" & "&#x25;{MacroSheet|applyHealing}"
+!mmm     return payload
+!mmm   end function
+!mmm   
+!mmm   set chatOutput = "&" & "{template:default} {{name=Getränkekarte}} "
+!mmm   set chatOutput = chatOutput & "{{ [Ausdauer 1W6](" & payload(1, "energy") & ") = [**Heilung 1W6**](" & payload(1, "healing") & ") }}"
+!mmm   set chatOutput = chatOutput & "{{ [Ausdauer 2W6](" & payload(2, "energy") & ") = [**Heilung 2W6**](" & payload(2, "healing") & ") }}"
+!mmm
+!mmm   do whisperback(chatOutput)
+!mmm
+!mmm   if selected.PC
+!mmm     do chat("GM", chatOutput)
+!mmm   end if
+!mmm
+!mmm end script

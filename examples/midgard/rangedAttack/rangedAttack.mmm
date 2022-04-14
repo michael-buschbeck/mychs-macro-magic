@@ -1,17 +1,17 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.16.0-pre (2022-02-22)"
+!mmm   set scriptVersion = "2.0.0-pre (2022-04-14)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Ranged Attack Script " & scriptVersion)
+!mmm     do whisperback(scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.26
-!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
+!mmm   if version < 1.28
+!mmm     do whisperback("Abbruch: MMM-Version 1.28.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -22,7 +22,7 @@
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
 !rem   //  cWeaponType          The type of weapon for narration, the "sword" in "I'm swinging my sword Glamdring"
@@ -33,9 +33,16 @@
 !rem   //  cAmmoMagicLabel      Magic ammunition descriptor (plural, for attribute and output)
 !rem   //  cAmmoMagicSkillBonus Optional modifier ("+x") for the attack roll if magic ammunition is used
 !rem   //  cAmmoMagicDamage     Damage roll expression ("1d6+x") for optional additional magic damage
-!rem   //  cFoeNameDefault      Output label for targets without names
+!rem   //  cMagicEnduranceCost  Optional endurance cost (integer) for using magic ammunition
 !rem   //
-!mmm   set customizable cVerbose = true
+!mmm   set customizable cOwnID = sender.token_id
+!mmm   if selected and sender.token_id ne selected and m3mgdValidateOwnTokenID(selected.token_id)
+!mmm     set customizable cOwnID = selected.token_id
+!mmm   else if m3mgdValidateOwnTokenID(sender.token_id)
+!mmm     set customizable cOwnID = sender.token_id
+!mmm   else
+!mmm     set customizable cOwnID = default
+!mmm   end if
 !mmm   set customizable cWeaponLabel = default
 !mmm   set customizable cWeaponName = ""
 !mmm   set customizable cWeaponType = default
@@ -50,42 +57,50 @@
 !mmm   set customizable cAmmoMagicSkillBonus = 0
 !mmm   set customizable cAmmoMagicDamage = ""
 !mmm   set customizable cMagicEnduranceCost = 0
+!rem
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
+!rem   //  cFoeNameDefault      Output label for targets without names
+!rem   //
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cGMSilentMode = (cOwnID.PC != 1)
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
 !rem
-!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
-!rem   //  cHealthAttr          Override if the script operates on a token for a generic NPC
-!rem   //  cEnduranceAttr       Override if the script operates on a token for a generic NPC
-!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
-!rem   //  cAttackRoll          Override by player to see beautifully animated 3D dice
-!mmm   set customizable cOwnID = sender.token_id
-!mmm   set customizable cHealthAttr = "bar3"
-!mmm   set customizable cEnduranceAttr = "bar2"
-!mmm   set customizable cGMSilentMode = false
+!rem   //  cTargetID            Target token: override in customize block with Roll20 target picker
+!rem   //  cSemiManualModifiers Override in customize block with nested dropdowns or preset value
+!rem   //  cManualModifiers     Override in customize block with input box or preset value
+!rem   //  cAttackRoll          Override in customize block to see beautifully animated 3D dice
+!rem   //  
+!mmm   set customizable cTargetID = ""
+!mmm   set customizable cSemiManualModifiers = default
+!mmm   set customizable cManualModifiers = default
 !mmm   set customizable cAttackRoll = roll("1d20")
 !mmm
-!rem   // Refetch token_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = cOwnID.token_id
-!mmm   if isdenied(cOwnID)
-!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & getreason(cOwnID)) 
-!mmm     exit script
-!mmm   end if
+!rem
+!rem   // Initialize & collect data
 !rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
 !mmm   if cOwnID.token_name ne sender
 !mmm     set sender = cOwnID.token_name
 !mmm   end if
+!mmm   
+!rem   // Refetch token id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = m3mgdValidateOwnTokenID(cOwnID)
+!mmm   if not cOwnID
+!mmm     do whisperback(scriptVersion & ": Invalid own token ID configured. Check custom config script.")
+!mmm     exit script
+!mmm   end if
 !rem
-!rem   // Init
+!rem   // Abort attack if injury or critical effect status does not allow for it
+!mmm   if m3mgdIsUnfitToAttack(cOwnID)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Constants
 !rem
-!rem   // - Constants
-!rem
-!mmm   set emojiLock = "🔒"
 !mmm   set emojiMagic = "✨"
-!mmm   set emojiKnife = "🔪"
 !mmm
-!mmm   set whirlWindMagicMarker = "status_half_haze"
-!mmm
-!rem   // - Validate attack weapon and request manual entry if selection is missing
+!rem   // Validate attack weapon and request manual entry if selection is missing
 !mmm
 !mmm   if cWeaponLabel eq "" or not cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm     set weaponsList = m3mgdListRangedAttackWeapons(cOwnID)
@@ -103,7 +118,12 @@
 !mmm     end if
 !mmm   end if
 !mmm
-!rem   // - Pull missing weapon properties for chosen attack weapon (works only for standard weapons)
+!mmm   if isdefault(cSemiManualModifiers) or isdefault(cManualModifiers)
+!mmm     do m3mgdWeaponSelectorChatMenu(cOwnID, "ranged")
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Pull missing weapon properties for chosen attack weapon (works only for standard weapons)
 !mmm
 !mmm   set weaponProperties = m3mgdRangedWeaponProperties(cWeaponLabel)
 !mmm   if not isunknown(weaponProperties)
@@ -124,32 +144,28 @@
 !mmm     end if
 !mmm   end if
 !mmm
-!rem   // - Fetch character (attacker) data
+!rem   // Fetch attacker data
 !rem
 !mmm   set effAttack = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEW"))
 !mmm   set weaponDamageExpr = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeSchaden"))
-!mmm   set weaponDamageBonus = cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB"))
-!mmm   if weaponDamageBonus >= 0
-!mmm     set weaponDamageBonus = "+" & weaponDamageBonus
-!mmm   end if
+!mmm   set weaponDamageBonus = sign(cOwnID.(findattr(cOwnID, "Angriff", "Waffe", cWeaponLabel, "WaffeEfSchB")), "math")
 !mmm   set sharpshootingSkill = cOwnID.(findattr(cOwnID, "Fertigkeiten", "Fertigkeit", "Scharfschießen", "FW"))
 !mmm   if (not effAttack) or (not weaponDamageExpr)
 !rem     // Most probably, a weapon called cWeaponLabel does not exist, so the script cannot work
 !mmm     do whisperback("Abbruch: " & cOwnID.name & " hat keine Waffe namens " & cWeaponLabel & ".")
 !mmm     exit script
-!mmm   else if cMagicEnduranceCost > 0 and cOwnID.(cEnduranceAttr) < cMagicEnduranceCost
+!mmm   else if cMagicEnduranceCost > 0 and cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)) < cMagicEnduranceCost
 !mmm     do whisperback("Abbruch: " & cOwnID.name & " ist zu erschöpft für diesen magischen Angriff.")
 !mmm     exit script
 !mmm   end if
 !rem
-!rem   // - Fetch NPC (target) data
+!rem   // Fetch target data
 !rem
-!mmm   set foeID = "@{target|Angriffsziel|token_id}"
-!mmm   set foeName = foeID.name
+!mmm   set foeName = cTargetID.name
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
 !mmm   end if
-!mmm   set foeEndurance = foeID.bar2
+!mmm   set foeEndurance = cTargetID.bar2
 !mmm
 !rem   // - Fetch ammo properties
 !mmm
@@ -178,12 +194,12 @@
 !mmm   end if
 !mmm
 !rem   // Calculate direction, exit if direction to target is outside arc of view 
-!mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, foeID)
+!mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, cTargetID)
 !mmm   if (myViewAngle < -45) or (myViewAngle > 45)
 !mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
 !mmm     exit script
 !mmm   end if
-!mmm   set foeViewAngle = m3mgdGetViewAngle(foeID, cOwnID)
+!mmm   set foeViewAngle = m3mgdGetViewAngle(cTargetID, cOwnID)
 !mmm
 !rem   // Deduce ammo spent, if not magically unlimited
 !mmm   if ammoCount ne "∞"
@@ -201,7 +217,7 @@
 !mmm   end if
 !rem
 !rem   // Calculate distance, exit if distance exceeds range
-!mmm   set distance = m3mgdGetDistance(cOwnID, foeID)
+!mmm   set distance = m3mgdGetDistance(cOwnID, cTargetID)
 !mmm   set distanceUnits = distunits() 
 !mmm   if distance > cRangeUpperBoundFar
 !mmm     combine chat
@@ -221,25 +237,20 @@
 !rem   // Collect attack modifiers
 !mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
+!mmm   set semiAutoModifiers = 0
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !rem   // If we have a magic weapon with a skill bonus, add that
 !mmm   if cWeaponMagicSkillBonus
 !mmm     set autoModifiers = autoModifiers + cWeaponMagicSkillBonus
-!mmm     if cWeaponMagicSkillBonus > 0
-!mmm       set cWeaponMagicSkillBonus = "+" & abs(cWeaponMagicSkillBonus)
-!mmm     end if 
-!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "=EW" & cWeaponMagicSkillBonus & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " " & cWeaponLabel & "&nbsp;&nbsp;&nbsp;EW" & cWeaponMagicSkillBonus & "<br/> "
+!mmm     set modifierLog = modifierLog & " {{" & cWeaponLabel & "=EW" & sign(cWeaponMagicSkillBonus, "math") & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & cWeaponLabel & "&nbsp;&nbsp;&nbsp;EW" & sign(cWeaponMagicSkillBonus, "math") & "<br/> "
 !mmm   end if
 !rem   // If we have magic ammunition with a skill bonus, add that
 !mmm   if cAmmoMagicSkillBonus
 !mmm     set autoModifiers = autoModifiers + cAmmoMagicSkillBonus
-!mmm     if cAmmoMagicSkillBonus > 0
-!mmm       set cAmmoMagicSkillBonus = "+" & cAmmoMagicSkillBonus
-!mmm     end if 
-!mmm     set modifierLog = modifierLog & " {{" & cAmmoMagicLabel & "=" & cAmmoMagicSkillBonus & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " " & cAmmoMagicLabel & "&nbsp;&nbsp;&nbsp;" & cAmmoMagicSkillBonus & "<br/> "
+!mmm     set modifierLog = modifierLog & " {{" & cAmmoMagicLabel & "=" & sign(cAmmoMagicSkillBonus, "math") & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & cAmmoMagicLabel & "&nbsp;&nbsp;&nbsp;" & sign(cAmmoMagicSkillBonus, "math") & "<br/> "
 !mmm   end if
 !rem   // 1. Distance
 !mmm   if distance > cRangeUpperBoundMid
@@ -260,30 +271,26 @@
 !mmm     set modifierLog = modifierLog & " {{" & rangeBracket & "=+/-0}}"
 !mmm     set modifierTooltip = modifierTooltip & " " & rangeBracket & "&nbsp;&nbsp;&nbsp;+/-0 "
 !mmm   end if
-!rem   // 2. Attacker exhausted
-!mmm   if cOwnID.(cEnduranceAttr).max > 0 and cOwnID.(cEnduranceAttr) <= 0
-!mmm     set autoModifiers = autoModifiers - 4
-!mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & cOwnID.name & "].AP:0)=-4}} "
-!mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
-!mmm   end if
+!rem   // 2. Attacker's active status markers for exhaustion, injury etc.
+!mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "rangedAttack")
+!mmm     set autoModifiers = autoModifiers + activeMod.rollModifiers.rangedAttack
+!mmm     set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.rangedAttack, "display") & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.rangedAttack & " "
+!mmm   end for
 !rem   // 3. Target exhausted
-!mmm   if isdenied(foeEndurance) 
-!mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP&nbsp;" & emojiLock & "=**ggf. EW+2**}}"
-!mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
-!mmm   else if foeID.bar2.max > 0 and foeEndurance <= 0
+!mmm   if m3mgdIsExhausted(cTargetID)
 !mmm     set autoModifiers = autoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
 !rem   // 4. Finn's magic sword Whirlwind
-!mmm   if (foeName eq "Finn" or foeName eq "Finn MacRathgar") and foeID.(whirlWindMagicMarker) eq "shown"
+!mmm   if (foeName eq "Finn" or foeName eq "Finn MacRathgar") and cTargetID.(m3mgdWhirlWindActiveMarker) eq "shown"
 !mmm     set autoModifiers = autoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Wirbelwinds Wirbel-Winde=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Wirbelwinde&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
 !rem   // 5. Collect additional standard modifiers from user via dropdown menu
-!mmm   set semiAutoModCode = "?{Weitere Angriffsmodifikatoren| Normaler Angriff +/-0, ?{Normaler Angriff +/- ...&#124;  NORMAL HALT +/-0  &#44; 1 &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 2 &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 3 &#124;  Großes Ziel (2xMensch) +2 &#44; 5 &#124;  Riesiges Ziel (4xMensch) +4 &#44; 7 &#124;  Angriff ins Handgemenge (Zufallsopfer) +4 &#44; 17  &#125; | Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ...&#124;  SONST NIX +/-0  &#44; 11  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 22  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 33  &#124;  Großes Ziel (2xMensch) +2 &#44; 55  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 77  &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 143 &#124;  Angriff ins Handgemenge (Zufallsopfer) +4 &#44; 187  &#125; | Schnelles Ziel (30m+/Runde) -2, ?{Schnelles Ziel -2 +/- ...&#124;  SONST NIX +/-0  &#44; 13  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 26  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 39  &#124;  Großes Ziel (2xMensch) +2 &#44; 65  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 91  &#124;  Spontaner Angriff -4  &#44; 143 &#124;  Sorgfältig gezielt +4 &#44; 247  &#125; | Sorgfältig gezielt +4, ?{Sorgfältig gezielt +4 +/- ...&#124;  SONST NIX +/-0  &#44; 19  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 38  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 57  &#124;  Großes Ziel (2xMensch) +2 &#44; 95  &#124;  Riesiges Ziel (4xMensch) +4 &#44; 133 &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 247  &#125; | Scharfschießen +4/Spezial, ?{Scharfschießen +4/Spezial +/- ...&#124;  SONST NIX +/-0  &#44; 23  &#124;  Mini-Ziel (1/4xMensch) -4 &#44; 46  &#124;  Kleines Ziel/halb gedeckt (1/2xMensch) -2 &#44; 69  &#124;  Großes Ziel (2xMensch) +2 &#44; 115 &#124;  Riesiges Ziel (4xMensch) +4 &#44; 161 &#124;  Schnelles Ziel (30m+/Runde) -2  &#44; 299  &#125;}"
-!mmm   if semiAutoModCode % 23 == 0
+!mmm   if cSemiManualModifiers % 23 == 0
 !rem     // Check if PC has sharpshooting skill
 !mmm     if not sharpshootingSkill
 !mmm       do whisperback("Abbruch: " & cOwnID.name & " hat die Fertigkeit Scharfschießen nicht.")
@@ -293,57 +300,53 @@
 !mmm     set modifierLog = modifierLog & " {{Scharfschießen=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Scharfschießen&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
-!mmm   if semiAutoModCode % 19 == 0
+!mmm   if cSemiManualModifiers % 19 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Sorgfältig gezielt=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Sorgfältig&nbsp;gezielt&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
-!mmm   if semiAutoModCode % 17 == 0
+!mmm   if cSemiManualModifiers % 17 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Angriff ins Handgemenge=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;ins&nbsp;Handgemenge&nbsp;&nbsp;&nbsp;+4 "
 !rem     // TODO: Remind user to throw dice to identify actual target!
 !mmm   end if
-!mmm   if semiAutoModCode % 13 == 0
+!mmm   if cSemiManualModifiers % 13 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 2
 !mmm     set modifierLog = modifierLog & " {{Schnelles Ziel=-2}} "
 !mmm     set modifierTooltip = modifierTooltip & " Schnelles&nbsp;Ziel&nbsp;&nbsp;&nbsp;-2 "
 !mmm   end if
-!mmm   if semiAutoModCode % 11 == 0
+!mmm   if cSemiManualModifiers % 11 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Spontaner Angriff=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Spontaner&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
-!mmm   if semiAutoModCode % 7 == 0
+!mmm   if cSemiManualModifiers % 7 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Riesiges Ziel=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Riesiges&nbsp;Ziel&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
-!mmm   if semiAutoModCode % 5 == 0
+!mmm   if cSemiManualModifiers % 5 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 2
 !mmm     set modifierLog = modifierLog & " {{Großes Ziel=+2}} "
 !mmm     set modifierTooltip = modifierTooltip & " Großes&nbsp;Ziel&nbsp;&nbsp;&nbsp;+2 "
 !mmm   end if
-!mmm   if semiAutoModCode % 3 == 0
+!mmm   if cSemiManualModifiers % 3 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 2
 !mmm     set modifierLog = modifierLog & " {{Kleines/halb verdecktes Ziel=-2}} "
 !mmm     set modifierTooltip = modifierTooltip & " Kleines/halb&nbsp;verdecktes&nbsp;Ziel&nbsp;&nbsp;&nbsp;-2 "
 !mmm   end if
-!mmm   if semiAutoModCode % 2 == 0
+!mmm   if cSemiManualModifiers % 2 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers -4
 !mmm     set modifierLog = modifierLog & " {{Sehr kleines Ziel=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Sehr&nbsp;kleines&nbsp;Ziel&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
-!rem   // Ask for individual modifiers and sum up the various modifiers
-!mmm   set manualModifiers = "?{Weitere spezielle Angriffsmodifikatoren|0}"
-!mmm   if manualModifiers != 0
-!mmm     if manualModifiers > 0
-!mmm       set manualModifiers = "+" & (manualModifiers * 1)
-!mmm     end if
-!mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & manualModifiers & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & manualModifiers & " "
+!rem   // Process manual modifiers and sum up the various modifiers
+!mmm   if cManualModifiers != 0
+!mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & sign(cManualModifiers, "display") & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & sign(cManualModifiers, "display") & " "
 !mmm   end if
-!mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + manualModifiers
+!mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + cManualModifiers
 !rem
 !rem   // Check for attack from behind
 !mmm   if (foeViewAngle < -135) or (foeViewAngle > 135)
@@ -354,70 +357,56 @@
 !mmm
 !rem   // For magic weapons: Process optional endurance cost
 !mmm   if cMagicEnduranceCost > 0
-!mmm     set effEnduranceLoss = cOwnID.(cEnduranceAttr) - m3mgdModifyEndurance(-1 * cMagicEnduranceCost, cOwnID, cEnduranceAttr)
+!mmm     set effEnduranceLoss = cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)) - m3mgdModifyEndurance(-1 * cMagicEnduranceCost, cOwnID, m3mgdGetEnduranceAttribute(cOwnID))
 !mmm     set modifierLog = modifierLog & "{{ " & cWeaponLabel & "=-" & cMagicEnduranceCost & " AP }}"
 !mmm   end if
 !rem
 !rem   // Run & format rolls
 !rem
-!mmm   set attackResult = cAttackRoll + effAttack + modifiers
-!mmm   if modifiers == 0
-!mmm     set modifiers = "+/-0"
-!mmm   else if modifiers > 0
-!mmm     set modifiers = "+" & modifiers
+!mmm   if cSemiManualModifiers % 23 == 0
+!rem     // Sharpshooting: if one of the two rolls is a critical successes, the other gets +4
+!mmm     set customizable cSharpExtraRoll = roll("1d20")
+!mmm     if iscritical(cSharpExtraRoll) and not iscritical(cAttackRoll) and not isfumble(cAttackRoll)
+!mmm       set modifiers = modifiers + 4
+!mmm       set modifierLog = modifierLog & " {{Kritischer Erfolg Scharfschießen=+4}} "
+!mmm     else if iscritical(cAttackRoll) and not iscritical(cSharpExtraRoll) and not isfumble(cSharpExtraRoll)
+!mmm       set sharpExtraResult = rollResult(cSharpExtraRoll, effAttack, { "Modifikatoren": modifiers - 4, "FW:Scharfschießen": sharpshootingSkill, "Krit.Erfolg": 4 } )
+!mmm     else
+!mmm       set sharpExtraResult = rollResult(cSharpExtraRoll, effAttack, { "Modifikatoren": modifiers - 4, "FW:Scharfschießen": sharpshootingSkill } )
+!mmm     end if
 !mmm   end if
+!mmm   set attackResult = rollResult(cAttackRoll, effAttack, modifiers)
+!mmm   set modifiers = highlight(sign(modifiers, "display"), "info", modifierTooltip)
 !mmm   if modifierLog eq ""
 !mmm     set modifierLog = "{{Boni/Mali=keine}}"
 !mmm   end if
-!mmm   set modifiers = highlight(modifiers, "info", modifierTooltip)
-!mmm   set attackResultLog = attackResult & " = (1d20 = " & cAttackRoll & ") + (EW = " & effAttack & ") " & modifiers
-!mmm   if iscritical(cAttackRoll)
-!mmm     set attackResult = highlight(attackResult, "good", attackResultLog)
-!mmm     set criticalAttack = true
-!mmm   else if isfumble(cAttackRoll)
-!mmm     set attackResult = highlight(attackResult, "bad", attackResultLog)
-!mmm     set criticalAttack = false
-!mmm   else 
-!mmm     set attackResult = highlight(attackResult, "normal", attackResultLog)
-!mmm     set criticalAttack = false
-!mmm   end if
+!mmm   set criticalAttack = iscritical(cAttackRoll)
 !mmm 
 !mmm   if attackResult >= 20
-!rem     // Damage roll (and make sure it doesn't get negative)
-!mmm     set damageRoll = roll(weaponDamageExpr)
-!mmm     set damageResult = damageRoll + weaponDamageBonus
-!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & damageRoll & ") " & weaponDamageBonus
+!rem     // Damage roll: override in customize block
+!mmm     set customizable cDamageRoll = roll(weaponDamageExpr)
+!mmm     set damageResult = cDamageRoll + weaponDamageBonus
+!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & cDamageRoll & ") " & weaponDamageBonus
+!rem     // damageResult must not become negative, even for puny weapons causing 1d6-4 damage
 !mmm     if damageResult < 0
 !mmm       set damageResult = highlight(0, "bad")
 !mmm     end if
 !mmm     set damageResultBasic = highlight(damageResult, damageResult, damageResultLog)
 !rem     // Special case: sharpshooting
 !mmm     set sharpExtraDamage = 0
-!mmm     if semiAutoModCode % 23 == 0
-!mmm       set sharpExtraRoll = roll("1d20")
-!mmm       set sharpExtraResult = sharpExtraRoll + effAttack + modifiers - 4 + sharpshootingSkill
-!mmm       set sharpExtraTooltip = sharpExtraResult & " = (1d20 = " & sharpExtraRoll & ") + (EW = " & effAttack & ") + " & modifiers - 4 & " + (FW:Scharfschießen = " & sharpshootingSkill & ")"
-!mmm       if iscritical(sharpExtraRoll)
-!mmm         set sharpExtraResult = highlight(sharpExtraResult, "good", sharpExtraTooltip)
-!mmm       else if isfumble(sharpExtraRoll)
-!mmm         set sharpExtraResult = highlight(sharpExtraResult, "bad", sharpExtraTooltip)
-!mmm       else
-!mmm         set sharpExtraResult = highlight(sharpExtraResult, "normal", sharpExtraTooltip)
-!mmm       end if
-!mmm       if sharpExtraResult >= 20
-!mmm         set sharpExtraDamage = round(sharpExtraResult * .1)
-!mmm         set damageResult = damageResult + sharpExtraDamage
-!mmm         set damageResultLog = damageResultLog & " + (Scharfschuss-Bonus = " & sharpExtraDamage & ")"
-!mmm       end if
+!mmm     if cSemiManualModifiers % 23 == 0 and sharpExtraResult >= 20
+!mmm       set sharpExtraDamage = round(sharpExtraResult * .1)
+!mmm       set damageResult = damageResult + sharpExtraDamage
+!mmm       set damageResultLog = damageResultLog & " + (Scharfschuss-Bonus = " & sharpExtraDamage & ")"
 !mmm     end if
 !rem     // Special case: magic ammunition with extra damage
 !mmm     if cAmmoMagic and cAmmoMagicDamage ne ""
-!mmm       set magicExtraDamage = roll(cAmmoMagicDamage)
-!mmm       if magicExtraDamage < 0
-!mmm         set magicExtraDamage = highlight(0, "bad")
+!mmm       set cMagicExtraDamageRoll = roll(cAmmoMagicDamage)
+!mmm       if cMagicExtraDamageRoll < 0
+!mmm         set cMagicExtraDamageRoll = highlight(0, "bad")
 !mmm       end if
-!mmm       set damageResult = damageResult + magicExtraDamage
-!mmm       set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & magicExtraDamage & ")"
+!mmm       set damageResult = damageResult + cMagicExtraDamageRoll
+!mmm       set damageResultLog = damageResultLog & " + (" & cAmmoMagicDamage & " = " & cMagicExtraDamageRoll & emojiMagic & ")"
 !mmm     end if 
 !rem     // Complete damage variables
 !mmm     set damageResultLog = damageResult & " = " & damageResultLog
@@ -438,7 +427,7 @@
 !mmm
 !rem   // Register practice point, if applicable
 !mmm   if iscritical(cAttackRoll) and foeEndurance > 0
-!mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel, foeID)
+!mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel, cTargetID)
 !mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
 !mmm     end if
 !mmm   else if iscritical(cAttackRoll)
@@ -496,24 +485,45 @@
 !mmm     if cGMSilentMode
 !mmm       chat: /w GM 
 !mmm     end if
-!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff mit ${cWeaponType[0]} * ${cWeaponName} *}} 
-!mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(foeID)}}}
-!mmm     if iscritical(cAttackRoll)
-!mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;(**Wurf** ${cAttackRoll})}}
-!mmm     else if attackResult >= 20
-!mmm       chat:    {{Erfolg=${attackResult} (**Wurf** ${cAttackRoll})}}
-!mmm     else 
-!mmm       chat:    {{Fehlschlag=${attackResult} (**Wurf** ${cAttackRoll})}}
+!mmm     if cSemiManualModifiers % 23 == 0
+!mmm       set sharpShootingInsert = " (🎯 Scharfschießen) "
 !mmm     end if
-!mmm     chat:      {{Boni/Mali=**${modifiers}**}}
+!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff ${sharpShootingInsert} mit ${cWeaponType[0]} * ${cWeaponName} *
+!mmm     do chat(m3mgdRerunButton(cOwnID, "ranged", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cSharpExtraRoll": cSharpExtraRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll}))
+!mmm     chat:      }} 
+!mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(cTargetID)}}}
+!mmm     if iscritical(cAttackRoll) and cSemiManualModifiers % 23 == 0
+!mmm       chat:    {{Kritischer Erfolg=${attackResult}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${sharpExtraResult}}}
+!mmm     else if attackResult >= 20 and cSemiManualModifiers % 23 == 0
+!mmm       chat:    {{Erfolg=${attackResult}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${sharpExtraResult}}}
+!mmm     else if iscritical(cAttackRoll) and cSemiManualModifiers % 23 != 0
+!mmm       chat:    {{Kritischer Erfolg=${attackResult} }}
+!mmm     else if attackResult >= 20
+!mmm       chat:    {{Erfolg=${attackResult}}}
+!mmm     else if isfumble(cAttackRoll)
+!mmm       chat:    {{Kritischer Fehlschlag=${attackResult} [🎲](${m3mgdCriticalEffectRollPayload(cOwnID, "rangedAttackFailure", cTargetID)}${cssTableCellButton}) }}
+!mmm     else 
+!mmm       chat:    {{Fehlschlag=${attackResult}}}
+!mmm     end if
+!mmm     if cSemiManualModifiers % 23 == 0 and attackResult >= 20
+!mmm       chat:      {{Boni/Mali=${modifiers}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${highlight(sign(modifiers-4,"display"),"info")}}}
+!mmm     else
+!mmm       chat:      {{Boni/Mali=${modifiers}}}
+!mmm     end if
 !mmm     chat:      {{Entfernung=${distance} ${distanceUnits} (${round(distance/(distsnap()*distscale()))} Planquadrate, ${rangeBracket})}}
 !mmm     if attackFromBehind
 !mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** (${foeViewAngle}°)}}
 !mmm     end if 
-!mmm     if attackResult >= 20 and semiAutoModCode % 23 == 0
-!mmm       chat:    {{Basisschaden=${damageResultBasic}}}
-!mmm       chat:    {{Scharfschießen=${sharpExtraResult}}}
-!mmm       chat:    {{Vollschaden=${damageResult}}}
+!mmm     if attackResult >= 20 and cSemiManualModifiers % 23 == 0 and not isfumble(sharpExtraResult)
+!mmm       if (attackResult >= 40 and sharpExtraResult >= 40)
+!mmm         chat:  {{Schaden=🎯 HAMMMER!! <1cm genau: 💀&nbsp;oder&nbsp;${damageResult}}}
+!mmm       else if (attackResult >= 30 and sharpExtraResult >= 30) or (iscritical(cAttackRoll) and iscritical(cSharpExtraRoll))
+!mmm         chat:  {{Schaden=🎯 AUGE! 💀&nbsp;oder&nbsp;${damageResult}}}
+!mmm       else if attackResult >= 25 and sharpExtraResult >= 25
+!mmm         chat:  {{Schaden=🎯 Zentrum: 💀&nbsp;oder&nbsp;${damageResult}}}
+!mmm       else 
+!mmm         chat:  {{Schaden=${damageResult} 🎯&nbsp;${(25-min(attackResult, sharpExtraResult))*5}cm&nbsp;daneben}}
+!mmm       end if
 !mmm     else if attackResult >= 20
 !mmm       chat:    {{Schaden=${damageResult}}}
 !mmm     end if
@@ -522,18 +532,23 @@
 !mmm     end if
 !mmm   end combine
 !mmm
-!mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
-!mmm   if not cGMSilentMode
+!rem   // If present, reduce counters for attack-specific modifier effects
+!mmm   set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(cOwnID, "attack")
+!mmm   if endOfActionSummary
+!mmm     set modifierLog = modifierLog & " {{ Zähler=" & endOfActionSummary & " }}"
+!mmm   end if
+!mmm
+!mmm   if modifierLog ne "{{Boni/Mali=keine}}"
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm
 !rem   // Injury & exhaustion special effects
 !mmm   if effEnduranceLoss > 0
-!mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(cEnduranceAttr).max)
+!mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
 !mmm   end if
 !mmm   
 !mmm   if attackResult >= 20
-!mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense", cWeaponType)
+!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType, "ranged")
 !mmm   end if
 !mmm
 !mmm end script

@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgardRuneBlades()
 !mmm   
-!mmm   set libVersion = "libMidgardRuneBlades v1.0.0 (2022-02-22)"
+!mmm   set libVersion = "libMidgardRuneBlades v1.1.0 (2022-03-18)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Game-global constants for publication
@@ -13,6 +13,13 @@
 !mmm   set m3mgdEarthBladeWeaponLabel = "Steinherz (Streitaxt)"
 !mmm   set m3mgdEarthBondStatusMarker = "status_cobweb"
 !mmm   set m3mgdEarthBondPCAttrTargetID = "m3mgd_earthBond_targetID"
+!mmm   if not m3mgdInjuryStatus
+!mmm     do whisperback(libVersion & ": Expected game-global variable m3mgdInjuryStatus not found. Aborting.")
+!mmm     exit script
+!mmm   end if
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "cobweb": { "rollModifiers": { "defense": -2 }, "excluded": ("Ufix Steinbrot", "Yerrick MacRothgar"), "label": "Erdfessel", "icon": "", "desc": "Abwehr -2" } }
+!mmm   publish to game: m3mgdInjuryStatus
+!mmm
 !mmm   set m3mgdWhirlWindActiveMarker = "status_half_haze"
 !mmm
 !mmm   publish to game: m3mgdFireMoleActiveMarker, m3mgdEarthBladeWeaponLabel, m3mgdEarthBondPCAttrTargetID, m3mgdEarthBondStatusMarker, m3mgdWhirlWindActiveMarker
@@ -42,7 +49,7 @@
 !mmm   end if
 !mmm   set sender = tokenID.character_name
 !mmm
-!mmm   if tokenID.(script.cEnduranceAttr) <= 0
+!mmm   if tokenID.(script.cEnduranceAttr) <= 0 and command ne "cancel-first"
 !mmm
 !mmm     return false
 !mmm     

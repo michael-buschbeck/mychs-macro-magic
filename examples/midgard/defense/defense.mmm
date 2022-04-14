@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-22)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2022-04-12)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -10,8 +10,8 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.26
-!mmm     do whisperback("Abbruch: MMM-Version 1.26.0 oder höher erforderlich.")
+!mmm   if version < 1.28
+!mmm     do whisperback("Abbruch: MMM-Version 1.28.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -68,7 +68,7 @@
 !mmm     set payload = "!mmm customize&#13;"
 !mmm     set payload = payload & literal("!mmm set cOwnID = \"@" & "{target|Wer verteidigt sich?|token_id}\"") & "&#13;"
 !mmm     set payload = payload & "!mmm end customize&#13;"
-!mmm     set payload = payload & "&#x25;{MacroSheet|defenseMain}"
+!mmm     set payload = payload & "&#x25;{MacroSheet|defense}"
 !mmm     do whisperback("<" & "br>Wer soll sich denn verteidigen?<" & "br>[**Token auswählen**](" & payload & ")")
 !mmm     exit script
 !mmm   else if not m3mgdValidateAttackData()
@@ -89,21 +89,9 @@
 !mmm   if m3mgdExchange.(m3mgdAttrAttackWeaponType).max ne ""
 !mmm     set attackWeaponSpecialEffect = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
 !mmm   end if
-!rem   // Check for armor piercing projectiles
-!mmm   set armorPiercing = ((m3mgdArmorPiercingWeaponTypes where ... eq attackWeaponType) eq attackWeaponType)
-!mmm
-!rem   // Check if an active defense is even possible
-!mmm   set cNoDefense = (cNoDefense eq "true") or m3mgdIsDefenseless(cOwnID)
 !mmm
 !rem   // Initialize defender 
 !mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
-!mmm   set armorLabel = cOwnID.(findattr(cOwnID, "Ruestung", "RsGetragen", true, "Rüstung"))
-!mmm   set armorProtection = cOwnID.(findattr(cOwnID, "Ruestung", "RsGetragen", true, "RüsLP"))
-!mmm   if isunknown(armorLabel) or isunknown(armorProtection)
-!rem     // For NPC tokens where the search for "RsGetragen==true" doesn't work, just take first armor in sheet
-!mmm     set armorLabel = cOwnID.(findattr(cOwnID, "Ruestung", "Rüstung"))
-!mmm     set armorProtection = cOwnID.(findattr(cOwnID, "Ruestung", "RüsLP"))
-!mmm   end if
 !mmm   set endurance = cOwnID.(cEnduranceAttr)
 !mmm   set health = cOwnID.(cHealthAttr)
 !mmm   set maxHealth = cOwnID.(cHealthAttr).max
@@ -112,9 +100,22 @@
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !mmm
+!rem   // Check if an active defense is even possible
+!mmm   set defenseless = m3mgdIsDefenseless(cOwnID)
+!mmm   set cNoDefense = (cNoDefense eq "true") or defenseless
+!mmm
 !mmm   if cNoDefense
 !mmm
-!mmm     set modifierLog = modifierLog & " {{Wehrlos=keine Abwehr möglich}} "
+!mmm     set modifierLog = modifierLog & " {{Wehrlos="
+!mmm     set reasonCount = 0
+!mmm     for reason in defenseless
+!mmm       set reasonCount = reasonCount + 1
+!mmm       set modifierLog = modifierLog & reason.icon & reason.label & ": " & reason.desc 
+!mmm       if reasonCount < count(defenseless)
+!mmm         set modifierLog = modifierLog & " / "
+!mmm       end if
+!mmm     end for
+!mmm     set modifierLog = modifierLog & "}} "
 !mmm
 !mmm   else
 !mmm
@@ -129,7 +130,7 @@
 !mmm       else if count(defenseWeaponList) == 1
 !mmm         set cWeaponLabel = cOwnID.(defenseWeaponList)
 !mmm       else 
-!mmm         do m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)
+!mmm         chat: /w "${cOwnID.character_name}" ${m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)}
 !mmm         exit script
 !mmm       end if
 !mmm     end if
@@ -166,21 +167,23 @@
 !rem     // Collect defense modifiers
 !mmm     set modifiers = 0
 !mmm     set autoModifiers = 0
-!rem     // 1. Defender exhausted or magically encumbered (runeBladeEarthBond)
-!mmm     if cOwnID.(cEnduranceAttr).max > 0 and endurance <= 0
-!mmm       set autoModifiers = autoModifiers - 4
-!mmm       set modifierLog = modifierLog & " {{Erschöpft=-4}} "
-!mmm       set modifierTooltip = modifierTooltip & " Erschöpft&nbsp;&nbsp;&nbsp;-4 "
-!mmm     end if
-!mmm     if cOwnID.(m3mgdEarthBondStatusMarker) eq "shown"
-!mmm       set autoModifiers = autoModifiers - 2
-!mmm       set modifierLog = modifierLog & " {{Erdfessel=-2}} "
-!mmm       set modifierTooltip = modifierTooltip & " Erdfessel&nbsp;&nbsp;&nbsp;-2 "
-!mmm     end if
+!rem     // 1. Active status markers for exhaustion, injury etc.
+!mmm     for activeMod in m3mgdActiveStatusModifiers(cOwnID, "defense")
+!mmm       set autoModifiers = autoModifiers + activeMod.rollModifiers.defense
+!mmm       set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.defense, "display") & "}} "
+!mmm       set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.defense & " "
+!mmm     end for
 !rem     // 2. Dropdown prompt: Focused defense, surprise (taken from prior user input customize block)
-!mmm     if cSemiManualModifiers == 4
-!mmm       set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
-!mmm       set modifierTooltip = modifierTooltip & " Konzentrierte&nbsp;Abwehr&nbsp;&nbsp;&nbsp;+4 "
+!mmm     if cSemiManualModifiers == 4 
+!mmm       set noFocusedDefenseReasons = m3mgdActiveStatusModifiers(cOwnID, "noFocusedDefense")
+!mmm       if not noFocusedDefenseReasons
+!mmm         set autoModifiers = autoModifiers + 4
+!mmm         set modifierLog = modifierLog & " {{Konzentrierte Abwehr=+4}} "
+!mmm         set modifierTooltip = modifierTooltip & " Konzentrierte&nbsp;Abwehr&nbsp;&nbsp;&nbsp;+4 "
+!mmm       else
+!mmm         set modifierLog = modifierLog & " {{Konzentrierte Abwehr=**Derzeit nicht möglich:** " & (noFocusedDefenseReasons... where (...key eq "label" or ...key eq "desc")) & "}} "
+!mmm         set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.defense & " "
+!mmm       end if
 !mmm     else if cSemiManualModifiers == -2
 !mmm       set modifierLog = modifierLog & " {{Überstürzter eigener Angriff=-2}} "
 !mmm       set modifierTooltip = modifierTooltip & " Überstürzter&nbsp;eigener&nbsp;Angriff&nbsp;&nbsp;&nbsp;-2 "
@@ -240,14 +243,9 @@
 !mmm     end if
 !mmm
 !rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health)
-!mmm     if not cOwnID.(cHealthAttr).max == 0 and armorProtection > 0
-!mmm       if armorProtection > 3 and armorPiercing == true
-!mmm         set armorProtection = 3
-!mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & ", reduziert wg. Geschosstyp (" & m3mgdExchange.(m3mgdAttrAttackWeaponType) & ")}} "
-!mmm       else
-!mmm         set modifierLog = modifierLog & " {{" & armorLabel & "=LP-Verlust -" & armorProtection & "}} "
-!mmm       end if
-!mmm       set effHealthLoss = attackDamage - armorProtection
+!mmm     set effArmorProtection = m3mgdEffectiveArmorProtection(cOwnID, attackWeaponType)
+!mmm     if not cOwnID.(cHealthAttr).max == 0 and effArmorProtection
+!mmm       set effHealthLoss = attackDamage - effArmorProtection
 !mmm       if effHealthLoss < 0
 !mmm         set effHealthLoss = 0
 !mmm       end if
@@ -318,7 +316,7 @@
 !mmm         else if effHealthLoss > 0
 !mmm           chat     [DefenseFailureMinorHit]:   Au. Pieks. Na warte!
 !mmm         else 
-!mmm           chat     [DefenseFailureNoDamage]:   Doch kein Problem für meine $[armorLabel]{armorLabel}, außer Schweiß verliere ich nichts.
+!mmm           chat     [DefenseFailureNoDamage]:   Doch kein Problem für meine Rüstung, außer Schweiß verliere ich nichts.
 !mmm         end if
 !mmm         if newHealth < 0 and timeToDie < 0
 !mmm           chat     [EffectsImmediateDeath]:    War schön mit euch allen. Bis dann, und danke für den Fisch! $[ownName]{cOwnID.name}, out.${"<"}br>[x](https://media.giphy.com/media/96quMvXlWpwRO/giphy.gif)
@@ -332,8 +330,14 @@
 !rem   // Output data table using data table execution code from library
 !mmm   do m3mgdDefenseDataTable()
 !mmm
+!rem   // If present, reduce counters for defense-specific modifier effects
+!mmm   set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(cOwnID, "defense")
+!mmm   if endOfActionSummary
+!mmm     set modifierLog = modifierLog & " {{ Zähler=" & endOfActionSummary & " }}"
+!mmm   end if
+!mmm
 !rem   // Output modifier log and PP reminder
-!mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
+!mmm   chat: /w GM ${"&"}{template:default} ${modifierLog} 
 !mmm   if not cGMSilentMode
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if

@@ -1,17 +1,17 @@
 !rem // libBasics: Basic MMM utility functions
 !rem // 
-!rem // _libMidgardBasics()
+!rem // _libBasics()
 !rem // 
 !rem //   Initializer and publisher function. Call once from autorun.
 !rem //
-!mmm function _libMidgardBasics()
+!mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.0.0 (2022-02-25)"
+!mmm   set libVersion = "libMidgardBasics v1.2.0 (2022-04-09)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: count, isChar, sign, stringify, rollResult
+!mmm   publish to game: count, isChar, sign, stringify, sum, rollResult
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -84,21 +84,55 @@
 !mmm   return string
 !mmm end function
 !rem
-!rem // rollResult(roll, skill, [modifiers])
+!rem // sum(list)
 !rem //
-!rem //   Calculates and formats the result of a 1d20 roll on a skill with modifiers for display.
+!rem //   Calculates the sum of items in list, which must be defined as a list before (set foo = 1, 2, 3). 
+!rem //   If the arguments are not a list, returns the value of the first argument.
 !rem //
-!mmm function rollResult(roll, skill, modifiers)
-!mmm   set result = roll + skill + modifiers
-!mmm   set tooltip = " = 1d20:" & roll & " + FW/WW:" & skill
-!mmm   if not isdefault(modifiers)
-!mmm     set tooltip = tooltip & " " & sign(modifiers, "display")
+!mmm function sum(list)
+!mmm   set sumVal = 0
+!mmm   if count(list) > 1
+!mmm     for i in list
+!mmm       set sumVal = sumVal + i
+!mmm     end for
+!mmm   else
+!mmm     set sumVal = list
 !mmm   end if
-!mmm   if iscritical(roll)
+!mmm   return sumVal
+!mmm end function
+!rem
+!rem // rollResult(roll, baseSkill, [modifiers])
+!rem //
+!rem //   Calculates and formats the result of a 1d20 roll on baseSkill with modifiers for display.
+!rem //   baseSkill can be either a number (12) or a key:value pair of skill label and skill value.
+!rem //   modifiers can be an optionalley signed number (+4) or a struct of "reason":modifier pairs.
+!rem //
+!mmm function rollResult(rollValue, baseSkill, modifiers)
+!mmm   
+!mmm   if baseSkill + 0 eq baseSkill
+!mmm     set baseSkill = {"eFW/WW": baseSkill}
+!mmm   end if
+!mmm   
+!mmm   if (not isdefault(modifiers)) and modifiers + 0 eq modifiers
+!mmm     set modifiers = {"": modifiers}
+!mmm   end if
+!mmm
+!mmm   set result = rollValue + (baseSkill...).value
+!mmm   set tooltip = " = 1d20:" & rollValue & " + " & (baseSkill...).key & ":" & (baseSkill...).value
+!mmm   for mod in modifiers...
+!mmm     set result = result + mod.value
+!mmm     set tooltip = tooltip & " " & sign(mod.value, "display")
+!mmm     if mod.key ne ""
+!mmm       set tooltip = tooltip & "(" & mod.key & ")" 
+!mmm     end if
+!mmm   end for
+!mmm
+!mmm   if iscritical(rollValue)
 !mmm     return highlight(result, "good", tooltip)
-!mmm   else if isfumble(roll)
+!mmm   else if isfumble(rollValue)
 !mmm     return highlight(result, "bad", tooltip)
 !mmm   else
 !mmm     return highlight(result, "normal", tooltip)
 !mmm   end if
+!mmm
 !mmm end function

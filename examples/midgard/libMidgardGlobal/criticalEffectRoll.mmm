@@ -1,0 +1,72 @@
+!mmm script
+!mmm
+!rem // dev code for handling combat critical effects
+!mmm
+!mmm function m3mgdChatActiveEffects(tokenID)
+!mmm
+!mmm       for statusRule in m3mgdGetActivePersistentEffects(tokenID)
+!mmm
+!mmm         set activeCounter = activeCounter + 1
+!mmm         chat: {{ #${activeCounter}, noch ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}
+!mmm         for mod in statusRule.rollModifiers...
+!mmm           chat: ${sign(mod.value, "display")} ${mod.key}; 
+!mmm         end for
+!mmm         if statusRule.effect.noAttack
+!mmm           chat: kein Angriff;
+!mmm         end if
+!mmm         if statusRule.effect.noDefense
+!mmm           chat: keine Abwehr;
+!mmm         end if
+!mmm         if statusRule.effect.noFocusedDefense
+!mmm           chat: keine konzentrierte Abwehr;
+!mmm         end if
+!mmm         if statusRule.effect.marker
+!mmm           chat: ${statusRule.effect.marker};
+!mmm         end if
+!mmm         if statusRule.effect.cappedAttribute
+!mmm           chat: **${statusRule.effect.cappedAttribute}** reduziert
+!mmm         end if
+!mmm         chat: }}
+!mmm         
+!mmm       end for
+!mmm       
+!mmm end function
+!mmm publish to game: m3mgdChatActiveEffects
+!mmm
+!mmm
+!rem // moveToken() moves a token by fwd/rgtOffset from its own perspective
+!mmm function moveToken(tokenID, fwdOffset, rgtOffset)
+!mmm   set altDirection = roll("1d3")
+!mmm   if altDirection == 1
+!mmm     set altDirection = "links"
+!mmm   else if altDirection == 2
+!mmm     set altDirection = "rechts"
+!mmm   else 
+!mmm     set altDirection = "vorne"
+!mmm   end if
+!mmm
+!mmm   chat: {{ (fehlt) = **Bitte Token verschieben:** eine Zelle zurück wenn möglich, sonst nach ${altDirection} }}
+!mmm end function
+!mmm publish to sender: moveToken
+!mmm
+!mmm function spawnWeaponToken(ownerID, offsetRight, offsetForward)
+!rem   // ISSUE: This call requires the owner token to be selected by the player executing the code. See mych#204.
+!rem   // TODO: redefine args as seen from ownerID's direction of view and recalculate offsets: 0/1 should be the field in front of ownerID, 0/-1 behind, 1/0 to my right, -1/0 to my left
+!mmm   chat: !Spawn --name|tokenMuleWeapons --side|rand --offset|${offsetRight},${offsetForward} --order|top --controlledby|all --tokenProps|name:${ownerID.name}'s Weapon,showname:1
+!mmm end function
+!mmm publish to sender: spawnWeaponToken
+!mmm
+!mmm
+!rem // MAIN
+!mmm
+!mmm   for tableName in "defenseFailure"
+!rem // !mmm     set effectRoll = highlight(roll("1d100"), "normal", "Wurf 1W100")
+!mmm     set effectRoll = highlight(57, "normal", "Wurf 1W100")
+!rem //!mmm     for effectDataRow in m3mgdCriticalEffectsTable.(tableName)... order (...left.key < ...right.key)
+!rem //!mmm       set effectRoll = highlight(effectDataRow.key, "normal", "Wurf 1W100")
+!mmm       chat: Rolling ${effectRoll} for testing.
+!mmm       do m3mgdCriticalEffectPrompt("Yorric MacRathgar".token_id, tableName, effectRoll, "-M_a1Zy8w8jDCc0qt172".token_id)
+!rem //!mmm     end for
+!mmm   end for
+!mmm
+!mmm end script

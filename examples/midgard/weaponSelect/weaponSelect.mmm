@@ -1,10 +1,10 @@
 !rem // Midgard combat weapon selector script
 !mmm script
-!mmm   set scriptVersion = "v1.0.0 (2022-01-29)"
+!mmm   set scriptVersion = "weaponSelect v1.1.1 (2022-03-12)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
-!mmm     do whisperback("Midgard Attack Weapon Selector Script " & scriptVersion)
+!mmm     do whisperback(scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -28,7 +28,7 @@
 !mmm
 !mmm   for weaponGroup in cWeaponGroups
 !mmm     
-!mmm     do m3mgdWeaponSelectorChatMenu(cOwnID, weaponGroup)
+!mmm     do chat(cOwnID.token_name, "/w \"" & cOwnID.character_name & "\" " & m3mgdWeaponSelectorChatMenu(cOwnID, weaponGroup))
 !mmm       
 !mmm   end for
 !mmm

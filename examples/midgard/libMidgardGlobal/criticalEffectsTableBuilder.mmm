@@ -1,0 +1,457 @@
+!mmm script
+!mmm
+!mmm   chat: Building new critical effects tables...
+!mmm
+!rem   // Build table: defenseFailure 
+!mmm
+!mmm   set tableName = "defenseFailure"
+!mmm   combine chat
+!mmm     chat: Table ${tableName} ...
+!mmm     set table = {}
+!mmm
+!mmm     set entryID = 10
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du verlierst kurz das Gleichgewicht und brauchst etwas Zeit, um wieder kampfbereit zu sein. Du bekommst für Deinen nächsten Angriff (in der laufenden oder folgenden Runde) -2 auf den EW:Angriff, kannst jedoch ohne Abzug abwehren (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "attack" }, rollModifiers: { meleeAttack: -2, rangedAttack: -2 } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 20
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du verlierst kurz das Gleichgewicht und brauchst etwas Zeit, um wieder kampfbereit zu sein. Du kannst Deinen nächsten Angriff (in der laufenden oder folgenden Runde) nicht durchführen, jedoch kannst Du normal abwehren (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "attack" }, noAttack: true, noFocusedDefense: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 30
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Deine Verteidigungswaffe wird zerstört (magische Waffen nur bei 1W100 gegen den magischen Bonuswert x 10%).', 'Unbewaffneter Kampf': 'Du verlierst kurz das Gleichgewicht und musst eine Runde aussetzen. Du bekommst -2 auf alle EW der nächsten Runde (konzentrierte Abwehr ist nicht möglich).' } }
+!mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, rollModifiers: { meleeAttack: -2, rangedAttack: -2, defense: -2 }, noFocusedDefense: true } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 40
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Verteidigungswaffe fallen. Sie fällt auf das Feld, auf dem Du dich befindest. Du setzt die nächste Runde aus um Deine Waffe aufzuheben, es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung (konzentrierte Abwehr ist nicht möglich).', 'Unbewaffneter Kampf': 'Du verlierst das Gleichgewicht und musst eine Runde aussetzen. Es gibt in der nächsten Runde jedoch keinen Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung (konzentrierte Abwehr ist nicht möglich).' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do spawnWeaponToken(myID, 0, 0)' } 
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true, noFocusedDefense: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 50
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Handgemenge': 'Deine Sicht ist behindert. Du kannst in der folgenden Runde nicht angreifen, da Du Dir Blut oder Schweiß aus den Augen wischen oder eine verrutschte Kopfbedeckung zurechtrücken musst (konzentrierte Abwehr ist nicht möglich).', 'Nahkampf': 'Du wirst ein Feld weit abgedrängt. Dein Gegner kann Dir augenblicklich folgen oder sich lösen.', 'Fernkampf': 'Der Schwung Deiner Ausweichbewegung reißt dich um ein Feld weg.' } }
+!mmm     set entryData = { entryData, persistent: { 'Handgemenge': { expiry: { count: 1, type: "round" }, noAttack: true, noFocusedDefense: true } } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf': '!mmm do moveToken(myID, -1, 0)', 'Fernkampf': '!mmm do moveToken(myID, -1, 0))' } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 60
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: 'Deine Sicht ist behindert. Du kannst in der folgenden Runde nicht angreifen, da Du Dir Blut oder Schweiß aus den Augen wischen oder eine verrutschte Kopfbedeckung zurechtrücken musst (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true, noFocusedDefense: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 70
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Fernkampf': 'Du gibst Dir in der Verteidigung eine Blöße. Dem nächsten Schuss oder Wurf (in der laufenden oder folgenden Runde) kannst du nicht ausweichen und daher keinen WW:Abwehr würfeln (konzentrierte Abwehr ist nicht möglich).', 'Handgemenge': 'Du gibst Dir in der Verteidigung eine Blöße. Dein Gegner darf sofort außer der Reihe einen zusätzlichen EW:Angriff machen, der nicht abgewehrt werden darf.', 'Nahkampf': 'Du gibst Dir in der Verteidigung eine Blöße. Dein Gegner darf sofort außer der Reihe einen zusätzlichen EW:Angriff machen, der nicht abgewehrt werden darf.' } }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "defense" }, noDefense: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 80
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du verstauchst Dir Deinen Fuß. Die Bewegungsweite verringert sich für 2W6 Runden um ein Drittel.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(myID, "bar1", abs(myID.bar1 * 2/3))' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: "2d6", type: "round" }, cappedAttribute: "bar1" } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 90
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf oder Handgemenge': 'Du prallst unglücklich mit Deinem Gegner zusammen und bist kurzzeitig benommen. Du kannst in der folgenden Runde weder angreifen noch abwehren. Dein Gegner leidet unter denselben Folgen – aber nur, wenn ihm ein PW:Gewandtheit misslingt. Eine konzentrierte Abwehr ist nicht möglich.', 'Fernkampf': 'Du prallst unglücklich gegen ein Hindernis und bist kurzzeitig benommen. Du kannst dem nächsten Schuss oder Wurf (in der laufenden oder folgenden Runde) nicht ausweichen und daher keinen WW:Abwehr würfeln (konzentrierte Abwehr ist nicht möglich) und zusätzlich entfällt auch Dein nächster EW:Angriff (in der laufenden oder folgenden Runde).' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf oder Handgemenge': '!mmm do m3mgdRollChanceEffect(foeID, "Gw", "1d100", 0, "!mmm do m3mgdExecuteCriticalEffect(myID,\'defenseFailure\',' & entryID & ', \'Nahkampf oder Handgemenge\')")' } }
+!mmm     set entryData = { entryData, persistent: { 'Nahkampf oder Handgemenge': { expiry: { count: 1, type: "round" }, noAttack: true, noDefense: true }, 'Fernkampf': { expiry: { count: 1, type: "defense" }, noAttack: true, noDefense: true } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 99
+!mmm     set entryData = { weight: 9, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du rutscht aus und stürzt zu Boden. *Im Handgemenge* darf Dein Gegner einen zusätzlichen Angriff starten, der nicht abgewehrt werden darf.' }
+!mmm     set entryData = { entryData, persistent: { 'Handgemenge': { expiry: { count: 1, type: "defense" }, noDefense: true } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 100
+!mmm     set entryData = { weight: 1, label: '⚀ Kritischer Fehler', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du stürzt und verlierst für 1W6 Runden das Bewusstsein.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(myID, "status_pummeled", true)' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: "1d6", type: "round" }, marker: "status_pummeled" } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
+!mmm   end combine
+!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm
+!mmm
+!rem   // Build table: defenseSuccess
+!mmm
+!mmm   set tableName = "defenseSuccess"
+!mmm   combine chat
+!mmm     chat: Table ${tableName} ...
+!mmm     set table = {}
+!mmm
+!mmm     set entryID = 10
+!mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du durchschaust die nächste Aktion Deines Gegners und bekommst +2 auf Deinen EW:Abwehr.' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 30
+!mmm     set entryData = { weight: 20, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf': 'Die Waffenhand Deines Gegners wird geprellt. In der folgenden Runde kann er mit dieser Hand nicht angreifen. Tiere verlieren einen Angriff mit Pranke, Zähnen, Stachel usw.', 'Fernkampf': 'Du bekommst +2 auf deinen nächsten EW:Abwehr.' } }
+!mmm     set entryData = { entryData, persistent: { 'Nahkampf': { focus: "foe", expiry: { count: 1, type: "attack" }, noAttack: true }, 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 40
+!mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Dein Angreifer wird entwaffnet. Die Waffe fliegt vom Angreifer aus gesehen geradlinig um 1W6–1 m nach links', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr.' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do spawnWeaponToken(foeID, -1 * roll("1d6-1"), 0)' } } 
+!mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 50
+!mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Dein Angreifer wird entwaffnet. Die Waffe fliegt vom Angreifer aus gesehen geradlinig um 1W6–1 m nach rechts', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr.' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do spawnWeaponToken(foeID, roll("1d6-1"), 0)' } } 
+!mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 60
+!mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Dein Angreifer wird entwaffnet. Die Waffe fliegt vom Angreifer aus gesehen geradlinig um 1W6–1 m nach hinten', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr.' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do spawnWeaponToken(foeID, 0, -1 * roll("1d6-1"))' } } 
+!mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 70
+!mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Dein Angreifer wird entwaffnet. Die Waffe fliegt vom Angreifer aus gesehen geradlinig um 1W6–1 m nach vorne', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr.' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do spawnWeaponToken(foeID, 0, roll("1d6-1"))' } } 
+!mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 80
+!mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Du hast den Angreifer im Nahkampf umgestoßen, so dass er zu Boden stürzt. Er verliert seinen nächsten Angriff und seine nächste Abwehr (konzentrierte Abwehr ist nicht möglich).', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr' } }
+!mmm     set entryData = { entryData, persistent: { 'Nahkampf mit Waffe': ( { focus: "foe", expiry: { count: 1, type: "attack" }, noAttack: true }, { focus: "foe", expiry: { count: 1, type: "defense" }, noDefense: true, noFocusedDefense: true } ), 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 95
+!mmm     set entryData = { weight: 15, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Der Angreifer wird durch Deine hervorragende Nahkampf-Abwehr leicht verwundet (1W6 AP, keine Abwehr möglich).', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do m3mgdProcessInjury(foeID, 0, "1d6", true)' } }
+!mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 99
+!mmm     set entryData = { weight: 4, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Der Angreifer wird durch Deine hervorragende Nahkampf-Abwehr schwer verwundet (1W6 LP/AP, keine Abwehr möglich).', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do m3mgdProcessInjury(foeID, "1d6", "*", true)' } }
+!mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 100
+!mmm     set entryData = { weight: 1, label: '⚅ Kritischer Abwehrerfolg', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Der Angreifer wird durch Deine hervorragende Nahkampf-Abwehr schwer verwundet (1W6 LP/AP, keine Abwehr möglich) **und verliert für 1W6 Runden das Bewusstsein**.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': ('!mmm do m3mgdProcessInjury(foeID, "1d6", "*", true)', '!mmm do setattr(foeID, "status_pummeled", true)') } }
+!mmm     set entryData = { entryData, persistent: { 'Nahkampf mit Waffe': { focus: "foe", expiry: { count: "1d6", type: "round" }, marker: "status_pummeled" }, 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
+!mmm   end combine
+!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm
+!mmm
+!rem   // Build table: rangedAttackFailure 
+!mmm
+!mmm   set tableName = "rangedAttackFailure"
+!mmm   combine chat
+!mmm     chat: Table ${tableName} ...
+!mmm     set table = {}
+!mmm
+!mmm     set entryID = 10
+!mmm     set entryData = { weight: 20, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Deine Fernkampfwaffe knallt dir ins Gesicht. Du bist eine Runde orientierungslos und musst aussetzen. Es gibt in der nächsten Runde jedoch keinen Vorteil für Deinen Gegner.' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 30
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du lässt Deine Waffe fallen. Sie fällt auf das Feld, auf dem Du dich befindest. Du setzt die nächste Runde aus um Deine Waffe aufzuheben, es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do spawnWeaponToken(myID, 0, 0)' } 
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 40
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Dein Geschoss ist zerbrochen. Bei magischen Geschossen wird mit 1W100 auf den höheren der beiden magischen Bonuswerte (*10%) gewürfelt ob dieses auch zerstört ist.' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 50
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Deine Waffe wird zerstört. Bei magischen Waffen wird mit 1W100 auf den höheren der beiden magischen Bonuswerte (*10%) gewürfelt ob diese auch zerstört ist.' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 60
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Wurfwaffen': 'Du verletzt dich leicht und musst die nächste Runde aussetzen.', 'andere': 'Es reißt die Sehne oder ein äquivalenter Teil der Waffe, verletzt dich leicht und muss ersetzt werden.' } }
+!mmm     set entryData = { entryData, persistent: { 'Wurfwaffen': { expiry: { count: 1, type: "round" }, noAttack: true }, 'andere': { expiry: { count: "1d6+3", type: "round" }, noAttack: true } } }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(myID, 0, "1d6-1", false)' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 70
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du triffst aus Versehen eine befreundete Person entlang der Schusslinie (1 Meter links bzw. rechts) und fügst ihr 1W6–1 schweren Schaden zu. Befindet sich kein Gefährte in Reichweite, hat der Fehler keine Folgen. Kommen mehrere Personen als Opfer in Frage, wird eine von ihnen ausgewürfelt.' }
+!mmm     set entryData = { entryData, userInput: { xtarget: '@' & '{Wen triffst du?|target|token_id}' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(xtarget, "1d6-1", "*", true)' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 99
+!mmm     set entryData = { weight: 29, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bogen oder Armbrust': 'Du verletzt dich leicht an deiner Waffe und musst die nächste Runde aussetzen.' } }
+!mmm     set entryData = { entryData, persistent: { 'Bogen oder Armbrust': { expiry: { count: "1", type: "round" }, noAttack: true } } }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(myID, 0, "1d6-1", true)' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 100
+!mmm     set entryData = { weight: 1, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Deine Sehne reißt. Dadurch stürzt du so unglücklich, dass du für 1W10 Runden das Bewusstsein verlierst. Trägst du einen Helm, schützt er zu 50% vor der Ohnmacht.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(myID, "status_pummeled", true)' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: "1d10", type: "round" }, marker: "status_pummeled" } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
+!mmm   end combine
+!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm
+!rem   // Build table: meleeAttackFailure 
+!mmm
+!mmm   set tableName = "meleeAttackFailure"
+!mmm   combine chat
+!mmm     chat: Table ${tableName} ...
+!mmm     set table = {}
+!mmm
+!mmm     set entryID = 20
+!mmm     set entryData = { weight: 20, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du stolperst und musst die nächste Runde aussetzen um dich neu zu sammeln. Angreifer bekommen +4 auf Ihren nächsten Angriff. Keine negative Auswirkung auf Deine Verteidigung in der nächsten Runde. Bei misslungenem Prüfwurf auf Geschicklichkeit schlägst Du mit dem Kopf so unglücklich auf, dass Du für 1W6 Runden ohnmächtig wirst. Träger eines Helms bekommen +4 auf ihren Prüfwurf.' }
+!mmm     set entryData = { entryData, userInput: { xhelmetworn: '?' & '{Trägst du einen Helm?|Ja,4|Nein,0}' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdRollChanceEffect(myID, "Gs", "1d100", xhelmetworn, "!mmm do setattr(myID, \'status_pummeled\', true)", { expiry: { count: "1d6", type: "round" }, marker: "status_pummeled" })' } 
+!mmm     set entryData = { entryData, persistent: { focus: "foe", expiry: { count: 1, type: "round" }, rollModifiers: { meleeAttack: +4 } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 23
+!mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das Feld, auf dem Du dich befindest. Du setzt die nächste Runde aus, um Deine Waffe aufzuheben, es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, 0, 0)' } }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 26
+!mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das rechte Feld von Dir. Um an Deine Waffe zu gelangen, müsstest Du Dich aus dem Nahkampf lösen oder nächste Runde eine neue Waffe ziehen und bekommst -2 auf deinen EW:Angriff.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, 1, 0)' } }
+!mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 29
+!mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das linke Feld von Dir. Um an Deine Waffe zu gelangen, müsstest Du Dich aus dem Nahkampf lösen oder nächste Runde eine neue Waffe ziehen und bekommst -2 auf deinen EW:Angriff.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, -1, 0)' } }
+!mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 32
+!mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das Feld hinter Dir. Um an Deine Waffe zu gelangen, müsstest Du Dich aus dem Nahkampf lösen oder nächste Runde eine neue Waffe ziehen und bekommst -2 auf deinen EW:Angriff.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, 0, -1)' } }
+!mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 35
+!mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das Feld deines Gegners. Um weiter anzugreifen, müsstest du nächste Runde eine neue Waffe ziehen und bekommst -2 auf deinen EW:Angriff.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, 0, 1)' } }
+!mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 40
+!mmm     set entryData = { weight: 5, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Deine Angriffswaffe wird zerstört. Bei magischen Waffen wird mit 1W100 auf den höheren der beiden magischen Bonuswerte (*10%) gewürfelt ob diese auch zerstört ist.', 'Unbewaffneter Kampf': 'Bei einem Angriff mit Fäusten sind diese stark geprellt und können 1W10 Minuten lang nicht eingesetzt werden.' } }
+!mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: "1d10*6", type: "round" }, noAttack: true } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 50
+!mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du rempelst versehentlich einen Freund auf einem Nachbarfeld an. Dieser bekommt in der nächsten Runde -2 auf seinen EW:Angriff. Du selber bist dadurch etwas orientierungslos und musst eine Runde aussetzen. Es gibt in der nächsten Runde jedoch keinen Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' }
+!mmm     set entryData = { entryData, userInput: { xtarget: '"@' & '{target|Wen hast du angerempelt?|token_id}"' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdStoreCriticalEffect(xtarget, { expiry: { count: 1, type: "round" }, rollModifiers: { meleeAttack: -2 } })' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 55
+!mmm     set entryData = { weight: 5, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du verletzt dich selbst (1W6-1 schwerer Schaden).', 'Unbewaffneter Kampf': 'Du verletzt dich selbst, verlierst 1W6–1 AP durch eine Muskelzerrung und musst die nächste Runde aussetzen. Es gibt in der nächsten Runde jedoch keinen Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
+!mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do m3mgdProcessInjury(myID, "1d6-1", "*", true)', 'Unbewaffneter Kampf': '!mmm do m3mgdProcessInjury(myID, 0, "1d6-1", false)' } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 60
+!mmm     set entryData = { weight: 5, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du triffst aus Versehen die nächst stehende befreundete Person im Nahkampf und fügst ihr 1W6–1 schweren Schaden zu. Befindet sich kein Gefährte in Reichweite, hat der Fehler keine Folgen. Kommen mehrere Personen als Opfer in Frage, wird eine von ihnen ausgewürfelt.' }
+!mmm     set entryData = { entryData, userInput: { xtarget: '"@' & '{target|Wen hast du getroffen?|token_id}"' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(xtarget, "1d6-1", "*", true)' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 80
+!mmm     set entryData = { weight: 20, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du läufst in die Waffe des Gegners hinein. Der Angegriffene darf sofort außer der Reihe einen zusätzlichen EW:Angriff machen, der nicht abgewehrt werden darf.' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "defense" }, noDefense: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 99
+!mmm     set entryData = { weight: 19, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du verstauchst Dir Deinen Fuß. Die Bewegungsweite verringert sich für 2W6 Runden um ein Drittel. Du musst nächste Runde aussetzen. Es gibt in der nächsten Runde jedoch keinen Vorteil für Deinen Gegner. Du erhältst aber -2 auf Deine EW:Abwehr während der Zeit.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(myID, "bar1", abs(myID.bar1 * 2/3))' }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: "2d6", type: "round" }, cappedAttribute: "bar1" }, { expiry: { count: 1, type: "round" }, noAttack: true, rollModifiers: { defense: -2 } } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 100
+!mmm     set entryData = { weight: 1, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du stürzt so unglücklich zu Boden, dass Du dabei das Bewusstsein verlierst und für 1W10 Runden ohnmächtig bleibst. Trägst Du einen Helm besteht zu 50% die Chance, dass der Helm Dich vor einer Ohnmacht schützt.' }
+!mmm     set entryData = { entryData, userInput: { xhelmetworn: '?' & '{Trägst du einen Helm?|Ja,4|Nein,0}' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdRollChanceEffect(myID, 50, "1d100", xhelmetworn, "!mmm do setattr(myID, \'status_pummeled\', true)", { expiry: { count: "1d10", type: "round" }, marker: "status_pummeled" })' } 
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
+!mmm   end combine
+!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm
+!rem   // Build table: attackSuccess 
+!mmm
+!mmm   set tableName = "attackSuccess"
+!mmm   combine chat
+!mmm     chat: Table ${tableName} ...
+!mmm     set table = {}
+!mmm
+!mmm     set entryID = 10
+!mmm     set entryData = { weight: 10, label: '⚅ Kritischer Erfolg beim Angriff', url: '' }
+!mmm     set entryData = { entryData, desc: 'Normaler schwerer Schaden.' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 20
+!mmm     set entryData = { weight: 10, label: '⚅ Kurzer Schock', url: '' }
+!mmm     set entryData = { entryData, desc: 'Das Opfer kann durch den Schock der Verwundung eine Runde lang nicht angreifen (keine konzentrierte Abwehr möglich).' }
+!mmm     set entryData = { entryData, persistent: { focus: "foe", expiry: { count: 1, type: "round" }, noAttack: true, noFocusedDefense: true } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 30
+!mmm     set entryData = { weight: 10, label: '⚅ Rumpftreffer mit Rippenbrüchen', url: '' }
+!mmm     set entryData = { entryData, desc: 'Du brichst dem Gegner 1W3 Rippen. Ein paar gebrochene Rippen verursachen zwar Schmerzen bei Bewegung und Atmen, sind aber vergleichsweise harmlos. Wenn der Brustkorb mit Erste Hilfe fachgerecht bandagiert ist, wird der Verletzte nur wenig behindert. Nur in bewegungsintensiven Situationen erleidet er wegen der Schmerzen –4 auf Erfolgs- und Widerstandswürfe, z.B. auf EW:Angriff und WW:Abwehr und beim Einsatz von Fertigkeiten wie Akrobatik oder Klettern. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der gebrochenen Rippen. Andernfalls verdoppelt sich die Heilzeit.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_white_tower", true)' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 35
+!mmm     set entryData = { weight: 5, label: '⚅ Rumpftreffer mit Gefahr innerer Verletzungen', url: '' }
+!mmm     set entryData = { entryData, desc: 'Das Opfer verliert zusätzlich zum normalen Schaden 1W6 LP und AP.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(foeID, "1d6", "*", true)' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 44
+!mmm     set entryData = { weight: 9, label: '⚅ Schwere Verletzung am rechten Arm', url: '' }
+!mmm     set entryData = { entryData, desc: 'Der rechte Arm ist für 30 Minuten stark geprellt und kann nicht genutzt werden. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der Armverletzung. Andernfalls verdoppelt sich die Heilzeit. Während dieser Zeit kann er keine Fertigkeit ausüben, für die er beide Arme braucht. Führt ein Rechtshänder mit der linken Hand eine Waffe oder setzt er eine Fertigkeit ein, bei der er normalerweise die rechte Hand benötigt, so fällt ihm das sehr schwer (–4 bei Erfolgswürfen). Wenn das Opfer durch eine **andere** als eine Stich-, Wurf- oder Schusswaffe **mehr als 1/3 des LP–Maximums verliert,** besteht eine **20% Chance,** dass der Arm abgetrennt wird (bei einer Waffe mit Schneide) oder dauerhaft verkrüppelt bleibt. Mit Armschutz führt auch der Treffer mit einer scharfen Waffe nicht zum Abtrennen, sondern nur zur Verkrüppelung des Armes.' }
+!mmm     set entryData = { entryData, userInput: { xweaparm: '?' & '{Bist du...|Rechtshänder,true|Linkshänder,false}' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_grab", ((foeID.status_grab eq "shown")+xweaparm>0))' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 53
+!mmm     set entryData = { weight: 9, label: '⚅ Schwere Verletzung am linken Arm', url: '' }
+!mmm     set entryData = { entryData, desc: 'Der linke Arm ist für 30 Minuten stark geprellt und kann nicht genutzt werden. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der Armverletzung. Andernfalls verdoppelt sich die Heilzeit. Während dieser Zeit kann er keine Fertigkeit ausüben, für die er beide Arme braucht. Führt ein Rechtshänder mit der linken Hand eine Waffe oder setzt er eine Fertigkeit ein, bei der er normalerweise die rechte Hand benötigt, so fällt ihm das sehr schwer (–4 bei Erfolgswürfen). Wenn das Opfer durch eine **andere** als eine Stich-, Wurf- oder Schusswaffe **mehr als 1/3 des LP–Maximums verliert,** besteht eine **20% Chance,** dass der Arm abgetrennt wird (bei einer Waffe mit Schneide) oder dauerhaft verkrüppelt bleibt. Mit Armschutz führt auch der Treffer mit einer scharfen Waffe nicht zum Abtrennen, sondern nur zur Verkrüppelung des Armes.' }
+!mmm     set entryData = { entryData, userInput: { xweaparm: '?' & '{Bist du...|Rechtshänder,false|Linkshänder,true}' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_grab", ((foeID.status_grab eq "shown")+xweaparm>0))' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 62
+!mmm     set entryData = { weight: 9, label: '⚅ Schwere Verletzung am rechten Bein', url: '' }
+!mmm     set entryData = { entryData, desc: 'Das rechte Bein ist für 30 Minuten stark geprellt und kann nicht genutzt werden. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der Beinverletzung. Andernfalls verdoppelt sich die Heilzeit. Während dieser Zeit kann sich der Verletzte nur mit B4 fortbewegen. Wird das Bein mit Erster Hilfe geschient, erhöht sich seine Bewegungsweite auf B6, mit einem Stock sogar auf die Hälfte seiner normalen Bewegungsweite (B/2). Mit Stock kann er auch mit einer einhändigen Waffe im Nahkampf kämpfen, aber die Abwehr wird durch die mangelnde Beweglichkeit weiterhin sehr erschwert (–4 auf WW:Abwehr). Wenn das Opfer durch eine **andere** als eine Stich-, Wurf- oder Schusswaffe **mehr als 1/3 des LP–Maximums verliert,** besteht eine **20% Chance,** dass das Bein abgetrennt wird (bei einer Waffe mit Schneide) oder dauerhaft verkrüppelt bleibt. Mit Beinschutz führt auch der Treffer mit einer scharfen Waffe nicht zum Abtrennen, sondern nur zur Verkrüppelung des Beins.' }
+!mmm     set entryData = { entryData, immediate: ('!mmm do setattr(foeID, "status_tread", true)', '!mmm do setattr(foeID, "bar1", 4)') }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 71
+!mmm     set entryData = { weight: 9, label: '⚅ Schwere Verletzung am linken Bein', url: '' }
+!mmm     set entryData = { entryData, desc: 'Das linke Bein ist für 30 Minuten stark geprellt und kann nicht genutzt werden. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der Beinverletzung. Andernfalls verdoppelt sich die Heilzeit. Während dieser Zeit kann sich der Verletzte nur mit B4 fortbewegen. Wird das Bein mit Erster Hilfe geschient, erhöht sich seine Bewegungsweite auf B6, mit einem Stock sogar auf die Hälfte seiner normalen Bewegungsweite (B/2). Mit Stock kann er auch mit einer einhändigen Waffe im Nahkampf kämpfen, aber die Abwehr wird durch die mangelnde Beweglichkeit weiterhin sehr erschwert (–4 auf WW:Abwehr). Wenn das Opfer durch eine **andere** als eine Stich-, Wurf- oder Schusswaffe **mehr als 1/3 des LP–Maximums verliert,** besteht eine **20% Chance,** dass das Bein abgetrennt wird (bei einer Waffe mit Schneide) oder dauerhaft verkrüppelt bleibt. Mit Beinschutz führt auch der Treffer mit einer scharfen Waffe nicht zum Abtrennen, sondern nur zur Verkrüppelung des Beins.' }
+!mmm     set entryData = { entryData, immediate: ('!mmm do setattr(foeID, "status_tread", true)', '!mmm do setattr(foeID, "bar1", 4)') }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 80
+!mmm     set entryData = { weight: 9, label: '⚅ Treffer im Gesicht', url: '' }
+!mmm     set entryData = { entryData, desc: 'Das Aussehen des Getroffenen sinkt durch eine entstellende Narbe dauerhaft um ein Zehntel (mindestens aber um 1). Der Träger eines Helms mit Visier ist vor dieser Art von Schaden sicher.' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 85
+!mmm     set entryData = { weight: 5, label: '⚅ Schwerer Kopftreffer', url: '' }
+!mmm     set entryData = { entryData, desc: 'Helmlose Opfer verlieren zusätzlich zum normalen Schaden 1W3 LP und AP. Der Getroffene verliert für 2W6 Runden das Bewusstsein (1W6 Runden für Helmträger) und ist 30 min lang (15 Minuten für Helmträger) benommen und handlungsunfähig. Übersteigen die LP-Verluste ein Drittel seines LP-Maximums, fällt ein helmloses Opfer mit 20% in ein Koma.' }
+!mmm     set entryData = { entryData, userInput: { xdmg: '"?' & '{Trägt das Opfer Helm?|Ja,0|Nein,1d3}"' } }
+!mmm     set entryData = { entryData, immediate: ('!mmm do m3mgdProcessInjury(foeID, xdmg, "*", false)', '!mmm do setattr(foeID, "status_pummeled", true)', '!mmm do m3mgdStoreCriticalEffect(foeID, { expiry: { count: ((xdmg + 0 ne 0)+1)&"d6", type: "round" }, marker: "status_pummeled" })') }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 89
+!mmm     set entryData = { weight: 4, label: '⚅ Kopftreffer mit Hörschaden', url: '' }
+!mmm     set entryData = { entryData, desc: 'Helmlose Opfer verlieren zusätzlich zum normalen Schaden 1W3 LP und AP und das Hörvermögen leidet durch den schweren Treffer auf Dauer. Der Abenteurer wird wie ein von Geburt an Schwerhöriger behandelt (–2 auf EW:Wahrnehmung für Hörbares). Das Opfer ist zusätzlich für 30 Minuten Handlungsunfähig (15 Minuten für Helmträger).' }
+!mmm     set entryData = { entryData, userInput: { xdmg: '"?' & '{Trägt das Opfer Helm?|Ja,0|Nein,1d3}"' } }
+!mmm     set entryData = { entryData, immediate: ('!mmm do m3mgdProcessInjury(foeID, xdmg, "*", false)', '!mmm do setattr(foeID, "status_screaming", true)', '!mmm do setattr(foeID, "status_red", true)') }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 93
+!mmm     set entryData = { weight: 4, label: '⚅ Augenverletzung', url: '' }
+!mmm     set entryData = { entryData, desc: 'Durch eine Wunde am Auge leidet das Sehvermögen eines Abenteurers dauerhaft. Er wird wie ein von Geburt an Kurzsichtiger behandelt (–2 auf EW:Wahrnehmung für Sichtbares). Der Träger eines Helms mit Visier ist vor dieser Art von Schaden sicher.' }
+!mmm     set entryData = { entryData, userInput: { xnohelmet: '?' & '{Trägt das Opfer einen Helm mit Visier?|Ja,false|Nein,true}' } }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_bleeding_eye", ((foeID.status_bleeding_eye eq "shown")+xnohelmet>0))' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 96
+!mmm     set entryData = { weight: 3, label: '⚅ Augenverlust', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Scharfe, spitze o. Schusswaffe': 'Das helmlose Opfer verliert ein Auge. Es wird wie ein von Geburt an Kurzsichtiger behandelt (–2 auf EW:Wahrnehmung für Sichtbares) und kann zusätzlich Entfernungen nicht mehr zuverlässig abschätzen.' } }
+!mmm     set entryData = { entryData, userInput: { xnohelmet: '?' & '{Trägt das Opfer Helm?|Ja,false|Nein,true}' } }
+!mmm     set entryData = { entryData, immediate: { 'Scharfe, spitze o. Schusswaffe': '!mmm do setattr(foeID, "status_bleeding_eye", ((foeID.status_bleeding_eye eq "shown")+xnohelmet>0))' } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 97
+!mmm     set entryData = { weight: 1, label: '⚅ Halstreffer', url: '' }
+!mmm     set entryData = { entryData, desc: { 'Scharfe, spitze o. Schusswaffe': 'Durch einen Treffer einer spitzen oder scharfen Waffe an der Halsschlagader verliert der Verwundete pro Runde 1 LP & AP, bis die Blutung mit Erster Hilfe gestillt wird, was eine Runde dauert. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der Halsverletzung. Andernfalls verdoppelt sich die Heilzeit. Wird der Verletzte während der Heilzeit in Nahkämpfe oder ähnlich anstrengende Aktivitäten verwickelt, besteht pro Runde eine Chance von 10%, dass die Wunde wieder aufbricht und erneut mit Erster Hilfe versorgt werden muss.', 'Stumpfe Waffe': 'Übersteigen LP-Verluste durch den Angriff ein Drittel des LP-Maximums, werden die Nackenwirbel verletzt. Verhält sich der Verwundete nicht absolut ruhig, stirbt er mit 10% pro Runde. Diese Gefahr kann gebannt werden, wenn der Hals mit Erster Hilfe sorgfältig bandagiert wird, was 10 min dauert. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der Nackenwirbelverletzung. Andernfalls verdoppelt sich die Heilzeit. Wird der Verletzte während der Heilzeit wieder in Nahkämpfe oder ähnlich anstrengende Aktivitäten verwickelt, lockert sich der Verband mit einer Chance von 10% pro Runde. In diesem Fall besteht wieder Todesgefahr bei Bewegungen, solange die Bandage nicht erneuert worden ist.' } }
+!mmm     set entryData = { entryData, userInput: { xloss: '?' & '{Hat das Opfer >1/3 LP verloren?|Ja,true|Nein,false}' } }
+!mmm     set entryData = { entryData, immediate: { 'Scharfe, spitze o. Schusswaffe': '!mmm do setattr(foeID, "status_sleepy", true)', "Stumpfe Waffe": '!mmm do setattr(foeID, "status_back_pain", ((foeID.status_back_pain eq "shown")+xloss>0))' } }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 98
+!mmm     set entryData = { weight: 1, label: '⚅ Schwere Schädelverletzung', url: '' }
+!mmm     set entryData = { entryData, desc: 'Helmlose Opfer verlieren zusätzlich zum normalen Schaden 1W6 LP und AP. Der Getroffene verliert für 2W6 Runden das Bewusstsein (1W6 Runden für Helmträger) und ist 30 min lang (15 Minuten für Helmträger) benommen und handlungsunfähig. Übersteigen die LP-Verluste ein Drittel seines LP-Maximums, fällt ein helmloses Opfer mit 20% in ein Koma und seine Intelligenz sinkt durch Hirnschäden dauerhaft um ein Zehntel (mindestens aber um 1).' }
+!mmm     set entryData = { entryData, userInput: { xdmg: '"?' & '{Trägt das Opfer Helm?|Ja,0|Nein,1d6}"' } }
+!mmm     set entryData = { entryData, immediate: ('!mmm script', '!mmm do m3mgdProcessInjury(foeID, xdmg, "*", false)', '!mmm do setattr(foeID, "status_pummeled", true)', '!mmm do m3mgdStoreCriticalEffect(foeID, { expiry: { count: ((xdmg + 0 ne 0)+1) & "d6", type: "round" }, marker: "status_pummeled" })', '!mmm do setattr(foeID, "status_ninja_mask", true)', '!mmm end script') }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 99
+!mmm     set entryData = { weight: 1, label: '⚅ Schwere Verletzung der Wirbelsäule', url: '' }
+!mmm     set entryData = { entryData, desc: '*Nur ein wuchtiger Hieb, z.B. mit einer Schlagwaffe, einer zweihändigen Hiebwaffe, einem Morgenstern, einem Kampfstab oder mit einer Pranke, richtet diese Art von kritischem Schaden an.* Durch starke Schmerzen ist die Beweglichkeit des Verletzten 30 min lang stark eingeschränkt, und er ist in diesem Zeitraum erschöpft. Würfelt der Spieler mit W% höchstens 10×LP-Verluste, besteht zusätzlich für jeden Arm und jedes Bein eine Chance von je 20%, dass sie auf Dauer gelähmt sind, was wie die Folgen einer entsprechenden schweren Verletzung zu behandeln ist. Treffer mit anderen Waffen verursachen normalen schweren Schaden. Das Opfer ist für 30 Minuten handlungsunfähig.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_red", true)' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 100
+!mmm     set entryData = { weight: 1, label: '⚅ Tödlicher Treffer', url: '' }
+!mmm     set entryData = { entryData, desc: 'Ein Treffer ins Herz, an der Kehle etc. tötet den Getroffenen augenblicklich.' }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_dead", true)' } 
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
+!mmm   end combine
+!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm
+!mmm
+!mmm
+!rem   // Save table
+!mmm
+!mmm   do setattr("MacroSheet", "m3mgdCriticalEffectsTable", serialize(m3mgdCriticalEffectsTable))
+!mmm   publish to game: m3mgdCriticalEffectsTable
+!mmm   chat: done.
+!mmm end script

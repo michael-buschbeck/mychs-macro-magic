@@ -1,14 +1,21 @@
 !rem // showXP
-!rem // 2022-01-29
+!rem // 2022-03-19
 !mmm script
 !mmm   combine chat
-!mmm     chat: /w GM ${"&"}{template:default} {{name=EP-Übersicht}}
+!mmm     if sender.character_name
+!mmm       chat: /w ${sender.character_name} 
+!mmm     else
+!mmm       chat: /w GM
+!mmm     end if
+!mmm     chat: ${"&"}{template:default} {{name=EP-Übersicht}}
 !mmm     for char in m3mgdPlayerCharacters
 !mmm       if not isdenied(char.character_id)
 !mmm         chat: {{${char.name}=${char.Erfahrungsschatz}}}
 !mmm       end if
 !mmm     end for
 !mmm     chat: {{ EP-Protokoll=[📃](~MacroSheet|showXPLog) (Einzelnen Token auswählen!) }}
-!mmm     chat: {{ EP löschen=[**LÖSCHEN**](~MacroSheet|flushXP) }}
+!mmm     if privileged
+!mmm       chat: {{ EP löschen=[**LÖSCHEN**](~MacroSheet|flushXP) }}
+!mmm     end if
 !mmm   end combine
 !mmm end script
