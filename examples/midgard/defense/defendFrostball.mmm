@@ -1,11 +1,11 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.3.5 (2022-01-29)"
+!mmm   set scriptVersion = "defendFrostball 1.4.0 (2022-03-12)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
-!mmm     do whisperback("Midgard script " & scriptVersion)
+!mmm     do whisperback(scriptVersion)
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -15,6 +15,7 @@
 !mmm   end if
 !mmm
 !mmm   set customizable cVerbose = true
+!mmm   set customizable cNoDefense = false
 !mmm   set customizable cGMSilentMode = false
 !mmm   if selected and sender.token_id ne selected
 !mmm     set customizable cOwnID = selected.token_id
@@ -95,6 +96,18 @@
 !mmm   end if
 !mmm   set effHealthLoss = highlight(effHealthLoss, "info")
 !mmm
+!rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
+!mmm   if isChar(m3mgdExchange.(m3mgdAttrAttackerID)) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
+!mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), effEnduranceLoss, m3mgdExchange.(m3mgdAttrAttackerID), cOwnID)
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": +" & xpGain & " EP}} "
+!mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (∞ AP, abgewehrt) }} "
+!mmm   else if cNoDefense or (cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0)
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (Ziel erschöpft/wehrlos) }} "
+!mmm   else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (kein AP-Verlust) }} "
+!mmm   end if
+!mmm
 !mmm   if cOwnID.token_name ne sender
 !mmm     set sender = cOwnID.token_name
 !mmm   end if
@@ -125,6 +138,12 @@
 !rem
 !rem   // Output data table using data table execution code from library
 !mmm   do m3mgdDefenseDataTable()
+!mmm   
+!rem   // Output modifier log and PP reminder
+!mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}
+!mmm   if not cGMSilentMode
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
+!mmm   end if
 !mmm   
 !rem   // Special effects
 !mmm   if effHealthLoss > 0 or effEnduranceLoss > 0

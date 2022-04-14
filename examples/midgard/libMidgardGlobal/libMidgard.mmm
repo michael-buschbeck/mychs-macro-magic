@@ -1473,11 +1473,11 @@
 !rem
 !rem // m3mgdProcessAttackXP(attackType, attackDamageRoll, [attackerID], [targetID])
 !rem //
-!rem //   Processes experience gain from mundane attacks (attackType: melee or ranged).
+!rem //   Processes experience gain from mundane attacks (attackType: melee, ranged or magic).
 !rem //
 !mmm function m3mgdProcessAttackXP(attackType, attackDamageRoll, attackerID, targetID)
 !mmm
-!mmm   if isdefault(attackType) or not (attackType eq "melee" or attackType eq "ranged")
+!mmm   if isdefault(attackType) or not (attackType eq "melee" or attackType eq "ranged" or attackType eq "magic")
 !mmm     do whisperback("m3mgdProcessAttackXP(): no or invalid attackType parameter: " & attackType & " -- no experience processed.")
 !mmm     return false
 !mmm   end if
@@ -1508,9 +1508,14 @@
 !mmm   
 !mmm   set xpGain = targetID.Grad + 3
 !mmm   set xpTooltip = targetID.Grad & "[Grad]+3"
-!mmm   if attackType eq "ranged"
+!mmm   if attackType eq "ranged" or attackType eq "magic"
 !mmm     set xpGain = xpGain / 2
-!mmm     set xpTooltip = "(" & xpTooltip & ") /2[FK]"
+!mmm     set xpTooltip = "(" & xpTooltip & ") /2"
+!mmm     if attackType eq "ranged" 
+!mmm       set xpTooltip = xpTooltip & "[FK]"
+!mmm     else if attackType eq "magic"
+!mmm       set xpTooltip = xpTooltip & "[✨]"
+!mmm     end if
 !mmm   end if
 !rem   // Devastating hits
 !mmm   if attackDamageRoll >= 8 and targetID.(script.cEnduranceAttr) >= 8
