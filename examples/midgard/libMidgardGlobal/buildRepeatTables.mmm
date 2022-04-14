@@ -1,0 +1,26 @@
+!mmm script
+!mmm
+!mmm   if not m3mgdCriticalEffectsTable
+!mmm     if "MacroSheet".m3mgdCriticalEffectsTable ne ""
+!mmm       set m3mgdCriticalEffectsTable = deserialize("MacroSheet".m3mgdCriticalEffectsTable)
+!mmm     else
+!mmm       set m3mgdCriticalEffectsTable = {}
+!mmm     end if
+!mmm     publish to game: m3mgdCriticalEffectsTable
+!mmm   end if
+!mmm
+!rem   // Init table contents
+!mmm   set tableName = "defenseFailure"
+!mmm   for i in 1,2,3,4,5,6,7,8,9,10
+!mmm     set entryDesc = "Du verlierst kurz das Gleichgewicht und brauchst etwas Zeit, um wieder kampfbereit zu sein. Du bekommst auf Deinen nächsten Angriff (in der laufenden oder folgenden Runde) -2 auf den EW: Angriff kannst jedoch ohne Abzug abwehren (konzentrierte Abwehr ist nicht möglich)."
+!mmm     set entryCode = "!mmm script"
+!mmm     set entryCode = entryCode, "!mmm   set myVar = 1"
+!mmm     set entryCode = entryCode, "!mmm   chat: It implements some complicated effect on ${myID.name}, something to do with the number ${myVar}."
+!mmm     set entryCode = entryCode, "!mmm   set myVar = myVar + 1"
+!mmm     set entryCode = entryCode, "!mmm   chat: ${myID.name} will not be the same for quite a while (${myVar})."
+!mmm     set entryCode = entryCode, "!mmm end script"
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): { m3mgdCriticalEffectsTable.(tableName), (i): { weight: 10, desc: entryDesc, url: "", code: entryCode } } }
+!mmm   end for
+!mmm   publish to game: m3mgdCriticalEffectsTable
+!mmm 
+!mmm end script

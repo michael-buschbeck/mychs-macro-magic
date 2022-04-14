@@ -1,0 +1,100 @@
+!mmm script
+!mmm
+!mmm   function sum(list)
+!mmm     set sumVal = 0
+!mmm     if count(list) > 1
+!mmm       for i in list
+!mmm         set sumVal = sumVal + i
+!mmm       end for
+!mmm     else
+!mmm       set sumVal = list
+!mmm     end if
+!mmm     return sumVal
+!mmm   end function
+!mmm
+!mmm   chat: Building new critical effects tables...
+!mmm
+!rem   // Build table: defenseFailure 
+!mmm
+!mmm   combine chat
+!mmm     set tableName = "defenseFailure"
+!mmm     chat: Starting with table ${tableName} ...
+!mmm     set table = {}
+!mmm
+!mmm     set entryID = 10
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: 'Du verlierst kurz das Gleichgewicht und brauchst etwas Zeit, um wieder kampfbereit zu sein. Du bekommst für Deinen nächsten Angriff (in der laufenden oder folgenden Runde) -2 auf den EW:Angriff, kannst jedoch ohne Abzug abwehren (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, code: '!mmm do addCriticalEffect(myID, { expiry: { count: 1, type: "attack" }, rollModifiers: { meleeAttack: -2, rangedAttack: -2 } } )' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 20
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: 'Du verlierst kurz das Gleichgewicht und brauchst etwas Zeit, um wieder kampfbereit zu sein. Du kannst Deinen nächsten Angriff (in der laufenden oder folgenden Runde) nicht durchführen, jedoch kannst Du normal abwehren (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, code: '!mmm do addCriticalEffect(myID, { expiry: { count: 1, type: "attack" }, noAttack: true, noFocusedDefense: true } )' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 30
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: '*Bewaffneter Kampf:* Deine Verteidigungswaffe wird zerstört (magische Waffen nur bei 1W100 gegen den magischen Bonuswert x 10%). / *Unbewaffneter Kampf:* Du verlierst kurz das Gleichgewicht und musst eine Runde aussetzen. Du bekommst -2 auf alle EW der nächsten Runde (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, code: '!mmm chat: THIS IS COMPLICATED, TBD' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 40
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: '*Bewaffneter Kampf:* Du lässt Deine Verteidigungswaffe fallen. Sie fällt auf das Feld, auf dem Du dich befindest. Du setzt die nächste Runde aus um Deine Waffe aufzuheben, es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung (konzentrierte Abwehr ist nicht möglich). *Unbewaffneter Kampf:* Du verlierst das Gleichgewicht und musst eine Runde aussetzen. Es gibt in der nächsten Runde jedoch keinen Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, code: '!mmm do spawnWeaponToken(myID, 0, 0)', '!mmm do addCriticalEffect(myID, { expiry: { count: 1, type: "round" }, noAttack: true; noFocusedDefense: true } )' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 50
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: 'Du wirst ein Feld nach hinten gedrängt (Nahkampf) oder der Schwung Deiner Ausweichbewegung (Fernkampf) reißt dich um ein Feld nach hinten mit. Alternativ nach links (1-2), rechts (3-4) oder nach vorne (5-6). Im Nahkampf kann Dein Gegner Dir augenblicklich folgen oder sich lösen. Im Handgemenge ist Deine Sicht behindert. Du kannst in der folgenden Runde nicht angreifen, da Du Dir Blut oder Schweiß aus den Augen wischen oder eine verrutschte Kopfbedeckung zurechtrücken musst (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, code: '!mmm chat: /w "${myID.character_name}" [Handgemenge](!mmm do addCriticalEffect(myID, { expiry: { count: 1, type: "round" }, noAttack: true, noFocusedDefense: true } )) / Kein Handgemenge & eins nach hinten ist ... [möglich](!mmm do moveToken(myID, -1, 0)) [nicht möglich](!mmm do moveToken(myID, 1, "1d6"))' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 60
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: 'Deine Sicht wird behindert. Du kannst in der folgenden Runde nicht angreifen, da Du Dir Blut oder Schweiß aus den Augen wischen oder eine verrutschte Kopfbedeckung zurechtrücken musst (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, code: '!mmm do addCriticalEffect(myID, { expiry: { count: 1, type: "round" }, noAttack: true, noFocusedDefense: true } )' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 70
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: 'Du gibst Dir in der Verteidigung eine Blöße. Im *Nahkampf* oder *Handgemenge* darf Dein Gegner sofort außer der Reihe einen zusätzlichen EW:Angriff machen, der nicht abgewehrt werden darf. Im *Fernkampf* kannst Du dem nächsten Schuss oder Wurf (in der laufenden oder folgenden Runde) nicht ausweichen und daher keinen WW:Abwehr würfeln (konzentrierte Abwehr ist nicht möglich).' }
+!mmm     set entryData = { entryData, code: '!mmm do addCriticalEffect(myID, { expiry: { count: 1, type: "defense" }, noDefense: true } )' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 80
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: 'Du verstauchst Dir Deinen Fuß. Die Bewegungsweite verringert sich für 2W6 Runden um ein Drittel.' }
+!mmm     set entryData = { entryData, code: '!mmm do setattr(myID, "bar1", abs(myID.bar1 / 3))', '!mmm do addCriticalEffect(myID, { expiry: { count: roll("2d6"), type: "round" }, maxMovement: abs(myID.bar1 / 3) } )' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 90
+!mmm     set entryData = { weight: 10, url: '' }
+!mmm     set entryData = { entryData, desc: 'Du prallst unglücklich mit Deinem Gegner zusammen (Nahkampf oder Handgemenge) oder gegen ein Hindernis (Fernkampf) und bist kurzzeitig benommen. Im Nahkampf oder Handgemenge kannst Du in der folgenden Runde weder angreifen noch abwehren. Dein Gegner leidet unter denselben Folgen – aber nur, wenn ihm ein PW:Gewandtheit misslingt. Im Fernkampf kannst Du dem nächsten Schuss oder Wurf (in der laufenden oder folgenden Runde) nicht ausweichen und daher keinen WW:Abwehr würfeln (konzentrierte Abwehr ist nicht möglich) und zusätzlich entfällt auch Dein nächster EW:Angriff (in der laufenden oder folgenden Runde). Eine konzentrierte Abwehr ist nicht möglich.' }
+!mmm     set entryData = { entryData, code: '!mmm do addCriticalEffect(myID, { expiry: { count: 1, type: "round" }, noAttack: true, noDefense: true } )', '!mmm if roll("1d100") < foeID.Gw', '!mmm do addCriticalEffect(foeID, { expiry: { count: 1, type: "round" }, noAttack: true, noDefense: true } )', '!mmm end if' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 99
+!mmm     set entryData = { weight: 9, url: '' }
+!mmm     set entryData = { entryData, desc: 'Du rutscht aus und stürzt zu Boden. *Im Handgemenge* darf Dein Gegner einen zusätzlichen Angriff starten, der nicht abgewehrt werden darf.' }
+!mmm     set entryData = { entryData, code: '!mmm chat: /w "${myID.character_name}" [Handgemenge](!mmm do addCriticalEffect(myID, { expiry: { count: 1, type: "defense" }, noDefense: true } ))' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     set entryID = 100
+!mmm     set entryData = { weight: 1, url: '' }
+!mmm     set entryData = { entryData, desc: 'Du stürzt und verlierst für 1W6 Runden das Bewusstsein.' }
+!mmm     set entryData = { entryData, code: '!mmm do addCriticalEffect(myID, { expiry: { count: roll("1d6"), type: "round" }, marker: "status_sleepy" } )', '!mmm do setattr(myID, "status_sleepy")' }
+!mmm     set table = { table, (entryID): entryData }
+!mmm
+!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
+!mmm   end combine
+!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm
+!mmm
+!rem   // Save table
+!mmm
+!mmm   do setattr("MacroSheet", "m3mgdCriticalEffectsTable", serialize(m3mgdCriticalEffectsTable))
+!mmm   publish to game: m3mgdCriticalEffectsTable
+!mmm   chat: done.
+!mmm end script
