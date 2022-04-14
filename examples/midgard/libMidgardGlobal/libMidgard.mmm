@@ -1255,7 +1255,7 @@
 !rem
 !rem // m3mgdWeaponSelectorChatMenu([tokenID], [weaponsGroup], [attackWeaponType])  
 !rem //
-!rem //   Whispers a chat menu for tokenID to its player to select among weaponsGroup ("defense", "melee" or "ranged").
+!rem //   Returns code for a chat menu for tokenID to select among weaponsGroup ("defense", "melee" or "ranged").
 !rem //   Buttons execute a customize block to hand over the chosen weapon to the relevant script. 
 !rem //   Scripts called differ between player characters (identified by the attribute "PC" evaluating as true) and NPCs.
 !rem //
@@ -1400,12 +1400,7 @@
 !mmm   end if
 !mmm   set chatMenu = "&" & "{template:default} {\{name=" & selectorPrompt & "}\} " & chatMenu
 !rem
-!rem   // Override chat sender for characters unconnected to the player (usually NPCs)
-!mmm   set sender = tokenID.token_name
-!mmm   
-!mmm   chat: /w "${tokenID.character_name}" ${chatMenu}
-!mmm   
-!mmm   return true
+!mmm   return chatMenu
 !mmm   
 !mmm end function
 !rem

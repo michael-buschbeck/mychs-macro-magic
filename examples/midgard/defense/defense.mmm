@@ -129,7 +129,7 @@
 !mmm       else if count(defenseWeaponList) == 1
 !mmm         set cWeaponLabel = cOwnID.(defenseWeaponList)
 !mmm       else 
-!mmm         do m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)
+!mmm         chat: /w "${cOwnID.character_name}" ${m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)}
 !mmm         exit script
 !mmm       end if
 !mmm     end if
