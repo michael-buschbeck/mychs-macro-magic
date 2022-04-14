@@ -1317,11 +1317,11 @@
 !mmm   return payload
 !mmm end function
 !rem
-!rem // _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, [rollData])
+!rem // _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, [rollData], [rollConfig])
 !rem //
-!rem //   Returns payload code for a chat button for tokenID to use weaponLabel (offensive or defensive) with scriptCommand, (re)using rollData about previous die rolls.
+!rem //   Returns payload code for a chat button for tokenID to use weaponLabel (offensive or defensive) with scriptCommand, (re)using rollData/rollConfig about previous die rolls.
 !rem //
-!mmm function _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData)
+!mmm function _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData, rollConfig)
 !mmm
 !mmm   set weaponScriptCommand = m3mgdScriptCommands.(weaponsGroup)
 !rem   // Overwrite weaponScriptCommand if there is a custom config script registered for weaponLabel in tokenID's character sheet
@@ -1334,19 +1334,42 @@
 !mmm   set payload = payload & literal("!mmm set cOwnID=\"" & tokenID & "\"") & "&#13;"
 !mmm
 !mmm   if weaponsGroup eq "melee" or weaponsGroup eq "ranged"
-!mmm       
-!mmm     set payload = payload & literal("!mmm set cTargetID=\"@" & "{target|Angriffsziel|token_id}\"") & "&#13;"
+!mmm     
+!mmm     if not isdefault(rollConfig) and rollConfig.cTargetID ne ""
+!mmm       set payload = payload & literal("!mmm set cTargetID=\"" & rollConfig.cTargetID & "\"") & "&#13;"
+!mmm     else 
+!mmm       set payload = payload & literal("!mmm set cTargetID=\"@" & "{target|Angriffsziel|token_id}\"") & "&#13;"
+!mmm     end if
+!mmm     
 !mmm     set payload = payload & literal("!mmm set cWeaponLabel=\"@" & "{" & tokenID.character_name & "|" & findattr(tokenID, "Angriff", "Waffe", weaponLabel) & "}\"") & "&#13;"
 !mmm
 !mmm     if weaponsGroup eq "melee"
+!mmm
 !mmm       set payload = payload & literal("!mmm set cWeaponType=\"" & m3mgdMeleeWeaponType(weaponLabel) & "\"") & "&#13;"
-!mmm       set payload = payload & literal("!mmm set cSemiManualModifiers=") & "?"&"{Standard-Angriffsmodifikatoren|Keine +/-0,?"&"{Keine +/-0 +/-...&amp;vert;Echt keine +/-0&amp;comma;1&amp;vert;Von oben 70cm+ +2&amp;comma;2&amp;vert;Ziel liegt/ich stehe +4&amp;comma;3&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;5&amp;vert;Ziel flieht panisch +4&amp;comma;7&amp;rbrace;|Spontan -4,?"&"{Spontan -4 +/-...&amp;vert;Nix weiter +/-0&amp;comma;11&amp;vert;Von oben 70cm+ +2&amp;comma;22&amp;vert;Ziel liegt/ich stehe +4&amp;comma;33&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;55&amp;vert;Ziel flieht panisch +4&amp;comma;77&amp;rbrace;|Überstürzt -6,?"&"{Überstürzt -6 +/-...&amp;vert;Nix weiter +/-0&amp;comma;13&amp;vert;Von oben 70cm+ +2&amp;comma;26&amp;vert;Ziel liegt/ich stehe +4&amp;comma;39&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;65&amp;vert;Ziel flieht panisch +4&amp;comma;91&amp;rbrace;|Völlig dunkel/geblendet -6,?"&"{Völlig dunkel/geblendet -6 +/-...&amp;vert;Nix weiter +/-0&amp;comma;17&amp;vert;Von oben 70cm+ +2&amp;comma;34&amp;vert;Ziel liegt/ich stehe +4&amp;comma;51&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;85&amp;vert;Ziel flieht panisch +4&amp;comma;119&amp;vert;Spontan -4&amp;comma;?"&"{Keine +/-0 +/-...&amp;amp;vert;Echt keine +/-0&amp;amp;comma;187&amp;amp;vert;Von oben 70cm+ +2&amp;amp;comma;374&amp;amp;vert;Ziel liegt/ich stehe +4&amp;amp;comma;561&amp;amp;vert;Ziel wehrlos/überrascht +4&amp;amp;comma;935&amp;amp;vert;Ziel flieht panisch +4&amp;amp;comma;1309&amp;amp;rbrace;&amp;vert;Überstürzt -6&amp;comma;?"&"{Keine +/-0 +/-...&amp;amp;vert;Echt keine +/-0&amp;amp;comma;221&amp;amp;vert;Von oben 70cm+ +2&amp;amp;comma;442&amp;amp;vert;Ziel liegt/ich stehe +4&amp;amp;comma;663&amp;amp;vert;Ziel wehrlos/überrascht +4&amp;amp;comma;1105&amp;amp;vert;Ziel flieht panisch +4&amp;amp;comma;1547&amp;amp;rbrace;&amp;rbrace; }&#13;"
+!mmm
+!mmm       if not isdefault(rollConfig) and rollConfig.cSemiManualModifiers
+!mmm         set payload = payload & literal("!mmm set cSemiManualModifiers=" & rollConfig.cSemiManualModifiers) & "&#13;"
+!mmm       else
+!mmm         set payload = payload & literal("!mmm set cSemiManualModifiers=") & "?"&"{Standard-Angriffsmodifikatoren|Keine +/-0,?"&"{Keine +/-0 +/-...&amp;vert;Echt keine +/-0&amp;comma;1&amp;vert;Von oben 70cm+ +2&amp;comma;2&amp;vert;Ziel liegt/ich stehe +4&amp;comma;3&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;5&amp;vert;Ziel flieht panisch +4&amp;comma;7&amp;rbrace;|Spontan -4,?"&"{Spontan -4 +/-...&amp;vert;Nix weiter +/-0&amp;comma;11&amp;vert;Von oben 70cm+ +2&amp;comma;22&amp;vert;Ziel liegt/ich stehe +4&amp;comma;33&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;55&amp;vert;Ziel flieht panisch +4&amp;comma;77&amp;rbrace;|Überstürzt -6,?"&"{Überstürzt -6 +/-...&amp;vert;Nix weiter +/-0&amp;comma;13&amp;vert;Von oben 70cm+ +2&amp;comma;26&amp;vert;Ziel liegt/ich stehe +4&amp;comma;39&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;65&amp;vert;Ziel flieht panisch +4&amp;comma;91&amp;rbrace;|Völlig dunkel/geblendet -6,?"&"{Völlig dunkel/geblendet -6 +/-...&amp;vert;Nix weiter +/-0&amp;comma;17&amp;vert;Von oben 70cm+ +2&amp;comma;34&amp;vert;Ziel liegt/ich stehe +4&amp;comma;51&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;85&amp;vert;Ziel flieht panisch +4&amp;comma;119&amp;vert;Spontan -4&amp;comma;?"&"{Keine +/-0 +/-...&amp;amp;vert;Echt keine +/-0&amp;amp;comma;187&amp;amp;vert;Von oben 70cm+ +2&amp;amp;comma;374&amp;amp;vert;Ziel liegt/ich stehe +4&amp;amp;comma;561&amp;amp;vert;Ziel wehrlos/überrascht +4&amp;amp;comma;935&amp;amp;vert;Ziel flieht panisch +4&amp;amp;comma;1309&amp;amp;rbrace;&amp;vert;Überstürzt -6&amp;comma;?"&"{Keine +/-0 +/-...&amp;amp;vert;Echt keine +/-0&amp;amp;comma;221&amp;amp;vert;Von oben 70cm+ +2&amp;amp;comma;442&amp;amp;vert;Ziel liegt/ich stehe +4&amp;amp;comma;663&amp;amp;vert;Ziel wehrlos/überrascht +4&amp;amp;comma;1105&amp;amp;vert;Ziel flieht panisch +4&amp;amp;comma;1547&amp;amp;rbrace;&amp;rbrace; }&#13;"
+!mmm       end if
+!mmm
 !mmm     else if weaponsGroup eq "ranged"
+!mmm
 !mmm       set payload = payload & literal("!mmm set cWeaponType=\"" & m3mgdRangedWeaponProperties(weaponLabel)[0] & "\"") & "&#13;"
-!mmm       set payload = payload & literal("!mmm set cSemiManualModifiers=") & "?"&"{Standard-Angriffsmodifikatoren|Keine +/-0,?"&"{Keine +/-0 +/-...&amp;vert;Echt keine +/-0&amp;comma;1&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;2&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;3&amp;vert;Großes Ziel 2xMensch +2&amp;comma;5&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;7&amp;vert;Ins Handgemenge/Zufallsopfer +4&amp;comma;17&amp;rbrace;|Spontan -4,?"&"{Spontan -4 +/-...&amp;vert;Nix weiter +/-0&amp;comma;11&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;22&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;33&amp;vert;Großes Ziel 2xMensch +2&amp;comma;55&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;77&amp;vert;Schnelles Ziel/B30+ -2&amp;comma;143&amp;vert;Ins Handgemenge/Zufallsopfer +4&amp;comma;187&amp;rbrace;|Schnelles Ziel/B30+ -2,?"&"{Schnelles Ziel/B30+ -2 +/-...&amp;vert;Nix weiter +/-0&amp;comma;13&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;26&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;39&amp;vert;Großes Ziel 2xMensch +2&amp;comma;65&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;91&amp;vert;Spontan -4&amp;comma;143&amp;vert;10 Sekunden gezielt +4&amp;comma;247&amp;rbrace;|10 Sekunden gezielt +4,?"&"{10 Sekunden gezielt +4 +/-...&amp;vert;Nix weiter +/-0&amp;comma;19&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;38&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;57&amp;vert;Großes Ziel 2xMensch +2&amp;comma;95&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;133&amp;vert;Schnelles Ziel/B30+ -2&amp;comma;247&amp;rbrace;|Scharfschießen +4/Spezial,?"&"{Scharfschießen +4/Spezial&amp;vert;Nix weiter +/-0&amp;comma;23&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;46&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;69&amp;vert;Großes Ziel 2xMensch +2&amp;comma;115&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;161&amp;vert;Schnelles Ziel/B30+ -2&amp;comma;299&amp;rbrace; }&#13;"
+!mmm
+!mmm       if not isdefault(rollConfig) and rollConfig.cSemiManualModifiers
+!mmm         set payload = payload & literal("!mmm set cSemiManualModifiers=" & rollConfig.cSemiManualModifiers) & "&#13;"
+!mmm       else
+!mmm         set payload = payload & literal("!mmm set cSemiManualModifiers=") & "?"&"{Standard-Angriffsmodifikatoren|Keine +/-0,?"&"{Keine +/-0 +/-...&amp;vert;Echt keine +/-0&amp;comma;1&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;2&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;3&amp;vert;Großes Ziel 2xMensch +2&amp;comma;5&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;7&amp;vert;Ins Handgemenge/Zufallsopfer +4&amp;comma;17&amp;rbrace;|Spontan -4,?"&"{Spontan -4 +/-...&amp;vert;Nix weiter +/-0&amp;comma;11&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;22&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;33&amp;vert;Großes Ziel 2xMensch +2&amp;comma;55&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;77&amp;vert;Schnelles Ziel/B30+ -2&amp;comma;143&amp;vert;Ins Handgemenge/Zufallsopfer +4&amp;comma;187&amp;rbrace;|Schnelles Ziel/B30+ -2,?"&"{Schnelles Ziel/B30+ -2 +/-...&amp;vert;Nix weiter +/-0&amp;comma;13&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;26&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;39&amp;vert;Großes Ziel 2xMensch +2&amp;comma;65&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;91&amp;vert;Spontan -4&amp;comma;143&amp;vert;10 Sekunden gezielt +4&amp;comma;247&amp;rbrace;|10 Sekunden gezielt +4,?"&"{10 Sekunden gezielt +4 +/-...&amp;vert;Nix weiter +/-0&amp;comma;19&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;38&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;57&amp;vert;Großes Ziel 2xMensch +2&amp;comma;95&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;133&amp;vert;Schnelles Ziel/B30+ -2&amp;comma;247&amp;rbrace;|Scharfschießen +4/Spezial,?"&"{Scharfschießen +4/Spezial&amp;vert;Nix weiter +/-0&amp;comma;23&amp;vert;Mini-Ziel 1/4xMensch -4&amp;comma;46&amp;vert;Kleines Ziel 1/2xMensch -2&amp;comma;69&amp;vert;Großes Ziel 2xMensch +2&amp;comma;115&amp;vert;Riesiges Ziel 4xMensch +4&amp;comma;161&amp;vert;Schnelles Ziel/B30+ -2&amp;comma;299&amp;rbrace; }&#13;"
+!mmm       end if
+!mmm
 !mmm     end if
 !mmm
-!mmm     set payload = payload & literal("!mmm set cManualModifiers=?" & "{Weitere spezielle Angriffsmodifikatoren|0}") & "&#13;"
+!mmm     if not isdefault(rollConfig) and rollConfig.cManualModifiers ne undef
+!mmm       set payload = payload & literal("!mmm set cManualModifiers=" & rollConfig.cManualModifiers) & "&#13;"
+!mmm     else
+!mmm       set payload = payload & literal("!mmm set cManualModifiers=?" & "{Weitere spezielle Angriffsmodifikatoren|0}") & "&#13;"
+!mmm     end if
 !mmm
 !mmm     if tokenID.PC
 !mmm       set payload = payload & literal("!mmm set cGMSilentMode=false") & "&#13;"
@@ -1729,7 +1752,7 @@
 !rem
 !rem // m3mgdChatDefensePrompt(targetID, [attackerID], weaponType)
 !rem //
-!mmm function m3mgdChatDefensePrompt(targetID, attackerID, weaponType)
+!mmm function m3mgdChatDefensePrompt(targetID, attackerID, weaponType, weaponsGroup)
 !mmm   
 !mmm   if isdefault(targetID) or not m3mgdValidateOwnTokenID(targetID)
 !mmm     do whisperback("m3mgdChatDefensePrompt() called without a valid target ID.")
@@ -1747,10 +1770,13 @@
 !mmm     chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", weaponType)}
 !mmm   else
 !mmm     set sender = attackerID.token_name
-!mmm     set payload = "!mmm script&#13;"
-!mmm     set payload = payload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
-!mmm     set payload = payload & "!mmm end script&#13;"
-!mmm     chat: /w GM [🖅 **an ${targetID.character_name}**](${payload})
+!mmm     set approvePayload = "!mmm script&#13;"
+!mmm     set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
+!mmm     set approvePayload = approvePayload & "!mmm end script&#13;"
+!mmm
+!mmm     set rerollPayload = _m3mgdWeaponButtonPayload(attackerID, weaponsGroup, script.cWeaponLabel, default, { cTargetID: targetID, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
+!mmm
+!mmm     chat: /w GM [🖅 **an ${targetID.character_name}**](${approvePayload}) &nbsp; *oder* &nbsp; [🎲 nochmal würfeln](${rerollPayload})
 !mmm   end if
 !mmm   return true
 !mmm   

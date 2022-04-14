@@ -528,7 +528,7 @@
 !mmm   end if
 !mmm   
 !mmm   if attackResult >= 20
-!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType)
+!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType, "ranged")
 !mmm   end if
 !mmm
 !mmm end script
