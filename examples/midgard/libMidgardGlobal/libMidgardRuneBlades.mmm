@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgardRuneBlades()
 !mmm   
-!mmm   set libVersion = "libMidgardRuneBlades v1.0.0 (2022-02-22)"
+!mmm   set libVersion = "libMidgardRuneBlades v1.0.1 (2022-03-17)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Game-global constants for publication
@@ -42,7 +42,7 @@
 !mmm   end if
 !mmm   set sender = tokenID.character_name
 !mmm
-!mmm   if tokenID.(script.cEnduranceAttr) <= 0
+!mmm   if tokenID.(script.cEnduranceAttr) <= 0 and command ne "cancel-first"
 !mmm
 !mmm     return false
 !mmm     
