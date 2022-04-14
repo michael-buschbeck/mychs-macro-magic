@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-03-16)"
+!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-03-18)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -71,7 +71,18 @@
 !mmm     do whisperback(scriptVersion & ": Invalid own token ID configured. Check custom config script.")
 !mmm     exit script
 !mmm   end if
-!rem
+!mmm
+!rem   // Abort attack if injury status does not allow for it
+!mmm   for statusRule in m3mgdInjuryStatus... where cOwnID.("status_" & ...key) eq "shown"
+!mmm     if statusRule.value.noAttack
+!mmm       set noAttackStatusList = noAttackStatusList, statusRule.value.icon & statusRule.value.label
+!mmm     end if
+!mmm   end for
+!mmm   if noAttackStatusList
+!mmm     do whisperback(cOwnID.name & " kann im Moment nicht angreifen: " & stringify(noAttackStatusList, "", ", "))
+!mmm     exit script
+!mmm   end if
+!mmm
 !rem   // Constants
 !rem
 !mmm   set emojiMagic = "✨"
@@ -134,12 +145,12 @@
 !mmm   set semiAutoModifiers = 0
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
-!rem   // 1. Attacker exhausted
-!mmm   if m3mgdIsExhausted(cOwnID)
-!mmm     set autoModifiers = autoModifiers - 4
-!mmm     set modifierLog = modifierLog & " {{Angreifer erschöpft ([" & cOwnID.name & "].AP:0)=-4}} "
-!mmm     set modifierTooltip = modifierTooltip & " Angreifer&nbsp;erschöpft&nbsp;&nbsp;&nbsp;-4 "
-!mmm   end if
+!rem   // 1. Attacker's active status markers for exhaustion, injury etc.
+!mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "melee")
+!mmm     set autoModifiers = autoModifiers + activeMod.value.rollModifiers.melee
+!mmm     set modifierLog = modifierLog & " {{" & activeMod.value.label & "=" & activeMod.value.rollModifiers.melee & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & activeMod.value.label & "&nbsp;&nbsp;&nbsp;" & activeMod.value.rollModifiers.melee & " "
+!mmm   end for
 !rem   // 2. Target exhausted
 !mmm   if m3mgdIsExhausted(cTargetID)
 !mmm     set autoModifiers = autoModifiers + 4
