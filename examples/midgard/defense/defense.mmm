@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 1.16.0-pre (2022-02-22)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2022-02-22)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion

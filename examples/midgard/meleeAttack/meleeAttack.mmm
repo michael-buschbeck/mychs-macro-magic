@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "v1.16.0-pre (2022-02-18)"
+!mmm   set scriptVersion = "v2.0.0-pre (2022-02-26)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -22,53 +22,60 @@
 !rem
 !rem   // Config: set defaults for customizable variables
 !rem   //
-!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cWeaponLabel         The label of the weapon, must be identical to your combat sheet
 !rem   //  cWeaponName          Optional: The name of a named weapon, e.g. "Sting"
 !rem   //  cWeaponType          The type of weapon for narration, the "sword" in "I'm swinging my sword Glamdring"
 !rem   //  cMagicExtraDamageMarker   Attribute in which activity status (true/false) of the weapon's magic is stored
 !rem   //  cMagicExtraDamage    Damage roll expression ("1d6+x") for additional magic damage
-!rem   //  cFoeNameDefault      Output label for targets without names
-!rem   //
-!mmm   set customizable cVerbose = true
+!mmm   if selected and sender.token_id ne selected and m3mgdValidateOwnTokenID(selected.token_id)
+!mmm     set customizable cOwnID = selected.token_id
+!mmm   else if m3mgdValidateOwnTokenID(sender.token_id)
+!mmm     set customizable cOwnID = sender.token_id
+!mmm   end if
 !mmm   set customizable cWeaponLabel = ""
 !mmm   set customizable cWeaponName = ""
 !mmm   set customizable cWeaponType = default
 !mmm   set customizable cMagicExtraDamageMarker = ""
 !mmm   set customizable cMagicExtraDamage = ""
 !mmm   set customizable cMagicExtraDamageLabel = "" 
+!mmm
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
+!rem   //  cFoeNameDefault      Output label for targets without names
+!rem   //
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cGMSilentMode = (cOwnID.PC != 1)
 !mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
 !rem
-!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
-!rem   //  cHealthAttr          Override if the script operates on a token for a generic NPC
-!rem   //  cEnduranceAttr       Override if the script operates on a token for a generic NPC
-!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
 !rem   //  cAttackRoll          Override by player to see beautifully animated 3D dice
-!mmm   set customizable cOwnID = sender.token_id
-!mmm   set customizable cHealthAttr = "bar3"
-!mmm   set customizable cEnduranceAttr = "bar2"
-!mmm   set customizable cGMSilentMode = false
+!rem   //
+!mmm   set customizable cTargetID = ""
+!mmm   set customizable cSemiManualModifiers = default
+!mmm   set customizable cManualModifiers = default
 !mmm   set customizable cAttackRoll = roll("1d20")
 !mmm
-!rem   // Refetch token_id to ensure access in case of erroneous override in customize block
-!mmm   set cOwnID = cOwnID.token_id
-!mmm   if isdenied(cOwnID)
-!mmm     do whisperback("Abbruch: Keine Zuordnung zu einem zugreifbaren Charakter möglich - " & getreason(cOwnID)) 
-!mmm     exit script
-!mmm   end if
+!rem
+!rem   // Initialize & collect data
 !rem
 !rem   // Override chat sender for characters unconnected to the player (usually NPCs)
 !mmm   if cOwnID.token_name ne sender
 !mmm     set sender = cOwnID.token_name
 !mmm   end if
+!mmm   
+!rem   // Refetch token id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = m3mgdValidateOwnTokenID(cOwnID)
+!rem
+!rem   // For player chars, work with the charsheet LP/AP attributes; for NPCs, use the token bars in case they are generic NPCs
+!mmm   set cHealthAttr = m3mgdGetHealthAttribute(cOwnID)
+!mmm   set cEnduranceAttr = m3mgdGetEnduranceAttribute(cOwnID)
+!mmm   
 !rem
 !rem   // Constants
 !rem
 !mmm   set emojiLock = "🔒"
 !mmm   set emojiMagic = "✨"
 !mmm   set emojiKnife = "🔪"
-!mmm
-!mmm   set whirlWindMagicMarker = "status_half_haze"
 !mmm
 !rem   // Validate attack weapon and request manual entry if selection is missing
 !mmm
@@ -104,22 +111,21 @@
 !mmm   
 !rem   // Initialize target token
 !mmm
-!mmm   set customizable foeID = "@{target|Angriffsziel|token_id}"
-!mmm   set foeName = foeID.name
+!mmm   set foeName = cTargetID.name
 !mmm   if isdenied(foeName) or isunknown(foeName)
 !mmm     set foeName = cFoeNameDefault
 !mmm   end if
-!mmm   set foeEndurance = foeID.bar2
-!mmm
+!mmm   set foeEndurance = cTargetID.bar2
+!mmm 
 !rem   // Check for melee range (<=1 grid cell) and orientation, prepare calculations for attack from behind
 !rem
-!mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, foeID)
+!mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, cTargetID)
 !mmm   if (myViewAngle < -90) or (myViewAngle > 90)
 !mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes ($[viewAngle]{myViewAngle}°). Schade.
 !mmm     exit script
 !mmm   end if
-!mmm   set foeViewAngle = m3mgdGetViewAngle(foeID, cOwnID)
-!mmm   set distance = m3mgdGetDistance(cOwnID, foeID)
+!mmm   set foeViewAngle = m3mgdGetViewAngle(cTargetID, cOwnID)
+!mmm   set distance = m3mgdGetDistance(cOwnID, cTargetID)
 !mmm   set distanceUnits = distunits() 
 !mmm   if (distance/(distsnap()*distscale())) > 0
 !mmm     chat [OutsideStrikeDistance]: $[targetName]{foeName} ist zu weit entfernt für mein $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} * ($[weaponLabel]{cWeaponLabel}). Schade.
@@ -130,6 +136,7 @@
 !rem
 !mmm   set modifiers = 0
 !mmm   set autoModifiers = 0
+!mmm   set semiAutoModifiers = 0
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !rem   // 1. Attacker exhausted
@@ -142,7 +149,7 @@
 !mmm   if isdenied(foeEndurance) 
 !mmm     set modifierLog = modifierLog & " {{[" & foeName & "].AP&nbsp;" & emojiLock & "=**ggf. EW+2**}}"
 !mmm     set modifierTooltip = modifierTooltip & " Ziel.AP&nbsp;" & emojiLock & "=ggf. EW+2 "
-!mmm   else if foeID.bar2.max > 0 and foeEndurance <= 0
+!mmm   else if cTargetID.bar2.max > 0 and foeEndurance <= 0
 !mmm     set autoModifiers = autoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
@@ -153,59 +160,54 @@
 !mmm     set modifierLog = modifierLog & " {{Angriff von hinten=+2}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;von&nbsp;hinten&nbsp;&nbsp;&nbsp;+2 "
 !mmm   end if
-!rem   // Collect additional standard modifiers from user via dropdown menu
-!mmm   set semiAutoModCode = "?{Standard-Angriffsmodifikatoren|   Normaler Angriff +/-0, ?{Normaler Angriff +/- ... &#124;      NORMAL HALT +/-0              &#44; 1 &#124;      Angriff von oben (70cm+) +2   &#44; 2 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 3 &#124;      Wehrloses Ziel/Überraschung +4             &#44; 5 &#124;      Panisch fliehendes Ziel +4    &#44; 7   &#125; |   Spontaner Angriff -4, ?{Spontaner Angriff -4 +/- ... &#124;      Nix weiter +/-0               &#44; 11 &#124;      Angriff von oben (70cm+) +2   &#44; 22 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 33 &#124;      Wehrloses Ziel/Überraschung +4             &#44; 55 &#124;      Panisch fliehendes Ziel +4    &#44; 77   &#125; |   Überstürzter Angriff -6, ?{Überstürzter Angriff -6 +/- ... &#124;      Nix weiter +/-0               &#44; 13 &#124;      Angriff von oben (70cm+) +2   &#44; 26 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 39 &#124;      Wehrloses Ziel/Überraschung +4             &#44; 65 &#124;      Panisch fliehendes Ziel +4    &#44; 91   &#125; |   Völlige Dunkelheit/Blendung -6, ?{Völlige Dunkelheit/Blendung -6 +/- ... &#124;      Nix weiter +/-0               &#44; 17 &#124;      Angriff von oben (70cm+) +2   &#44; 34 &#124;      Liegendes Ziel (ich stehe) +4 &#44; 51 &#124;      Wehrloses Ziel/Überraschung +4             &#44; 85 &#124;      Panisch fliehendes Ziel +4    &#44; 119 &#124;       Spontaner Angriff -4 &#44; ?{Völlige Dunkelheit/Blendung -6 Spontaner Angriff -4 +/- ... &amp;#124;         Das war alles               &amp;#44; 187 &amp;#124;         Angriff von oben (70cm+) +2 &amp;#44; 374 &amp;#124;         Liegendes Ziel (ich stehe) +4 &amp;#44; 561 &amp;#124;         Wehrloses Ziel/Überraschung +4           &amp;#44; 935 &amp;#124;         Panisch fliehendes Ziel +4  &amp;#44; 1309       &amp;#125; &#124;       Überstürzter Angriff -6 &#44; ?{Völlige Dunkelheit/Blendung -6 Überstürzter Angriff -6 +/- ... &amp;#124;        Das war alles               &amp;#44; 221 &amp;#124;        Angriff von oben (70cm+) +2 &amp;#44; 442 &amp;#124;        Liegendes Ziel (ich stehe) +4 &amp;#44; 663 &amp;#124;        Wehrloses Ziel/Überraschung +4           &amp;#44; 1105 &amp;#124;        Panisch fliehendes Ziel +4  &amp;#44; 1547       &amp;#125;    &#125; }"
-!mmm   if semiAutoModCode % 17 == 0
+!rem   // Process additional standard modifiers collected from user via dropdown menu in a customize block
+!mmm   if cSemiManualModifiers % 17 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 6
 !mmm     set modifierLog = modifierLog & " {{Völlige Dunkelheit / geblendet=-6}} "
 !mmm     set modifierTooltip = modifierTooltip & " Völlige&nbsp;Dunkelheit/geblendet&nbsp;&nbsp;&nbsp;-6 "
 !mmm   end if
-!mmm   if semiAutoModCode % 13 == 0
+!mmm   if cSemiManualModifiers % 13 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 6
 !mmm     set modifierLog = modifierLog & " {{Überstürzter Angriff=-6}} "
 !mmm     set modifierTooltip = modifierTooltip & " Überstürzter&nbsp;Angriff&nbsp;&nbsp;&nbsp;-6 "
 !mmm   end if
-!mmm   if semiAutoModCode % 11 == 0
+!mmm   if cSemiManualModifiers % 11 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers - 4
 !mmm     set modifierLog = modifierLog & " {{Spontaner Angriff=-4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Spontaner&nbsp;Angriff&nbsp;&nbsp;&nbsp;-4 "
 !mmm   end if
-!mmm   if semiAutoModCode % 7 == 0
+!mmm   if cSemiManualModifiers % 7 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel flieht panisch=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;flieht&nbsp;panisch&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
-!mmm   if semiAutoModCode % 5 == 0
+!mmm   if cSemiManualModifiers % 5 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel wehrlos=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;wehrlos&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
-!mmm   if semiAutoModCode % 3 == 0
+!mmm   if cSemiManualModifiers % 3 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 4
 !mmm     set modifierLog = modifierLog & " {{Ziel liegt=+4}} "
 !mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;liegt&nbsp;&nbsp;&nbsp;+4 "
 !mmm   end if
-!mmm   if semiAutoModCode % 2 == 0
+!mmm   if cSemiManualModifiers % 2 == 0
 !mmm     set semiAutoModifiers = semiAutoModifiers + 2
 !mmm     set modifierLog = modifierLog & " {{Angriff von oben=+2}} "
 !mmm     set modifierTooltip = modifierTooltip & " Angriff&nbsp;von&nbsp;oben&nbsp;&nbsp;&nbsp;+2 "
 !mmm   end if
 !rem   // Ask for individual modifiers and sum up the various modifiers
-!mmm   set manualModifiers = "?{Weitere spezielle Angriffsmodifikatoren|0}"
-!mmm   if manualModifiers != 0
-!mmm     if manualModifiers > 0
-!mmm       set manualModifiers = "+" & (manualModifiers * 1)
+!mmm   if cManualModifiers != 0
+!mmm     if cManualModifiers > 0
+!mmm       set cManualModifiers = "+" & (cManualModifiers * 1)
 !mmm     end if
-!mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & manualModifiers & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & manualModifiers & " "
+!mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & cManualModifiers & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & cManualModifiers & " "
 !mmm   end if
-!mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + manualModifiers
+!mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + cManualModifiers
 !rem
 !rem   // Run & format rolls
 !rem
-!mmm   if cGMSilentMode
-!mmm     set cAttackRoll = roll("1d20")
-!mmm   end if
 !mmm   set attackResult = cAttackRoll + effAttack + modifiers
 !mmm   if modifiers == 0
 !mmm     set modifiers = "+/-0"
@@ -264,7 +266,7 @@
 !mmm
 !rem   // Register practice point, if applicable
 !mmm   if iscritical(cAttackRoll) and foeEndurance > 0
-!mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel, foeID)
+!mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel, cTargetID)
 !mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
 !mmm     end if
 !mmm   else if iscritical(cAttackRoll)
@@ -334,7 +336,7 @@
 !mmm       chat: /w GM 
 !mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}}} 
-!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(foeID)}}}
+!mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(cTargetID)}}}
 !mmm     if attackResult >= 20
 !mmm       chat:    {{Erfolg=$[attackResult]{attackResult} (**Wurf**&nbsp;$[attackRoll]{cAttackRoll})}}
 !mmm     else 
@@ -354,6 +356,6 @@
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm   if attackResult >= 20
-!mmm     do m3mgdWeaponSelectorChatMenu(foeID, "defense", cWeaponType)
+!mmm     do m3mgdWeaponSelectorChatMenu(cTargetID, "defense", cWeaponType)
 !mmm   end if
 !mmm end script
