@@ -2450,7 +2450,7 @@ class MychScriptContext extends MychProperties
         if (!updateKey)
         {
             let currentOrMaxDescription = (max ? "Maximum" : "Current");
-            return new MychScriptContext.Unknown(currentOrMaxDescription + " value of attribute <strong>" + this.literal(attributeName) + "</strong> does not exist and cannot be created");
+            return new MychScriptContext.Unknown(currentOrMaxDescription + " value of attribute <strong>" + this.literal(attributeName) + "</strong> cannot be created");
         }
         
         if (!this.$canControlAttribute(updateObj, attributeName))
