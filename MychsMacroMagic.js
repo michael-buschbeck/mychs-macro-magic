@@ -968,6 +968,51 @@ class MychScriptContext extends MychProperties
         }
     }
 
+    getpage(playerId)
+    {
+        playerId = MychExpression.coerceString(playerId);
+
+        if (playerId == "")
+        {
+            playerId = this.playerid;
+        }
+
+        if (playerId != this.playerid && !this.privileged)
+        {
+            return new MychScriptContext.Denied("Player <strong>" + this.literal(playerId) + "</strong> inaccessible");
+        }
+
+        // requires use of playerIsGM() instead of this.privileged
+        if (playerIsGM(playerId))
+        {
+            let playerObj = getObj("player", playerId);
+
+            if (playerObj)
+            {
+                let privilegedPlayerPageId = playerObj.get("lastpage");
+
+                if (getObj("page", privilegedPlayerPageId))
+                {
+                    return privilegedPlayerPageId;
+                }
+            }
+        }
+
+        let specificPlayerPageIds = Campaign().get("playerspecificpages");
+
+        if (specificPlayerPageIds)
+        {
+            let specficPlayerPageId = specificPlayerPageIds[playerId];
+
+            if (specificPlayerPageIds != undefined)
+            {
+                return specficPlayerPageId;
+            }
+        }
+
+        return Campaign().get("playerpageid");
+    }
+
     literal(value)
     {
         return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";");
@@ -1379,7 +1424,7 @@ class MychScriptContext extends MychProperties
 
     distunits()
     {
-        let playerPageId = Campaign().get("playerpageid");
+        let playerPageId = this.getpage();
         let playerPage = getObj("page", playerPageId)
 
         if (!playerPage)
@@ -1392,7 +1437,7 @@ class MychScriptContext extends MychProperties
 
     distscale()
     {
-        let playerPageId = Campaign().get("playerpageid");
+        let playerPageId = this.getpage();
         let playerPage = getObj("page", playerPageId)
 
         if (!playerPage)
@@ -1411,7 +1456,7 @@ class MychScriptContext extends MychProperties
 
     distsnap()
     {
-        let playerPageId = Campaign().get("playerpageid");
+        let playerPageId = this.getpage();
         let playerPage = getObj("page", playerPageId)
 
         if (!playerPage)
@@ -1696,7 +1741,7 @@ class MychScriptContext extends MychProperties
             return this.$canView(getObj("character", characterId));
         }
 
-        let playerPageId = Campaign().get("playerpageid");
+        let playerPageId = this.getpage();
 
         if (objType == "page" && obj.id == playerPageId)
         {
@@ -1798,7 +1843,7 @@ class MychScriptContext extends MychProperties
 
             case "character":
             {
-                let playerPageId = Campaign().get("playerpageid");
+                let playerPageId = this.getpage();
                 let tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: playerPageId, layer: "objects" });
                 return (tokens ? tokens[0] : undefined);
             }
@@ -2022,7 +2067,7 @@ class MychScriptContext extends MychProperties
             {
                 if (max)
                 {
-                    lookupObj = getObj("page", Campaign().get("playerpageid"));
+                    lookupObj = getObj("page", this.getpage());
                     lookupKey = (attributeName == "left" ? "width" : "height");
                     lookupMod = val => 70 * val;
                 }
