@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.28.3";
+const MMM_VERSION = "1.29.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1011,6 +1011,141 @@ class MychScriptContext extends MychProperties
         }
 
         return Campaign().get("playerpageid");
+    }
+
+    showtracker(shown)
+    {
+        if (arguments.length == 0)
+        {
+            return Boolean(Campaign().get("initiativepage"));
+        }
+
+        if (!this.privileged)
+        {
+            return new MychScriptContext.Denied("Updating tracker visibility requires GM privileges");
+        }
+
+        shown = MychExpression.coerceBoolean(shown);
+
+        Campaign().set("initiativepage", shown);
+        return shown;
+    }
+
+    gettracker()
+    {
+        if (!this.privileged && !this.showtracker())
+        {
+            return [];
+        }
+
+        let entriesString = Campaign().get("turnorder");
+
+        if (entriesString == "")
+        {
+            return [];
+        }
+
+        let entries = JSON.parse(entriesString);
+        let entryStructs = [];
+
+        let playerPageId = this.getpage();
+
+        for (let entry of entries)
+        {
+            if (!(this.privileged || entry.id == "-1" || entry._pageid == playerPageId))
+            {
+                continue;
+            }
+
+            let entryTitle;
+            let entryToken;
+
+            if (entry.id == "-1")
+            {
+                entryTitle = entry.custom;
+                entryToken = new MychScriptContext.Unknown("No token associated with tracker entry <strong>" + this.literal(entryTitle) + "</strong>");
+            }
+            else
+            {
+                entryTitle = MychExpression.coerceString(this.getattr(entry.id, "token_name"));
+                entryToken = entry.id;
+            }
+
+            let entryStruct = new MychExpressionStruct(
+            {
+                title: entryTitle,
+                token: entryToken,
+                value: entry.pr,
+            });
+
+            if (entry.formula != undefined)
+            {
+                entryStruct.$setProperty("formula", entry.formula);
+            }
+
+            entryStructs.push(entryStruct);
+        }
+        
+        return entryStructs;
+    }
+
+    settracker(...entryStructs)
+    {
+        if (!this.privileged)
+        {
+            return new MychScriptContext.Denied("Updating tracker entries requires GM privileges");
+        }
+
+        entryStructs = entryStructs.flatMap(MychExpression.coerceList);
+        let entries = [];
+
+        for (let entryStruct of entryStructs)
+        {
+            entryStruct = MychExpression.coerceStruct(entryStruct);
+
+            let entryToken = MychExpression.coerceString(entryStruct.$getProperty("token"));
+            let entryValue = MychExpression.coerceString(entryStruct.$getProperty("value"));
+
+            let [character, token] = this.$getCharacterAndTokenObjs(entryToken);
+
+            let entry = {};
+
+            if (token)
+            {
+                entry._pageid = token.get("pageid");
+                entry.id = token.id;
+                entry.pr = entryValue;
+            }
+            else
+            {
+                let entryTitle = MychExpression.coerceString(entryStruct.$getProperty("title"));
+
+                entry.id = "-1";
+                entry.custom = entryTitle; 
+                entry.pr = entryValue;
+            }
+
+            let entryFormula = MychExpression.coerceString(entryStruct.$getProperty("formula"));
+
+            if (entryFormula != "")
+            {
+                entry.formula = entryFormula;
+            }
+
+            entries.push(entry);
+        }
+
+        if (entries.length == 0)
+        {
+            Campaign().set("turnorder", "");
+        }
+        else
+        {
+            let entriesString = JSON.stringify(entries);
+            Campaign().set("turnorder", entriesString);
+        }
+
+        return this.gettracker();
     }
 
     literal(value)
