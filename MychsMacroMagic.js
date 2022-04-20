@@ -2074,6 +2074,7 @@ class MychScriptContext extends MychProperties
             "token_name",
             "character_id",
             "token_id",
+            "page",
             "bar1",
             "bar2",
             "bar3",
@@ -2185,6 +2186,13 @@ class MychScriptContext extends MychProperties
             {
                 lookupObj = token;
                 lookupKey = (max ? undefined : "id");
+            }
+            break;
+
+            case "page":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "pageid");
             }
             break;
         
@@ -2348,6 +2356,12 @@ class MychScriptContext extends MychProperties
             break;
 
             case "token_id":
+            {
+                updateObj = token;
+            }
+            break;
+
+            case "page":
             {
                 updateObj = token;
             }
