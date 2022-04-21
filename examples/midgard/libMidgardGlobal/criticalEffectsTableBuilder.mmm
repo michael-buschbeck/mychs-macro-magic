@@ -12,7 +12,7 @@
 !mmm     set entryID = 10
 !mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
 !mmm     set entryData = { entryData, desc: 'Du verlierst kurz das Gleichgewicht und brauchst etwas Zeit, um wieder kampfbereit zu sein. Du bekommst für Deinen nächsten Angriff (in der laufenden oder folgenden Runde) -2 auf den EW:Angriff, kannst jedoch ohne Abzug abwehren (konzentrierte Abwehr ist nicht möglich).' }
-!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "attack" }, rollModifiers: { meleeAttack: -2, rangedAttack: -2 } } }
+!mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "attack" }, noFocusedDefense: true, rollModifiers: { meleeAttack: -2, rangedAttack: -2 } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 20
@@ -212,7 +212,7 @@
 !mmm     set entryData = { weight: 29, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Bogen oder Armbrust': 'Du verletzt dich leicht an deiner Waffe und musst die nächste Runde aussetzen.' } }
 !mmm     set entryData = { entryData, persistent: { 'Bogen oder Armbrust': { expiry: { count: "1", type: "round" }, noAttack: true } } }
-!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(myID, 0, "1d6-1", true)' }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(myID, 0, "1d6-1", false)' }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 100
@@ -355,7 +355,7 @@
 !mmm     set entryID = 35
 !mmm     set entryData = { weight: 5, label: '⚅ Rumpftreffer mit Gefahr innerer Verletzungen', url: '' }
 !mmm     set entryData = { entryData, desc: 'Das Opfer verliert zusätzlich zum normalen Schaden 1W6 LP und AP.' }
-!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(foeID, "1d6", "*", true)' }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdProcessInjury(foeID, "1d6", "*", false)' }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 44
