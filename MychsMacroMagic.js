@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.28.2";
+const MMM_VERSION = "1.28.3";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1384,7 +1384,7 @@ class MychScriptContext extends MychProperties
 
         if (!playerPage)
         {
-            return MychScriptContext.Unknown("Player page currently unset")
+            return new MychScriptContext.Unknown("Player page currently unset")
         }
 
         return playerPage.get("scale_units");
@@ -1397,7 +1397,7 @@ class MychScriptContext extends MychProperties
 
         if (!playerPage)
         {
-            return MychScriptContext.Unknown("Player page currently unset")
+            return new MychScriptContext.Unknown("Player page currently unset")
         }
 
         let gridUnitsPerGridCell = playerPage.get("snapping_increment");
@@ -1416,7 +1416,7 @@ class MychScriptContext extends MychProperties
 
         if (!playerPage)
         {
-            return MychScriptContext.Unknown("Player page currently unset")
+            return new MychScriptContext.Unknown("Player page currently unset")
         }
 
         let gridUnitsPerGridCell = playerPage.get("snapping_increment");
