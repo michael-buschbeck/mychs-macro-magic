@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.28.3";
+const MMM_VERSION = "1.29.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -968,6 +968,186 @@ class MychScriptContext extends MychProperties
         }
     }
 
+    getpage(playerId)
+    {
+        playerId = MychExpression.coerceString(playerId);
+
+        if (playerId == "")
+        {
+            playerId = this.playerid;
+        }
+
+        if (playerId != this.playerid && !this.privileged)
+        {
+            return new MychScriptContext.Denied("Player <strong>" + this.literal(playerId) + "</strong> inaccessible");
+        }
+
+        // requires use of playerIsGM() instead of this.privileged
+        if (playerIsGM(playerId))
+        {
+            let playerObj = getObj("player", playerId);
+
+            if (playerObj)
+            {
+                let privilegedPlayerPageId = playerObj.get("lastpage");
+
+                if (getObj("page", privilegedPlayerPageId))
+                {
+                    return privilegedPlayerPageId;
+                }
+            }
+        }
+
+        let specificPlayerPageIds = Campaign().get("playerspecificpages");
+
+        if (specificPlayerPageIds)
+        {
+            let specficPlayerPageId = specificPlayerPageIds[playerId];
+
+            if (specificPlayerPageIds != undefined)
+            {
+                return specficPlayerPageId;
+            }
+        }
+
+        return Campaign().get("playerpageid");
+    }
+
+    showtracker(shown)
+    {
+        if (arguments.length == 0)
+        {
+            return Boolean(Campaign().get("initiativepage"));
+        }
+
+        if (!this.privileged)
+        {
+            return new MychScriptContext.Denied("Updating tracker visibility requires GM privileges");
+        }
+
+        shown = MychExpression.coerceBoolean(shown);
+
+        Campaign().set("initiativepage", shown);
+        return shown;
+    }
+
+    gettracker()
+    {
+        if (!this.privileged && !this.showtracker())
+        {
+            return [];
+        }
+
+        let entriesString = Campaign().get("turnorder");
+
+        if (entriesString == "")
+        {
+            return [];
+        }
+
+        let entries = JSON.parse(entriesString);
+        let entryStructs = [];
+
+        let playerPageId = this.getpage();
+
+        for (let entry of entries)
+        {
+            if (!(this.privileged || entry.id == "-1" || entry._pageid == playerPageId))
+            {
+                continue;
+            }
+
+            let entryTitle;
+            let entryToken;
+
+            if (entry.id == "-1")
+            {
+                entryTitle = entry.custom;
+                entryToken = new MychScriptContext.Unknown("No token associated with tracker entry <strong>" + this.literal(entryTitle) + "</strong>");
+            }
+            else
+            {
+                entryTitle = MychExpression.coerceString(this.getattr(entry.id, "token_name"));
+                entryToken = entry.id;
+            }
+
+            let entryStruct = new MychExpressionStruct(
+            {
+                title: entryTitle,
+                token: entryToken,
+                value: entry.pr,
+            });
+
+            if (entry.formula != undefined)
+            {
+                entryStruct.$setProperty("formula", entry.formula);
+            }
+
+            entryStructs.push(entryStruct);
+        }
+        
+        return entryStructs;
+    }
+
+    settracker(...entryStructs)
+    {
+        if (!this.privileged)
+        {
+            return new MychScriptContext.Denied("Updating tracker entries requires GM privileges");
+        }
+
+        entryStructs = entryStructs.flatMap(MychExpression.coerceList);
+        let entries = [];
+
+        for (let entryStruct of entryStructs)
+        {
+            entryStruct = MychExpression.coerceStruct(entryStruct);
+
+            let entryToken = MychExpression.coerceString(entryStruct.$getProperty("token"));
+            let entryValue = MychExpression.coerceString(entryStruct.$getProperty("value"));
+
+            let [character, token] = this.$getCharacterAndTokenObjs(entryToken);
+
+            let entry = {};
+
+            if (token)
+            {
+                entry._pageid = token.get("pageid");
+                entry.id = token.id;
+                entry.pr = entryValue;
+            }
+            else
+            {
+                let entryTitle = MychExpression.coerceString(entryStruct.$getProperty("title"));
+
+                entry.id = "-1";
+                entry.custom = entryTitle; 
+                entry.pr = entryValue;
+            }
+
+            let entryFormula = MychExpression.coerceString(entryStruct.$getProperty("formula"));
+
+            if (entryFormula != "")
+            {
+                entry.formula = entryFormula;
+            }
+
+            entries.push(entry);
+        }
+
+        if (entries.length == 0)
+        {
+            Campaign().set("turnorder", "");
+        }
+        else
+        {
+            let entriesString = JSON.stringify(entries);
+            Campaign().set("turnorder", entriesString);
+        }
+
+        return this.gettracker();
+    }
+
     literal(value)
     {
         return MychExpression.coerceString(value).replace(/[^\w\s]/ug, char => "&#" + char.codePointAt(0) + ";");
@@ -1379,7 +1559,7 @@ class MychScriptContext extends MychProperties
 
     distunits()
     {
-        let playerPageId = Campaign().get("playerpageid");
+        let playerPageId = this.getpage();
         let playerPage = getObj("page", playerPageId)
 
         if (!playerPage)
@@ -1392,7 +1572,7 @@ class MychScriptContext extends MychProperties
 
     distscale()
     {
-        let playerPageId = Campaign().get("playerpageid");
+        let playerPageId = this.getpage();
         let playerPage = getObj("page", playerPageId)
 
         if (!playerPage)
@@ -1411,7 +1591,7 @@ class MychScriptContext extends MychProperties
 
     distsnap()
     {
-        let playerPageId = Campaign().get("playerpageid");
+        let playerPageId = this.getpage();
         let playerPage = getObj("page", playerPageId)
 
         if (!playerPage)
@@ -1696,7 +1876,7 @@ class MychScriptContext extends MychProperties
             return this.$canView(getObj("character", characterId));
         }
 
-        let playerPageId = Campaign().get("playerpageid");
+        let playerPageId = this.getpage();
 
         if (objType == "page" && obj.id == playerPageId)
         {
@@ -1798,7 +1978,7 @@ class MychScriptContext extends MychProperties
 
             case "character":
             {
-                let playerPageId = Campaign().get("playerpageid");
+                let playerPageId = this.getpage();
                 let tokens = findObjs({ type: "graphic", subtype: "token", represents: characterOrToken.id, pageid: playerPageId, layer: "objects" });
                 return (tokens ? tokens[0] : undefined);
             }
@@ -1894,6 +2074,7 @@ class MychScriptContext extends MychProperties
             "token_name",
             "character_id",
             "token_id",
+            "page",
             "bar1",
             "bar2",
             "bar3",
@@ -2007,6 +2188,13 @@ class MychScriptContext extends MychProperties
                 lookupKey = (max ? undefined : "id");
             }
             break;
+
+            case "page":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "pageid");
+            }
+            break;
         
             case "bar1":
             case "bar2":
@@ -2022,7 +2210,7 @@ class MychScriptContext extends MychProperties
             {
                 if (max)
                 {
-                    lookupObj = getObj("page", Campaign().get("playerpageid"));
+                    lookupObj = getObj("page", this.getpage());
                     lookupKey = (attributeName == "left" ? "width" : "height");
                     lookupMod = val => 70 * val;
                 }
@@ -2172,6 +2360,12 @@ class MychScriptContext extends MychProperties
                 updateObj = token;
             }
             break;
+
+            case "page":
+            {
+                updateObj = token;
+            }
+            break;
         
             case "bar1":
             case "bar2":
@@ -2270,7 +2464,7 @@ class MychScriptContext extends MychProperties
         if (!updateKey)
         {
             let currentOrMaxDescription = (max ? "Maximum" : "Current");
-            return new MychScriptContext.Unknown(currentOrMaxDescription + " value of attribute <strong>" + this.literal(attributeName) + "</strong> does not exist and cannot be created");
+            return new MychScriptContext.Unknown(currentOrMaxDescription + " value of attribute <strong>" + this.literal(attributeName) + "</strong> cannot be created");
         }
         
         if (!this.$canControlAttribute(updateObj, attributeName))
@@ -4234,9 +4428,9 @@ class MychExpressionArgs extends Array
 
 class MychExpressionStruct
 {
-    constructor()
+    constructor(properties = {})
     {
-        this.properties = {};
+        this.properties = properties;
     }
 
     $hasProperty(key)
@@ -4631,6 +4825,33 @@ class MychExpression
         }
 
         return mappedList;
+    }
+
+    static *sortList(list, less = function*(itemA, itemB) {})
+    {
+        function* quicksort(items)
+        {
+            if (items.length <= 1)
+            {
+                return items;
+            }
+
+            let itemsLeft = [];
+            let itemsRight = [];
+
+            let pivotItem = items.pop();
+
+            for (let item of items)
+            {
+                (((yield* less(item, pivotItem)) < 0) ? itemsLeft : itemsRight).push(item);
+            }
+
+            return [
+                ...yield* quicksort(itemsLeft), pivotItem,
+                ...yield* quicksort(itemsRight)];
+        }
+
+        return yield* quicksort([...list]);
     }
 
     static normalize(value)
@@ -5626,6 +5847,34 @@ class MychExpression
             coerceValueB: MychExpression.coerceNumber,
             evaluate: (valueA, valueB) => valueA >= valueB,
         },
+        "lt":
+        {
+            precedence: 6,
+            coerceValueA: MychExpression.coerceString,
+            coerceValueB: MychExpression.coerceString,
+            evaluate: (valueA, valueB) => valueA < valueB,
+        },
+        "le":
+        {
+            precedence: 6,
+            coerceValueA: MychExpression.coerceString,
+            coerceValueB: MychExpression.coerceString,
+            evaluate: (valueA, valueB) => valueA <= valueB,
+        },
+        "gt":
+        {
+            precedence: 6,
+            coerceValueA: MychExpression.coerceString,
+            coerceValueB: MychExpression.coerceString,
+            evaluate: (valueA, valueB) => valueA > valueB,
+        },
+        "ge":
+        {
+            precedence: 6,
+            coerceValueA: MychExpression.coerceString,
+            coerceValueB: MychExpression.coerceString,
+            evaluate: (valueA, valueB) => valueA >= valueB,
+        },
         "==":
         {
             precedence: 7,
@@ -5687,6 +5936,37 @@ class MychExpression
             {
                 return yield* MychExpression.mapList(yield* evaluatorA(),
                     function*(itemA) { return (yield* evaluatorB(itemA)) ? itemA : undefined });
+            }
+        },
+        "order":
+        {
+            precedence: 11,
+            coerceValueA: MychExpression.coerceList,
+            coerceValueB: MychExpression.coerceList,
+            evaluate: function*(evaluatorA, evaluatorB)
+            {
+                function* compare(itemA, itemB)
+                {
+                    let compareAlessB = yield* evaluatorB(new MychExpressionStruct({ left: itemA, right: itemB }));
+                    let compareBlessA = yield* evaluatorB(new MychExpressionStruct({ left: itemB, right: itemA }));
+
+                    let numComparisons = Math.max(compareAlessB.length, compareBlessA.length);
+
+                    for (let comparisonIndex = 0; comparisonIndex < numComparisons; ++comparisonIndex)
+                    {
+                        let isAlessB = MychExpression.coerceBoolean(compareAlessB[comparisonIndex]);
+                        let isBlessA = MychExpression.coerceBoolean(compareBlessA[comparisonIndex]);
+
+                        if (isAlessB != isBlessA)
+                        {
+                            return isAlessB ? -1 : +1;
+                        }
+                    }
+
+                    return 0;
+                }
+
+                return yield* MychExpression.sortList(yield* evaluatorA(), compare);
             }
         },
         ",":

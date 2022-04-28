@@ -884,6 +884,7 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `token_name`      | `"Finn's Spiderbro"` | read   |       | Token name – provided for Roll20 parity
 | `character_id`    |                      | read   |       | Character ID
 | `character_name`  | `"Finn"`             | read   |       | Character name – provided for Roll20 parity
+| `page`            | `"-MRZtlN_1XJe4k"`   | read   |       | Page ID on which the token is displayed
 | `bar1`            | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
 | `bar2`            | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
 | `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
@@ -940,6 +941,10 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | *a* `<=` *b*           | 6           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
 | *a* `>` *b*            | 6           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
 | *a* `>=` *b*           | 6           | Logic    | Return `true` if *a* is numerically greater than or equal to *b*, else `false`
+| *a* `lt` *b*           | 6           | Logic    | Return `true` if *a* is alphanumerically less than *b*, else `false`
+| *a* `le` *b*           | 6           | Logic    | Return `true` if *a* is alphanumerically less than or equal to *b*, else `false`
+| *a* `gt` *b*           | 6           | Logic    | Return `true` if *a* is alphanumerically greater than *b*, else `false`
+| *a* `ge` *b*           | 6           | Logic    | Return `true` if *a* is alphanumerically greater than or equal to *b*, else `false`
 | *a* `==` *b*           | 7           | Logic    | Return `true` if *a* is numerically equal to *b*, else `false`
 | *a* `!=` *b*           | 7           | Logic    | Return `true` if *a* is numerically unequal to *b*, else `false`
 | *a* `eq` *b*           | 7           | Logic    | Return `true` if *a* is alphanumerically equal to *b*, else `false`
@@ -949,6 +954,7 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | *a* `or` *b*           | 10          | Logic    | Return `true` if *a* or *b* or both are `true`, else `false`
 | *list* `where` *expr*  | 11          | List     | For each *list* item in turn, set the special `...` variable to the item, evaluate *expr*, and return a list of all items for which the result of *expr* is true
 | *list* `select` *expr* | 11          | List     | For each *list* item in turn, set the special `...` variable to the item, evaluate *expr*, and return a list of the results of *expr*
+| *list* `order` *expr*  | 11          | List     | Order *list* such that *expr*, which is evaluated repeatedly with `...left` and `...right` set to pairs of list items, is `true` for all consecutive pairs of items – see below
 | *a*`,` *b*`,` *c*...   | 12 (lowest) | List     | Make an ordered list of *a*, *b*, *c*, and more – also used for function arguments
 
 If you want to calculate the square root of something, you can use the power-of operator with a fractional exponent: `val**(1/2)`
@@ -957,13 +963,23 @@ In the right-hand-side *expr* of the `where` and `select` operators, the special
 
 | Line | Commands | Result
 | ---- | -------- | ------
-| 1    | _!mmm_ **set** odd_numbers = (1, 2, 3, 4, 5) **where** ... % 1 == 1 | odd_numbers = 1, 3, 5
+| 1    | _!mmm_ **set** odd_numbers = (1, 2, 3, 4, 5) **where** ... % 1 == 1 | odd_numbers = (1, 3, 5)
 | 2    | _!mmm_ **set** nearly_dead = selected **where** ...HP < 5 | *(selected tokens with less than 5 HP)*
 | 3    | _!mmm_ **set** my_tokens = selected **where** ...permission **eq** "control" | *(selected tokens that can be controlled by the player)*
-| 4    | _!mmm_ **set** squares = (1, 2, 3, 4, 5) **select** ... ** 2 | squares = 1, 4, 9, 16, 25
-| 5    | _!mmm_ **set** pairs = (1, 2, 3) **select** (..., ...) | pairs = 1, 1, 2, 2, 3, 3
-| 6    | _!mmm_ **set** nearly_dead_HP = selected **select** ...HP **where** ... < 5 | nearly_dead_HP = 4, 1
-| 7    | _!mmm_ **set** nearly_dead_names = selected **where** ...HP < 5 **select** ...name | nearly_dead_names = "Finn", "Yorric"
+| 4    | _!mmm_ **set** squares = (1, 2, 3, 4, 5) **select** ... ** 2 | squares = (1, 4, 9, 16, 25)
+| 5    | _!mmm_ **set** pairs = (1, 2, 3) **select** (..., ...) | pairs = (1, 1, 2, 2, 3, 3)
+| 6    | _!mmm_ **set** nearly_dead_HP = selected **select** ...HP **where** ... < 5 | nearly_dead_HP = (4, 1)
+| 7    | _!mmm_ **set** nearly_dead_names = selected **where** ...HP < 5 **select** ...name | nearly_dead_names = ("Finn", "Yorric")
+
+The list-sorting operator `order` evaluates its right-hand-side *expr* repeatedly for pairs of list items passed in `...left` and `...right` to define the comparison that shall be `true` for each pair of consecutive *list* items. (If the *expr* won't return `true` for a pair of items regardless of which one is `...left` and which one `...right`, the two items are considered equal and their order in the sorted list is arbitrary.)
+
+If you have a primary sort key and a secondary one that decides the order only if the primary key is equal, you can specify both by having *expr* return a list that represents comparison results for the primary and the secondary key in turn – first list item the comparison result for the primary key, second for the secondary, and even more if there are more keys to compare.
+
+| Line | Commands | Result
+| ---- | -------- | ------
+| 1    | _!mmm_ **set** sorted = (-2, -7, 2, 7, 5) **order** (...left < ...right) | sorted = (-7, -2, 2, 5, 7)
+| 2    | _!mmm_ **set** reverse = (-2, -7, 2, 7, 5) **order** (...left > ...right) | reverse = (7, 5, 2, -2, -7)
+| 3    | _!mmm_ **set** pairs = (foo: 456, foo: 123, bar: 123) **order** (...left.key **lt** ...right.key, ...left.value < ...right.value) | pairs = (bar: 123, foo: 123, foo: 456)
 
 There are also three special debug operators: `?` *expr*, `??` *expr*, and `???` *expr*. They don't quite fit into the table above because they don't actually change the result of the expression they're used in. Instead, they just whisper a partial expression result back at you, and then continue evaluating the expression as if nothing happened.
 
@@ -1022,6 +1038,12 @@ This works in any place with an expression, of course, not just in **set** – y
 | distsnap()                                         | Board     | distsnap() = 70      | Return number of pixels between grid lines – if grid lines disabled, zero
 | spawnfx(*type*, *left*, *top*)                     | Board     | spawnfx("nova-blood", 70, 70) | **[Side effect]** Spawns visual effect *type* around coordinates *left*, *top*
 | spawnfx(*type*, *left1*, *top1*, *left2*, *top2*)  | Board     | | **[Side effect]** Spawns directional visual effect *type* going from coordinates *left1*, *top1* to coordinates *left2*, *top2*
+| getpage()                                          | Board     | getpage() = "-MRZtlN_1XJe4k" | Return the page ID the calling player is currently viewing
+| getpage(*playerid*)                                | Board     | | **\[Privileged]** Return the page ID the specified *playerid* is currently viewing
+| showtracker()                                      | Tracker   | showtracker() = false | Return `true` if the turn tracker window is shown, else `false`
+| showtracker(*shown*)                               | Tracker   | showtracker(true) | **\[Privileged]** **[Side effect]** Show or hide the turn tracker window
+| gettracker()                                       | Tracker   | | Return list of entries in the turn tracker window – see below
+| settracker(*entries*)                              | Tracker   | | **\[Privileged]** **[Side effect]** Update the turn tracker window to show all given *entries* – see below
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | chat(*name\|id*, *str*)                            | Chat      | chat("Spiderbro", "Hi!") | **[Side effect]** Send string *str* to chat, impersonating another character or token under the player's control
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
@@ -1039,6 +1061,37 @@ This works in any place with an expression, of course, not just in **set** – y
 | isdefault(*expr*)                                  | Customize | isdefault(default) | Return `true` if *expr* is the special `default` indicator value, else `false`
 | isunknown(*expr*)                                  | Debug     | isunknown(result) | Return `true` if *expr* is a special `unknown` indicator result (the called function was unable to produce a meaningful result given its arguments and/or the current state of the game), else `false`
 | getreason(*expr*)                                  | Debug     | getreason(result) = "Sunspots" | Return the diagnostic reason carried by a `denied` or `unknown` result
+
+**Turn tracker:** Use the `gettracker()` function to get the list of turn tracker entries currently visible to the calling player (or GM), and the `settracker()` function (GMs only) to update the list.
+
+The list returned by `gettracker()` is made up from structs describing each individual entries:
+
+| Property        | Example            | Description
+| --------------- | ------------------ | -----------
+| `entry.title`   | `"Finn"`           | Title of the tracker entry (middle column)
+| `entry.value`   | `"98"`             | Value of the tracker entry (right-hand column) – note that this is a string
+| `entry.token`   |                    | Token ID if the tracker entry represents a token, or `unknown` if it's a custom entry
+| `entry.page`    | `"-MRZtlN_1XJe4k"` | Page ID of the token represented by this tracker entry, or `undef` if it's a custom entry
+| `entry.formula` | `"+1"`             | Formula (if any) applied by Roll20 when this entry becomes the first one after a turn
+
+For GMs, `gettracker()` always returns all entries regardless of which page they're on, and it returns the most recently shown entries even if the turn tracker window is currently hidden. Regular players only get the entries they can actually see (custom entries and tokens on the current page) – and an empty list if the turn tracker window is hidden.
+
+Only GMs can call the `settracker()` function. It takes a list of structs describing individual entries like above.
+
+- For an entry that represents a token, set the `entry.token` property to the token ID or the name of a token or character on the board. The `entry.value` and `entry.formula` properties are supported but optional. The `entry.page` property is ignored and automatically set to the token's page ID. The `entry.title` page is also ignored and set to the token's name on the board.
+
+- For a custom entry that's doesn't represent a token, set `entry.title` but leave `entry.token` undefined. The `entry.value` and `entry.formula` properties are supported but optional. The `entry.page` property is ignored.
+
+Some useful examples:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **do** settracker() | *(clears the tracker)*
+| 2    | _!mmm_ **do** settracker(selected select {token: ...}) | *(sets the tracker to the currently selected tokens)*
+| 3    | _!mmm_ **do** settracker({title: "Round", value: 0, formula: "+1"}, gettracker()) | *(prepends a round counter to the current tracker contents)*
+| 4    | _!mmm_ **do** settracker(gettracker() where not ...token) | *(removes all tokens from the tracker, but leaves all custom entries like a round counter)*
+| 5    | _!mmm_ **do** settracker(gettracker() order ...left.title le ...right.title) | *(orders current tracker entries by title)*
+| 6    | _!mmm_ **do** settracker(gettracker() order (...left.value > ...right.value, ...left.title le ...right.title)) | *(orders current tracker entries by value from greatest to least; or by title for entries with the same value)*
 
 
 ## Recipes
@@ -1173,6 +1226,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.29.9  | 2022-04-28 | Add `order` and string relation operators, `page` attribute, `getpage()`, and turn tracker functions
 | 1.28.0  | 2022-04-03 | Add `serialize(val)` and `deserialize(str)` for data storage
 | 1.27.0  | 2022-03-31 | Introduce structs, the `...` operator, and the `repeating` character property
 | 1.26.0  | 2022-01-23 | Introduce `publish to sender` and `publish to game` commands
