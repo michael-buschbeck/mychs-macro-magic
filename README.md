@@ -1037,6 +1037,8 @@ This works in any place with an expression, of course, not just in **set** – y
 | distsnap()                                         | Board     | distsnap() = 70      | Return number of pixels between grid lines – if grid lines disabled, zero
 | spawnfx(*type*, *left*, *top*)                     | Board     | spawnfx("nova-blood", 70, 70) | **[Side effect]** Spawns visual effect *type* around coordinates *left*, *top*
 | spawnfx(*type*, *left1*, *top1*, *left2*, *top2*)  | Board     | | **[Side effect]** Spawns directional visual effect *type* going from coordinates *left1*, *top1* to coordinates *left2*, *top2*
+| getpage()                                          | Board     | getpage() = "-MRZtlN_1XJe4k" | Return the page ID the calling player is currently viewing
+| getpage(*playerid*)                                | Board     | | **\[Privileged]** Return the page ID the specified *playerid* is currently viewing
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | chat(*name\|id*, *str*)                            | Chat      | chat("Spiderbro", "Hi!") | **[Side effect]** Send string *str* to chat, impersonating another character or token under the player's control
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
