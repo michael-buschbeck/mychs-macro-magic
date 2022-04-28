@@ -884,6 +884,7 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `token_name`      | `"Finn's Spiderbro"` | read   |       | Token name – provided for Roll20 parity
 | `character_id`    |                      | read   |       | Character ID
 | `character_name`  | `"Finn"`             | read   |       | Character name – provided for Roll20 parity
+| `page`            | `"-MRZtlN_1XJe4k"`   | read   |       | Page ID on which the token is displayed
 | `bar1`            | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
 | `bar2`            | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
 | `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
