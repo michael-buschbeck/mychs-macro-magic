@@ -1039,6 +1039,10 @@ This works in any place with an expression, of course, not just in **set** – y
 | spawnfx(*type*, *left1*, *top1*, *left2*, *top2*)  | Board     | | **[Side effect]** Spawns directional visual effect *type* going from coordinates *left1*, *top1* to coordinates *left2*, *top2*
 | getpage()                                          | Board     | getpage() = "-MRZtlN_1XJe4k" | Return the page ID the calling player is currently viewing
 | getpage(*playerid*)                                | Board     | | **\[Privileged]** Return the page ID the specified *playerid* is currently viewing
+| showtracker()                                      | Tracker   | showtracker() = false | Return `true` if the turn tracker window is shown, else `false`
+| showtracker(*shown*)                               | Tracker   | showtracker(true) | **\[Privileged]** **[Side effect]** Show or hide the turn tracker window
+| gettracker()                                       | Tracker   | | Return list of entries in the turn tracker window – see below
+| settracker(*entries*)                              | Tracker   | | **\[Privileged]** **[Side effect]** Update the turn tracker window to show all given *entries* – see below
 | chat(*str*)                                        | Chat      | chat("Hi!") | **[Side effect]** Send string *str* to chat
 | chat(*name\|id*, *str*)                            | Chat      | chat("Spiderbro", "Hi!") | **[Side effect]** Send string *str* to chat, impersonating another character or token under the player's control
 | whisperback(*str*)                                 | Chat      | whisperback("Meh?") | **[Side effect]** Send string *str* only to the script sender's chat – useful for error messages
@@ -1056,6 +1060,37 @@ This works in any place with an expression, of course, not just in **set** – y
 | isdefault(*expr*)                                  | Customize | isdefault(default) | Return `true` if *expr* is the special `default` indicator value, else `false`
 | isunknown(*expr*)                                  | Debug     | isunknown(result) | Return `true` if *expr* is a special `unknown` indicator result (the called function was unable to produce a meaningful result given its arguments and/or the current state of the game), else `false`
 | getreason(*expr*)                                  | Debug     | getreason(result) = "Sunspots" | Return the diagnostic reason carried by a `denied` or `unknown` result
+
+**Turn tracker:** Use the `gettracker()` function to get the list of turn tracker entries currently visible to the calling player (or GM), and the `settracker()` function (GMs only) to update the list.
+
+The list returned by `gettracker()` is made up from structs describing each individual entries:
+
+| Property        | Example            | Description
+| --------------- | ------------------ | -----------
+| `entry.title`   | `"Finn"`           | Title of the tracker entry (middle column)
+| `entry.value`   | `"98"`             | Value of the tracker entry (right-hand column) – note that this is a string
+| `entry.token`   |                    | Token ID if the tracker entry represents a token, or `unknown` if it's a custom entry
+| `entry.page`    | `"-MRZtlN_1XJe4k"` | Page ID of the token represented by this tracker entry, or `undef` if it's a custom entry
+| `entry.formula` | `"+1"`             | Formula (if any) applied by Roll20 when this entry becomes the first one after a turn
+
+For GMs, `gettracker()` always returns all entries regardless of which page they're on, and it returns the most recently shown entries even if the turn tracker window is currently hidden. Regular players only get the entries they can actually see (custom entries and tokens on the current page) – and an empty list if the turn tracker window is hidden.
+
+Only GMs can call the `settracker()` function. It takes a list of structs describing individual entries like above.
+
+- For an entry that represents a token, set the `entry.token` property to the token ID or the name of a token or character on the board. The `entry.value` and `entry.formula` properties are supported but optional. The `entry.page` property is ignored and automatically set to the token's page ID. The `entry.title` page is also ignored and set to the token's name on the board.
+
+- For a custom entry that's doesn't represent a token, set `entry.title` but leave `entry.token` undefined. The `entry.value` and `entry.formula` properties are supported but optional. The `entry.page` property is ignored.
+
+Some useful examples:
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **do** settracker() | *(clears the tracker)*
+| 2    | _!mmm_ **do** settracker(selected select {token: ...}) | *(sets the tracker to the currently selected tokens)*
+| 3    | _!mmm_ **do** settracker({title: "Round", value: 0, formula: "+1"}, gettracker()) | *(prepends a round counter to the current tracker contents)*
+| 4    | _!mmm_ **do** settracker(gettracker() where not ...token) | *(removes all tokens from the tracker, but leaves all custom entries like a round counter)*
+| 5    | _!mmm_ **do** settracker(gettracker() order ...left.title le ...right.title) | *(orders current tracker entries by title)*
+| 6    | _!mmm_ **do** settracker(gettracker() order (...left.value > ...right.value, ...left.title le ...right.title)) | *(orders current tracker entries by value from greatest to least; or by title for entries with the same value)*
 
 
 ## Recipes
@@ -1190,6 +1225,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.29.9  | 2022-04-28 | Add `order` and string relation operators, `page` attribute, `getpage()`, and turn tracker functions
 | 1.28.0  | 2022-04-03 | Add `serialize(val)` and `deserialize(str)` for data storage
 | 1.27.0  | 2022-03-31 | Introduce structs, the `...` operator, and the `repeating` character property
 | 1.26.0  | 2022-01-23 | Introduce `publish to sender` and `publish to game` commands
