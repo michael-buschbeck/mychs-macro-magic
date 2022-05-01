@@ -1226,7 +1226,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
-| 1.29.9  | 2022-04-28 | Add `order` and string relation operators, `page` attribute, `getpage()`, and turn tracker functions
+| 1.29.0  | 2022-04-28 | Add `order` and string relation operators, `page` attribute, `getpage()`, and turn tracker functions
 | 1.28.0  | 2022-04-03 | Add `serialize(val)` and `deserialize(str)` for data storage
 | 1.27.0  | 2022-03-31 | Introduce structs, the `...` operator, and the `repeating` character property
 | 1.26.0  | 2022-01-23 | Introduce `publish to sender` and `publish to game` commands
