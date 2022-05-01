@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.29.0";
+const MMM_VERSION = "1.30.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1805,6 +1805,11 @@ class MychScriptContext extends MychProperties
         return this.$setAttribute(nameOrId, attributeName, attributeValue, true);
     }
 
+    delattr(nameOrId, attributeName)
+    {
+        return this.$delAttribute(nameOrId, attributeName);
+    }
+
     $canControl(obj)
     {
         if (!this.playerid || !obj || !obj.get)
@@ -2475,6 +2480,60 @@ class MychScriptContext extends MychProperties
         updateObj.set(updateKey, (updateVal != undefined) ? updateVal : null);
 
         return this.$getAttribute(nameOrId, attributeName, max);
+    }
+
+    $delAttribute(nameOrId, attributeName)
+    {
+        if (nameOrId instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return nameOrId;
+        }
+
+        if (attributeName instanceof MychScriptContext.DiagnosticUndef)
+        {
+            return attributeName;
+        }
+
+        nameOrId = MychExpression.coerceString(nameOrId);
+
+        if (nameOrId == "")
+        {
+            return new MychScriptContext.Unknown("Charakter or token name or identifier not specified");
+        }
+
+        attributeName = MychExpression.coerceString(attributeName);
+
+        if (attributeName == "")
+        {
+            return new MychScriptContext.Unknown("Attribute name not specified");
+        }
+
+        let [character, token] = this.$getCharacterAndTokenObjs(nameOrId);
+
+        if (!character && !token)
+        {
+            return new MychScriptContext.Denied("Character or token <strong>" + this.literal(nameOrId) + "</strong> inaccessible");
+        }
+
+        if (!character)
+        {
+            return new MychScriptContext.Unknown("Token <strong>" + this.literal(nameOrId) + "</strong> is not connected to any character sheet to delete an attribute from");
+        }
+
+        if (!this.$canControlAttribute(character, attributeName))
+        {
+            return new MychScriptContext.Denied("Attribute <strong>" + this.literal(attributeName) + "</strong> of character <strong>" + this.literal(nameOrId) + "</strong> cannot be deleted");
+        }
+
+        let attributeObj = findObjs({ type: "attribute", characterid: character.id, name: attributeName }, { caseInsensitive: true })[0];
+
+        if (attributeObj)
+        {
+            attributeObj.remove();
+            return true;
+        }
+
+        return false;
     }
 
     $debugHighlight(scalar)

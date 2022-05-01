@@ -1057,6 +1057,7 @@ This works in any place with an expression, of course, not just in **set** – y
 | getattrmax(*name\|id*, *attr*)                     | Attribute | getattrmax("Finn", "HP") | Look up maximum value of attribute *attr* for *name\|id*
 | setattr(*name\|id*, *attr*, *val*)                 | Attribute | setattr("Finn", "HP", 17) | **[Side effect]** Set attribute *attr* for *name\|id* to *val*, then return *val* – create *attr* if necessary
 | setattrmax(*name\|id*, *attr*, *val*)              | Attribute | setattrmax("Finn", "HP", 25) | **[Side effect]** Set maximum value of attribute *attr* for *name\|id* to *val* – create *attr* if necessary
+| delattr(*name\|id*, *attr*)                        | Attribute | delattr("Finn", "ego") = true | **[Side effect]** Delete character attribute *attr* from *name\|id*, then return `true` if the attribute existed and was deleted, else `false`
 | isdenied(*expr*)                                   | Attribute | isdenied(getattr("Finn", "HP")) | Return `true` if *expr* is a special `denied` indicator value (attribute access was denied), else `false`
 | isdefault(*expr*)                                  | Customize | isdefault(default) | Return `true` if *expr* is the special `default` indicator value, else `false`
 | isunknown(*expr*)                                  | Debug     | isunknown(result) | Return `true` if *expr* is a special `unknown` indicator result (the called function was unable to produce a meaningful result given its arguments and/or the current state of the game), else `false`
@@ -1226,6 +1227,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.30.0  | 2022-05-01 | Add `delattr()` to delete character attributes
 | 1.29.0  | 2022-04-28 | Add `order` and string relation operators, `page` attribute, `getpage()`, and turn tracker functions
 | 1.28.0  | 2022-04-03 | Add `serialize(val)` and `deserialize(str)` for data storage
 | 1.27.0  | 2022-03-31 | Introduce structs, the `...` operator, and the `repeating` character property
