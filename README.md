@@ -894,6 +894,8 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
 | `bar3_shown`      | `true`               | write  |       | Visibility of token's bottom bar – `false` to hide, `true` to show
 | `bar1_edit`       | `false`              | write  |       | Whether the token's bottom bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
+| `tooltip`         | `"Wounded"`          | write  |       | Token's tooltip text
+| `tooltip_shown`   | `true`               | write  |       | Visibility of token's tooltip – `false` to hide, `true` to show
 | `status_`...      | `true`               | write  |       | Token's status markers – `false` to hide, `true` to show, or any single digit to show with an overlay – see below
 | `left`            | `350` / `1750`       | write  | read  | Token's X coordinate on the table
 | `top`             | `350` / `1750`       | write  | read  | Token's Y coordinate on the table
@@ -1233,6 +1235,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.32.0  | 2022-05-02 | Support `tooltip` and `tooltip_shown` attributes
 | 1.31.0  | 2022-05-02 | Support `barX_shown` and `barX_edit` attributes
 | 1.30.0  | 2022-05-01 | Add `delattr()` to delete character attributes
 | 1.29.0  | 2022-04-28 | Add `order` and string relation operators, `page` attribute, `getpage()`, and turn tracker functions

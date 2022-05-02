@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.31.0";
+const MMM_VERSION = "1.32.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1874,6 +1874,12 @@ class MychScriptContext extends MychProperties
                 let token = this.$getCorrespondingTokenObj(obj);
                 return this.privileged || (this.$canControl(token) && token.get("playersedit_" + attributeName));
             }
+
+            case "tooltip_shown":
+            case "tooltip":
+                {
+                return this.privileged;
+            }
         }
 
         return this.$canControl(obj);
@@ -1978,6 +1984,18 @@ class MychScriptContext extends MychProperties
             {
                 let token = this.$getCorrespondingTokenObj(obj);
                 return (this.$canView(token) && token.get("showplayers_" + attributeName));
+            }
+
+            case "tooltip_shown":
+            {
+                let token = this.$getCorrespondingTokenObj(obj);
+                return this.$canView(token);
+            }
+
+            case "tooltip":
+            {
+                let token = this.$getCorrespondingTokenObj(obj);
+                return this.privileged || (this.$canView(token) && token.get("show_tooltip"));
             }
 
             case "left":
@@ -2123,6 +2141,8 @@ class MychScriptContext extends MychProperties
             "bar3",
             "bar3_shown",
             "bar3_edit",
+            "tooltip",
+            "tooltip_shown",
             "left",
             "top",
             "width",
@@ -2281,6 +2301,26 @@ class MychScriptContext extends MychProperties
                 {
                     lookupObj = token;
                     lookupKey = attributeName;
+                }
+            }
+            break;
+
+            case "tooltip_shown":
+            {
+                if (!max)
+                {
+                    lookupObj = token;
+                    lookupKey = "show_tooltip";
+                }
+            }
+            break;
+
+            case "tooltip":
+            {
+                if (!max)
+                {
+                    lookupObj = token;
+                    lookupKey = "tooltip";
                 }
             }
             break;
@@ -2457,6 +2497,22 @@ class MychScriptContext extends MychProperties
                 updateObj = token;
                 updateKey = attributeName + (max ? "_max" : "_value");
                 updateVal = MychExpression.coerceNumber(attributeValue);
+            }
+            break;
+
+            case "tooltip_shown":
+            {
+                updateObj = token;
+                updateKey = "show_tooltip";
+                updateVal = MychExpression.coerceBoolean(attributeValue);
+            }
+            break;
+
+            case "tooltip":
+            {
+                updateObj = token;
+                updateKey = "tooltip";
+                updateVal = MychExpression.coerceString(attributeValue);
             }
             break;
 
