@@ -886,8 +886,14 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `character_name`  | `"Finn"`             | read   |       | Character name – provided for Roll20 parity
 | `page`            | `"-MRZtlN_1XJe4k"`   | read   |       | Page ID on which the token is displayed
 | `bar1`            | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
+| `bar1_shown`      | `true`               | write  |       | Visibility of token's top bar – `false` to hide, `true` to show
+| `bar1_edit`       | `false`              | write  |       | Whether the token's top bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
 | `bar2`            | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
+| `bar2_shown`      | `true`               | write  |       | Visibility of token's middle bar – `false` to hide, `true` to show
+| `bar1_edit`       | `false`              | write  |       | Whether the token's middle bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
 | `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
+| `bar3_shown`      | `true`               | write  |       | Visibility of token's bottom bar – `false` to hide, `true` to show
+| `bar1_edit`       | `false`              | write  |       | Whether the token's bottom bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
 | `status_`...      | `true`               | write  |       | Token's status markers – `false` to hide, `true` to show, or any single digit to show with an overlay – see below
 | `left`            | `350` / `1750`       | write  | read  | Token's X coordinate on the table
 | `top`             | `350` / `1750`       | write  | read  | Token's Y coordinate on the table
@@ -1227,6 +1233,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.31.0  | 2022-05-02 | Support `barX_shown` and `barX_edit` attributes
 | 1.30.0  | 2022-05-01 | Add `delattr()` to delete character attributes
 | 1.29.0  | 2022-04-28 | Add `order` and string relation operators, `page` attribute, `getpage()`, and turn tracker functions
 | 1.28.0  | 2022-04-03 | Add `serialize(val)` and `deserialize(str)` for data storage

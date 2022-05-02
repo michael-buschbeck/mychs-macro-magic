@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.30.0";
+const MMM_VERSION = "1.31.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1858,6 +1858,24 @@ class MychScriptContext extends MychProperties
 
     $canControlAttribute(obj, attributeName)
     {
+        switch (attributeName)
+        {
+            case "bar1_edit":
+            case "bar2_edit":
+            case "bar3_edit":
+            {
+                return this.privileged;
+            }
+
+            case "bar1":
+            case "bar2":
+            case "bar3":
+            {
+                let token = this.$getCorrespondingTokenObj(obj);
+                return this.privileged || (this.$canControl(token) && token.get("playersedit_" + attributeName));
+            }
+        }
+
         return this.$canControl(obj);
     }
 
@@ -1936,6 +1954,22 @@ class MychScriptContext extends MychProperties
                 let character = this.$getCorrespondingCharacterObj(obj);
                 let token = this.$getCorrespondingTokenObj(obj);
                 return (this.$canView(character) || (this.$canView(token) && token.get("showplayers_name")));
+            }
+
+            case "bar1_shown":
+            case "bar2_shown":
+            case "bar3_shown":
+            {
+                let token = this.$getCorrespondingTokenObj(obj);
+                return this.$canView(token);
+            }
+
+            case "bar1_edit":
+            case "bar2_edit":
+            case "bar3_edit":
+            {
+                let token = this.$getCorrespondingTokenObj(obj);
+                return this.$canControl(token);
             }
 
             case "bar1":
@@ -2081,8 +2115,14 @@ class MychScriptContext extends MychProperties
             "token_id",
             "page",
             "bar1",
+            "bar1_shown",
+            "bar1_edit",
             "bar2",
+            "bar2_shown",
+            "bar2_edit",
             "bar3",
+            "bar3_shown",
+            "bar3_edit",
             "left",
             "top",
             "width",
@@ -2198,6 +2238,24 @@ class MychScriptContext extends MychProperties
             {
                 lookupObj = token;
                 lookupKey = (max ? undefined : "pageid");
+            }
+            break;
+
+            case "bar1_shown":
+            case "bar2_shown":
+            case "bar3_shown":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "showplayers_" + attributeName.substr(0, "barX".length));
+            }
+            break;
+
+            case "bar1_edit":
+            case "bar2_edit":
+            case "bar3_edit":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "playersedit_" + attributeName.substr(0, "barX".length));
             }
             break;
         
@@ -2369,6 +2427,26 @@ class MychScriptContext extends MychProperties
             case "page":
             {
                 updateObj = token;
+            }
+            break;
+
+            case "bar1_shown":
+            case "bar2_shown":
+            case "bar3_shown":
+            {
+                updateObj = token;
+                updateKey = (max ? undefined : "showplayers_" + attributeName.substr(0, "barX".length));
+                updateVal = MychExpression.coerceBoolean(attributeValue);
+            }
+            break;
+
+            case "bar1_edit":
+            case "bar2_edit":
+            case "bar3_edit":
+            {
+                updateObj = token;
+                updateKey = (max ? undefined : "playersedit_" + attributeName.substr(0, "barX".length));
+                updateVal = MychExpression.coerceBoolean(attributeValue);
             }
             break;
         
