@@ -1048,6 +1048,8 @@ This works in any place with an expression, of course, not just in **set** – y
 | spawnfx(*type*, *left1*, *top1*, *left2*, *top2*)  | Board     | | **[Side effect]** Spawns directional visual effect *type* going from coordinates *left1*, *top1* to coordinates *left2*, *top2*
 | getpage()                                          | Board     | getpage() = "-MRZtlN_1XJe4k" | Return the page ID the calling player is currently viewing
 | getpage(*playerid*)                                | Board     | | **\[Privileged]** Return the page ID the specified *playerid* is currently viewing
+| gettokens()                                        | Board     | | Returns a list of all token IDs on the page the calling player is currently viewing
+| gettokens(*pageid*)                                | Board     | | **\[Privileged]** Returns a list of all token IDs on the specified page
 | showtracker()                                      | Tracker   | showtracker() = false | Return `true` if the turn tracker window is shown, else `false`
 | showtracker(*shown*)                               | Tracker   | showtracker(true) | **\[Privileged]** **[Side effect]** Show or hide the turn tracker window
 | gettracker()                                       | Tracker   | | Return list of entries in the turn tracker window – see below
@@ -1235,6 +1237,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.33.0  | 2022-05-06 | Add `gettokens()` to get a list of all tokens on the board
 | 1.32.0  | 2022-05-02 | Support `tooltip` and `tooltip_shown` attributes
 | 1.31.0  | 2022-05-02 | Support `barX_shown` and `barX_edit` attributes
 | 1.30.0  | 2022-05-01 | Add `delattr()` to delete character attributes

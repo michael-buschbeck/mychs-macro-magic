@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.32.0";
+const MMM_VERSION = "1.33.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1011,6 +1011,32 @@ class MychScriptContext extends MychProperties
         }
 
         return Campaign().get("playerpageid");
+    }
+
+    gettokens(pageId)
+    {
+        let playerPageId = this.getpage();
+
+        pageId = MychExpression.coerceString(pageId) || playerPageId;
+
+        let tokenObjs;
+
+        if (this.privileged)
+        {
+            tokenObjs = findObjs({ type: "graphic", subtype: "token", pageid: pageId });
+        }
+        else
+        {
+            if (pageId != playerPageId)
+            {
+                return new MychScriptContext.Denied("Page <strong>" + this.literal(pageId) + "</strong> inaccessible");
+            }
+            
+            tokenObjs = findObjs({ type: "graphic", subtype: "token", pageid: pageId, layer: "objects" });
+            tokenObjs = tokenObjs.filter(tokenObj => this.$canView(tokenObj));
+        }
+
+        return tokenObjs.map(tokenObj => tokenObj.id);
     }
 
     showtracker(shown)
