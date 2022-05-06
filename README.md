@@ -945,6 +945,7 @@ If you try to read or write an attribute you don't have permission to, you'll ge
 | *a* `+` *b*            | 4           | Math     | Add *a* and *b*
 | *a* `-` *b*            | 4           | Math     | Subtract *b* from *a*
 | *a* `&` *b*            | 5           | String   | Concatenate strings *a* and *b*
+| *a* `&&` *b*           | 5           | String   | Concatenate strings *a* and *b* preserving their markup presentation (if any)
 | *a* `<` *b*            | 6           | Logic    | Return `true` if *a* is numerically less than *b*, else `false`
 | *a* `<=` *b*           | 6           | Logic    | Return `true` if *a* is numerically less than or equal to *b*, else `false`
 | *a* `>` *b*            | 6           | Logic    | Return `true` if *a* is numerically greater than *b*, else `false`
@@ -1237,6 +1238,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.34.0  | 2022-05-06 | Add markup-preserving `&&` string concatenation operator
 | 1.33.0  | 2022-05-06 | Add `gettokens()` to get a list of all tokens on the board
 | 1.32.0  | 2022-05-02 | Support `tooltip` and `tooltip_shown` attributes
 | 1.31.0  | 2022-05-02 | Support `barX_shown` and `barX_edit` attributes

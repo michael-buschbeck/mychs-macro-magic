@@ -424,6 +424,18 @@
                 { chat: "getreason(unknown) = " },
             ],
             [
+                "!mmm chat: ${unknown && ' and ' && denied}",
+                { chat: "<span class=\"mmm-unknown\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold\">unknown</span> and <span class=\"mmm-denied\" style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>" },
+                "!mmm chat: ${unknown & ' and ' && denied}",
+                { chat: " and <span class=\"mmm-denied\" style=\"background: red; border: 2px solid red; color: white; font-weight: bold\">denied</span>" },
+                "!mmm chat: ${unknown && ' and ' & denied}",
+                { chat: " and " },
+                "!mmm chat: ${unknown & ' and ' & denied}",
+                { chat: " and " },
+                "!mmm debug do unknown && denied",
+                { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; outline: 2px solid silver; border-radius: 2px; color: black; white-space: pre-wrap'>\"\"</span> ◀️ <span style='background: #E0E0E0; padding: 0em 0.3em; outline: 2px solid silver; border-radius: 2px; color: black; white-space: pre-wrap'>unknown && denied</span>" },
+            ],
+            [
                 "!mmm chat: ${? default + 123}",
                 { whisper: "🔎 <span style='background: #E0E0E0; padding: 0em 0.3em; outline: 2px solid silver; border-radius: 2px; color: black; white-space: pre-wrap'><span style=\"background: gray; border: 2px solid gray; color: white; font-weight: bold\">default</span></span> ◀️ ? <span style='background: #E0E0E0; padding: 0em 0.3em; outline: 2px solid silver; border-radius: 2px; color: black; white-space: pre-wrap'>default</span> + 123" },
                 { chat: "123" },
