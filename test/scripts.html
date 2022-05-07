@@ -906,7 +906,7 @@
                 "!mmm     chat: current HP: ${getattr('Finn', 'HP')}",
                 "!mmm     do chat('and even from expressions')",
                 "!mmm end combine",
-                { chat: "Hello World! Meaning of life: 42, current HP: 19 and even from expressions" },
+                { chat: "Hello World! Meaning of life: 42, current HP: 20 and even from expressions" },
             ],
             [
                 "!mmm combine chat using '//'",
@@ -1112,7 +1112,7 @@
                 "!mmm     end for",
                 "!mmm end script",
                 { chat: "Finn's name: Finn MacRathgar" },
-                { chat: "Finn's HP: 19" },
+                { chat: "Finn's HP: 20" },
                 { chat: "Finn's LP: 15" },
                 { chat: "Finn's cousin: Yorrick" },
             ],
@@ -1772,6 +1772,8 @@
             },
         };
 
+        let attributesPerTest;
+
         MychScriptContext.prototype.listnum = function(list)
         {
             if (list instanceof MychExpressionArgs)
@@ -1836,7 +1838,7 @@
         {
             characterNameOrId = MychExpression.coerceString(characterNameOrId);
 
-            let attributesForCharacter = attributes[characterNameOrId];
+            let attributesForCharacter = attributesPerTest[characterNameOrId];
 
             if (!attributesForCharacter)
             {
@@ -1860,7 +1862,7 @@
 
             characterNameOrId = MychExpression.coerceString(characterNameOrId);
 
-            let attributesForCharacter = attributes[characterNameOrId];
+            let attributesForCharacter = attributesPerTest[characterNameOrId];
 
             if (!attributesForCharacter)
             {
@@ -1903,7 +1905,7 @@
 
             characterNameOrId = MychExpression.coerceString(characterNameOrId);
 
-            let attributesForCharacter = attributes[characterNameOrId];
+            let attributesForCharacter = attributesPerTest[characterNameOrId];
 
             if (!attributesForCharacter)
             {
@@ -2059,6 +2061,8 @@
             document.write("<div class='script' id='script-" + scriptSourceIndex + "'>");
             document.write("<table>");
             document.write("<tr><td></td><td class='script-header'>test script " + scriptSourceIndex + "</td></tr>");
+
+            attributesPerTest = JSON.parse(JSON.stringify(attributes));
 
             for (let [contextStaticName, contextStaticValue] of Object.entries(contextStatics))
             {
