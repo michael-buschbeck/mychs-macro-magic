@@ -340,6 +340,15 @@
                 { chat: "Finn's name: Finn MacRathgar, HP: 20, max: 30" },
             ],
             [
+                "!mmm script",
+                "!mmm     set oldHP = 'Finn'.HP",
+                "!mmm     do setattr('Finn', 'HP', 99)",
+                "!mmm     do setattrmax('Finn', 'HP', 888)",
+                "!mmm     chat: oldHP: ${oldHP}/${oldHP.max}, HP: ${'Finn'.HP}/${'Finn'.HP.max}",
+                "!mmm end script",
+                { chat: "oldHP: 20/30, HP: 99/888" },
+            ],
+            [
                 "!mmm chat: Finn's brother's name: ${'Finn'.brother.name}, HP: ${'Finn'.brother.HP}, max: ${'Finn'.brother.HP.max}",
                 { chat: "Finn's brother's name: <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Unknown attribute: brother\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold; cursor: help\">unknown</span>, HP: <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Unknown attribute: brother\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold; cursor: help\">unknown</span>, max: <span class=\"mmm-unknown showtip tipsy-n-right\" title=\"Unknown attribute: brother\" style=\"background: darkorange; border: 2px solid darkorange; color: white; font-weight: bold; cursor: help\">unknown</span>" },
             ],
