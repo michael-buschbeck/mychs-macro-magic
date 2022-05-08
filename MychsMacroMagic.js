@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.34.1";
+const MMM_VERSION = "1.35.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1989,6 +1989,14 @@ class MychScriptContext extends MychProperties
                 return (this.$canView(character) || (this.$canView(token) && token.get("showplayers_name")));
             }
 
+            case "bars_style_top":
+            case "bars_style_overlap":
+            case "bars_style_compact":
+            {
+                let token = this.$getCorrespondingTokenObj(obj);
+                return this.privileged || (this.$canView(token) && ["bar1", "bar2", "bar3"].some(bar => token.get("showplayers_" + bar)));
+            }
+
             case "bar1_shown":
             case "bar2_shown":
             case "bar3_shown":
@@ -2159,6 +2167,9 @@ class MychScriptContext extends MychProperties
             "character_id",
             "token_id",
             "page",
+            "bars_style_top",
+            "bars_style_overlap",
+            "bars_style_compact",
             "bar1",
             "bar1_shown",
             "bar1_edit",
@@ -2285,6 +2296,30 @@ class MychScriptContext extends MychProperties
             {
                 lookupObj = token;
                 lookupKey = (max ? undefined : "pageid");
+            }
+            break;
+
+            case "bars_style_top":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "bar_location");
+                lookupMod = val => (val == null || val == "above" || val == "overlap_top");
+            }
+            break;
+
+            case "bars_style_overlap":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "bar_location");
+                lookupMod = val => (val == "overlap_top" || val == "overlap_bottom");
+            }
+            break;
+
+            case "bars_style_compact":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "compact_bar");
+                lookupMod = val => (val == "compact");
             }
             break;
 
@@ -2494,6 +2529,34 @@ class MychScriptContext extends MychProperties
             case "page":
             {
                 updateObj = token;
+            }
+            break;
+
+            case "bars_style_top":
+            {
+                updateObj = token;
+                updateKey = (max ? undefined : "bar_location");
+                updateVal = (MychExpression.coerceBoolean(attributeValue)
+                    ? (this.$getAttribute(nameOrId, "bars_style_overlap") ? "overlap_top"    : "above") 
+                    : (this.$getAttribute(nameOrId, "bars_style_overlap") ? "overlap_bottom" : "below"));
+            }
+            break;
+
+            case "bars_style_overlap":
+            {
+                updateObj = token;
+                updateKey = (max ? undefined : "bar_location");
+                updateVal = (this.$getAttribute(nameOrId, "bars_style_top")
+                    ? (MychExpression.coerceBoolean(attributeValue) ? "overlap_top"    : "above") 
+                    : (MychExpression.coerceBoolean(attributeValue) ? "overlap_bottom" : "below"));
+            }
+            break;
+
+            case "bars_style_compact":
+            {
+                updateObj = token;
+                updateKey = (max ? undefined : "compact_bar");
+                updateVal = MychExpression.coerceBoolean(attributeValue) ? "compact" : null;
             }
             break;
 

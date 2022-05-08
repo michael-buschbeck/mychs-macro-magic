@@ -876,33 +876,36 @@ If a token represents a specific character (e.g. your character token on the boa
 
 MMM has a more general notion of what attributes are than Roll20 itself and adds a few of its own:
 
-| Attribute         | Example              | Value? | Max?  | Description
-| ----------------- | -------------------- | ------ | ----- | -----------
-| `permission`      | `"control"`          | read   |       | `"none"`, `"view"`, or `"control"` – see below
-| `name`            | `"Finn"`             | read   |       | Character or token name
-| `token_id`        |                      | read   |       | Token ID
-| `token_name`      | `"Finn's Spiderbro"` | read   |       | Token name – provided for Roll20 parity
-| `character_id`    |                      | read   |       | Character ID
-| `character_name`  | `"Finn"`             | read   |       | Character name – provided for Roll20 parity
-| `page`            | `"-MRZtlN_1XJe4k"`   | read   |       | Page ID on which the token is displayed
-| `bar1`            | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
-| `bar1_shown`      | `true`               | write  |       | Visibility of token's top bar – `false` to hide, `true` to show
-| `bar1_edit`       | `false`              | write  |       | Whether the token's top bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
-| `bar2`            | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
-| `bar2_shown`      | `true`               | write  |       | Visibility of token's middle bar – `false` to hide, `true` to show
-| `bar1_edit`       | `false`              | write  |       | Whether the token's middle bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
-| `bar3`            | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
-| `bar3_shown`      | `true`               | write  |       | Visibility of token's bottom bar – `false` to hide, `true` to show
-| `bar1_edit`       | `false`              | write  |       | Whether the token's bottom bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
-| `tooltip`         | `"Wounded"`          | write  |       | Token's tooltip text
-| `tooltip_shown`   | `true`               | write  |       | Visibility of token's tooltip – `false` to hide, `true` to show
-| `status_`...      | `true`               | write  |       | Token's status markers – `false` to hide, `true` to show, or any single digit to show with an overlay – see below
-| `left`            | `350` / `1750`       | write  | read  | Token's X coordinate on the table
-| `top`             | `350` / `1750`       | write  | read  | Token's Y coordinate on the table
-| `width`           | `70`                 | write  |       | Token's width (subject to its rotation)
-| `height`          | `70`                 | write  |       | Token's height (subject to its rotation)
-| `rotation`        | `45`                 | write  |       | Token's clockwise rotation in degrees
-| *(anything else)* |                      | write  | write | Character attribute – e.g. `HP` or any custom attribute
+| Attribute            | Example              | Value? | Max?  | Description
+| -------------------- | -------------------- | ------ | ----- | -----------
+| `permission`         | `"control"`          | read   |       | `"none"`, `"view"`, or `"control"` – see below
+| `name`               | `"Finn"`             | read   |       | Character or token name
+| `token_id`           |                      | read   |       | Token ID
+| `token_name`         | `"Finn's Spiderbro"` | read   |       | Token name – provided for Roll20 parity
+| `character_id`       |                      | read   |       | Character ID
+| `character_name`     | `"Finn"`             | read   |       | Character name – provided for Roll20 parity
+| `page`               | `"-MRZtlN_1XJe4k"`   | read   |       | Page ID on which the token is displayed
+| `bars_style_top`     | `true`               | write  |       | Whether the token's bars are shown near the top of the token – `true` for top, `false` for bottom
+| `bars_style_overlap` | `false`              | write  |       | Whether the token's bars overlap the token – `true` for overlap, `false` for outside
+| `bars_style_compact` | `false`              | write  |       | Whether the token's bars are shown in compact style – `true` for compact, `false` for normal
+| `bar1`               | `20` / `30`          | write  | write | Token's top bar value – middle circle (default green)
+| `bar1_shown`         | `true`               | write  |       | Visibility of token's top bar – `false` to hide, `true` to show
+| `bar1_edit`          | `false`              | write  |       | Whether the token's top bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
+| `bar2`               | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
+| `bar2_shown`         | `true`               | write  |       | Visibility of token's middle bar – `false` to hide, `true` to show
+| `bar1_edit`          | `false`              | write  |       | Whether the token's middle bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
+| `bar3`               | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
+| `bar3_shown`         | `true`               | write  |       | Visibility of token's bottom bar – `false` to hide, `true` to show
+| `bar1_edit`          | `false`              | write  |       | Whether the token's bottom bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
+| `tooltip`            | `"Wounded"`          | write  |       | Token's tooltip text
+| `tooltip_shown`      | `true`               | write  |       | Visibility of token's tooltip – `false` to hide, `true` to show
+| `status_`...         | `true`               | write  |       | Token's status markers – `false` to hide, `true` to show, or any single digit to show with an overlay – see below
+| `left`               | `350` / `1750`       | write  | read  | Token's X coordinate on the table
+| `top`                | `350` / `1750`       | write  | read  | Token's Y coordinate on the table
+| `width`              | `70`                 | write  |       | Token's width (subject to its rotation)
+| `height`             | `70`                 | write  |       | Token's height (subject to its rotation)
+| `rotation`           | `45`                 | write  |       | Token's clockwise rotation in degrees
+| *(anything else)*    |                      | write  | write | Character attribute – e.g. `HP` or any custom attribute
 
 
 **Tables:** MMM exposes a special character property named `repeating` that gives you access to the contents of all tabular data in the character sheet. The `repeating` property contains a struct with one key for each table; each table is a list of rows; each row is a struct whose keys are the column names in the table.
@@ -1238,6 +1241,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.35.0  | 2022-05-10 | Support `bars_style_top`, `bars_style_overlap`, and `bars_style_compact` token attributes
 | 1.34.0  | 2022-05-06 | Add markup-preserving `&&` string concatenation operator
 | 1.33.0  | 2022-05-06 | Add `gettokens()` to get a list of all tokens on the board
 | 1.32.0  | 2022-05-02 | Support `tooltip` and `tooltip_shown` attributes
