@@ -190,7 +190,7 @@ on("chat:message", function(msg)
             lastseen: undefined,
             context: new MychScriptContext(msg.playerid),
             script: undefined,
-            globals: new MychProperties(MychScriptContext.globals),
+            globals: new MychStash(MychScriptContext.globals),
             customizations: undefined,
             exception: undefined,
         };
@@ -379,11 +379,11 @@ on("chat:message", function(msg)
     }
 });
 
-class MychProperties
+class MychStash
 {
-    constructor(parentProperties = undefined)
+    constructor(parentStash = undefined)
     {
-        this.$parentProperties = parentProperties;
+        this.$parentStash = parentStash;
     }
 
     $isValidPropertyKey(key)
@@ -398,9 +398,9 @@ class MychProperties
             return true;
         }
 
-        if (this.$parentProperties)
+        if (this.$parentStash)
         {
-            return this.$parentProperties.$hasProperty(key);
+            return this.$parentStash.$hasProperty(key);
         }
 
         return false;
@@ -413,9 +413,9 @@ class MychProperties
             return this[key];
         }
 
-        if (this.$parentProperties)
+        if (this.$parentStash)
         {
-            return this.$parentProperties.$getProperty(key);
+            return this.$parentStash.$getProperty(key);
         }
 
         return undefined;
@@ -433,9 +433,9 @@ class MychProperties
             }
         }
 
-        if (this.$parentProperties)
+        if (this.$parentStash)
         {
-            for (let parentKey of this.$parentProperties.$getPropertyKeys())
+            for (let parentKey of this.$parentStash.$getPropertyKeys())
             {
                 keys.add(parentKey);
             }
@@ -464,7 +464,7 @@ class MychProperties
     }
 }
 
-class MychScriptContext extends MychProperties
+class MychScriptContext extends MychStash
 {
     static persistentState = MychScriptContext.initPersistentState(
     {
@@ -520,7 +520,7 @@ class MychScriptContext extends MychProperties
         return persistentStateContainer;
     }
 
-    static globals = new MychProperties();
+    static globals = new MychStash();
     static players = {};
     static impersonation = undefined;
 
@@ -2972,7 +2972,7 @@ class MychScriptContext extends MychProperties
     }
 }
 
-class MychScriptVariables extends MychProperties
+class MychScriptVariables extends MychStash
 {
     constructor(parent = undefined)
     {
