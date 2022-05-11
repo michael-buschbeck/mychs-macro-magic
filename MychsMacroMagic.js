@@ -370,7 +370,7 @@ on("chat:message", function(msg)
                 if (script.type == "function")
                 {
                     let functionName = script.definition.functionName;
-                    let functionImpl = scriptVariables.$getProperty(functionName, undefined, false);
+                    let functionImpl = scriptVariables.$getProperty(functionName);
 
                     player.globals.$setProperty(functionName, functionImpl);
                 }
@@ -393,50 +393,29 @@ class MychProperties
 
     $hasProperty(key)
     {
-        for (let properties = this; properties; properties = properties.$parentProperties)
+        if (this.$isValidPropertyKey(key) && key in this)
         {
-            if (properties.$isValidPropertyKey(key) && key in properties)
-            {
-                return true;
-            }
+            return true;
+        }
+
+        if (this.$parentProperties)
+        {
+            return this.$parentProperties.$hasProperty(key);
         }
 
         return false;
     }
 
-    $getProperty(key, fallbackProperties, bindFunctionToProperties)
+    $getProperty(key)
     {
-        for (let properties = this; properties; properties = properties.$parentProperties)
+        if (this.$isValidPropertyKey(key) && key in this)
         {
-            if (properties.$isValidPropertyKey(key) && key in properties)
-            {
-                let value = properties[key];
-    
-                if (bindFunctionToProperties && value instanceof Function && !value.hasBoundVariables)
-                {
-                    let variables = this;
-
-                    function functionImplWithVariables(...args)
-                    {
-                        return value.apply(variables, args);
-                    }
-
-                    functionImplWithVariables.functionName = value.functionName || value.name;
-                    functionImplWithVariables.functionParamCount = value.functionParamCount || value.length;
-                    functionImplWithVariables.functionParamNames = value.functionParamNames;
-                    functionImplWithVariables.boundVariables = variables;
-                    functionImplWithVariables.hasBoundVariables = true;
-
-                    return functionImplWithVariables;
-                }
-    
-                return value;
-            }
+            return this[key];
         }
 
-        if (fallbackProperties)
+        if (this.$parentProperties)
         {
-            return fallbackProperties.$getProperty(key, undefined, bindFunctionToProperties);
+            return this.$parentProperties.$getProperty(key);
         }
 
         return undefined;
@@ -446,21 +425,26 @@ class MychProperties
     {
         let keys = new Set();
 
-        for (let properties = this; properties; properties = properties.$parentProperties)
+        for (let key in this)
         {
-            for (let key in properties)
+            if (this.$isValidPropertyKey(key))
             {
-                if (!keys.has(key) && properties.$isValidPropertyKey(key))
-                {
-                    keys.add(key);
-                }
+                keys.add(key);
             }
         }
 
-        let sortedKeys = [...keys];
-        sortedKeys.sort();
+        if (this.$parentProperties)
+        {
+            for (let parentKey of this.$parentProperties.$getPropertyKeys())
+            {
+                keys.add(parentKey);
+            }
+        }
 
-        return sortedKeys;
+        keys = [...keys];
+        keys.sort();
+
+        return keys;
     }
 
     $setProperty(key, value)
@@ -3448,7 +3432,7 @@ class MychScript
 
                 for (let identifier of this.definition.identifiers)
                 {
-                    let value = variables.$getProperty(identifier, this.context, false);
+                    let value = MychExpression.resolveProperty([variables, this.context], identifier);
                     scopeVariables.$setProperty(identifier, value);
                 }
             },
@@ -5147,6 +5131,56 @@ class MychExpression
         return value;
     }
 
+    static resolveProperty(containers, key, options = {})
+    {
+        let container;
+        let value;
+
+        if (!Array.isArray(containers))
+        {
+            container = containers;
+            value = container.$getProperty(key);
+        }
+        else
+        {
+            for (container of containers)
+            {
+                value = container.$getProperty(key);
+
+                // non-undefined value unambiguously means key exists
+                if (value != undefined)
+                {
+                    break;
+                }
+
+                // undefined value may still mean key exists if container explicitly says so
+                if (container.$hasProperty instanceof Function && container.$hasProperty(key))
+                {
+                    break;
+                }
+            }
+        }
+
+        if (options.bindFunctionsToContainer && value && value instanceof Function && !value.hasBoundContainer)
+        {
+            function boundFunction(...args)
+            {
+                return value.apply(container, args);
+            }
+
+            boundFunction.functionName = value.functionName || value.name;
+            boundFunction.functionParamCount = value.functionParamCount || value.length;
+            boundFunction.functionParamNames = value.functionParamNames;
+            
+            boundFunction.boundContainer = container;
+            boundFunction.hasBoundContainer = true;
+
+            return boundFunction;
+        }
+
+        return value;
+    }
+
     static literalWithMarkup(value)
     {
         if (value && value.toLiteralWithMarkup instanceof Function)
@@ -5428,7 +5462,7 @@ class MychExpression
 
                         if (valueStruct && valueStruct.$getProperty instanceof Function)
                         {
-                            return valueStruct.$getProperty(valueKey, undefined, true);
+                            return MychExpression.resolveProperty(valueStruct, valueKey, { bindFunctionsToContainer: true });
                         }
 
                         return context.getprop(valueStruct, valueKey);
@@ -5568,7 +5602,7 @@ class MychExpression
                 {
                     function* symbolLookupEvaluator(variables)
                     {
-                        return variables.$getProperty(token.value, context, true);
+                        return MychExpression.resolveProperty([variables, context], token.value, { bindFunctionsToContainer: true });
                     }
 
                     state.pushEvaluator(token, symbolLookupEvaluator);
