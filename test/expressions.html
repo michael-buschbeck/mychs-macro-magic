@@ -1142,6 +1142,17 @@
             return new MychScriptContext.Unknown("Unknown attribute: " + attributeName);
         }
 
+        MychScriptContext.prototype.getattrmax = function(characterName, attributeName)
+        {
+            switch (attributeName)
+            {
+                case "HP":
+                    return "30";
+            }
+
+            return new MychScriptContext.Unknown("Unknown attribute: " + attributeName);
+        }
+
         MychScriptContext.prototype.async = function*(intermediate, result)
         {
             yield intermediate;

@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.34.0";
+const MMM_VERSION = "1.34.1";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1532,11 +1532,14 @@ class MychScriptContext extends MychProperties
         }
         else
         {
+            let attributeValue = this.getattr(nameOrId, attributeName);
+            let attributeValueMax = this.getattrmax(nameOrId, attributeName);
+            
             let attributeStruct =
             {
                 toScalar: function()
                 {
-                    return context.getattr(nameOrId, attributeName);
+                    return attributeValue;
                 },
 
                 toLiteral: function()
@@ -1551,9 +1554,7 @@ class MychScriptContext extends MychProperties
 
                 $getProperty: function(key)
                 {
-                    return (key == "max"
-                        ? context.getattrmax(nameOrId, attributeName)
-                        : context.getprop(context.getattr(nameOrId, attributeName), key));
+                    return (key == "max" ? attributeValueMax : context.getprop(attributeValue, key));
                 },
 
                 $getPropertyItems: function()
