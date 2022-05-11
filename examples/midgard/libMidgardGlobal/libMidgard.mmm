@@ -1142,10 +1142,7 @@
 !mmm   
 !mmm   if script.cDamageRoll ne undef
 !mmm     set storeTarget = storeTarget + 1
-!mmm     set damageRoll = script.cDamageRoll
-!mmm     if damageRoll < 0
-!mmm       set damageRoll = 0
-!mmm     end if
+!mmm     set damageRoll = zeroOrPositive(script.cDamageRoll)
 !mmm     if setattr(dataExchangeID, m3mgdAttrAttackDamageRoll, damageRoll) == damageRoll
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
@@ -1763,7 +1760,7 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!rem   // For variable expiry counts, make the roll and update persistentEffect with the result
+!rem   // For variable expiry counts where .count is not an integer, make the roll and update persistentEffect with the result
 !mmm   if persistentEffect.effect.expiry.count and (persistentEffect.effect.expiry.count + 0 ne persistentEffect.effect.expiry.count)
 !mmm     set persistentEffect = { persistentEffect, effect: { persistentEffect.effect, expiry: { persistentEffect.effect.expiry, count: roll(persistentEffect.effect.expiry.count) } } }
 !mmm   end if

@@ -6,12 +6,12 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.2.0 (2022-04-09)"
+!mmm   set libVersion = "libMidgardBasics v1.3.0 (2022-05-07)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: count, isChar, sign, stringify, sum, rollResult
+!mmm   publish to game: count, isChar, sign, stringify, sum, rollResult, zeroOrPositive
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -135,4 +135,16 @@
 !mmm     return highlight(result, "normal", tooltip)
 !mmm   end if
 !mmm
+!mmm end function
+!rem
+!rem // zeroOrPositive(number)
+!rem //
+!rem //   Returns number if zero or positive, otherwise zero.
+!rem //
+!mmm function zeroOrPositive(number)
+!mmm   if number < 0
+!mmm     return 0
+!mmm   else
+!mmm     return number
+!mmm   end if
 !mmm end function
