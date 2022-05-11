@@ -2949,7 +2949,7 @@ class MychScriptContext extends MychProperties
                 let backupMacroSuffixRegExpSource = /^/u.source + MychExpression.createLiteralRegExpSource(destination) + /_backup_(?<suffix>\d+)$/u.source;
                 let backupMacroSuffixRegExp = new RegExp(backupMacroSuffixRegExpSource, "ui");
                 
-                let existingBackupMacroMaxSuffix = Math.max(0, ...existingMacroNames.map(name => backupMacroSuffixRegExp.exec(name)).filter(match => match).map(match => parseInt(match.groups.suffix)));
+                let existingBackupMacroMaxSuffix = Math.max(0, ...existingMacroNames.map(name => backupMacroSuffixRegExp.exec(name)).filter(Boolean).map(match => parseInt(match.groups.suffix)));
 
                 let backupMacroSuffix = existingBackupMacroMaxSuffix + 1;
                 let backupMacroName = destinationMacro.get("name") + "_backup_" + backupMacroSuffix;
@@ -6479,7 +6479,7 @@ class MychExpression
 
             operatorEvaluator.argEvaluators = argEvaluators;
 
-            let definedArgEvaluators = argEvaluators.filter(evaluator => evaluator);
+            let definedArgEvaluators = argEvaluators.filter(Boolean);
 
             operatorEvaluator.sourceOffset = Math.min(operatorEntry.sourceOffset, ...definedArgEvaluators.map(evaluator => evaluator.sourceOffset));
             operatorEvaluator.sourceLength = Math.max(operatorEntry.sourceOffset + operatorEntry.sourceLength, ...definedArgEvaluators.map(evaluator => evaluator.sourceOffset + evaluator.sourceLength)) - operatorEvaluator.sourceOffset;
