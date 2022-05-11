@@ -33,35 +33,11 @@
 !mmm end function
 !mmm publish to game: m3mgdChatActiveEffects
 !mmm
-!mmm
-!rem // moveToken() moves a token by fwd/rgtOffset from its own perspective
-!mmm function moveToken(tokenID, fwdOffset, rgtOffset)
-!mmm   set altDirection = roll("1d3")
-!mmm   if altDirection == 1
-!mmm     set altDirection = "links"
-!mmm   else if altDirection == 2
-!mmm     set altDirection = "rechts"
-!mmm   else 
-!mmm     set altDirection = "vorne"
-!mmm   end if
-!mmm
-!mmm   chat: {{ (fehlt) = **Bitte Token verschieben:** eine Zelle zurück wenn möglich, sonst nach ${altDirection} }}
-!mmm end function
-!mmm publish to sender: moveToken
-!mmm
-!mmm function spawnWeaponToken(ownerID, offsetRight, offsetForward)
-!rem   // ISSUE: This call requires the owner token to be selected by the player executing the code. See mych#204.
-!rem   // TODO: redefine args as seen from ownerID's direction of view and recalculate offsets: 0/1 should be the field in front of ownerID, 0/-1 behind, 1/0 to my right, -1/0 to my left
-!mmm   chat: !Spawn --name|tokenMuleWeapons --side|rand --offset|${offsetRight},${offsetForward} --order|top --controlledby|all --tokenProps|name:${ownerID.name}'s Weapon,showname:1
-!mmm end function
-!mmm publish to sender: spawnWeaponToken
-!mmm
-!mmm
 !rem // MAIN
 !mmm
 !mmm   for tableName in "defenseFailure"
 !rem // !mmm     set effectRoll = highlight(roll("1d100"), "normal", "Wurf 1W100")
-!mmm     set effectRoll = highlight(57, "normal", "Wurf 1W100")
+!mmm     set effectRoll = highlight(47, "normal", "Wurf 1W100")
 !rem //!mmm     for effectDataRow in m3mgdCriticalEffectsTable.(tableName)... order (...left.key < ...right.key)
 !rem //!mmm       set effectRoll = highlight(effectDataRow.key, "normal", "Wurf 1W100")
 !mmm       chat: Rolling ${effectRoll} for testing.

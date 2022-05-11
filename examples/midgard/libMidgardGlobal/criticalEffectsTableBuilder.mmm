@@ -30,7 +30,7 @@
 !mmm     set entryID = 40
 !mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Verteidigungswaffe fallen. Sie fällt auf das Feld, auf dem Du dich befindest. Du setzt die nächste Runde aus um Deine Waffe aufzuheben, es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung (konzentrierte Abwehr ist nicht möglich).', 'Unbewaffneter Kampf': 'Du verlierst das Gleichgewicht und musst eine Runde aussetzen. Es gibt in der nächsten Runde jedoch keinen Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung (konzentrierte Abwehr ist nicht möglich).' } }
-!mmm     set entryData = { entryData, immediate: '!mmm do spawnWeaponToken(myID, 0, 0)' } 
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdSpawnWeaponToken(myID, 0, 0)' } 
 !mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true, noFocusedDefense: true } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
@@ -38,7 +38,7 @@
 !mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Handgemenge': 'Deine Sicht ist behindert. Du kannst in der folgenden Runde nicht angreifen, da Du Dir Blut oder Schweiß aus den Augen wischen oder eine verrutschte Kopfbedeckung zurechtrücken musst (konzentrierte Abwehr ist nicht möglich).', 'Nahkampf': 'Du wirst ein Feld weit abgedrängt. Dein Gegner kann Dir augenblicklich folgen oder sich lösen.', 'Fernkampf': 'Der Schwung Deiner Ausweichbewegung reißt dich um ein Feld weg.' } }
 !mmm     set entryData = { entryData, persistent: { 'Handgemenge': { expiry: { count: 1, type: "round" }, noAttack: true, noFocusedDefense: true } } }
-!mmm     set entryData = { entryData, immediate: { 'Nahkampf': '!mmm do moveToken(myID, -1, 0)', 'Fernkampf': '!mmm do moveToken(myID, -1, 0))' } }
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf': '!mmm do m3mgdMoveToken(myID, 0, -1)', 'Fernkampf': '!mmm do m3mgdMoveToken(myID, 0, -1))' } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 60
@@ -107,28 +107,28 @@
 !mmm     set entryID = 40
 !mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Dein Angreifer wird entwaffnet. Die Waffe fliegt vom Angreifer aus gesehen geradlinig um 1W6–1 m nach links', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr.' } }
-!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do spawnWeaponToken(foeID, -1 * roll("1d6-1"), 0)' } } 
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do m3mgdSpawnWeaponToken(foeID, -1 * roll("1d6-1"), 0)' } } 
 !mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 50
 !mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Dein Angreifer wird entwaffnet. Die Waffe fliegt vom Angreifer aus gesehen geradlinig um 1W6–1 m nach rechts', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr.' } }
-!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do spawnWeaponToken(foeID, roll("1d6-1"), 0)' } } 
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do m3mgdSpawnWeaponToken(foeID, roll("1d6-1"), 0)' } } 
 !mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 60
 !mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Dein Angreifer wird entwaffnet. Die Waffe fliegt vom Angreifer aus gesehen geradlinig um 1W6–1 m nach hinten', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr.' } }
-!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do spawnWeaponToken(foeID, 0, -1 * roll("1d6-1"))' } } 
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do m3mgdSpawnWeaponToken(foeID, 0, -1 * roll("1d6-1"))' } } 
 !mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 70
 !mmm     set entryData = { weight: 10, label: '⚅ Kritischer Abwehrerfolg', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Nahkampf mit Waffe': 'Dein Angreifer wird entwaffnet. Die Waffe fliegt vom Angreifer aus gesehen geradlinig um 1W6–1 m nach vorne', 'Waffenlos': '+2 auf Deinen nächsten EW: Abwehr.', 'Fernkampf': '+2 auf Deinen nächsten EW: Abwehr.' } }
-!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do spawnWeaponToken(foeID, 0, roll("1d6-1"))' } } 
+!mmm     set entryData = { entryData, immediate: { 'Nahkampf mit Waffe': '!mmm do m3mgdSpawnWeaponToken(foeID, 0, roll("1d6-1"))' } } 
 !mmm     set entryData = { entryData, persistent: { 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
@@ -180,7 +180,7 @@
 !mmm     set entryID = 30
 !mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler beim Fernkampf-Angriff', url: '' }
 !mmm     set entryData = { entryData, desc: 'Du lässt Deine Waffe fallen. Sie fällt auf das Feld, auf dem Du dich befindest. Du setzt die nächste Runde aus um Deine Waffe aufzuheben, es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' }
-!mmm     set entryData = { entryData, immediate: '!mmm do spawnWeaponToken(myID, 0, 0)' } 
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdSpawnWeaponToken(myID, 0, 0)' } 
 !mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
@@ -244,35 +244,35 @@
 !mmm     set entryID = 23
 !mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das Feld, auf dem Du dich befindest. Du setzt die nächste Runde aus, um Deine Waffe aufzuheben, es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
-!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, 0, 0)' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do m3mgdSpawnWeaponToken(myID, 0, 0)' } }
 !mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 26
 !mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das rechte Feld von Dir. Um an Deine Waffe zu gelangen, müsstest Du Dich aus dem Nahkampf lösen oder nächste Runde eine neue Waffe ziehen und bekommst -2 auf deinen EW:Angriff.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
-!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, 1, 0)' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do m3mgdSpawnWeaponToken(myID, 1, 0)' } }
 !mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 29
 !mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das linke Feld von Dir. Um an Deine Waffe zu gelangen, müsstest Du Dich aus dem Nahkampf lösen oder nächste Runde eine neue Waffe ziehen und bekommst -2 auf deinen EW:Angriff.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
-!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, -1, 0)' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do m3mgdSpawnWeaponToken(myID, -1, 0)' } }
 !mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 32
 !mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das Feld hinter Dir. Um an Deine Waffe zu gelangen, müsstest Du Dich aus dem Nahkampf lösen oder nächste Runde eine neue Waffe ziehen und bekommst -2 auf deinen EW:Angriff.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
-!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, 0, -1)' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do m3mgdSpawnWeaponToken(myID, 0, -1)' } }
 !mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 35
 !mmm     set entryData = { weight: 3, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
 !mmm     set entryData = { entryData, desc: { 'Bewaffneter Kampf': 'Du lässt Deine Waffe fallen. Sie fällt auf das Feld deines Gegners. Um weiter anzugreifen, müsstest du nächste Runde eine neue Waffe ziehen und bekommst -2 auf deinen EW:Angriff.', 'Unbewaffneter Kampf': 'Deine Fäuste sind leicht geprellt, du musst eine Runde aussetzen. Es gibt jedoch keinen weiteren Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' } }
-!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do spawnWeaponToken(myID, 0, 1)' } }
+!mmm     set entryData = { entryData, immediate: { 'Bewaffneter Kampf': '!mmm do m3mgdSpawnWeaponToken(myID, 0, 1)' } }
 !mmm     set entryData = { entryData, persistent: { 'Unbewaffneter Kampf': { expiry: { count: 1, type: "round" }, noAttack: true } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm

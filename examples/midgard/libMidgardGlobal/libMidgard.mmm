@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-14)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-25)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -100,7 +100,7 @@
 !mmm   publish to game: m3mgdShapeMoji, m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
 !mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth, m3mgdProcessInjury
-!mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
+!mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance, m3mgdMoveToken, m3mgdSpawnWeaponToken
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
@@ -1060,6 +1060,27 @@
 !mmm
 !mmm   return round(max(absDistY, absDistX))
 !mmm
+!mmm end function
+!rem
+!rem // m3mgdMoveToken(tokenID, offsetRight, offsetForward)
+!rem //
+!rem //   Moves tokenID by offsetRight grid cells to its right (per its direction of view) and offsetForward cells forward.
+!rem //
+!mmm function m3mgdMoveToken(tokenID, offsetRight, offsetForward)
+!mmm   set bearing = (tokenID.rotation % 360 + atan(offsetRight, offsetForward)) % 360
+!mmm   do setattr(tokenID, "left", tokenID.left - sin(bearing) * max(abs(offsetRight), abs(offsetForward)) / distscale())
+!mmm   do setattr(tokenID, "top", tokenID.top + cos(bearing) * max(abs(offsetRight), abs(offsetForward)) / distscale())
+!mmm end function
+!rem
+!rem // m3mgdSpawnWeaponToken(originID, offsetRight, offsetForward)
+!rem //
+!rem //   Uses the SpawnDefaultToken API script (if installed) to make a new weapon token appear at position offsetRight/offsetForward grid cells from originID's direction of view
+!rem //
+!mmm function m3mgdSpawnWeaponToken(originID, offsetRight, offsetForward)
+!mmm   set bearing = (originID.rotation % 360 + round(atan(offsetRight, offsetForward))) % 360
+!mmm   set offsetX = -sin(bearing) * max(abs(offsetRight), abs(offsetForward))
+!mmm   set offsetY = cos(bearing) * max(abs(offsetRight), abs(offsetForward))
+!mmm   chat: !Spawn --name|tokenMuleWeapons --side|rand --offset|${round(offsetX)},${round(offsetY)} --order|top --controlledby|all --tokenProps|name:${originID.name}'s Weapon,showname:1
 !mmm end function
 !rem
 !rem // m3mgdExchangeStoreAttack(attackType, [magicSpell])
