@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.35.0";
+const MMM_VERSION = "1.36.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1303,32 +1303,44 @@ class MychScriptContext extends MychProperties
         sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
     }
 
-    chat(nameOrId_or_message, message_if_nameOrId = undefined)
+    chat(options_or_message, message_if_options = undefined)
     {
-        let nameOrId;
+        let options;
         let message;
 
         if (arguments.length == 1)
         {
-            nameOrId = undefined;
-            message = nameOrId_or_message;
+            options = undefined;
+            message = options_or_message;
         }
         else
         {
-            nameOrId = MychExpression.coerceString(nameOrId_or_message);
-            message = message_if_nameOrId;
+            options = options_or_message;
+            message = message_if_options;
         }
         
-        let sender = this.$getChatSender(nameOrId);
+        let sender = this.$getChatSender(
+            (options && options.$getProperty instanceof Function)
+                ? MychExpression.coerceString(MychExpression.resolveProperty([options, this], "sender"))
+                : MychExpression.coerceString(options));
+
         let messageString = MychExpression.coerceString(message);
 
         if (messageString.startsWith("!"))
         {
+            let selected = this.selected;
+
+            if (options && options.$getProperty instanceof Function)
+            {
+                selected = MychExpression.coerceList(MychExpression.resolveProperty([options, this], "selected"));
+                selected = selected.map(nameOrId => this.$getCharacterAndTokenObjs(nameOrId)[1]).filter(Boolean).map(token => token.id);
+            }
+
             let impersonation =
             {
                 playerid: this.playerid,
                 privileged: this.privileged,
-                selected: this.selected,
+                selected: selected,
             };
 
             MychScriptContext.$sendChatWithImpersonation(sender, messageString, impersonation);
@@ -3526,7 +3538,9 @@ class MychScript
                 }
 
                 let chatContext = (variables.chat instanceof Function) ? variables : this.context;
-                chatContext.chat(variables.sender || this.context.sender, message);
+                let chatOptions = variables;  // sender, selected
+
+                chatContext.chat(chatOptions, message);
             },
 
             getCustomization: function(variables)
@@ -3588,23 +3602,23 @@ class MychScript
 
                 let combineNestedScriptExit;
 
-                let collectedNameOrId;
+                let collectedOptions;
                 let collectedMessages = [];
                 
                 let variablesToRestore = ("chat" in variables) ? { chat: variables.chat } : {};
 
                 try
                 {
-                    variables.chat = function(nameOrId_or_message, message_if_nameOrId = undefined)
+                    variables.chat = function(options_or_message, message_if_options = undefined)
                     {
                         if (arguments.length == 1)
                         {
-                            collectedMessages.push(nameOrId_or_message);
+                            collectedMessages.push(options_or_message);
                         }
                         else
                         {
-                            collectedNameOrId = nameOrId_or_message;
-                            collectedMessages.push(message_if_nameOrId);
+                            collectedOptions = options_or_message;
+                            collectedMessages.push(message_if_options);
                         }
                     };
 
@@ -3622,7 +3636,9 @@ class MychScript
                 };
 
                 let chatContext = (variables.chat ? variables : this.context);
-                chatContext.chat(collectedNameOrId || this.context.sender, combinedMessages);
+                let chatOptions = variables;
+
+                chatContext.chat(collectedOptions || chatOptions, combinedMessages);
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
             },
