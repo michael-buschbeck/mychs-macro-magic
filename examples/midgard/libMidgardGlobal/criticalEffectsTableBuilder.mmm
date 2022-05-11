@@ -1,12 +1,14 @@
-!mmm script
+!mmm function m3mgdBuildCriticalEffectsTables()
+!mmm   set sender = "MacroSheetLibrary"
 !mmm
-!mmm   chat: Building new critical effects tables...
-!mmm
-!rem   // Build table: defenseFailure 
-!mmm
-!mmm   set tableName = "defenseFailure"
 !mmm   combine chat
-!mmm     chat: Table ${tableName} ...
+!mmm     chat: Building critical effects tables ...
+!mmm
+!rem     // Build table: defenseFailure 
+!mmm
+!mmm     set tableName = "defenseFailure"
+!mmm     
+!mmm     chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 10
@@ -80,16 +82,16 @@
 !mmm     set entryData = { entryData, persistent: { expiry: { count: "1d6", type: "round" }, marker: "status_pummeled" } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
-!mmm   end combine
-!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!mmm   
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
 !mmm
-!rem   // Build table: defenseSuccess
+!rem     // Build table: defenseSuccess
 !mmm
-!mmm   set tableName = "defenseSuccess"
-!mmm   combine chat
-!mmm     chat: Table ${tableName} ...
+!mmm     set tableName = "defenseSuccess"
+!mmm     
+!mmm     chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 10
@@ -159,16 +161,15 @@
 !mmm     set entryData = { entryData, persistent: { 'Nahkampf mit Waffe': { focus: "foe", expiry: { count: "1d6", type: "round" }, marker: "status_pummeled" }, 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
-!mmm   end combine
-!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
 !mmm
-!rem   // Build table: rangedAttackFailure 
+!rem     // Build table: rangedAttackFailure 
 !mmm
-!mmm   set tableName = "rangedAttackFailure"
-!mmm   combine chat
-!mmm     chat: Table ${tableName} ...
+!mmm     set tableName = "rangedAttackFailure"
+!mmm   
+!mmm     chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 10
@@ -222,15 +223,14 @@
 !mmm     set entryData = { entryData, persistent: { expiry: { count: "1d10", type: "round" }, marker: "status_pummeled" } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
-!mmm   end combine
-!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
-!rem   // Build table: meleeAttackFailure 
+!rem     // Build table: meleeAttackFailure 
 !mmm
-!mmm   set tableName = "meleeAttackFailure"
-!mmm   combine chat
-!mmm     chat: Table ${tableName} ...
+!mmm     set tableName = "meleeAttackFailure"
+!mmm     
+!mmm     chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 20
@@ -324,15 +324,14 @@
 !mmm     set entryData = { entryData, immediate: '!mmm do m3mgdRollChanceEffect(myID, 50, "1d100", xhelmetworn, "!mmm do setattr(myID, \'status_pummeled\', true)", { expiry: { count: "1d10", type: "round" }, marker: "status_pummeled" })' } 
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
-!mmm   end combine
-!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
-!rem   // Build table: attackSuccess 
+!rem     // Build table: attackSuccess 
 !mmm
-!mmm   set tableName = "attackSuccess"
-!mmm   combine chat
-!mmm     chat: Table ${tableName} ...
+!mmm     set tableName = "attackSuccess"
+!mmm     
+!mmm     chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 10
@@ -443,15 +442,13 @@
 !mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_dead", true)' } 
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: added ${table + 0} entries, total weight: ${sum(table... select ...value.weight)}.
+!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
+!mmm
+!rem     // Save table
+!mmm
+!mmm     do setattr("MacroSheet", "m3mgdCriticalEffectsTable", serialize(m3mgdCriticalEffectsTable))
+!mmm     publish to game: m3mgdCriticalEffectsTable
+!mmm     chat: done.
 !mmm   end combine
-!mmm   set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
-!mmm
-!mmm
-!mmm
-!rem   // Save table
-!mmm
-!mmm   do setattr("MacroSheet", "m3mgdCriticalEffectsTable", serialize(m3mgdCriticalEffectsTable))
-!mmm   publish to game: m3mgdCriticalEffectsTable
-!mmm   chat: done.
-!mmm end script
+!mmm end function
