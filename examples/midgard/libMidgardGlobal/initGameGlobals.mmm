@@ -2,22 +2,8 @@
 !rem // 
 !rem //   defines game-global variables and loads global functions for use across Midgard scripts
 !rem // 
-!rem // Sets ("exports") variables:
-!rem //   m3mgdExchange                 Exchange data sheet ID. Use to access any attribute: m3mgdExchange.(m3mgdAttrAttackType)
-!rem //   m3mgdExchangeDataSheet        Sheet name to look up the exchange data sheet, for portability between games
-!rem //   m3mgdExchangeAttrList         List of valid attribute labels (contained in the list of variables below)
-!rem //   m3mgdAttrAttackType           Attribute label for the attack type ("melee", "ranged", "magic"), with spell names stored in "max"
-!rem //   m3mgdAttrAttackerID           Attribute label for the attacker's token ID
-!rem //   m3mgdAttrAttackTargetID       Attribute label for the target's token ID
-!rem //   m3mgdAttrAttackResult         Attribute label for the attack result (integer)
-!rem //   m3mgdAttrAttackDamage         Attribute label for the attack damage (integer)
-!rem //   m3mgdAttrAttackDamageRoll     Attribute label for the attack damage roll result (integer)
-!rem //   m3mgdAttrAttackWeaponType     Attribute label for the attack weapon type (string)
-!rem //   m3mgdAttrHealthGain           Attribute label for the number of health points gained (e.g. through First Aid or a healing spell)
-!rem //   m3mgdAttrEnduranceGain        Attribute label for the number of endurance points gained (e.g. through an energy drink or spell)
-!rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.2.2 (2022-04-14)"
+!mmm   set scriptVersion = "initGameGlobals 1.3.0 (2022-04-29)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -27,13 +13,13 @@
 !mmm   end if
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   set mmmVersionReq = 1.26
+!mmm   set mmmVersionReq = 1.28
 !mmm   if version < mmmVersionReq
 !mmm     do whisperback(scriptVersion & " - Abbruch: MMM-Version " & mmmVersionReq & ".0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm   chat: ${"<"}br>
+!mmm   chat: Loading libraries... ${"<"}br>
 !mmm
 %{MacroSheetLibrary|libBasics}
 !mmm   do _libBasics()
@@ -43,7 +29,10 @@
 !mmm   
 %{MacroSheetLibrary|libMidgardRuneBlades}
 !mmm   do _libMidgardRuneBlades()
-!mmm   
+!mmm
+%{MacroSheetLibrary|criticalEffectsTableBuilder}
+!mmm   do m3mgdBuildCriticalEffectsTables()
+!mmm
 !mmm   combine chat
 !mmm     set m3mgdPlayerCharacters = "Yorric MacRathgar", "Finn MacRathgar", "Ufix Steinbrot", "Wulfric MacConuilh", "Baigh MacBeorn", "Titos Panathos"
 !mmm     for charName in m3mgdPlayerCharacters

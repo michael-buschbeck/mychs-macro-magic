@@ -1,0 +1,11 @@
+!mmm script
+!mmm   for tokenID in gettokens()
+!mmm     if tokenID.character_id and not tokenID.PC
+!mmm       do setattr(tokenID, "bar1_shown", false)
+!mmm       do setattr(tokenID, "bar2_shown", true)
+!mmm       do setattr(tokenID, "bar3_shown", true)
+!mmm       do setattr(tokenID, "bars_style_compact", true)
+!mmm       chat: ${tokenID.name}'s bars reset.
+!mmm     end if
+!mmm   end for
+!mmm end script

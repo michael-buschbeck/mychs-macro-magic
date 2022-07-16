@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0-pre (2022-04-12)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2022-05-07)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -222,10 +222,7 @@
 !mmm
 !rem     // Calculate endurance damage (only for max endurance > 0; may be reduced due to parry weapon or shield properties)
 !mmm     if not cOwnID.(cEnduranceAttr).max == 0 and parryWeaponEnduranceProtection
-!mmm       set effEnduranceLoss = attackDamage - parryWeaponEnduranceProtection
-!mmm       if effEnduranceLoss < 0
-!mmm         set effEnduranceLoss = 0
-!mmm       end if
+!mmm       set effEnduranceLoss = zeroOrPositive(attackDamage - parryWeaponEnduranceProtection)
 !mmm     else if not cOwnID.(cEnduranceAttr).max == 0
 !mmm       set effEnduranceLoss = attackDamage
 !mmm     end if
@@ -245,10 +242,7 @@
 !rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health)
 !mmm     set effArmorProtection = m3mgdEffectiveArmorProtection(cOwnID, attackWeaponType)
 !mmm     if not cOwnID.(cHealthAttr).max == 0 and effArmorProtection
-!mmm       set effHealthLoss = attackDamage - effArmorProtection
-!mmm       if effHealthLoss < 0
-!mmm         set effHealthLoss = 0
-!mmm       end if
+!mmm       set effHealthLoss = zeroOrPositive(attackDamage - effArmorProtection)
 !mmm     else if not cOwnID.(cHealthAttr).max == 0
 !mmm       set effHealthLoss = attackDamage
 !mmm     end if
@@ -277,9 +271,9 @@
 !mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (∞ AP, abgewehrt) }} "
 !mmm   else if cNoDefense or (cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0)
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (Ziel erschöpft/wehrlos) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (Ziel erschöpft/wehrlos) }} "
 !mmm   else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (kein AP-Verlust) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (kein AP-Verlust) }} "
 !mmm   end if
 !mmm
 !rem   // Register practice point, if applicable

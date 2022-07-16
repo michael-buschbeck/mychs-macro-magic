@@ -4,12 +4,12 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-04-14)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-05-11-1755)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
-!mmm   if version < 1.28
-!mmm     do whisperback("Abbruch: MMM-Version 1.28.0 oder höher erforderlich.")
+!mmm   if version < 1.36
+!mmm     do whisperback("Abbruch: MMM-Version 1.36.0 oder höher erforderlich.")
 !mmm     exit script
 !mmm   end if
 !mmm
@@ -94,13 +94,13 @@
 !mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
 !mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
-!mmm   publish to game: _m3mgdGetStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
+!mmm   publish to game: _m3mgdHandleStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
 !mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects
 !mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdIsUnfitToAttack
 !mmm   publish to game: m3mgdShapeMoji, m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
 !mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth, m3mgdProcessInjury
-!mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance
+!mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance, m3mgdMoveToken, m3mgdSpawnWeaponToken
 !mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
@@ -327,7 +327,7 @@
 !rem //   Places a temporary ceiling ceilingValue on tokenID attribute attrLabel and saves its value to be restored by m3mgdReleaseAttrCeiling().
 !rem //
 !mmm function m3mgdSetAttrCeiling(tokenID, attrLabel, ceilingValue)
-!mmm
+!mmm 
 !mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
 !mmm   if not tokenID
 !mmm     return false
@@ -377,12 +377,12 @@
 !mmm   
 !mmm end function
 !rem
-!rem // _m3mgdGetStoredAttr(dataExchangeID, tokenID, attrLabel, [flushStoredAttr])
+!rem // _m3mgdHandleStoredAttr(dataExchangeID, tokenID, attrLabel, [flushStoredAttr])
 !rem // 
 !rem //   Pulls stored attribute attrLabel for tokenID from data exchange stack and guesses between alternative endurance attributes.
 !rem //   If flushStoredAttr == true, resets the stored attribute to "".
 !rem //
-!mmm function _m3mgdGetStoredAttr(dataExchangeID, tokenID, attrLabel, flushStoredAttr)
+!mmm function _m3mgdHandleStoredAttr(dataExchangeID, tokenID, attrLabel, flushStoredAttr)
 !mmm   set paramAttrLabel = attrLabel
 !mmm   set storageAttrLabel = "m3mgd_tokenAttrCeiling" & tokenID & "_" & attrLabel
 !mmm   if isunknown(dataExchangeID.(storageAttrLabel))
@@ -401,7 +401,7 @@
 !mmm   end if
 !mmm   set payload = dataExchangeID.(storageAttrLabel)
 !mmm   if flushStoredAttr
-!mmm     do setattr(dataExchangeID, storageAttrLabel, "")
+!mmm     do delattr(dataExchangeID, storageAttrLabel)
 !mmm   end if
 !mmm   return payload
 !mmm end function
@@ -422,7 +422,7 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set attrCeiling = _m3mgdGetStoredAttr(m3mgdExchange, tokenID, attrLabel)
+!mmm   set attrCeiling = _m3mgdHandleStoredAttr(m3mgdExchange, tokenID, attrLabel)
 !mmm   if attrCeiling > 0
 !mmm     return attrCeiling
 !mmm   else
@@ -450,7 +450,7 @@
 !mmm   set dataExchangeID = m3mgdExchange
 !mmm   
 !mmm   set flushStoredAttr = true
-!mmm   set ceilingValue = _m3mgdGetStoredAttr(dataExchangeID, tokenID, attrLabel, flushStoredAttr)
+!mmm   set ceilingValue = _m3mgdHandleStoredAttr(dataExchangeID, tokenID, attrLabel, flushStoredAttr)
 !mmm   if ceilingValue == false or ceilingValue < 0 or (tokenID.(attrLabel).max > 0 and ceilingValue > tokenID.(attrLabel).max)
 !mmm   
 !mmm     do whisperback("m3mgdReleaseAttrCeiling(): ceiling for '" & tokenID.name & "'.'" & attrLabel & "' is missing or invalid ('" & ceilingValue & "').")
@@ -875,7 +875,7 @@
 !mmm
 !mmm   set prvHealth = tokenID.(healthAttr)
 !mmm   set maxHealth = tokenID.(healthAttr).max
-!mmm
+!mmm   
 !mmm   if maxHealth == 0
 !mmm
 !rem     // tokenID (LP.max=0) is not alive (possibly undead), so it cannot be healed or injured
@@ -933,11 +933,11 @@
 !mmm       do setattr(tokenID, "status_yellow", false)
 !mmm   
 !mmm     end if
-!mmm   
+!mmm 
 !mmm     if setattr(tokenID, healthAttr, newHealth) == newHealth
-!mmm       
-!mmm       set enduranceAttr = m3mgdValidateTokenAttribute(tokenID, default, "cEnduranceAttr")
-!mmm
+!mmm 
+!mmm       set enduranceAttr = m3mgdGetEnduranceAttribute(tokenID)
+!mmm 
 !mmm       if tokenID.(enduranceAttr).max > 0
 !mmm
 !mmm         if prvHealth > .5 * maxHealth and newHealth <= .5 * maxHealth
@@ -1062,6 +1062,28 @@
 !mmm
 !mmm end function
 !rem
+!rem // m3mgdMoveToken(tokenID, offsetRight, offsetForward)
+!rem //
+!rem //   Moves tokenID by offsetRight grid cells to its right (per its direction of view) and offsetForward cells forward.
+!rem //
+!mmm function m3mgdMoveToken(tokenID, offsetRight, offsetForward)
+!mmm   set bearing = (tokenID.rotation % 360 + atan(offsetRight, offsetForward)) % 360
+!mmm   do setattr(tokenID, "left", tokenID.left - sin(bearing) * max(abs(offsetRight), abs(offsetForward)) / distscale())
+!mmm   do setattr(tokenID, "top", tokenID.top + cos(bearing) * max(abs(offsetRight), abs(offsetForward)) / distscale())
+!mmm end function
+!rem
+!rem // m3mgdSpawnWeaponToken(originID, offsetRight, offsetForward)
+!rem //
+!rem //   Uses the SpawnDefaultToken API script (if installed) to make a new weapon token appear at position offsetRight/offsetForward grid cells from originID's direction of view
+!rem //
+!mmm function m3mgdSpawnWeaponToken(originID, offsetRight, offsetForward)
+!mmm   set bearing = (originID.rotation % 360 + round(atan(offsetRight, offsetForward))) % 360
+!mmm   set offsetX = -sin(bearing) * max(abs(offsetRight), abs(offsetForward))
+!mmm   set offsetY = cos(bearing) * max(abs(offsetRight), abs(offsetForward))
+!mmm   set selected = originID
+!mmm   chat: !Spawn --name|tokenMuleWeapons --side|rand --offset|${round(offsetX)},${round(offsetY)} --order|top --controlledby|all --tokenProps|name:${originID.name}'s Weapon,showname:1
+!mmm end function
+!rem
 !rem // m3mgdExchangeStoreAttack(attackType, [magicSpell])
 !rem //
 !mmm function m3mgdExchangeStoreAttack(attackType, magicSpell)
@@ -1121,10 +1143,7 @@
 !mmm   
 !mmm   if script.cDamageRoll ne undef
 !mmm     set storeTarget = storeTarget + 1
-!mmm     set damageRoll = script.cDamageRoll
-!mmm     if damageRoll < 0
-!mmm       set damageRoll = 0
-!mmm     end if
+!mmm     set damageRoll = zeroOrPositive(script.cDamageRoll)
 !mmm     if setattr(dataExchangeID, m3mgdAttrAttackDamageRoll, damageRoll) == damageRoll
 !mmm       set storeCounter = storeCounter + 1
 !mmm     end if
@@ -1742,7 +1761,7 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!rem   // For variable expiry counts, make the roll and update persistentEffect with the result
+!rem   // For variable expiry counts where .count is not an integer, make the roll and update persistentEffect with the result
 !mmm   if persistentEffect.effect.expiry.count and (persistentEffect.effect.expiry.count + 0 ne persistentEffect.effect.expiry.count)
 !mmm     set persistentEffect = { persistentEffect, effect: { persistentEffect.effect, expiry: { persistentEffect.effect.expiry, count: roll(persistentEffect.effect.expiry.count) } } }
 !mmm   end if
@@ -1914,7 +1933,7 @@
 !rem //   For tokenID, counts every active persistent effect counter of the type actionType down by one, save if it is marked as "new" (then the "new" marker is removed).
 !rem // 
 !mmm function m3mgdUpdatePersistentEffectsCounters(tokenID, actionType)
-!mmm debug do tokenID, actionType
+!mmm   
 !mmm   if not m3mgdHasActivePersistentEffects(tokenID)
 !mmm     return false
 !mmm   end if

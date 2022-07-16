@@ -1,0 +1,16 @@
+!rem // startTracker
+!rem //
+!rem //   Launches combat turn tracker with all our party's PRESENT character tokens and set to round 1.
+!rem //
+!mmm script
+!mmm
+!mmm   for charName in m3mgdPlayerCharacters
+!mmm     if charName.token_id
+!mmm       set trackerData = trackerData, { title: charName, token: charName.token_id, value: charName.Gw + charName.ItemBGewandheit + charName.modGw + charName.gRusGW }
+!mmm     end if
+!mmm   end for
+!mmm   set trackerData = { title: "Runde", value: "1", formula: "+1" }, trackerData order (...left.value > ...right.value)
+!mmm   do settracker(trackerData)
+!mmm   do showtracker(true)
+!mmm
+!mmm end script
