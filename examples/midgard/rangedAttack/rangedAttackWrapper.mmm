@@ -1,0 +1,11 @@
+!rem // Attack wrapper for weapon-specific config scripts
+!mmm customize
+!mmm   set cTargetID="@{target|Angriffsziel|token_id}"
+!mmm   set cSemiManualModifiers=?{Standard-Angriffsmodifikatoren|Keine +/-0,?{Keine +/-0 +/-...&vert;Echt keine +/-0&comma;1&vert;Mini-Ziel 1/4xMensch -4&comma;2&vert;Kleines Ziel 1/2xMensch -2&comma;3&vert;Großes Ziel 2xMensch +2&comma;5&vert;Riesiges Ziel 4xMensch +4&comma;7&vert;Ins Handgemenge/Zufallsopfer +4&comma;17&rbrace;|Spontan -4,?{Spontan -4 +/-...&vert;Nix weiter +/-0&comma;11&vert;Mini-Ziel 1/4xMensch -4&comma;22&vert;Kleines Ziel 1/2xMensch -2&comma;33&vert;Großes Ziel 2xMensch +2&comma;55&vert;Riesiges Ziel 4xMensch +4&comma;77&vert;Schnelles Ziel/B30+ -2&comma;143&vert;Ins Handgemenge/Zufallsopfer +4&comma;187&rbrace;|Schnelles Ziel/B30+ -2,?{Schnelles Ziel/B30+ -2 +/-...&vert;Nix weiter +/-0&comma;13&vert;Mini-Ziel 1/4xMensch -4&comma;26&vert;Kleines Ziel 1/2xMensch -2&comma;39&vert;Großes Ziel 2xMensch +2&comma;65&vert;Riesiges Ziel 4xMensch +4&comma;91&vert;Spontan -4&comma;143&vert;10 Sekunden gezielt +4&comma;247&rbrace;|10 Sekunden gezielt +4,?{10 Sekunden gezielt +4 +/-...&vert;Nix weiter +/-0&comma;19&vert;Mini-Ziel 1/4xMensch -4&comma;38&vert;Kleines Ziel 1/2xMensch -2&comma;57&vert;Großes Ziel 2xMensch +2&comma;95&vert;Riesiges Ziel 4xMensch +4&comma;133&vert;Schnelles Ziel/B30+ -2&comma;247&rbrace;|Scharfschießen +4/Spezial,?{Scharfschießen +4/Spezial&vert;Nix weiter +/-0&comma;23&vert;Mini-Ziel 1/4xMensch -4&comma;46&vert;Kleines Ziel 1/2xMensch -2&comma;69&vert;Großes Ziel 2xMensch +2&comma;115&vert;Riesiges Ziel 4xMensch +4&comma;161&vert;Schnelles Ziel/B30+ -2&comma;299&rbrace; }
+!mmm   set cManualModifiers=?{Weitere spezielle Angriffsmodifikatoren|0}
+&{template} [[1d20]] {{}}
+!mmm   set cAttackRoll=$[[0]]
+&{template} [[1D6]] {{}}
+!mmm   set cDamageRoll=$[[0]]
+!mmm end customize
+%{MacroSheet|rangedAttack}
