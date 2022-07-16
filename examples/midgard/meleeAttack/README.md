@@ -1,6 +1,6 @@
 # MMM-Angriffsskript (Nahkampf) für Midgard (5. Ausgabe)
 
-Aktuelle Version: **1.15.0 vom 2022-02-06,** erfordert MMM 1.26.0+.
+Aktuelle Version: **2.0.0-pre vom 2022-04-14,** erfordert MMM 1.28.0+.
 
 Das MMM-Nahkampfskript wickelt einen Nahkampfangriff ab. Es erwartet als Parameter (per [Konfigskript](#konfigskript)) die Angabe der Waffenbezeichnung entsprechend des Kampfblattes im Charakterbogen. Für Standardwaffen aus dem Kodex wird der Waffentyp automatisch ermittelt. Für besondere Waffen können zusätzliche Eigenschaften im Konfigskript übergeben werden, wie auch ein 3D-Würfelwurf und Text für die Geschichtenerzähler-Ausgabe.
 
@@ -86,6 +86,10 @@ Das Skript fragt bei jedem Start neben dem Ziel des Angriffs (auf gegnerisches T
 
 
 ## Changelog
+
+2.0.0-pre 2022-04-14
+
+- ...
 
 1.15.0 2022-02-06
 
