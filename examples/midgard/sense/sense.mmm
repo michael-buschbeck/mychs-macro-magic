@@ -3,7 +3,7 @@
 !rem // If called without a config script, sends a menu of sense options to the chat.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.1 (2022-02-07)"
+!mmm   set scriptVersion = "2.0.2 (2022-07-14)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -29,7 +29,7 @@
 !rem
 !mmm   function senseMenu()
 !mmm   
-!mmm     set scriptCommand = "&#x25;{MacroSheet|senseLogic}"
+!mmm     set scriptCommand = "&#x25;{MacroSheet|sense}"
 !mmm     set manualModifierQuery = literal("?" & "{" & "Modifikator|-8" & "}")
 !mmm
 !mmm     set selectModifierQuery = literal("?" & "{" & "Die ausgewählten sind... ")
