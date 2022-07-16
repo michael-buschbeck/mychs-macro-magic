@@ -3,7 +3,7 @@
 !rem // If called without a config script, sends a menu of sense options to the chat.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.2 (2022-07-14)"
+!mmm   set scriptVersion = "2.0.3 (2022-07-16)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -40,7 +40,6 @@
 !mmm     set autoModifier = -8
 !mmm     set autoTokenList = "-MFXIKG9zCxQLxsEZ6PW", "-MF0on5H-EnbMJQxQDhQ", "-MF0l4ve_sPrzpbctzUM", "-MFMpuvq2hfA-Y3i4EAe", "-MEnkmmvHcco4HHxg8R0", "-MGKyDWy10K_y3FS4VKi"
 !mmm     
-!mmm     
 !mmm     set menuCode = "&" & "{template:default}" & "{{name=Wahrnehmung}} "
 !mmm
 !mmm     for senseGroupLabel in "Sechster Sinn", "Sehen", "Nachtsicht", "Hören", "Riechen", "Schmecken"
@@ -60,7 +59,7 @@
 !mmm         set senseGroupLabel = "Riechen/Schmecken"
 !mmm       end if
 !mmm       set menuCode = menuCode & "{{ "
-!mmm       set menuCode = menuCode & "[" & "Manuell" & "]("
+!mmm       set menuCode = menuCode & "[" & "⚙️" & "]("
 !mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cSense=\"" & senseGroupLabel & "\"") & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cSenseModifier=") & manualModifierQuery & "&#13;"
@@ -80,13 +79,13 @@
 !mmm       set menuCode = menuCode & literal("!mmm set cCriticalFailureMessage=") & critFailMessageQuery & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
 !mmm       set menuCode = menuCode & " &nbsp; "
-!mmm       set menuCode = menuCode & "[" & "Auto" & "]("
+!mmm       set menuCode = menuCode & "[" & "Auto🤐" & "]("
 !mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cSense=\"" & senseGroupLabel & "\"") & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cSenseModifier=") & autoModifier & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cTokenList=" & stringify(autoTokenList)) & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cSuccessMessage=") & successMessageQuery & "&#13;"
-!mmm       set menuCode = menuCode & literal("!mmm set cRegularFailureMessage=") & failureMessage & "&#13;"
+!mmm       set menuCode = menuCode & literal("!mmm set cRegularFailureMessage=") & noMessage & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cCriticalFailureMessage=") & critFailMessageQuery & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
 !mmm       set menuCode = menuCode & "}} "
