@@ -5361,7 +5361,7 @@ class MychExpression
 
                 function binaryOperator(evaluatorA, evaluatorB)
                 {
-                    if (operatorDef.evaluate.constructor.name != "GeneratorFunction")
+                    if (operatorDef.evaluate.constructor != (function*(){}).constructor)
                     {
                         return function* binaryOperatorEvaluator(variables)
                         {
