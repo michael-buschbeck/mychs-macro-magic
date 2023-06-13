@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.35.0";
+const MMM_VERSION = "1.36.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -190,7 +190,7 @@ on("chat:message", function(msg)
             lastseen: undefined,
             context: new MychScriptContext(msg.playerid),
             script: undefined,
-            globals: new MychProperties(MychScriptContext.globals),
+            globals: new MychStash(MychScriptContext.globals),
             customizations: undefined,
             exception: undefined,
         };
@@ -370,7 +370,7 @@ on("chat:message", function(msg)
                 if (script.type == "function")
                 {
                     let functionName = script.definition.functionName;
-                    let functionImpl = scriptVariables.$getProperty(functionName, undefined, false);
+                    let functionImpl = scriptVariables.$getProperty(functionName);
 
                     player.globals.$setProperty(functionName, functionImpl);
                 }
@@ -379,11 +379,11 @@ on("chat:message", function(msg)
     }
 });
 
-class MychProperties
+class MychStash
 {
-    constructor(parentProperties = undefined)
+    constructor(parentStash = undefined)
     {
-        this.$parentProperties = parentProperties;
+        this.$parentStash = parentStash;
     }
 
     $isValidPropertyKey(key)
@@ -393,50 +393,29 @@ class MychProperties
 
     $hasProperty(key)
     {
-        for (let properties = this; properties; properties = properties.$parentProperties)
+        if (this.$isValidPropertyKey(key) && key in this)
         {
-            if (properties.$isValidPropertyKey(key) && key in properties)
-            {
-                return true;
-            }
+            return true;
+        }
+
+        if (this.$parentStash)
+        {
+            return this.$parentStash.$hasProperty(key);
         }
 
         return false;
     }
 
-    $getProperty(key, fallbackProperties, bindFunctionToProperties)
+    $getProperty(key)
     {
-        for (let properties = this; properties; properties = properties.$parentProperties)
+        if (this.$isValidPropertyKey(key) && key in this)
         {
-            if (properties.$isValidPropertyKey(key) && key in properties)
-            {
-                let value = properties[key];
-    
-                if (bindFunctionToProperties && value instanceof Function && !value.hasBoundVariables)
-                {
-                    let variables = this;
-
-                    function functionImplWithVariables(...args)
-                    {
-                        return value.apply(variables, args);
-                    }
-
-                    functionImplWithVariables.functionName = value.functionName || value.name;
-                    functionImplWithVariables.functionParamCount = value.functionParamCount || value.length;
-                    functionImplWithVariables.functionParamNames = value.functionParamNames;
-                    functionImplWithVariables.boundVariables = variables;
-                    functionImplWithVariables.hasBoundVariables = true;
-
-                    return functionImplWithVariables;
-                }
-    
-                return value;
-            }
+            return this[key];
         }
 
-        if (fallbackProperties)
+        if (this.$parentStash)
         {
-            return fallbackProperties.$getProperty(key, undefined, bindFunctionToProperties);
+            return this.$parentStash.$getProperty(key);
         }
 
         return undefined;
@@ -446,21 +425,26 @@ class MychProperties
     {
         let keys = new Set();
 
-        for (let properties = this; properties; properties = properties.$parentProperties)
+        for (let key in this)
         {
-            for (let key in properties)
+            if (this.$isValidPropertyKey(key))
             {
-                if (!keys.has(key) && properties.$isValidPropertyKey(key))
-                {
-                    keys.add(key);
-                }
+                keys.add(key);
             }
         }
 
-        let sortedKeys = [...keys];
-        sortedKeys.sort();
+        if (this.$parentStash)
+        {
+            for (let parentKey of this.$parentStash.$getPropertyKeys())
+            {
+                keys.add(parentKey);
+            }
+        }
 
-        return sortedKeys;
+        keys = [...keys];
+        keys.sort();
+
+        return keys;
     }
 
     $setProperty(key, value)
@@ -480,7 +464,7 @@ class MychProperties
     }
 }
 
-class MychScriptContext extends MychProperties
+class MychScriptContext extends MychStash
 {
     static persistentState = MychScriptContext.initPersistentState(
     {
@@ -536,7 +520,7 @@ class MychScriptContext extends MychProperties
         return persistentStateContainer;
     }
 
-    static globals = new MychProperties();
+    static globals = new MychStash();
     static players = {};
     static impersonation = undefined;
 
@@ -1319,32 +1303,44 @@ class MychScriptContext extends MychProperties
         sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
     }
 
-    chat(nameOrId_or_message, message_if_nameOrId = undefined)
+    chat(options_or_message, message_if_options = undefined)
     {
-        let nameOrId;
+        let options;
         let message;
 
         if (arguments.length == 1)
         {
-            nameOrId = undefined;
-            message = nameOrId_or_message;
+            options = undefined;
+            message = options_or_message;
         }
         else
         {
-            nameOrId = MychExpression.coerceString(nameOrId_or_message);
-            message = message_if_nameOrId;
+            options = options_or_message;
+            message = message_if_options;
         }
         
-        let sender = this.$getChatSender(nameOrId);
+        let sender = this.$getChatSender(
+            (options && options.$getProperty instanceof Function)
+                ? MychExpression.coerceString(MychExpression.resolveProperty([options, this], "sender"))
+                : MychExpression.coerceString(options));
+
         let messageString = MychExpression.coerceString(message);
 
         if (messageString.startsWith("!"))
         {
+            let selected = this.selected;
+
+            if (options && options.$getProperty instanceof Function)
+            {
+                selected = MychExpression.coerceList(MychExpression.resolveProperty([options, this], "selected"));
+                selected = selected.map(nameOrId => this.$getCharacterAndTokenObjs(nameOrId)[1]).filter(Boolean).map(token => token.id);
+            }
+
             let impersonation =
             {
                 playerid: this.playerid,
                 privileged: this.privileged,
-                selected: this.selected,
+                selected: selected,
             };
 
             MychScriptContext.$sendChatWithImpersonation(sender, messageString, impersonation);
@@ -2949,7 +2945,7 @@ class MychScriptContext extends MychProperties
                 let backupMacroSuffixRegExpSource = /^/u.source + MychExpression.createLiteralRegExpSource(destination) + /_backup_(?<suffix>\d+)$/u.source;
                 let backupMacroSuffixRegExp = new RegExp(backupMacroSuffixRegExpSource, "ui");
                 
-                let existingBackupMacroMaxSuffix = Math.max(0, ...existingMacroNames.map(name => backupMacroSuffixRegExp.exec(name)).filter(match => match).map(match => parseInt(match.groups.suffix)));
+                let existingBackupMacroMaxSuffix = Math.max(0, ...existingMacroNames.map(name => backupMacroSuffixRegExp.exec(name)).filter(Boolean).map(match => parseInt(match.groups.suffix)));
 
                 let backupMacroSuffix = existingBackupMacroMaxSuffix + 1;
                 let backupMacroName = destinationMacro.get("name") + "_backup_" + backupMacroSuffix;
@@ -2976,7 +2972,7 @@ class MychScriptContext extends MychProperties
     }
 }
 
-class MychScriptVariables extends MychProperties
+class MychScriptVariables extends MychStash
 {
     constructor(parent = undefined)
     {
@@ -3448,7 +3444,7 @@ class MychScript
 
                 for (let identifier of this.definition.identifiers)
                 {
-                    let value = variables.$getProperty(identifier, this.context, false);
+                    let value = MychExpression.resolveProperty([variables, this.context], identifier);
                     scopeVariables.$setProperty(identifier, value);
                 }
             },
@@ -3542,7 +3538,9 @@ class MychScript
                 }
 
                 let chatContext = (variables.chat instanceof Function) ? variables : this.context;
-                chatContext.chat(variables.sender || this.context.sender, message);
+                let chatOptions = variables;  // sender, selected
+
+                chatContext.chat(chatOptions, message);
             },
 
             getCustomization: function(variables)
@@ -3604,23 +3602,23 @@ class MychScript
 
                 let combineNestedScriptExit;
 
-                let collectedNameOrId;
+                let collectedOptions;
                 let collectedMessages = [];
                 
                 let variablesToRestore = ("chat" in variables) ? { chat: variables.chat } : {};
 
                 try
                 {
-                    variables.chat = function(nameOrId_or_message, message_if_nameOrId = undefined)
+                    variables.chat = function(options_or_message, message_if_options = undefined)
                     {
                         if (arguments.length == 1)
                         {
-                            collectedMessages.push(nameOrId_or_message);
+                            collectedMessages.push(options_or_message);
                         }
                         else
                         {
-                            collectedNameOrId = nameOrId_or_message;
-                            collectedMessages.push(message_if_nameOrId);
+                            collectedOptions = options_or_message;
+                            collectedMessages.push(message_if_options);
                         }
                     };
 
@@ -3638,7 +3636,9 @@ class MychScript
                 };
 
                 let chatContext = (variables.chat ? variables : this.context);
-                chatContext.chat(collectedNameOrId || this.context.sender, combinedMessages);
+                let chatOptions = variables;
+
+                chatContext.chat(collectedOptions || chatOptions, combinedMessages);
 
                 return this.propagateExitOnReturn(combineNestedScriptExit);
             },
@@ -5147,6 +5147,56 @@ class MychExpression
         return value;
     }
 
+    static resolveProperty(containers, key, options = {})
+    {
+        let container;
+        let value;
+
+        if (!Array.isArray(containers))
+        {
+            container = containers;
+            value = container.$getProperty(key);
+        }
+        else
+        {
+            for (container of containers)
+            {
+                value = container.$getProperty(key);
+
+                // non-undefined value unambiguously means key exists
+                if (value != undefined)
+                {
+                    break;
+                }
+
+                // undefined value may still mean key exists if container explicitly says so
+                if (container.$hasProperty instanceof Function && container.$hasProperty(key))
+                {
+                    break;
+                }
+            }
+        }
+
+        if (options.bindFunctionsToContainer && value && value instanceof Function && !value.hasBoundContainer)
+        {
+            function boundFunction(...args)
+            {
+                return value.apply(container, args);
+            }
+
+            boundFunction.functionName = value.functionName || value.name;
+            boundFunction.functionParamCount = value.functionParamCount || value.length;
+            boundFunction.functionParamNames = value.functionParamNames;
+            
+            boundFunction.boundContainer = container;
+            boundFunction.hasBoundContainer = true;
+
+            return boundFunction;
+        }
+
+        return value;
+    }
+
     static literalWithMarkup(value)
     {
         if (value && value.toLiteralWithMarkup instanceof Function)
@@ -5428,7 +5478,7 @@ class MychExpression
 
                         if (valueStruct && valueStruct.$getProperty instanceof Function)
                         {
-                            return valueStruct.$getProperty(valueKey, undefined, true);
+                            return MychExpression.resolveProperty(valueStruct, valueKey, { bindFunctionsToContainer: true });
                         }
 
                         return context.getprop(valueStruct, valueKey);
@@ -5568,7 +5618,7 @@ class MychExpression
                 {
                     function* symbolLookupEvaluator(variables)
                     {
-                        return variables.$getProperty(token.value, context, true);
+                        return MychExpression.resolveProperty([variables, context], token.value, { bindFunctionsToContainer: true });
                     }
 
                     state.pushEvaluator(token, symbolLookupEvaluator);
@@ -6479,7 +6529,7 @@ class MychExpression
 
             operatorEvaluator.argEvaluators = argEvaluators;
 
-            let definedArgEvaluators = argEvaluators.filter(evaluator => evaluator);
+            let definedArgEvaluators = argEvaluators.filter(Boolean);
 
             operatorEvaluator.sourceOffset = Math.min(operatorEntry.sourceOffset, ...definedArgEvaluators.map(evaluator => evaluator.sourceOffset));
             operatorEvaluator.sourceLength = Math.max(operatorEntry.sourceOffset + operatorEntry.sourceLength, ...definedArgEvaluators.map(evaluator => evaluator.sourceOffset + evaluator.sourceLength)) - operatorEvaluator.sourceOffset;
