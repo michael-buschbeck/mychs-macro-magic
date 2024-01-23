@@ -1119,7 +1119,14 @@ To call another API script, just do what you'd do in person: Send a chat message
 
 | Line | Commands | What happens?
 | ---- | -------- | -------------
-| 1    | _!mmm_ **chat:** !Spawn --name\|Fireball --offset\|1,-1 | *(Calls [Spawn](https://app.roll20.net/forum/permalink/9649899/) to make a fireball appear next to the selected token)*
+| 1    | _!mmm_ **chat:** !Spawn --name\|Fireball --offset\|1,-1 | *(calls [Spawn](https://app.roll20.net/forum/permalink/9649899/) to make a fireball appear next to the selected token)*
+
+If you set the `selected` context variable prior to calling an API script, the called script will see whatever you set as selected tokens. (This doesn't change which tokens are _actually_ selected, just what the API script _thinks_ was selected. Only the user can change the actual selection.)
+
+| Line | Commands | What happens?
+| ---- | -------- | -------------
+| 1    | _!mmm_ **set** selected = "Finn", "Phyllo" | *(overrides which tokens [Spawn](https://app.roll20.net/forum/permalink/9649899/) is going to see as selected tokens)*
+| 2    | _!mmm_ **chat:** !Spawn --name\|Fireball --offset\|1,-1 | *(calls [Spawn](https://app.roll20.net/forum/permalink/9649899/) to make a fireball appear next to Finn and Phyllo)*
 
 There's a wrinkle though: To properly support this, MMM must be loaded _before_ that other API script. Ask your GM to make sure that MMM appears earlier than the other API script you'd like to call from MMM in your game's list of API scripts. If that's not the case, the GM should delete and re-add the other script – that'll put it at the end of the list.
 
@@ -1241,6 +1248,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.36.0  | 2023-06-13 | Support `selected` override
 | 1.35.0  | 2022-05-10 | Support `bars_style_top`, `bars_style_overlap`, and `bars_style_compact` token attributes
 | 1.34.0  | 2022-05-06 | Add markup-preserving `&&` string concatenation operator
 | 1.33.0  | 2022-05-06 | Add `gettokens()` to get a list of all tokens on the board
