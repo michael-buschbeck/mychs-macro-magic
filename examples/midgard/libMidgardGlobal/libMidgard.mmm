@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2022-05-11-1755)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-01-18-2122)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -2213,7 +2213,7 @@
 !mmm     else if script.criticalAttack == true
 !mmm       chat: {\{Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "attackSuccess", script.cOwnID)}${cssTableCellButton}) }\}
 !mmm     else if isfumble(script.cDefenseRoll)
-!mmm       chat: {\{Kritischer Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "defenseFailure", script.cOwnID)}${cssTableCellButton}) }\}
+!mmm       chat: {\{Kritischer Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", m3mgdExchange.(m3mgdAttrAttackerID))}${cssTableCellButton}) }\}
 !mmm     else 
 !mmm       chat: {\{Ergebnis=${script.defenseResult} **Schwerer Treffer**}\}
 !mmm     end if
