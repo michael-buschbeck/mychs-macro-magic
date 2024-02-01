@@ -1,0 +1,25 @@
+!mmm script
+!mmm
+!mmm   if m3mgdExchange.m3mgdPCStates
+!mmm     set storageDB = deserialize(m3mgdExchange.m3mgdPCStates)
+!mmm   else 
+!mmm     set storageDB = {}
+!mmm   end if
+!mmm
+!mmm   for char in m3mgdPlayerCharacters
+!mmm     if not isdenied(char.character_id)
+!mmm       set charID = char.character_id
+!mmm       set tokenID = char.token_id
+!mmm       set backup = storageDB.(charID)
+!mmm       for attr in "LP", "AP", "B"
+!mmm         if charID.(attr) != tokenID.(attr) or charID.(attr).max != tokenID.(attr).max or charID.(attr) != backup.(attr).current or charID.(attr).max != backup.(attr).max
+!mmm             debug chat: ${attr} nicht identisch: CharSheet ${charID.(attr)}/${charID.(attr).max} | Token ${tokenID.(attr)}/${tokenID.(attr).max} | Backup
+!mmm         else 
+!mmm             debug chat: ${charID.name}.${attr} identisch.
+!mmm             set storageDB = { storageDB, (charID): { storageDB.(charID), (attr): { current: charID.(attr), max: charID.(attr).max } } }
+!mmm         end if
+!mmm       end for
+!mmm     end if
+!mmm   end for
+!mmm   do setattr(m3mgdExchange, "m3mgdPCStates", serialize(storageDB))
+!mmm end script
