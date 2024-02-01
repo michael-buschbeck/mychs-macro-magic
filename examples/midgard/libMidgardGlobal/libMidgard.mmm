@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-01-18-2122)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-01)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -2133,7 +2133,7 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set xpLog = attackerID.(m3mgdAttrXP) & "(+" & xpGain & ")=Angriff (" & attackType & ", Wurf: " & attackDamageRoll & ") auf " & targetID.name & " (Grad: " & targetID.Grad & ") = " & xpTooltip
+!mmm   set xpLog = "(+" & xpGain & "->) " & attackerID.(m3mgdAttrXP) & "=Angriff (" & attackType & ", Wurf: " & attackDamageRoll & ") auf " & targetID.name & " (Grad: " & targetID.Grad & ") = " & xpTooltip
 !mmm   if isunknown(attackerID.(m3mgdAttrXPLog))
 !mmm     do setattr(attackerID, m3mgdAttrXPLog, "")
 !mmm   end if
