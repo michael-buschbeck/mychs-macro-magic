@@ -1,0 +1,11 @@
+!rem // Attack wrapper for weapon-specific config scripts
+!mmm customize
+!mmm   set cTargetID="@{target|Angriffsziel|token_id}"
+!mmm   set cSemiManualModifiers=?{Standard-Angriffsmodifikatoren|Keine +/-0,?{Keine +/-0 +/-...&vert;Echt keine +/-0&comma;1&vert;Von oben 70cm+ +2&comma;2&vert;Ziel liegt/ich stehe +4&comma;3&vert;Ziel wehrlos/überrascht +4&comma;5&vert;Ziel flieht panisch +4&comma;7&rbrace;|Spontan -4,?{Spontan -4 +/-...&vert;Nix weiter +/-0&comma;11&vert;Von oben 70cm+ +2&comma;22&vert;Ziel liegt/ich stehe +4&comma;33&vert;Ziel wehrlos/überrascht +4&comma;55&vert;Ziel flieht panisch +4&comma;77&rbrace;|Überstürzt -6,?{Überstürzt -6 +/-...&vert;Nix weiter +/-0&comma;13&vert;Von oben 70cm+ +2&comma;26&vert;Ziel liegt/ich stehe +4&comma;39&vert;Ziel wehrlos/überrascht +4&comma;65&vert;Ziel flieht panisch +4&comma;91&rbrace;|Völlig dunkel/geblendet -6,?{Völlig dunkel/geblendet -6 +/-...&vert;Nix weiter +/-0&comma;17&vert;Von oben 70cm+ +2&comma;34&vert;Ziel liegt/ich stehe +4&comma;51&vert;Ziel wehrlos/überrascht +4&comma;85&vert;Ziel flieht panisch +4&comma;119&vert;Spontan -4&comma;?{Keine +/-0 +/-...&amp;vert;Echt keine +/-0&amp;comma;187&amp;vert;Von oben 70cm+ +2&amp;comma;374&amp;vert;Ziel liegt/ich stehe +4&amp;comma;561&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;935&amp;vert;Ziel flieht panisch +4&amp;comma;1309&amp;rbrace;&vert;Überstürzt -6&comma;?{Keine +/-0 +/-...&amp;vert;Echt keine +/-0&amp;comma;221&amp;vert;Von oben 70cm+ +2&amp;comma;442&amp;vert;Ziel liegt/ich stehe +4&amp;comma;663&amp;vert;Ziel wehrlos/überrascht +4&amp;comma;1105&amp;vert;Ziel flieht panisch +4&amp;comma;1547&amp;rbrace;&rbrace; }
+!mmm   set cManualModifiers=?{Weitere spezielle Angriffsmodifikatoren|0}
+&{template} [[1d20]] {{}}
+!mmm   set cAttackRoll=$[[0]]
+&{template} [[1D6]] {{}}
+!mmm   set cDamageRoll=$[[0]]
+!mmm end customize
+%{MacroSheet|meleeAttack}
