@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.36.0";
+const MMM_VERSION = "1.36.1";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -644,7 +644,7 @@ class MychScriptContext extends MychStash
             return true;
         }
 
-        if (value && value.toScalar instanceof Function)
+        if (value && MychExpression.isFunction(value.toScalar))
         {
             return this.isdefault(value.toScalar());
         }
@@ -659,7 +659,7 @@ class MychScriptContext extends MychStash
             return true;
         }
 
-        if (value && value.toScalar instanceof Function)
+        if (value && MychExpression.isFunction(value.toScalar))
         {
             return this.isunknown(value.toScalar());
         }
@@ -674,7 +674,7 @@ class MychScriptContext extends MychStash
             return true;
         }
 
-        if (value && value.toScalar instanceof Function)
+        if (value && MychExpression.isFunction(value.toScalar))
         {
             return this.isdenied(value.toScalar());
         }
@@ -689,7 +689,7 @@ class MychScriptContext extends MychStash
             return value.reason;
         }
 
-        if (value && value.toScalar instanceof Function)
+        if (value && MychExpression.isFunction(value.toScalar))
         {
             return this.getreason(value.toScalar());
         }
@@ -1320,7 +1320,7 @@ class MychScriptContext extends MychStash
         }
         
         let sender = this.$getChatSender(
-            (options && options.$getProperty instanceof Function)
+            (options && MychExpression.isFunction(options.$getProperty))
                 ? MychExpression.coerceString(MychExpression.resolveProperty([options, this], "sender"))
                 : MychExpression.coerceString(options));
 
@@ -1330,7 +1330,7 @@ class MychScriptContext extends MychStash
         {
             let selected = this.selected;
 
-            if (options && options.$getProperty instanceof Function)
+            if (options && MychExpression.isFunction(options.$getProperty))
             {
                 selected = MychExpression.coerceList(MychExpression.resolveProperty([options, this], "selected"));
                 selected = selected.map(nameOrId => this.$getCharacterAndTokenObjs(nameOrId)[1]).filter(Boolean).map(token => token.id);
@@ -3537,7 +3537,7 @@ class MychScript
                     message = "<br/>";
                 }
 
-                let chatContext = (variables.chat instanceof Function) ? variables : this.context;
+                let chatContext = MychExpression.isFunction(variables.chat) ? variables : this.context;
                 let chatOptions = variables;  // sender, selected
 
                 chatContext.chat(chatOptions, message);
@@ -4854,6 +4854,11 @@ class MychExpression
         }
     }
 
+    static isFunction(value)
+    {
+        return typeof(value) == "function";
+    }
+
     static createLiteralRegExpSource(literal, addWordBoundaryAssertions = false)
     {
         let requireWordBoundaryAssertionBegin = false;
@@ -4889,7 +4894,7 @@ class MychExpression
     {
         value = MychExpression.coerceListItem(value);
 
-        if (value && value.toScalar instanceof Function)
+        if (value && MychExpression.isFunction(value.toScalar))
         {
             return value.toScalar();
         }
@@ -4899,12 +4904,12 @@ class MychExpression
 
     static coerceMarkup(value)
     {
-        if (value && value.toMarkup instanceof Function)
+        if (value && MychExpression.isFunction(value.toMarkup))
         {
             return value.toMarkup();
         }
 
-        if (value && value.toScalar instanceof Function)
+        if (value && MychExpression.isFunction(value.toScalar))
         {
             return MychExpression.coerceMarkup(value.toScalar());
         }
@@ -4926,7 +4931,7 @@ class MychExpression
             return "";
         }
 
-        if (value instanceof Function)
+        if (MychExpression.isFunction(value))
         {
             let name = value.functionName || value.name;
             let paramCount = value.functionParamCount || value.length;
@@ -4942,7 +4947,7 @@ class MychExpression
     {
         value = MychExpression.coerceScalar(value);
 
-        if (value && value.toNumber instanceof Function)
+        if (value && MychExpression.isFunction(value.toNumber))
         {
             return value.toNumber();
         }
@@ -4973,7 +4978,7 @@ class MychExpression
     {
         value = MychExpression.coerceScalar(value);
 
-        if (value && value.toBoolean instanceof Function)
+        if (value && MychExpression.isFunction(value.toBoolean))
         {
             return value.toBoolean();
         }
@@ -5021,7 +5026,7 @@ class MychExpression
             return value;
         }
 
-        if (value && value.toList instanceof Function)
+        if (value && MychExpression.isFunction(value.toList))
         {
             return value.toList();
         }
@@ -5170,14 +5175,14 @@ class MychExpression
                 }
 
                 // undefined value may still mean key exists if container explicitly says so
-                if (container.$hasProperty instanceof Function && container.$hasProperty(key))
+                if (MychExpression.isFunction(container.$hasProperty) && container.$hasProperty(key))
                 {
                     break;
                 }
             }
         }
 
-        if (options.bindFunctionsToContainer && value && value instanceof Function && !value.hasBoundContainer)
+        if (options.bindFunctionsToContainer && value && MychExpression.isFunction(value) && !value.hasBoundContainer)
         {
             function boundFunction(...args)
             {
@@ -5199,7 +5204,7 @@ class MychExpression
 
     static literalWithMarkup(value)
     {
-        if (value && value.toLiteralWithMarkup instanceof Function)
+        if (value && MychExpression.isFunction(value.toLiteralWithMarkup))
         {
             return value.toLiteralWithMarkup();
         }
@@ -5225,7 +5230,7 @@ class MychExpression
 
     static literal(value)
     {
-        if (value && value.toLiteral instanceof Function)
+        if (value && MychExpression.isFunction(value.toLiteral))
         {
             return value.toLiteral();
         }
@@ -5243,7 +5248,7 @@ class MychExpression
             }
         }
 
-        if (value instanceof Function)
+        if (MychExpression.isFunction(value))
         {
             return value.functionName || value.name;
         }
@@ -5356,7 +5361,7 @@ class MychExpression
 
                 function binaryOperator(evaluatorA, evaluatorB)
                 {
-                    if (operatorDef.evaluate.constructor.name != "GeneratorFunction")
+                    if (operatorDef.evaluate.constructor != (function*(){}).constructor)
                     {
                         return function* binaryOperatorEvaluator(variables)
                         {
@@ -5476,7 +5481,7 @@ class MychExpression
                         let valueStruct = MychExpression.coerceListItem(yield* evaluatorStruct(variables));
                         let valueKey = MychExpression.coerceString(yield* evaluatorKey(variables));
 
-                        if (valueStruct && valueStruct.$getProperty instanceof Function)
+                        if (valueStruct && MychExpression.isFunction(valueStruct.$getProperty))
                         {
                             return MychExpression.resolveProperty(valueStruct, valueKey, { bindFunctionsToContainer: true });
                         }
@@ -5758,7 +5763,7 @@ class MychExpression
                         let func = MychExpression.coerceListItem(yield* funcEvaluator(variables));
                         let args = argsEvaluator ? MychExpression.coerceArgs(yield* argsEvaluator(variables)) : [];
 
-                        if (func instanceof Function)
+                        if (MychExpression.isFunction(func))
                         {
                             let funcResult = func(...args);
                             return (funcResult && funcResult.next) ? (yield* funcResult) : funcResult;
@@ -5920,12 +5925,12 @@ class MychExpression
                             {
                                 structItems.push(struct);
                             }
-                            else if (struct.$getPropertyItems instanceof Function)
+                            else if (MychExpression.isFunction(struct.$getPropertyItems))
                             {
                                 structItems.push(...struct.$getPropertyItems());
                             }
-                            else if (struct.$getPropertyKeys instanceof Function &&
-                                     struct.$getProperty     instanceof Function)
+                            else if (MychExpression.isFunction(struct.$getPropertyKeys) &&
+                                     MychExpression.isFunction(struct.$getProperty))
                             {
                                 structItems.push(...struct.$getPropertyKeys()
                                     .map(key => new MychExpressionStructItem(key, () => struct.$getProperty(key), true)));
