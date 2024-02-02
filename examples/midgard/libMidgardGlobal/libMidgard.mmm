@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-01)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-02-2109)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -109,7 +109,7 @@
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
 !mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect
 !mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdUpdatePersistentEffectsCounters
-!mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP
+!mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP, m3mgdProcessSkillXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -2138,6 +2138,56 @@
 !mmm     do setattr(attackerID, m3mgdAttrXPLog, "")
 !mmm   end if
 !mmm   do setattr(attackerID, m3mgdAttrXPLog, attackerID.(m3mgdAttrXPLog) & " {\{" & xpLog & "}\} ")
+!mmm
+!mmm   return highlight(xpGain, "normal", xpTooltip)
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdProcessSkillXP(skill, skillRoll, [characterID])
+!rem //
+!rem //   Processes experience gain from the use of non-combat skills.
+!rem //
+!mmm function m3mgdProcessSkillXP(skill, skillRoll, characterID)
+!mmm
+!mmm   if isdefault(characterID)
+!mmm     set characterID = script.cOwnID
+!mmm   end if
+!mmm   if not isChar(characterID)
+!mmm     do whisperback("m3mgdProcessSkillXP(): Unable to process experience for '" & characterID.name & "', skill '" & skill & "': not linked to a character sheet.")
+!mmm     return false
+!mmm   else if characterID.permission ne "control"
+!mmm     do whisperback("m3mgdProcessSkillXP(): Unable to process experience for '" & characterID.name & "', skill '" & skill & "': no control over token/sheet.")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isunknown(findattr(characterID, "Fertigkeiten", "Fertigkeit", skill))
+!mmm     do whisperback("m3mgdProcessSkillXP(): no or invalid skill '" & skill & "' for '" & characterID.name & "' -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(skillRoll) or skillRoll <= 0
+!mmm     do whisperback("m3mgdProcessSkillXP(): no or invalid skillRoll parameter: " & skillRoll & " -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   set xpGain = 5
+!mmm   set xpTooltip = "Standard amount"
+!mmm   
+!mmm   set newXP = characterID.(m3mgdAttrXP) + xpGain
+!mmm   if newXP <= 0 or not newXP
+!mmm     do whisperback("m3mgdProcessSkillXP(): Failure: new calculated XP likely undefined ('" & newXP & "') -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm   if setattr(characterID, m3mgdAttrXP, newXP) != newXP
+!mmm     do whisperback("m3mgdProcessSkillXP(): Failure storing new experience total " & newXP & " in attribute '" & characterID.name & "'." & m3mgdAttrXP)
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set xpLog = "(+" & xpGain & "->) " & characterID.(m3mgdAttrXP) & "=Fertigkeit '" & skill & "', Wurf: " & skillRoll
+!mmm   if isunknown(characterID.(m3mgdAttrXPLog))
+!mmm     do setattr(characterID, m3mgdAttrXPLog, "")
+!mmm   end if
+!mmm   do setattr(characterID, m3mgdAttrXPLog, characterID.(m3mgdAttrXPLog) & " {\{" & xpLog & "}\} ")
 !mmm
 !mmm   return highlight(xpGain, "normal", xpTooltip)
 !mmm
