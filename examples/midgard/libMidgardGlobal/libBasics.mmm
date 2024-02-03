@@ -6,12 +6,13 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.3.0 (2022-05-07)"
+!mmm   set libVersion = "libMidgardBasics v1.3.1 (2024-02-03)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
 !mmm   publish to game: count, isChar, sign, stringify, sum, rollResult, zeroOrPositive
+!mmm   publish to game: chatButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -147,4 +148,15 @@
 !mmm   else
 !mmm     return number
 !mmm   end if
+!mmm end function
+!rem
+!rem // chatButton(label, payload, style)
+!rem //
+!rem //   Returns chat code for a button with the label and payload provided. If the optional style is given, it is applied.
+!rem //
+!mmm function chatButton(label, payload, style)
+!mmm   if isdefault(style)
+!mmm     set style = ""
+!mmm   end if
+!mmm   return " [" & label & "](" & payload & style & ") "
 !mmm end function
