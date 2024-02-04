@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-03-2000)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-04-0930)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -111,7 +111,7 @@
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
 !mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect
 !mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdUpdatePersistentEffectsCounters
-!mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP, m3mgdProcessSkillXP
+!mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -2205,6 +2205,79 @@
 !mmm   end if
 !mmm
 !mmm   set xpLog = "(+" & xpGain & "->) " & characterID.(m3mgdAttrXP) & "=Fertigkeit '" & skill & "', Wurf: " & skillRoll
+!mmm   if isunknown(characterID.(m3mgdAttrXPLog))
+!mmm     do setattr(characterID, m3mgdAttrXPLog, "")
+!mmm   end if
+!mmm   do setattr(characterID, m3mgdAttrXPLog, characterID.(m3mgdAttrXPLog) & " {\{" & xpLog & "}\} ")
+!mmm
+!mmm   return highlight(xpGain, "normal", xpTooltip)
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdProcessSpellXP(spell, spellRoll, spellCost, spellType, [spellNotes], [characterID])
+!rem //
+!rem //   Processes experience gain from the use of magic spells.
+!rem //
+!mmm function m3mgdProcessSpellXP(spell, spellRoll, spellCost, spellType, spellNotes, characterID)
+!mmm
+!mmm   if isdefault(characterID)
+!mmm     set characterID = script.cOwnID
+!mmm   end if
+!mmm   if not isChar(characterID)
+!mmm     do whisperback("m3mgdProcessSpellXP(): Unable to process experience for '" & characterID.name & "', spell '" & spell & "': not linked to a character sheet.")
+!mmm     return false
+!mmm   else if characterID.permission ne "control"
+!mmm     do whisperback("m3mgdProcessSpellXP(): Unable to process experience for '" & characterID.name & "', spell '" & spell & "': no control over token/sheet.")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isunknown(findattr(characterID, "Zauber", "Zauber", spell))
+!mmm     do whisperback("m3mgdProcessSpellXP(): no or invalid spell '" & spell & "' for '" & characterID.name & "' -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!mmm   if isdefault(spellRoll) or spellRoll <= 0
+!mmm     do whisperback("m3mgdProcessSpellXP(): no or invalid spellRoll parameter: " & spellRoll & " -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isdefault(spellCost) or spellCost <= 0
+!mmm     do whisperback("m3mgdProcessSpellXP(): no or invalid spellCost parameter: " & spellCost & " -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if isdefault(spellType) or not (("combat", "healing", "other") where ... eq spellType)
+!mmm     do whisperback("m3mgdProcessSpellXP(): no or invalid spellType parameter: " & spellType & " must be combat, healing or other -- no experience processed.")
+!mmm     return false
+!mmm   else if spellType eq "combat"
+!mmm     do whisperback("m3mgdProcessSpellXP() does not handle experience for combat spells -- no experience processed.")
+!mmm     return false
+!mmm   end if
+!mmm   
+!rem   // Need to add lists of healing and combat spells and a check against them here
+!mmm   if spellType eq "healing"
+!mmm     if zauberHeilungAP > 19 or spell eq "Stabilisieren (M-87)"
+!mmm       set xpGain = 15 * spellCost
+!mmm       set xpTooltip = "15 x AP-Kosten wg. Heileffekt >19 (" & spellCost & ")"
+!mmm     else if zauberHeilungAP > 8
+!mmm       set xpGain = 6 * spellCost
+!mmm       set xpTooltip = "6 x AP-Kosten wg. Heileffekt >8 (" & spellCost & ")"
+!mmm     else
+!mmm       set xpGain = 3 * spellCost
+!mmm       set xpTooltip = "3 x AP-Kosten (" & spellCost & ")"
+!mmm     end if
+!mmm   else
+!mmm     set xpGain = 3 * spellCost
+!mmm     set xpTooltip = "3 x AP-Kosten (" & spellCost & ")"
+!mmm   end if
+!mmm   
+!mmm   set newXP = characterID.(m3mgdAttrXP) + xpGain
+!mmm   if setattr(characterID, m3mgdAttrXP, newXP) != newXP
+!mmm     do whisperback("m3mgdProcessSpellXP(): Failure storing new experience total " & newXP & " in attribute '" & characterID.name & "'." & m3mgdAttrXP)
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set xpLog = "(+" & xpGain & "->) " & characterID.(m3mgdAttrXP) & "=Zauber '" & spell & "', Wurf: " & spellRoll & " (" & spellNotes & ")"
 !mmm   if isunknown(characterID.(m3mgdAttrXPLog))
 !mmm     do setattr(characterID, m3mgdAttrXPLog, "")
 !mmm   end if
