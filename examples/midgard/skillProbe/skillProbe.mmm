@@ -1,7 +1,7 @@
 !rem // skillProbe
 !rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.0.0 (2022-02-11)"
+!mmm   set scriptVersion = "skillProbe 1.1.0-pre (2024-02-04)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -9,11 +9,33 @@
 !mmm     exit script
 !mmm   end if
 !rem
+!mmm   set scriptCommand = "&#x25;{MacroSheet|skillProbe}"
+!mmm   set usableSkills = "Alchemie", "Fälschen", "Fallen entdecken", "Fallenmechanik", "Gassenwissen", "Landeskunde (Alba)", "Menschenkenntnis", "Naturkunde", "Pflanzenkunde", "Schleichen", "Spurensuche", "Tarnen", "Tierkunde", "Verhören", "Zauberkunde"
+!mmm
 !rem   // FUNCTIONS
 !rem   //
+!mmm   function tokenMenu()
+!mmm     
+!mmm     set skillSelectQuery = "?" & "{" & "Fertigkeit auswählen"
+!mmm     for skill in usableSkills
+!mmm       set skillSelectQuery = skillSelectQuery & "|" & skill & "," & skill
+!mmm     end for
+!mmm     set skillSelectQuery = skillSelectQuery & "}"
+!mmm     
+!mmm     for charName in m3mgdPlayerCharacters
+!mmm       set autoTokenList = autoTokenList, charName
+!mmm     end for
+!mmm     
+!mmm     set buttonProps = { "label": "Ausgewählte Token", "scriptCommand": script.scriptCommand, "settings": { "cTokenList": "selected", "cSkill": "\"" & skillSelectQuery & "\"" } }
+!mmm     set buttonProps = buttonProps, { "label": "Komplette Gruppe", "scriptCommand": script.scriptCommand, "settings": { "cTokenList": stringify(autoTokenList), "cSkill": "\"" & skillSelectQuery & "\"" } }
+!mmm     
+!mmm     do whisperback(chatButtonTable("Fertigkeitsprüfung", { "type": "multi-buttons", "buttonProps": buttonProps } ))
+!mmm     
+!mmm   end function
+!mmm
+!rem // skillsMenu() is deprecated, too many skills now
 !mmm   function skillsMenu()
 !mmm   
-!mmm     set scriptCommand = "&#x25;{MacroSheet|skillProbe}"
 !mmm     set manualModifierQuery = literal("?" & "{" & "Modifikator|0" & "}")
 !mmm
 !mmm     for charName in m3mgdPlayerCharacters
@@ -22,7 +44,7 @@
 !mmm     
 !mmm     set menuCode = "&" & "{template:default}" & "{{name=Gruppenwurf für Fertigkeiten}} "
 !mmm
-!mmm     for skillLabel in "Fallen entdecken", "Fallenmechanik", "Schleichen", "Spurensuche", "Tarnen"
+!mmm     for skillLabel in usableSkills
 !mmm     
 !mmm       set menuCode = menuCode & "{{ " & skillLabel & " }} "
 !mmm       set menuCode = menuCode & "{{ "
@@ -31,14 +53,14 @@
 !mmm       set menuCode = menuCode & literal("!mmm set cSkill=\"" & skillLabel & "\"") & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cModifier=") & manualModifierQuery & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cTokenList=selected") & "&#13;"
-!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & script.scriptCommand & ")"
 !mmm       set menuCode = menuCode & " &nbsp; "
 !mmm       set menuCode = menuCode & "[" & "Gruppe" & "]("
 !mmm       set menuCode = menuCode & literal("!mmm customize") & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cSkill=\"" & skillLabel & "\"") & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cModifier=") & manualModifierQuery & "&#13;"
 !mmm       set menuCode = menuCode & literal("!mmm set cTokenList=" & stringify(autoTokenList)) & "&#13;"
-!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & scriptCommand & ")"
+!mmm       set menuCode = menuCode & literal("!mmm end customize") & "&#13;" & script.scriptCommand & ")"
 !mmm       set menuCode = menuCode & "}} "
 !mmm       
 !mmm     end for
@@ -66,7 +88,10 @@
 !mmm
 !rem   // Called without proper config -> show menu
 !rem   //
-!mmm   if isdefault(cSkill)
+!mmm   if isdefault(cTokenList)
+!mmm     do tokenMenu()
+!mmm     exit script
+!mmm   else if isdefault(cSkill)
 !mmm     do skillsMenu()
 !mmm     exit script
 !mmm   end if
@@ -154,7 +179,8 @@
 !mmm         
 !rem         // Compose output table row for GM
 !mmm         if tokenResult >= 20
-!mmm           chat: [${tokenID.token_name}${fallBack} ${tokenResult}](${cssGMTableItemSuccess})
+!mmm           set tokenXPGain = m3mgdProcessSkillXP(cSkill, tokenRoll - effModifier, tokenID)
+!mmm           chat: [${tokenID.token_name}${fallBack} ${tokenResult} &nbsp; Erfahrung: ${tokenXPGain}](${cssGMTableItemSuccess})
 !mmm         else if isfumble(tokenRoll)
 !mmm           chat: [${tokenID.token_name}${fallBack} ${tokenResult}](${cssGMTableItemFailure})
 !mmm         else 
