@@ -41,7 +41,7 @@
 !rem //!mmm     for effectDataRow in m3mgdCriticalEffectsTable.(tableName)... order (...left.key < ...right.key)
 !rem //!mmm       set effectRoll = highlight(effectDataRow.key, "normal", "Wurf 1W100")
 !mmm       chat: Rolling ${effectRoll} for testing.
-!mmm       do m3mgdCriticalEffectPrompt("Yorric MacRathgar".token_id, tableName, effectRoll, "-M_a1Zy8w8jDCc0qt172".token_id)
+!mmm       do m3mgdCriticalEffectPrompt(selected.token_id, tableName, effectRoll, "Yorric MacRathgar".token_id)
 !rem //!mmm     end for
 !mmm   end for
 !mmm
