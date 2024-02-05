@@ -6,13 +6,13 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.3.1 (2024-02-03)"
+!mmm   set libVersion = "libMidgardBasics v1.3.2 (2024-02-04)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
 !mmm   publish to game: count, isChar, sign, stringify, sum, rollResult, zeroOrPositive
-!mmm   publish to game: chatButton
+!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -159,4 +159,37 @@
 !mmm     set style = ""
 !mmm   end if
 !mmm   return " [" & label & "](" & payload & style & ") "
+!mmm end function
+!rem
+!rem // chatButtonPayload(scriptCommand, settings)
+!rem //
+!rem //   Returns button payload code for a customize script to call scriptCommand with the variables provided by settings.
+!rem //
+!mmm function chatButtonPayload(scriptCommand, settings)
+!mmm   set chatButtonPayloadCode = literal("!mmm customize") & "&#13;"
+!mmm   for setting in settings...
+!mmm     set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value) & "&#13;"
+!mmm   end for
+!mmm   set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm end customize") & "&#13;" & scriptCommand
+!mmm   return chatButtonPayloadCode
+!mmm end function
+!rem
+!rem // chatButtonTable(label, rows)
+!rem //
+!rem //   Returns chat code for a button with the label and payload provided. If the optional style is given, it is applied.
+!rem //
+!mmm function chatButtonTable(label, rows)
+!mmm   set chatButtonTableCode = "&" & "{template:default}" & "{{name=" & label & "}} "
+!mmm   for row in rows
+!mmm     if row.type eq "subheading"
+!mmm       set chatButtonTableCode = chatButtonTableCode & "{{ " & row.label & " }} "
+!mmm     else if row.type eq "multi-buttons"
+!mmm       set chatButtonTableCode = chatButtonTableCode & "{{ "
+!mmm       for singleButtonProps in row.buttonProps
+!mmm         set chatButtonTableCode = chatButtonTableCode & " &nbsp; " & chatButton(singleButtonProps.label, chatButtonPayload(singleButtonProps.scriptCommand, singleButtonProps.settings))
+!mmm       end for
+!mmm       set chatButtonTableCode = chatButtonTableCode & "}} "
+!mmm     end if
+!mmm   end for
+!mmm   return chatButtonTableCode
 !mmm end function
