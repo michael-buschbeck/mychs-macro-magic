@@ -1,0 +1,51 @@
+!mmm customize 
+!mmm   set cTokenID="@{target|Wer?|token_id}"
+!mmm   set cSign=-1
+!mmm   set cXPdiff=?{Wieviel?|0}
+!mmm   set cLogText="?{Warum?|}"
+!mmm end customize
+!rem // editXP: add/remove XP and log accordingly (GM tool to make manual changes to XP accrual)
+!rem // 2024-02-04 phr
+!mmm script
+!mmm   set customizable cTokenID = default
+!mmm   set customizable cSign = default
+!mmm   set customizable cXPdiff = default
+!mmm   set customizable cLogText = default
+!mmm
+!mmm   set scriptCommand = literal("%") & "{MacroSheet|editXP}"
+!mmm
+!mmm   if isdefault(cTokenID) or isdefault(cXPdiff) or isdefault(cLogText)
+!mmm     
+!mmm     debug chat: assembling input button
+!rem     // once tested, this part should be encapsulated in libMidgard for addition everywhere where automatic XP accrual is reported to the chat with a symbol such as ✏️🖉🖍✎🖉🖍️
+!mmm     set buttonProps = { "label": "EP hinzufügen", "scriptCommand": scriptCommand, "settings": { "cTokenID": "selected", "cSign": 1, "cXPdiff": "?" & "{Wieviel?|0}", "cLogText": "\"?" & "{Warum?|}\"" } }
+!mmm     set buttonProps = buttonProps, { "label": "EP wegnehmen", "scriptCommand": scriptCommand, "settings": { "cTokenID": "selected", "cSign": -1, "cXPdiff": "?" & "{Wieviel?|0}", "cLogText": "\"?" & "{Warum?|}\"" } }
+!mmm     do whisperback(chatButtonTable("EP-Korrektur", { "type": "multi-buttons", "buttonProps": buttonProps } ))
+!mmm     
+!mmm   else
+!mmm
+!mmm     set effXPdiff = cSign * cXPdiff
+!mmm debug do cTokenID.(m3mgdAttrXP), cTokenID.(m3mgdAttrXPLog), effXPdiff
+!mmm     if effXPdiff < 0 and (not cTokenID.(m3mgdAttrXP) or isunknown(cTokenID.(m3mgdAttrXPLog)) or cTokenID.(m3mgdAttrXPLog) eq "")
+!mmm       do whisperback(cTokenID.token_name & " hat gar keine neue Erfahrung, die abgezogen werden könnte.")
+!mmm       exit script
+!mmm     end if
+!mmm
+!mmm debug chat: modifying XP ${sign(cXPdiff)} from ${cTokenID} for reason '${cLogText}'
+!mmm     set newXP = cTokenID.(m3mgdAttrXP) + cXPdiff
+!mmm     if newXP < 0 or not newXP
+!mmm       do whisperback(cTokenID.token_name & " hat nur " & cTokenID.(m3mgdAttrXP) & " EP. Würdest du " & cXPdiff & " EP wegnehmen, wäre das Ergebnis negativ. Abbruch.")
+!mmm       exit script
+!mmm     end if
+!mmm     if setattr(cTokenID, m3mgdAttrXP, newXP) != newXP
+!mmm       do whisperback("Kein Schreibzugriff auf die Erfahrung von " & cTokenID.token_name)
+!mmm       exit script
+!mmm     end if
+!mmm     
+!mmm     set logLine = "(" & sign(cXPdiff) & "->) " & cTokenID.(m3mgdAttrXP) & "=" & cLogText
+!mmm     do setattr(cTokenID, m3mgdAttrXPLog, cTokenID.(m3mgdAttrXPLog) & " {\{" & logLine & "}\} ")
+!mmm
+!mmm     debug chat: Success.
+!mmm   end if
+!mmm   
+!mmm end script
