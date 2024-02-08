@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-04-0930)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-08-2100)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -15,7 +15,7 @@
 !mmm
 !rem   // Game-global constants for publication
 !rem
-!mmm   set m3mgdScriptCommands = { "defense": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}" }
+!mmm   set m3mgdScriptCommands = { "defense": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}", "editXP": "&#x25;{MacroSheet|editXP}" }
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm 
@@ -111,7 +111,7 @@
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
 !mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect
 !mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdUpdatePersistentEffectsCounters
-!mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP
+!mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP, m3mgdXPEditButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -2285,6 +2285,19 @@
 !mmm
 !mmm   return highlight(xpGain, "normal", xpTooltip)
 !mmm
+!mmm end function
+!rem
+!rem // m3mgdXPEditButton(tokenID, xpDiff, logText, [buttonLabel])
+!rem //
+!mmm function m3mgdXPEditButton(tokenID, xpDiff, logText, buttonLabel)
+!mmm   if isdefault(buttonLabel) and isdefault(xpDiff)
+!mmm     set buttonLabel = "✏️"
+!mmm     set xpDiff = "?" & "{Wieviel? (Zum Abziehen Minuszeichen eingeben)|}"
+!mmm     set logText = "?" & "{Warum?|" & logText & "}"
+!mmm   else if isdefault(buttonLabel) and xpDiff < 0
+!mmm     set buttonLabel = "❌"
+!mmm   end if
+!mmm   return chatButton(buttonLabel, chatButtonPayload(m3mgdScriptCommands.editXP, { "cTokenID": "\"" & tokenID & "\"", "cSign": 1, "cXPdiff": xpDiff, "cLogText": "\"" & logText & "\"" } ))
 !mmm end function
 !rem
 !rem // m3mgdRerunButton(tokenID, weaponsGroup, weaponLabel, rollData)
