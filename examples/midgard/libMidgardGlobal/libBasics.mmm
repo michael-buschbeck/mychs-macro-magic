@@ -166,6 +166,9 @@
 !rem //   Returns button payload code for a customize script to call scriptCommand with the variables provided by settings.
 !rem //
 !mmm function chatButtonPayload(scriptCommand, settings)
+!mmm   if isdefault(scriptCommand) or isdefault(settings)
+!mmm     return false
+!mmm   end if
 !mmm   set chatButtonPayloadCode = literal("!mmm customize") & "&#13;"
 !mmm   for setting in settings...
 !mmm     set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value) & "&#13;"
@@ -179,6 +182,9 @@
 !rem //   Returns chat code for a button with the label and payload provided. If the optional style is given, it is applied.
 !rem //
 !mmm function chatButtonTable(label, rows)
+!mmm   if isdefault(label) or isdefault(rows)
+!mmm     return false
+!mmm   end if
 !mmm   set chatButtonTableCode = "&" & "{template:default}" & "{{name=" & label & "}} "
 !mmm   for row in rows
 !mmm     if row.type eq "subheading"
