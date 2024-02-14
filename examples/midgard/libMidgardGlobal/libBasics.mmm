@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.3.2 (2024-02-04)"
+!mmm   set libVersion = "libMidgardBasics v1.3.3 (2024-02-14)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Publish game-global functions defined below
@@ -185,16 +185,16 @@
 !mmm   if isdefault(label) or isdefault(rows)
 !mmm     return false
 !mmm   end if
-!mmm   set chatButtonTableCode = "&" & "{template:default}" & "{{name=" & label & "}} "
+!mmm   set chatButtonTableCode = "&" & "{template:default}" & "{{name=" & label & "}\} "
 !mmm   for row in rows
 !mmm     if row.type eq "subheading"
-!mmm       set chatButtonTableCode = chatButtonTableCode & "{{ " & row.label & " }} "
+!mmm       set chatButtonTableCode = chatButtonTableCode & "{{ " & row.label & " }\} "
 !mmm     else if row.type eq "multi-buttons"
 !mmm       set chatButtonTableCode = chatButtonTableCode & "{{ "
 !mmm       for singleButtonProps in row.buttonProps
 !mmm         set chatButtonTableCode = chatButtonTableCode & " &nbsp; " & chatButton(singleButtonProps.label, chatButtonPayload(singleButtonProps.scriptCommand, singleButtonProps.settings))
 !mmm       end for
-!mmm       set chatButtonTableCode = chatButtonTableCode & "}} "
+!mmm       set chatButtonTableCode = chatButtonTableCode & "}\} "
 !mmm     end if
 !mmm   end for
 !mmm   return chatButtonTableCode

@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgardRuneBlades()
 !mmm   
-!mmm   set libVersion = "libMidgardRuneBlades v1.1.1-pre (2024-01-18-2156)"
+!mmm   set libVersion = "libMidgardRuneBlades v1.1.1-pre (2024-02-14)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Game-global constants for publication
@@ -230,7 +230,7 @@
 !mmm       chat: [x](${activateGIF})
 !mmm     end if 
 !mmm
-!mmm     chat: /w GM ${"&"}{template:default} {{name=Erdfessel}} {{ Opfer = ${targetID.name}}} {{ Folge = Abwehr -2 }} {{ Option = [**ENTFERNEN**](~MacroSheet|earthBondRemove) }}
+!mmm     chat: /w GM ${"&"}{template:default} {{name=Erdfessel}\} {{ Opfer = ${targetID.name} }\} {{ Folge = Abwehr -2 }\} {{ Option = [**ENTFERNEN**](~MacroSheet|earthBondRemove) }\}
 !mmm     
 !mmm     
 !mmm   else if command eq "releaseByCreator" or command eq "releaseByExhaustion"
