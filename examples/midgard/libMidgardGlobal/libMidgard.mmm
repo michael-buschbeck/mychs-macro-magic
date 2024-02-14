@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-08-2100)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-14-2130)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -111,7 +111,7 @@
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
 !mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect
 !mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdUpdatePersistentEffectsCounters
-!mmm   publish to game: m3mgdProcessCombatPP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP, m3mgdXPEditButton
+!mmm   publish to game: m3mgdProcessCombatPP, m3mgdGetXPLog, _m3mgdLogXP, m3mgdEditXP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP, m3mgdXPEditButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -2082,13 +2082,70 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set logLine = "PP:" & weaponLabel & "(" & newPP & ")=Kritisch erfolgreicher Angriff auf " & targetID.name & " (AP=" & cTargetID.(m3mgdGetEnduranceAttribute(cTargetID)) & ")"
-!mmm   if isunknown(ownID.(m3mgdAttrXPLog))
-!mmm     do setattr(ownID, m3mgdAttrXPLog, "")
+!mmm   if not _m3mgdLogXP(ownID, "", "PP:" & weaponLabel & "(" & newPP & ") Kritisch erfolgreicher Angriff auf " & targetID.name & " (AP:" & cTargetID.(m3mgdGetEnduranceAttribute(cTargetID)) & ")")
+!mmm     do whisperback("m3mgdProcessCombatPP(): Failure logging PP to XP log.")
 !mmm   end if
-!mmm   do setattr(ownID, m3mgdAttrXPLog, ownID.(m3mgdAttrXPLog) & " {\{" & logLine & "}\} ")
 !mmm
 !mmm   return true
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdGetXPLog(tokenID)
+!rem //
+!rem //   Returns a list of tokenID's experience log entries.
+!rem //
+!mmm function m3mgdGetXPLog(tokenID)
+!mmm   set xpLog = deserialize(tokenID.(m3mgdAttrXPLog))
+!mmm   if isunknown(xpLog)
+!mmm     return undefined
+!mmm   else
+!mmm     return xpLog
+!mmm   end if
+!mmm end function
+!rem
+!rem // _m3mgdLogXP(tokenID, xpDiff, xplogLine)
+!rem //
+!rem //   Writes xpLogline: xpDiff into tokenID's XP log.
+!rem //
+!mmm function _m3mgdLogXP(tokenID, xpDiff, xplogLine)
+!mmm   set logEntry = { (xpLogLine): xpDiff }
+!mmm   set newXPLog = m3mgdGetXPLog(tokenID), logEntry
+!mmm   set newXPLogString = serialize(newXPLog)
+!mmm   if setattr(tokenID, m3mgdAttrXPLog, newXPLogString) != newXPLogString
+!mmm     return false
+!mmm   else
+!mmm     return true
+!mmm   end if
+!mmm end function
+!rem
+!rem // m3mgdEditXP(tokenID, xpDiff, xpLogLine)
+!rem //
+!rem //   Makes a change (xpDiff, a signed non-zero number) to tokenID's experience points and logs xpLogLine to the character's experience log.
+!rem //   Returns the new level of XP.
+!rem //
+!mmm function m3mgdEditXP(tokenID, xpDiff, xpLogLine)
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     do whisperback("m3mgdEditXP() called without a valid tokenID. Exiting function.")
+!mmm     return false
+!mmm   end if
+!mmm   if isdefault(xpDiff) or xpDiff == 0
+!mmm     do whisperback("m3mgdEditXP() called without a nonzero amount of XP to add or subtract. Exiting function.")
+!mmm   end if
+!mmm
+!mmm   set newXP = tokenID.(m3mgdAttrXP) + xpDiff
+!mmm   if setattr(tokenID, m3mgdAttrXP, newXP) != newXP
+!mmm     do whisperback("m3mgdEditXP(): Failure storing new experience total " & newXP & " in attribute '" & tokenID.name & "'." & m3mgdAttrXP)
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   if not _m3mgdLogXP(tokenID, xpDiff, xpLogLine)
+!mmm     do whisperback("m3mgdEditXP(): Failure logging XP change -- " & xpLogLine & ": " & sign(xpDiff) & " for '" & tokenID.name & "'")
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   return newXP
 !mmm
 !mmm end function
 !rem
@@ -2144,21 +2201,10 @@
 !mmm     set xpTooltip = "(" & xpTooltip & ") x2[verheerend]"
 !mmm   end if
 !mmm   
-!mmm   set newXP = attackerID.(m3mgdAttrXP) + xpGain
-!mmm   if newXP <= 0 or not newXP
-!mmm     do whisperback("m3mgdProcessAttackXP(): Failure: new calculated XP likely undefined ('" & newXP & "') -- no experience processed.")
-!mmm     return false
+!mmm   if not m3mgdEditXP(attackerID, xpGain, "Angriff (" & attackType & ", Wurf: " & attackDamageRoll & ") auf " & targetID.name & " (Grad: " & targetID.Grad & "): " & xpTooltip)
+!mmm     do whisperback("m3mgdProcessAttackXP(): Unable to store experience gain.")
+!mmm     return highlight(xpGain & " not saved", "bad", xpTooltip)
 !mmm   end if
-!mmm   if setattr(attackerID, m3mgdAttrXP, newXP) != newXP
-!mmm     do whisperback("m3mgdProcessAttackXP(): Failure storing new experience total " & newXP & " in attribute '" & attackerID.name & "'." & m3mgdAttrXP)
-!mmm     return false
-!mmm   end if
-!mmm
-!mmm   set xpLog = "(+" & xpGain & "->) " & attackerID.(m3mgdAttrXP) & "=Angriff (" & attackType & ", Wurf: " & attackDamageRoll & ") auf " & targetID.name & " (Grad: " & targetID.Grad & ") = " & xpTooltip
-!mmm   if isunknown(attackerID.(m3mgdAttrXPLog))
-!mmm     do setattr(attackerID, m3mgdAttrXPLog, "")
-!mmm   end if
-!mmm   do setattr(attackerID, m3mgdAttrXPLog, attackerID.(m3mgdAttrXPLog) & " {\{" & xpLog & "}\} ")
 !mmm
 !mmm   return highlight(xpGain, "normal", xpTooltip)
 !mmm
@@ -2194,23 +2240,12 @@
 !mmm   set xpGain = 5
 !mmm   set xpTooltip = "Standard amount"
 !mmm   
-!mmm   set newXP = characterID.(m3mgdAttrXP) + xpGain
-!mmm   if newXP <= 0 or not newXP
-!mmm     do whisperback("m3mgdProcessSkillXP(): Failure: new calculated XP likely undefined ('" & newXP & "') -- no experience processed.")
-!mmm     return false
-!mmm   end if
-!mmm   if setattr(characterID, m3mgdAttrXP, newXP) != newXP
-!mmm     do whisperback("m3mgdProcessSkillXP(): Failure storing new experience total " & newXP & " in attribute '" & characterID.name & "'." & m3mgdAttrXP)
-!mmm     return false
+!mmm   if not m3mgdEditXP(characterID, xpGain, "Fertigkeit '" & skill & "', Wurf: " & skillRoll)
+!mmm     do whisperback("m3mgdProcessSkillXP(): Unable to store experience gain.")
+!mmm     return highlight(xpGain & " not saved", "bad", xpTooltip)
 !mmm   end if
 !mmm
-!mmm   set xpLog = "(+" & xpGain & "->) " & characterID.(m3mgdAttrXP) & "=Fertigkeit '" & skill & "', Wurf: " & skillRoll
-!mmm   if isunknown(characterID.(m3mgdAttrXPLog))
-!mmm     do setattr(characterID, m3mgdAttrXPLog, "")
-!mmm   end if
-!mmm   do setattr(characterID, m3mgdAttrXPLog, characterID.(m3mgdAttrXPLog) & " {\{" & xpLog & "}\} ")
-!mmm
-!mmm   return highlight(xpGain, "normal", xpTooltip)
+!mmm   return highlight(sign(xpGain), "normal", xpTooltip)
 !mmm
 !mmm end function
 !rem
@@ -2271,17 +2306,10 @@
 !mmm     set xpTooltip = "3 x AP-Kosten (" & spellCost & ")"
 !mmm   end if
 !mmm   
-!mmm   set newXP = characterID.(m3mgdAttrXP) + xpGain
-!mmm   if setattr(characterID, m3mgdAttrXP, newXP) != newXP
-!mmm     do whisperback("m3mgdProcessSpellXP(): Failure storing new experience total " & newXP & " in attribute '" & characterID.name & "'." & m3mgdAttrXP)
-!mmm     return false
+!mmm   if not m3mgdEditXP(characterID, xpGain, "Zauber '" & spell & "', Wurf: " & spellRoll & " (" & spellNotes & ")")
+!mmm     do whisperback("m3mgdProcessSpellXP(): Unable to store experience gain.")
+!mmm     return highlight(xpGain & " not saved", "bad", xpTooltip)
 !mmm   end if
-!mmm
-!mmm   set xpLog = "(+" & xpGain & "->) " & characterID.(m3mgdAttrXP) & "=Zauber '" & spell & "', Wurf: " & spellRoll & " (" & spellNotes & ")"
-!mmm   if isunknown(characterID.(m3mgdAttrXPLog))
-!mmm     do setattr(characterID, m3mgdAttrXPLog, "")
-!mmm   end if
-!mmm   do setattr(characterID, m3mgdAttrXPLog, characterID.(m3mgdAttrXPLog) & " {\{" & xpLog & "}\} ")
 !mmm
 !mmm   return highlight(xpGain, "normal", xpTooltip)
 !mmm
@@ -2289,15 +2317,18 @@
 !rem
 !rem // m3mgdXPEditButton(tokenID, xpDiff, logText, [buttonLabel])
 !rem //
+!rem //   Returns Roll20 chat button code for a command to modify tokenID's XP by xpDiff for the reason given by logText.
+!rem //   NB: logText MUST NOT include any colons(:), otherwise the button will not be clickable!
+!rem //
 !mmm function m3mgdXPEditButton(tokenID, xpDiff, logText, buttonLabel)
 !mmm   if isdefault(buttonLabel) and isdefault(xpDiff)
 !mmm     set buttonLabel = "✏️"
 !mmm     set xpDiff = "?" & "{Wieviel? (Zum Abziehen Minuszeichen eingeben)|}"
 !mmm     set logText = "?" & "{Warum?|" & logText & "}"
-!mmm   else if isdefault(buttonLabel) and xpDiff < 0
+!mmm   else if isdefault(buttonLabel)
 !mmm     set buttonLabel = "❌"
 !mmm   end if
-!mmm   return chatButton(buttonLabel, chatButtonPayload(m3mgdScriptCommands.editXP, { "cTokenID": "\"" & tokenID & "\"", "cSign": 1, "cXPdiff": xpDiff, "cLogText": "\"" & logText & "\"" } ))
+!mmm   return chatButton(buttonLabel, chatButtonPayload(m3mgdScriptCommands.editXP, { "cTokenID": "'" & tokenID & "'", "cSign": 1, "cXPdiff": xpDiff, "cLogText": "'" & logText & "'" } ), cssTableCellButton)
 !mmm end function
 !rem
 !rem // m3mgdRerunButton(tokenID, weaponsGroup, weaponLabel, rollData)

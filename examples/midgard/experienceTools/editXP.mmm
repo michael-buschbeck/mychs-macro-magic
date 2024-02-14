@@ -1,5 +1,5 @@
 !rem // editXP: add/remove XP and log accordingly (GM tool to make manual changes to XP accrual)
-!rem // 2024-02-08 phr
+!rem // 2024-02-14 phr
 !mmm script
 !mmm   set customizable cTokenID = default
 !mmm   set customizable cSign = default
@@ -10,7 +10,6 @@
 !mmm
 !mmm   if isdefault(cTokenID) or isdefault(cXPdiff) or isdefault(cLogText)
 !mmm     
-!rem     // once tested, this part should be encapsulated in libMidgard for addition everywhere where automatic XP accrual is reported to the chat with a symbol such as ✏️🖉🖍✎🖉🖍️
 !mmm     set buttonProps = { "label": "EP hinzufügen", "scriptCommand": scriptCommand, "settings": { "cTokenID": "selected", "cSign": 1, "cXPdiff": "?" & "{Wieviel?|0}", "cLogText": "\"?" & "{Warum?|}\"" } }
 !mmm     set buttonProps = buttonProps, { "label": "EP wegnehmen", "scriptCommand": scriptCommand, "settings": { "cTokenID": "selected", "cSign": -1, "cXPdiff": "?" & "{Wieviel?|0}", "cLogText": "\"?" & "{Warum?|}\"" } }
 !mmm     do whisperback(chatButtonTable("EP-Korrektur", { "type": "multi-buttons", "buttonProps": buttonProps } ))
@@ -24,17 +23,14 @@
 !mmm     end if
 !mmm
 !mmm     set newXP = cTokenID.(m3mgdAttrXP) + effXPdiff
-!mmm     if newXP < 0 or not newXP
+!mmm     if newXP < 0
 !mmm       do whisperback(cTokenID.token_name & " hat nur " & cTokenID.(m3mgdAttrXP) & " EP. Würdest du " & effXPdiff & " EP wegnehmen, wäre das Ergebnis negativ. Abbruch.")
 !mmm       exit script
 !mmm     end if
-!mmm     if setattr(cTokenID, m3mgdAttrXP, newXP) != newXP
+!mmm     if m3mgdEditXP(cTokenID, effXPdiff, cLogText) != newXP
 !mmm       do whisperback("Kein Schreibzugriff auf die Erfahrung von " & cTokenID.token_name)
 !mmm       exit script
 !mmm     end if
-!mmm     
-!mmm     set logLine = "(" & sign(effXPdiff) & "->) " & cTokenID.(m3mgdAttrXP) & "=" & cLogText
-!mmm     do setattr(cTokenID, m3mgdAttrXPLog, cTokenID.(m3mgdAttrXPLog) & " {\{" & logLine & "}\} ")
 !mmm
 !mmm     do whisperback("Erfahrung für " & cTokenID.name & " um " & sign(effXPdiff) & " modifiziert.")
 !mmm
