@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.5.0 (2022-03-24)"
+!mmm   set scriptVersion = "defendFrostball 1.5.1 (2024-02-03)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -53,6 +53,9 @@
 !mmm   if endurance <= 0
 !mmm     set defenseModifier = -4
 !mmm   end if
+!mmm
+!rem   // Dazzle players with special effect
+!mmm   do spawnfx("beam-frost", m3mgdExchange.(m3mgdAttrAttackerID).left, m3mgdExchange.(m3mgdAttrAttackerID).top, cOwnID.left, cOwnID.top)
 !mmm
 !mmm   set defenseResult = roll("1d20+" & (cOwnID.Abwehr + defenseModifier))
 !mmm   

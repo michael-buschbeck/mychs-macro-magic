@@ -1,0 +1,47 @@
+!rem // showPersistentEffects v0.1 2024-02-04 phr
+!rem //
+!rem // Chats a list of active persistent effects for the selected token, or all tokens if none are selected.
+!rem 
+!mmm script
+!mmm function removeEffectPayload(tokenID, removeEffectIndex)
+!mmm   set payload = literal("!mmm customize") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set cmd=\"removeEffect\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set removeEffectIndex=\"" & removeEffectIndex & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Wirklich löschen?|Nein,false|Ja,true}") & "&#13;"
+!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|removePersistentEffect}" & "&#13;"
+!mmm   return payload
+!mmm end function
+!mmm   for effectRecord in (deserialize(m3mgdExchange.m3mgdActivePersistentEffects))...
+!mmm     if (not selected or (selected and effectRecord.key eq selected)) and effectRecord.value
+!mmm       combine chat
+!mmm         chat: ${"&"}{template:default} {\{name=${effectRecord.key.token_name}: Active persistent effects}\}
+!mmm         set activeCounter = 0
+!mmm         for statusRule in m3mgdGetActivePersistentEffects(effectRecord.key)
+!mmm           set activeCounter = activeCounter + 1
+!mmm           chat: {{ #${activeCounter}, another ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}
+!mmm           for mod in statusRule.rollModifiers...
+!mmm             chat: ${sign(mod.value, "display")} ${mod.key}; 
+!mmm           end for
+!mmm           if statusRule.effect.noAttack
+!mmm             chat: kein Angriff;
+!mmm           end if
+!mmm           if statusRule.effect.noDefense
+!mmm             chat: keine Abwehr;
+!mmm           end if
+!mmm           if statusRule.effect.noFocusedDefense
+!mmm             chat: keine konzentrierte Abwehr;
+!mmm           end if
+!mmm           if statusRule.effect.marker
+!mmm             chat: ${statusRule.effect.marker};
+!mmm           end if
+!mmm           if statusRule.effect.cappedAttribute
+!mmm             chat: **${statusRule.effect.cappedAttribute}** reduziert
+!mmm           end if
+!mmm           chat: ${chatButton("X", removeEffectPayload(effectRecord.key, activeCounter-1, cssTableCellButton))}
+!mmm           chat: }}
+!mmm         end for
+!mmm       end combine
+!mmm     end if
+!mmm   end for
+!mmm end script

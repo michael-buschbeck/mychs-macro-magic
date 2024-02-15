@@ -1,0 +1,43 @@
+!rem // editXP: add/remove XP and log accordingly (GM tool to make manual changes to XP accrual)
+!rem // 2024-02-14 phr
+!mmm script
+!mmm   set customizable cTokenID = default
+!mmm   set customizable cSign = default
+!mmm   set customizable cXPdiff = default
+!mmm   set customizable cLogText = default
+!mmm
+!mmm   set scriptCommand = literal("%") & "{MacroSheet|editXP}"
+!mmm
+!mmm   if isdefault(cTokenID) or isdefault(cXPdiff) or isdefault(cLogText)
+!mmm     
+!mmm     set buttonProps = { "label": "EP hinzufügen", "scriptCommand": scriptCommand, "settings": { "cTokenID": "selected", "cSign": 1, "cXPdiff": "?" & "{Wieviel?|0}", "cLogText": "\"?" & "{Warum?|}\"" } }
+!mmm     set buttonProps = buttonProps, { "label": "EP wegnehmen", "scriptCommand": scriptCommand, "settings": { "cTokenID": "selected", "cSign": -1, "cXPdiff": "?" & "{Wieviel?|0}", "cLogText": "\"?" & "{Warum?|}\"" } }
+!mmm     do whisperback(chatButtonTable("EP-Korrektur", { "type": "multi-buttons", "buttonProps": buttonProps } ))
+!mmm     
+!mmm   else if cXPdiff != 0
+!mmm 
+!mmm     set effXPdiff = cSign * cXPdiff
+!mmm     if effXPdiff < 0 and (not cTokenID.(m3mgdAttrXP) or isunknown(cTokenID.(m3mgdAttrXPLog)) or cTokenID.(m3mgdAttrXPLog) eq "")
+!mmm       do whisperback(cTokenID.token_name & " hat gar keine neue Erfahrung, die abgezogen werden könnte.")
+!mmm       exit script
+!mmm     end if
+!mmm
+!mmm     set newXP = cTokenID.(m3mgdAttrXP) + effXPdiff
+!mmm     if newXP < 0
+!mmm       do whisperback(cTokenID.token_name & " hat nur " & cTokenID.(m3mgdAttrXP) & " EP. Würdest du " & effXPdiff & " EP wegnehmen, wäre das Ergebnis negativ. Abbruch.")
+!mmm       exit script
+!mmm     end if
+!mmm     if m3mgdEditXP(cTokenID, effXPdiff, cLogText) != newXP
+!mmm       do whisperback("Kein Schreibzugriff auf die Erfahrung von " & cTokenID.token_name)
+!mmm       exit script
+!mmm     end if
+!mmm
+!mmm     do whisperback("Erfahrung für " & cTokenID.name & " um " & sign(effXPdiff) & " modifiziert.")
+!mmm
+!mmm   else 
+!mmm
+!mmm     do whisperback("Erfahrung für " & cTokenID.name & " wurde nicht verändert (Eingabe: 0)")
+!mmm
+!mmm   end if
+!mmm   
+!mmm end script

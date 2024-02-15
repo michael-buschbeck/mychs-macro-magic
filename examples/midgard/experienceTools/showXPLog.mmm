@@ -1,8 +1,8 @@
 !rem // showXPLog for selected token's character
-!rem // 2022-03-19
+!rem // 2024-02-14
 !mmm script
 !mmm
-!mmm   if version < 1.26 or not m3mgdExchange or not m3mgdExchangeAttrList
+!mmm   if version < 1.27 or not m3mgdExchange or not m3mgdExchangeAttrList
 !mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
 !mmm     exit script
 !mmm   end if
@@ -19,10 +19,21 @@
 !mmm       chat: /w GM
 !mmm     end if
 !mmm     chat: ${"&"}{template:default} {{name=EP-Sitzungsprotokoll für **${selected.name}** (${selected.(m3mgdAttrXP)} EP)}}
-!mmm     if selected.(m3mgdAttrXPLog) eq ""
+!mmm     set xpLog = m3mgdGetXPLog(selected)
+!mmm     if not xpLog
 !mmm       chat: {{Keine Einträge}}
 !mmm     else 
-!mmm       chat: ${selected.(m3mgdAttrXPLog)}
+!mmm       set lineNo = 1
+!mmm       for entry in xpLog...
+!mmm         if entry.value ne ""
+!rem           set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP für " & entry.key & "")
+!mmm           set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP")
+!mmm         else
+!mmm           set editCtrl = ""
+!mmm         end if 
+!mmm         chat: {{#${lineNo}: ${entry.key}=${entry.value} ${editCtrl} }}
+!mmm         set lineNo = lineNo + 1
+!mmm       end for
 !mmm     end if
 !mmm   end combine
 !mmm end script
