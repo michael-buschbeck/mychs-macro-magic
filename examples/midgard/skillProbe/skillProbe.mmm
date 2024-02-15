@@ -1,7 +1,7 @@
 !rem // skillProbe
 !rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.1.0-pre (2024-02-09)"
+!mmm   set scriptVersion = "skillProbe 1.1.0 (2024-02-14)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -10,7 +10,7 @@
 !mmm   end if
 !rem
 !mmm   set scriptCommand = "&#x25;{MacroSheet|skillProbe}"
-!mmm   set usableSkills = "Alchemie", "Fälschen", "Fallen entdecken", "Fallenmechanik", "Gassenwissen", "Landeskunde (Alba)", "Menschenkenntnis", "Naturkunde", "Pflanzenkunde", "Schleichen", "Spurensuche", "Tarnen", "Tierkunde", "Verhören", "Zauberkunde"
+!mmm   set usableSkills = "Alchemie", "Fälschen", "Fallen entdecken", "Fallenmechanik", "Gassenwissen", "Heilkunde", "Landeskunde (Alba)", "Menschenkenntnis", "Naturkunde", "Pflanzenkunde", "Schleichen", "Spurensuche", "Tarnen", "Tierkunde", "Verhören", "Zauberkunde"
 !mmm
 !rem   // FUNCTIONS
 !rem   //

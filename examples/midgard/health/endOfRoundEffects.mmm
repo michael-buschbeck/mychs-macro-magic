@@ -2,7 +2,7 @@
 !mmm
 !mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe" }
 !mmm
-!mmm   for token in m3mgdPlayerCharacters, selected
+!mmm   for token in gettokens()
 !mmm 
 !mmm     if not isdenied(token.token_id)
 !mmm
