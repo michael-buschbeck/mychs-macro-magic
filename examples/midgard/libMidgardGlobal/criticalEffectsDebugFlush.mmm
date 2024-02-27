@@ -1,8 +1,8 @@
 !mmm script
-!mmm   chat: Flushing Yorric's and Druide 2's active effects attributes
+!mmm   chat: Flushing Yorric's and Titos' active effects attributes
 !mmm   set effectsDB = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
-!mmm   for tokenID in "Yorric MacRathgar".token_id, "-M_a1Zy8w8jDCc0qt172"
-!mmm     set effectsDB = { effectsDB where ...key ne tokenID }
+!mmm   for tokenID in "Yorric MacRathgar".token_id, "Titos Panathos".token_id
+!mmm     set effectsDB = { effectsDB... where ...key ne tokenID }
 !mmm   end for
 !mmm   do setattr(m3mgdExchange, "m3mgdActivePersistentEffects", serialize(effectsDB))
 !mmm   chat: done.
