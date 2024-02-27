@@ -1,3 +1,5 @@
+!rem // Critical effects tables
+!rem // Last revised: 2024-02-27
 !mmm function m3mgdBuildCriticalEffectsTables()
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
@@ -238,7 +240,7 @@
 !mmm     set entryData = { entryData, desc: 'Du stolperst und musst die nächste Runde aussetzen um dich neu zu sammeln. Angreifer bekommen +4 auf Ihren nächsten Angriff. Keine negative Auswirkung auf Deine Verteidigung in der nächsten Runde. Bei misslungenem Prüfwurf auf Geschicklichkeit schlägst Du mit dem Kopf so unglücklich auf, dass Du für 1W6 Runden ohnmächtig wirst. Träger eines Helms bekommen +4 auf ihren Prüfwurf.' }
 !mmm     set entryData = { entryData, userInput: { xhelmetworn: '?' & '{Trägst du einen Helm?|Ja,4|Nein,0}' } }
 !mmm     set entryData = { entryData, immediate: '!mmm do m3mgdRollChanceEffect(myID, "Gs", "1d100", xhelmetworn, "!mmm do setattr(myID, \'status_pummeled\', true)", { expiry: { count: "1d6", type: "round" }, marker: "status_pummeled" })' } 
-!mmm     set entryData = { entryData, persistent: { focus: "foe", expiry: { count: 1, type: "round" }, rollModifiers: { meleeAttack: +4 } } }
+!mmm     set entryData = { entryData, persistent: ({ expiry: { count: 1, type: "round" }, noAttack: true }, { focus: "foe", expiry: { count: 1, type: "round" }, rollModifiers: { meleeAttack: +4 } }) }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 23
@@ -286,7 +288,7 @@
 !mmm     set entryData = { weight: 10, label: '⚀ Kritischer Fehler beim Nahkampf-Angriff', url: '' }
 !mmm     set entryData = { entryData, desc: 'Du rempelst versehentlich einen Freund auf einem Nachbarfeld an. Dieser bekommt in der nächsten Runde -2 auf seinen EW:Angriff. Du selber bist dadurch etwas orientierungslos und musst eine Runde aussetzen. Es gibt in der nächsten Runde jedoch keinen Vorteil für Deinen Gegner und keinen Nachteil für Deine Verteidigung.' }
 !mmm     set entryData = { entryData, userInput: { xtarget: '"@' & '{target|Wen hast du angerempelt?|token_id}"' } }
-!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdStoreCriticalEffect(xtarget, { expiry: { count: 1, type: "round" }, rollModifiers: { meleeAttack: -2 } })' }
+!mmm     set entryData = { entryData, immediate: '!mmm do m3mgdStorePersistentEffect(xtarget, { label: "⚀ Angerempelt (kritischer Fehler des Gefährten)", desc: "-2 auf EW:Angriff in der nächsten Runde", effect: { expiry: { count: 1, type: "round" }, rollModifiers: { meleeAttack: -2 } } })' }
 !mmm     set entryData = { entryData, persistent: { expiry: { count: 1, type: "round" }, noAttack: true } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
@@ -392,7 +394,7 @@
 !mmm     set entryData = { weight: 5, label: '⚅ Schwerer Kopftreffer', url: '' }
 !mmm     set entryData = { entryData, desc: 'Helmlose Opfer verlieren zusätzlich zum normalen Schaden 1W3 LP und AP. Der Getroffene verliert für 2W6 Runden das Bewusstsein (1W6 Runden für Helmträger) und ist 30 min lang (15 Minuten für Helmträger) benommen und handlungsunfähig. Übersteigen die LP-Verluste ein Drittel seines LP-Maximums, fällt ein helmloses Opfer mit 20% in ein Koma.' }
 !mmm     set entryData = { entryData, userInput: { xdmg: '"?' & '{Trägt das Opfer Helm?|Ja,0|Nein,1d3}"' } }
-!mmm     set entryData = { entryData, immediate: ('!mmm do m3mgdProcessInjury(foeID, xdmg, "*", false)', '!mmm do setattr(foeID, "status_pummeled", true)', '!mmm do m3mgdStoreCriticalEffect(foeID, { expiry: { count: ((xdmg + 0 ne 0)+1)&"d6", type: "round" }, marker: "status_pummeled" })') }
+!mmm     set entryData = { entryData, immediate: ('!mmm do m3mgdProcessInjury(foeID, xdmg, "*", false)', '!mmm do setattr(foeID, "status_pummeled", true)', '!mmm do m3mgdStorePersistentEffect(foeID, { label: "⚀ Schwerer Kopftreffer", desc: "Bewusstlos", effect: { expiry: { count: ((xdmg + 0 ne 0)+1)&"d6", type: "round" }, marker: "status_pummeled" } })') }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 89
@@ -427,7 +429,7 @@
 !mmm     set entryData = { weight: 1, label: '⚅ Schwere Schädelverletzung', url: '' }
 !mmm     set entryData = { entryData, desc: 'Helmlose Opfer verlieren zusätzlich zum normalen Schaden 1W6 LP und AP. Der Getroffene verliert für 2W6 Runden das Bewusstsein (1W6 Runden für Helmträger) und ist 30 min lang (15 Minuten für Helmträger) benommen und handlungsunfähig. Übersteigen die LP-Verluste ein Drittel seines LP-Maximums, fällt ein helmloses Opfer mit 20% in ein Koma und seine Intelligenz sinkt durch Hirnschäden dauerhaft um ein Zehntel (mindestens aber um 1).' }
 !mmm     set entryData = { entryData, userInput: { xdmg: '"?' & '{Trägt das Opfer Helm?|Ja,0|Nein,1d6}"' } }
-!mmm     set entryData = { entryData, immediate: ('!mmm script', '!mmm do m3mgdProcessInjury(foeID, xdmg, "*", false)', '!mmm do setattr(foeID, "status_pummeled", true)', '!mmm do m3mgdStoreCriticalEffect(foeID, { expiry: { count: ((xdmg + 0 ne 0)+1) & "d6", type: "round" }, marker: "status_pummeled" })', '!mmm do setattr(foeID, "status_ninja_mask", true)', '!mmm end script') }
+!mmm     set entryData = { entryData, immediate: ('!mmm script', '!mmm do m3mgdProcessInjury(foeID, xdmg, "*", false)', '!mmm do setattr(foeID, "status_pummeled", true)', '!mmm do m3mgdStorePersistentEffect(foeID, { label: "⚀ Schwere Schädelverletzung", desc: "Bewusstlos", effect: { expiry: { count: ((xdmg + 0 ne 0)+1) & "d6", type: "round" }, marker: "status_pummeled" } })', '!mmm do setattr(foeID, "status_ninja_mask", true)', '!mmm end script') }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 99

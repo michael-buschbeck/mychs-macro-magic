@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-14-2130)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-27)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -260,11 +260,11 @@
 !mmm   end for
 !mmm end function
 !rem
-!rem // m3mgdRollChanceEffect(tokenID, attribute, rollTemplate, rollModifiers, immediateEffect, [persistentEffect])
+!rem // m3mgdRollChanceEffect(tokenID, attribute, rollTemplate, rollModifiers, immediateEffect, [persistentEffects])
 !rem // 
-!rem //   If a rollTemplate roll exceeds tokenID.(attribute)+rollModifiers, executes Roll20 chat code immediateEffect and stores persistentEffect.
+!rem //   If a rollTemplate roll exceeds tokenID.(attribute)+rollModifiers, executes Roll20 chat code immediateEffect and stores persistentEffects.
 !rem // 
-!mmm function m3mgdRollChanceEffect(tokenID, attribute, rollTemplate, rollModifiers, immediateEffect, persistentEffect)
+!mmm function m3mgdRollChanceEffect(tokenID, attribute, rollTemplate, rollModifiers, immediateEffect, persistentEffects)
 !mmm
 !rem   // Stop condition if recursion ends up here without a tokenID
 !mmm   if isdefault(tokenID) or isunknown(tokenID)
@@ -292,8 +292,10 @@
 !mmm
 !mmm   if rollResult > tokenID.(attribute)
 !mmm     do _m3mgdExecuteCode(immediateEffect, tokenID)
-!mmm     if not isdefault(persistentEffect)
-!mmm       do m3mgdStorePersistentEffect(tokenID, { label: currentEffect.label, desc: currentEffect.desc, effect: persistentEffect })
+!mmm     if not isdefault(persistentEffects)
+!mmm       for pE in persistentEffects
+!mmm         do m3mgdStorePersistentEffect(tokenID, { label: currentEffect.label, desc: currentEffect.desc, effect: pE })
+!mmm       end for
 !mmm     end if
 !mmm   end if
 !mmm
@@ -494,7 +496,7 @@
 !mmm   if not tokenID
 !mmm     return false
 !mmm   end if
-!mmm   if not m3mgdHasActivePersistentEffects(tokenID)
+!mmm   if m3mgdHasActivePersistentEffects(tokenID)
 !mmm     set tokenActiveEffectsList = m3mgdGetActivePersistentEffects(tokenID)
 !mmm   end if
 !mmm 
@@ -1764,14 +1766,17 @@
 !rem //   persistentEffect = { 
 !rem //     label: "string", 
 !rem //     desc: "string", 
-!rem //     effect: { 
+!rem //     effect: { }
+!rem //   }
+!rem //   The effect attribute can either look like this:
+!rem //     effect: {
 !rem //       expiry: { type: "[round|attack|defense]", count: integer or dice formula ("1d6+3") },   // plus one or more of the following:
 !rem //       [rollModifiers: { [attack|meleeAttack|rangedAttack|defense]: integer },]
 !rem //       [noAttack|noDefense|noFocusedDefense: true,]
 !rem //       [cappedAttribute: "(valid attribute for tokenID)",]
 !rem //       [marker: "(valid status marker for tokenID)"]
 !rem //     }
-!rem //   }
+!rem //   Or it contains a series of the previously described structs, labeled with a key.
 !rem //   Returns the stored persistentEffect struct, updated by whatever dice thrown to resolve effect.expiry.count.
 !rem //
 !mmm function m3mgdStorePersistentEffect(tokenID, persistentEffect)
@@ -1814,7 +1819,7 @@
 !rem //     desc: ["string" | { "context 1": "string", "context 2": "string", ...}],
 !rem //     [userInput]: {}, // key:value pairs defining the two sides of an MMM set statement, e.g. "myVar": "@" & "{Is the sky blue?|Yes,1|No,0}", made available to the code stored as immediate
 !rem //     [immediate]: *,  // Could be a string (Roll20 chat command), a list of strings, or a struct that maps context identifiers (keys, as in desc above) to either strings or list of strings holding chat commands (values)
-!rem //     [persistent]: {} // struct as documented in m3mgdStorePersistentEffect()
+!rem //     [persistent]: ({}, {}) // [list of] structs as documented in m3mgdStorePersistentEffect()
 !rem //   }
 !rem //
 !mmm function m3mgdExecuteCriticalEffect(tokenID, tableName, rollResult, context, foeID)
@@ -1848,20 +1853,34 @@
 !mmm       set codeLines = criticalEffect.immediate
 !mmm     end if
 !mmm     
-!mmm     if criticalEffect.persistent.expiry
-!mmm       set persistentEffectsList = criticalEffect.persistent
-!mmm     else if criticalEffect.persistent.(context).expiry or (criticalEffect.persistent.(context)[0].expiry and criticalEffect.persistent.(context)[1].expiry)
-!mmm       set persistentEffectsList = criticalEffect.persistent.(context)
+!rem     // Filter (list of) persistent effects for those applicable to the given context
+!mmm     for pE in criticalEffect.persistent
+!mmm       if pE.expiry
+!mmm         set persistentEffectsList = persistentEffectsList, pE
+!mmm       else if pE.(context).expiry or (pE.(context)[0].expiry and pE.(context)[1].expiry)
+!mmm         set persistentEffectsList = persistentEffectsList, pE.(context)
+!mmm       end if
+!mmm     end for
+!mmm 
+!rem     // Wrap and store each applicable persistent effect
+!mmm     if persistentEffectsList > 1
+!mmm       set pEcounter = 1
 !mmm     end if
-!mmm     for persistentEffect in persistentEffectsList
-!mmm       set persistentEffect = { effect: persistentEffect, label: criticalEffect.label, desc: descText }
-!mmm       if persistentEffect.effect.focus eq "foe"
+!mmm     for applicablePersistentEffect in persistentEffectsList
+!mmm       set completePersistentEffect = { effect: applicablePersistentEffect, label: criticalEffect.label, desc: descText }
+!mmm       if completePersistentEffect.effect.focus eq "foe"
 !mmm         set targetID = foeID
-!mmm       else if persistentEffect
+!mmm       else if completePersistentEffect
 !mmm         set targetID = tokenID
 !mmm       end if
-!mmm       set persistentEffect = m3mgdStorePersistentEffect(targetID, persistentEffect)
-!mmm       chat: {\{ ${persistentEffect.label}=${persistentEffect.effect} }\}
+!mmm       set completePersistentEffect = m3mgdStorePersistentEffect(targetID, completePersistentEffect)
+!mmm       if pEcounter
+!mmm         set pEcounterLabel = "(Effekt #" & pEcounter & ")"
+!mmm       end if
+!mmm       chat: {\{ ${completePersistentEffect.label} ${pEcounterLabel}=${completePersistentEffect.effect} }\}
+!mmm       if pEcounter
+!mmm         set pEcounter = pEcounter + 1
+!mmm       end if
 !mmm     end for
 !mmm
 !mmm   end combine
