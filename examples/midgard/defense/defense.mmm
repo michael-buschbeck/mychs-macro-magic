@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0-pre (2022-05-07)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2024-02-27)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -171,7 +171,7 @@
 !mmm     for activeMod in m3mgdActiveStatusModifiers(cOwnID, "defense")
 !mmm       set autoModifiers = autoModifiers + activeMod.rollModifiers.defense
 !mmm       set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.defense, "display") & "}} "
-!mmm       set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.defense & " "
+!mmm       set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & sign(activeMod.rollModifiers.defense, "display") & " "
 !mmm     end for
 !rem     // 2. Dropdown prompt: Focused defense, surprise (taken from prior user input customize block)
 !mmm     if cSemiManualModifiers == 4 
@@ -327,7 +327,7 @@
 !rem   // If present, reduce counters for defense-specific modifier effects
 !mmm   set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(cOwnID, "defense")
 !mmm   if endOfActionSummary
-!mmm     set modifierLog = modifierLog & " {{ Zähler=" & endOfActionSummary & " }}"
+!mmm     set modifierLog = modifierLog & " {{ Abwehrzähler=" & endOfActionSummary & " }}"
 !mmm   end if
 !mmm
 !rem   // Output modifier log and PP reminder
