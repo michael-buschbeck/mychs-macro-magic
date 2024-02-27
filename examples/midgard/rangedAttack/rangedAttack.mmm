@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2022-04-14)"
+!mmm   set scriptVersion = "2.0.0-pre (2024-02-27)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -275,7 +275,7 @@
 !mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "rangedAttack")
 !mmm     set autoModifiers = autoModifiers + activeMod.rollModifiers.rangedAttack
 !mmm     set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.rangedAttack, "display") & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.rangedAttack & " "
+!mmm     set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & sign(activeMod.rollModifiers.rangedAttack, "display") & " "
 !mmm   end for
 !rem   // 3. Target exhausted
 !mmm   if m3mgdIsExhausted(cTargetID)
@@ -535,7 +535,7 @@
 !rem   // If present, reduce counters for attack-specific modifier effects
 !mmm   set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(cOwnID, "attack")
 !mmm   if endOfActionSummary
-!mmm     set modifierLog = modifierLog & " {{ Zähler=" & endOfActionSummary & " }}"
+!mmm     set modifierLog = modifierLog & " {{ Angriffszähler=" & endOfActionSummary & " }}"
 !mmm   end if
 !mmm
 !mmm   if modifierLog ne "{{Boni/Mali=keine}}"

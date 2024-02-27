@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2022-04-14)"
+!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2024-02-27)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -143,7 +143,7 @@
 !mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "meleeAttack")
 !mmm     set autoModifiers = autoModifiers + activeMod.rollModifiers.meleeAttack
 !mmm     set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.meleeAttack, "display") & "}} "
-!mmm     set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & activeMod.rollModifiers.meleeAttack & " "
+!mmm     set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & sign(activeMod.rollModifiers.meleeAttack, "display") & " "
 !mmm   end for
 !rem   // 2. Target exhausted
 !mmm   if m3mgdIsExhausted(cTargetID)
@@ -348,7 +348,7 @@
 !rem   // If present, reduce counters for attack-specific modifier effects
 !mmm   set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(cOwnID, "attack")
 !mmm   if endOfActionSummary
-!mmm     set modifierLog = modifierLog & " {{ Zähler=" & endOfActionSummary & " }}"
+!mmm     set modifierLog = modifierLog & " {{ Angriffszähler=" & endOfActionSummary & " }}"
 !mmm   end if
 !mmm
 !mmm   if modifierLog ne "{{Boni/Mali=keine}}"

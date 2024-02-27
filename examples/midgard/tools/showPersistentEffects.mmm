@@ -1,4 +1,4 @@
-!rem // showPersistentEffects v0.1 2024-02-04 phr
+!rem // showPersistentEffects v0.2 2024-02-27 phr
 !rem //
 !rem // Chats a list of active persistent effects for the selected token, or all tokens if none are selected.
 !rem 
@@ -12,15 +12,21 @@
 !mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|removePersistentEffect}" & "&#13;"
 !mmm   return payload
 !mmm end function
-!mmm   for effectRecord in (deserialize(m3mgdExchange.m3mgdActivePersistentEffects))...
+!mmm 
+!mmm set pEregistry = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
+!mmm set cleanRegistry = { pEregistry... where ...value ne undef }
+!mmm if not cleanRegistry
+!mmm   chat: ${"&"}{template:default} {\{name=No active persistent effects in current game}\}
+!mmm else
+!mmm   for effectRecord in cleanRegistry...
 !mmm     if (not selected or (selected and effectRecord.key eq selected)) and effectRecord.value
 !mmm       combine chat
 !mmm         chat: ${"&"}{template:default} {\{name=${effectRecord.key.token_name}: Active persistent effects}\}
 !mmm         set activeCounter = 0
 !mmm         for statusRule in m3mgdGetActivePersistentEffects(effectRecord.key)
 !mmm           set activeCounter = activeCounter + 1
-!mmm           chat: {{ #${activeCounter}, another ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}
-!mmm           for mod in statusRule.rollModifiers...
+!mmm           chat: {{ #${activeCounter}, another ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}: 
+!mmm           for mod in statusRule.effect.rollModifiers...
 !mmm             chat: ${sign(mod.value, "display")} ${mod.key}; 
 !mmm           end for
 !mmm           if statusRule.effect.noAttack
@@ -44,4 +50,6 @@
 !mmm       end combine
 !mmm     end if
 !mmm   end for
+!mmm end if
+!mmm
 !mmm end script
