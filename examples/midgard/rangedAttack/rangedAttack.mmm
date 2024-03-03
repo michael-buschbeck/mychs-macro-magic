@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2024-02-27)"
+!mmm   set scriptVersion = "2.0.0-pre (2024-02-28)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -390,6 +390,16 @@
 !rem     // damageResult must not become negative, even for puny weapons causing 1d6-4 damage
 !mmm     if damageResult < 0
 !mmm       set damageResult = highlight(0, "bad")
+!mmm     end if
+!rem     // Critical successes maximize damage
+!mmm     if iscritical(cAttackRoll)
+!mmm       set cDamageRoll = rollMax(weaponDamageExpr)
+!mmm       set damageResult = cDamageRoll + weaponDamageBonus
+!mmm       if cDamageRoll == undef 
+!mmm         do whisperback(scriptVersion & ": No maximum roll found for " & weaponDamageExpr & ", setting damage to 99")
+!mmm         set cDamageRoll = 99
+!mmm       end if
+!mmm       set damageResultLog = "(" & weaponDamageExpr & "[max] = " & cDamageRoll & ") " & weaponDamageBonus
 !mmm     end if
 !mmm     set damageResultBasic = highlight(damageResult, damageResult, damageResultLog)
 !rem     // Special case: sharpshooting

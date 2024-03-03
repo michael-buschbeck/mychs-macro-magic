@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2024-02-27)"
+!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2024-02-28)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -214,11 +214,19 @@
 !mmm   if attackResult >= 20
 !rem     //  cDamageRoll: Override in customize block to see beautifully animated 3D dice
 !mmm     set customizable cDamageRoll = roll(weaponDamageExpr)
+!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & cDamageRoll & ") " & weaponDamageBonus
+!mmm     if iscritical(cAttackRoll)
+!mmm       set cDamageRoll = rollMax(weaponDamageExpr)
+!mmm       if cDamageRoll == undef 
+!mmm         do whisperback(scriptVersion & ": No maximum roll found for " & weaponDamageExpr & ", setting damage to 99")
+!mmm         set cDamageRoll = 99
+!mmm       end if
+!mmm       set damageResultLog = "(" & weaponDamageExpr & "[max] = " & cDamageRoll & ") " & weaponDamageBonus
+!mmm     end if
 !mmm     set damageResult = cDamageRoll + weaponDamageBonus
 !mmm     if damageResult < 0
 !mmm       set damageResult = highlight(0, "bad")
 !mmm     end if
-!mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & cDamageRoll & ") " & weaponDamageBonus
 !mmm     if magicExtraDamageActive and cMagicExtraDamage ne ""
 !rem       //  cMagicExtraDamageRoll: Override in customize block to see beautifully animated 3D dice
 !mmm       set customizable cMagicExtraDamageRoll = roll(cMagicExtraDamage)
