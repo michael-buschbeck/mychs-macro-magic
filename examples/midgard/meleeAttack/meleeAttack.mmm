@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2024-02-28)"
+!mmm   set scriptVersion = "meleeAttack v2.0.0-pre (2024-03-16)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -211,7 +211,7 @@
 !mmm   set attackResultLog = attackResult & " = (1d20 = " & cAttackRoll & ") + (EW = " & effAttack & ") + (" & modifiers & ")"
 !mmm   set criticalAttack = iscritical(cAttackRoll)
 !rem
-!mmm   if attackResult >= 20
+!mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
 !rem     //  cDamageRoll: Override in customize block to see beautifully animated 3D dice
 !mmm     set customizable cDamageRoll = roll(weaponDamageExpr)
 !mmm     set damageResultLog = "(" & weaponDamageExpr & " = " & cDamageRoll & ") " & weaponDamageBonus
@@ -242,16 +242,16 @@
 !mmm
 !rem   // Save key attack data for defense script
 !rem
-!mmm   if attackResult >= 20 and damageResult > 0
+!mmm   if attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
 !mmm     if not m3mgdExchangeStoreAttack("melee") 
 !mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
 !mmm     end if
 !mmm   end if
 !rem
 !rem   // Break down magic effects for player and GM
-!mmm   if magicExtraDamageActive and attackResult >= 20 and damageResult > 0
+!mmm   if magicExtraDamageActive and attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - cMagicExtraDamageRoll) & "**&nbsp;" & emojiMagic & " +&nbsp;**" & cMagicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "
-!mmm   else if magicWeapon and attackResult >= 20 and damageResult > 0
+!mmm   else if magicWeapon and attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & damageResult & "**&nbsp;" & emojiMagic & " }} "
 !mmm   end if
 !mmm
@@ -296,7 +296,7 @@
 !mmm       else
 !mmm         chat [AttackFailsClearly]:                     verfehlt ($[attackResult]{attackResult+0}). 
 !mmm       end if
-!mmm       if attackResult >= 20
+!mmm       if attackResult >= 20 and not isfumble(cAttackRoll)
 !mmm         if damageResult > 10
 !mmm           set damageDescription = "ausgesprochen schwerer, unter Umständen lebensgefährlicher"
 !mmm         else if damageResult > 3
@@ -332,7 +332,7 @@
 !mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(cTargetID)}}}
 !mmm     if criticalAttack
 !mmm       chat:    {{Kritischer Erfolg=$[attackResult]{attackResult} }}
-!mmm     else if attackResult >= 20
+!mmm     else if attackResult >= 20 and not isfumble(cAttackRoll)
 !mmm       chat:    {{Erfolg=$[attackResult]{attackResult} }}
 !mmm     else if isfumble(cAttackRoll)
 !mmm       chat:    {{Kritischer Fehlschlag=$[attackResult]{attackResult} [🎲](${m3mgdCriticalEffectRollPayload(cOwnID, "meleeAttackFailure", cTargetID)}${cssTableCellButton}) }}
@@ -340,7 +340,7 @@
 !mmm       chat:    {{Fehlschlag=$[attackResult]{attackResult} }}
 !mmm     end if
 !mmm     chat:      {{Boni/Mali=**$[attackModifiers]{modifiers}**}}
-!mmm     if attackResult >= 20
+!mmm     if attackResult >= 20 and not isfumble(cAttackRoll)
 !mmm       set damageType = ""
 !mmm       if magicWeapon and damageResult > 0
 !mmm         if magicExtraDamageActive 
@@ -363,7 +363,7 @@
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm
-!mmm   if attackResult >= 20
+!mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
 !mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType, "melee")
 !mmm   end if
 !mmm

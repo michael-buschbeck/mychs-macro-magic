@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2024-02-28)"
+!mmm   set scriptVersion = "2.0.0-pre (2024-03-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -382,7 +382,7 @@
 !mmm   end if
 !mmm   set criticalAttack = iscritical(cAttackRoll)
 !mmm 
-!mmm   if attackResult >= 20
+!mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
 !rem     // Damage roll: override in customize block
 !mmm     set customizable cDamageRoll = roll(weaponDamageExpr)
 !mmm     set damageResult = cDamageRoll + weaponDamageBonus
@@ -424,14 +424,14 @@
 !mmm   end if
 !mmm
 !rem   // Save key attack data for defense script
-!mmm   if attackResult >= 20 and damageResult > 0
+!mmm   if attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
 !mmm     if not m3mgdExchangeStoreAttack("ranged") 
 !mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
 !mmm     end if
 !mmm   end if
 !rem
 !rem   // Break down extra magic damage to player and GM
-!mmm   if cAmmoMagic and attackResult >= 20 and damageResult > 0
+!mmm   if cAmmoMagic and attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberschaden=" & damageResult & " }} "
 !mmm   end if
 !mmm
@@ -508,14 +508,14 @@
 !mmm       chat:    {{Erfolg=${attackResult}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${sharpExtraResult}}}
 !mmm     else if iscritical(cAttackRoll) and cSemiManualModifiers % 23 != 0
 !mmm       chat:    {{Kritischer Erfolg=${attackResult} }}
-!mmm     else if attackResult >= 20
-!mmm       chat:    {{Erfolg=${attackResult}}}
 !mmm     else if isfumble(cAttackRoll)
 !mmm       chat:    {{Kritischer Fehlschlag=${attackResult} [🎲](${m3mgdCriticalEffectRollPayload(cOwnID, "rangedAttackFailure", cTargetID)}${cssTableCellButton}) }}
+!mmm     else if attackResult >= 20
+!mmm       chat:    {{Erfolg=${attackResult}}}
 !mmm     else 
 !mmm       chat:    {{Fehlschlag=${attackResult}}}
 !mmm     end if
-!mmm     if cSemiManualModifiers % 23 == 0 and attackResult >= 20
+!mmm     if cSemiManualModifiers % 23 == 0 and attackResult >= 20 and not isfumble(cAttackRoll)
 !mmm       chat:      {{Boni/Mali=${modifiers}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🎯${highlight(sign(modifiers-4,"display"),"info")}}}
 !mmm     else
 !mmm       chat:      {{Boni/Mali=${modifiers}}}
@@ -524,7 +524,7 @@
 !mmm     if attackFromBehind
 !mmm       chat:    {{Angriff von hinten=Bei Hinterhalt **kein Abwehrwurf** (${foeViewAngle}°)}}
 !mmm     end if 
-!mmm     if attackResult >= 20 and cSemiManualModifiers % 23 == 0 and not isfumble(sharpExtraResult)
+!mmm     if attackResult >= 20 and not isfumble(cAttackRoll) and cSemiManualModifiers % 23 == 0 and not isfumble(sharpExtraResult)
 !mmm       if (attackResult >= 40 and sharpExtraResult >= 40)
 !mmm         chat:  {{Schaden=🎯 HAMMMER!! <1cm genau: 💀&nbsp;oder&nbsp;${damageResult}}}
 !mmm       else if (attackResult >= 30 and sharpExtraResult >= 30) or (iscritical(cAttackRoll) and iscritical(cSharpExtraRoll))
@@ -534,7 +534,7 @@
 !mmm       else 
 !mmm         chat:  {{Schaden=${damageResult} 🎯&nbsp;${(25-min(attackResult, sharpExtraResult))*5}cm&nbsp;daneben}}
 !mmm       end if
-!mmm     else if attackResult >= 20
+!mmm     else if attackResult >= 20 and not isfumble(cAttackRoll)
 !mmm       chat:    {{Schaden=${damageResult}}}
 !mmm     end if
 !mmm     if ammoCount ne "∞"
@@ -556,8 +556,8 @@
 !mmm   if effEnduranceLoss > 0
 !mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
 !mmm   end if
-!mmm   
-!mmm   if attackResult >= 20
+!mmm   debug do cAttackRoll
+!mmm   if attackResult >= 20 and not ? isfumble(cAttackRoll)
 !mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType, "ranged")
 !mmm   end if
 !mmm

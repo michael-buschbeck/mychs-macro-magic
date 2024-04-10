@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.3.4 (2024-02-28)"
+!mmm   set libVersion = "libMidgardBasics v1.3.5 (2024-04-10)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -26,11 +26,24 @@
 !mmm   
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: count, isChar, sign, stringify, sum, rollResult, rollMax, zeroOrPositive
+!mmm   publish to game: isfumble, count, isChar, sign, stringify, sum, rollResult, rollMax, zeroOrPositive
 !mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
+!mmm end function
+!rem
+!rem // 
+!rem // isfumble(rollResult, rollTemplate) overwrites MMM's own isfumble() for a dirty hack that works with simple numbers given as rollResult
+!rem // 
+!mmm function isfumble(rollResult, rollTemplate)
+!mmm   if (isdefault(rollTemplate) or rollTemplate eq "1d20" or rollTemplate eq "1d6") and rollResult == 1
+!mmm     return true
+!mmm   else if (isdefault(rollTemplate) or rollTemplate eq "1d20" or rollTemplate eq "1d6") and rollResult != 1
+!mmm     return false
+!mmm   else 
+!mmm     return unknown
+!mmm   end if
 !mmm end function
 !rem
 !rem // 
