@@ -1,7 +1,9 @@
 !rem // skillProbe
 !rem //
+!rem // GM script to execute group probes on skills, privately show results and whisper tailored messages to players based on their probe results.
+!rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.1.0 (2024-02-14)"
+!mmm   set scriptVersion = "skillProbe 1.2.0 (2024-04-13)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -9,9 +11,15 @@
 !mmm     exit script
 !mmm   end if
 !rem
-!mmm   set scriptCommand = "&#x25;{MacroSheet|skillProbe}"
+!mmm   set scriptCommand = literal("%" & "{MacroSheet|skillProbe}")
 !mmm   set usableSkills = "Alchemie", "Fälschen", "Fallen entdecken", "Fallenmechanik", "Gassenwissen", "Heilkunde", "Landeskunde (Alba)", "Menschenkenntnis", "Naturkunde", "Pflanzenkunde", "Schleichen", "Spurensuche", "Tarnen", "Tierkunde", "Verhören", "Zauberkunde"
 !mmm
+!rem   // Output formatting constants
+!mmm   set playerMsgEmoji = "🖅"
+!mmm   set colorSuccess = "#58b53c"
+!mmm   set colorFailure = "#d95d86"
+!mmm   set colorInactive = "#adadad"
+!rem
 !rem   // FUNCTIONS
 !rem   //
 !mmm   function tokenMenu()
@@ -22,18 +30,35 @@
 !mmm     end for
 !mmm     set skillSelectQuery = skillSelectQuery & "}"
 !mmm     set manualModifierQuery = "?" & "{" & "Modifikator|0" & "}"
-!mmm     
+!mmm
 !mmm     for charName in m3mgdPlayerCharacters
 !mmm       set autoTokenList = autoTokenList, charName
 !mmm     end for
+!mmm     set buttonProps = { label: "**Ausgewählte Token**", bgColor: "#e10085", textColor: "#ffffff", payload: chatButtonPayload(script.scriptCommand, { "cATokenList": "selected", "cBSkill": "\"" & skillSelectQuery & "\"", "cCModifier": manualModifierQuery }) }
+!mmm     set buttonProps = buttonProps, { label: "**Ganze Gruppe**", bgColor: "#e10085", textColor: "#ffffff", payload: chatButtonPayload(script.scriptCommand, { "cATokenList": stringify(autoTokenList), "cBSkill": "\"" & skillSelectQuery & "\"", "cCModifier": manualModifierQuery }) }
 !mmm     
-!mmm     set buttonProps = { "label": "Ausgewählte Token", "scriptCommand": script.scriptCommand, "settings": { "cATokenList": "selected", "cBSkill": "\"" & skillSelectQuery & "\"", "cCModifier": manualModifierQuery } }
-!mmm     set buttonProps = buttonProps, { "label": "Ganze Gruppe", "scriptCommand": script.scriptCommand, "settings": { "cATokenList": stringify(autoTokenList), "cBSkill": "\"" & skillSelectQuery & "\"", "cCModifier": manualModifierQuery } }
-!mmm     
-!mmm     do whisperback(chatButtonTable("Fertigkeitsprüfung", { "type": "multi-buttons", "buttonProps": buttonProps } ))
+!mmm     set output = chatTightBoxHeader("Fertigkeitsprüfung für...") & chatTightBoxMultiButton(buttonProps)
+!mmm     do whisperback(output)
 !mmm     
 !mmm   end function
 !mmm
+!mmm   function postOffice()
+!mmm
+!mmm     for recipientToken in script.cRecipientList
+!mmm       set rcptMessage = chatTightBoxSubHeader("Nachricht vom Spielleiter") & chatTightBoxRow(script.cPlayerMessage)
+!mmm       do chat("/w \"" & recipientToken.character_name & "\" " & rcptMessage)
+!mmm       set rcptNames = rcptNames, recipientToken.character_name
+!mmm     end for
+!mmm
+!mmm     set output = chatTightBoxSubHeader("Nachrichten verschickt:")
+!mmm     set output = output & chatTightBoxRow(script.playerMsgEmoji & " " & stringify(rcptNames, "", ", ") & ": \"" & script.cPlayerMessage & "\"")
+!mmm
+!mmm     do whisperback(output)
+!mmm
+!mmm   end function
+!mmm
+!rem   // MAIN
+!rem   
 !rem   // Config: set defaults for customizable variables
 !rem   //
 !rem   //  cCheckVersion    Toggle version check
@@ -41,11 +66,15 @@
 !rem   //  cCModifier       Modifier to the skill roll
 !rem   //  cATokenList      List of valid token_id or character_id values for characters that get the sense rolls. Duplicates are ignored.
 !rem   //    A, B, C serve to maintain the right order for chatButton() in libBasics
+!rem   //  cPlayerMessage   Message to be whispered to everyone in...
+!rem   //  cRecipientList   ...the list of recipient token/character IDs/names
 !rem   //
 !mmm   set customizable cCheckVersion = false
 !mmm   set customizable cATokenList = default
 !mmm   set customizable cBSkill = default
 !mmm   set customizable cCModifier = default
+!mmm   set customizable cPlayerMessage = default
+!mmm   set customizable cRecipientList = default
 !mmm
 !mmm   if cCheckVersion
 !mmm     do whisperback(scriptVersion)
@@ -54,26 +83,18 @@
 !mmm
 !rem   // Called without proper config -> show menu
 !rem   //
-!mmm   if isdefault(cATokenList)
+!mmm   if isdefault(cATokenList) and isdefault(cRecipientList)
 !mmm     do tokenMenu()
 !mmm     exit script
 !mmm   end if
 !mmm   
-!rem   // Initialize 
+!rem   // Called with whisper output to deliver -> do so
 !rem   //
-!mmm   if isdefault(cATokenList) and selected
-!mmm     set cATokenList = selected
+!mmm   if not isdefault(cRecipientList)
+!mmm     do postOffice()
+!mmm     exit script
 !mmm   end if
 !mmm
-!rem   // Output formatting constants
-!mmm   set playerMsgEmoji = "💬"
-!mmm   set cssGMTableHead = "#\" style=\"border: 1px solid #000000; display:block;background-color:#702082;margin:0px;padding:5px;font-size:1.05em;font-style:normal;font-weight:bold;color:#FFFFFF;text-decoration:none;"
-!mmm   set cssGMTableSection = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000; display:block;background-color:#FFFFFF;margin:0px;padding:5px;font-size:1.05em;font-style:normal;font-weight:bold;color:#000000;text-decoration:none;"
-!mmm   set cssGMTableItem = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#f0f0f0;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
-!mmm   set cssGMTableItemSuccess = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#cdde87;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
-!mmm   set cssGMTableItemFailure = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#ffccaa;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
-!mmm   set cssGMTableItemCriticalFailure = "#\" style=\"border-left: 1px solid #000000;border-right: 1px solid #000000;border-bottom: 1px solid #000000; display:block;background-color:#f06560;margin:0px;padding:5px;font-style:normal;color:#000000;text-decoration:none;"
-!rem
 !rem   // Due diligence: weed out duplicate tokens, in case cTokenList was populated manually or via {target}
 !mmm   for item in cATokenList
 !mmm 
@@ -96,10 +117,8 @@
 !mmm     end if
 !mmm   end for
 !rem
-!mmm   combine chat
-!mmm     
-!mmm     chat: /w GM [${cBSkill}](${cssGMTableHead})
-!mmm     chat: [Würfe für...](${cssGMTableSection})
+!mmm   set output = chatTightBoxHeader(cBSkill)
+!mmm   set output = output & " " & chatTightBoxSubHeader("Würfe für...")
 !mmm     
 !rem     // Run through selected characters
 !mmm     for id in trimmedTokenList
@@ -136,18 +155,27 @@
 !mmm         set effModifier = sign(tokenEffSkill + tokenModifier, "math")
 !mmm         set tokenRoll = roll("1d20" & effModifier)
 !mmm         
-!rem         // Overwrite tooltip to break down components
+!rem         // Build tooltip to break down components
 !mmm         set tokenResultTooltip = tokenRoll & " = (1d20 = " & (tokenRoll - effModifier) & ") + (EW = " & tokenEffSkill & ") " & sign(tokenModifier, "display")
-!mmm         set tokenResult = highlight(tokenRoll, default, tokenResultTooltip)
 !mmm         
-!rem         // Compose output table row for GM
-!mmm         if tokenResult >= 20 and fallBack eq ""
-!mmm           set tokenXPGain = m3mgdProcessSkillXP(cBSkill, tokenRoll - effModifier, tokenID)
-!mmm           chat: [${tokenID.token_name} ${tokenResult} &nbsp; EP: ${tokenXPGain}](${cssGMTableItemSuccess})
-!mmm         else if tokenResult >= 20
-!mmm           chat: [${tokenID.token_name}${fallBack} ${tokenResult} &nbsp; (keine EP)](${cssGMTableItemSuccess})
+!mmm         if iscritical(tokenRoll)
+!mmm           set critSuccessList = critSuccessList, tokenID
+!mmm         else if tokenRoll >= 20
+!mmm           set successList = successList, tokenID
+!mmm         else if isfumble(tokenRoll)
+!mmm           set critFailList = critFailList, tokenID
 !mmm         else 
-!mmm           chat: [${tokenID.token_name}${fallBack} ${tokenResult}](${cssGMTableItemFailure})
+!mmm           set failureList = failureList, tokenID
+!mmm         end if
+!mmm
+!rem         // Compose output table row for GM
+!mmm         if tokenRoll >= 20 and fallBack eq ""
+!mmm           set tokenXPGain = m3mgdProcessSkillXP(cBSkill, tokenRoll - effModifier, tokenID)
+!mmm           set output = output & chatTightBoxRow(tokenID.token_name & " **" & tokenRoll & "** &nbsp; EP: " & tokenXPGain, literal(tokenResultTooltip), colorSuccess)
+!mmm         else if tokenRoll >= 20
+!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenRoll & "** &nbsp; (keine EP)", literal(tokenResultTooltip), colorSuccess)
+!mmm         else 
+!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenRoll & "**", literal(tokenResultTooltip), colorFailure)
 !mmm         end if
 !mmm
 !mmm       end if
@@ -157,20 +185,47 @@
 !rem     // Tell GM which selected characters were skipped
 !mmm     if skippedList
 !mmm         
-!mmm       chat: [Keine Würfe für...](${cssGMTableSection})
+!mmm       set output = output & chatTightBoxSubHeader("Keine Würfe für...")
 !mmm         
 !mmm       for skippedItem in skippedList
 !mmm         
 !mmm         if skippedItem
 !mmm         
-!mmm           chat: [${skippedItem}](${cssGMTableItem})
+!mmm           set output = output & chatTightBoxRow(skippedItem)
 !mmm         
 !mmm         end if
 !mmm         
 !mmm       end for
 !mmm         
 !mmm     end if
+!mmm
+!rem     // Buttons for whispering information to players depending on their skillProbe results
+!mmm     set critSuccessQuery = "'?" & "{Spielerinfo bei kritischem Erfolg|}'"
+!mmm     set successQuery = "'?" & "{Spielerinfo bei Erfolg|}'"
+!mmm     set failureQuery = "'?" & "{Spielerinfo bei Misserfolg|}'"
+!mmm     set critFailureQuery = "'?" & "{Spielerinfo bei kritischem Misserfolg|}'"
+!mmm     if count(critSuccessList) > 0
+!mmm       set multiButtonProps = { label: count(critSuccessList) & " krit. 🍑", bgColor: colorSuccess, textColor: "#000000", payload: chatButtonPayload(scriptCommand, { "cPlayerMessage": critSuccessQuery, "cRecipientList": stringify(critSuccessList, '"', ",") }) }
+!mmm     else 
+!mmm       set multiButtonProps = { label: "0 krit.🍑", bgColor: colorInactive, textColor: "#000000", payload: "#" }
+!mmm     end if 
+!mmm     if count(successList) > 0
+!mmm       set multiButtonProps = multiButtonProps, { label: count(successList) & "🍑", bgColor: colorSuccess, payload: chatButtonPayload(scriptCommand, { "cPlayerMessage": successQuery, "cRecipientList": stringify(successList, '"', ",") }) } 
+!mmm     else 
+!mmm       set multiButtonProps = multiButtonProps, { label: "0 🍑", bgColor: colorInactive, textColor: "#000000", payload: "#" }
+!mmm     end if 
+!mmm     if count(failureList) > 0
+!mmm       set multiButtonProps = multiButtonProps, { label: count(failureList) & "🍋", bgColor: colorFailure, payload: chatButtonPayload(scriptCommand, { "cPlayerMessage": failureQuery, "cRecipientList": stringify(failureList, '"', ",") }) }
+!mmm     else 
+!mmm       set multiButtonProps = multiButtonProps, { label: "0 🍋", bgColor: colorInactive, textColor: "#000000", payload: "#" }
+!mmm     end if 
+!mmm     if count(critFailList) > 0
+!mmm       set multiButtonProps = multiButtonProps, { label: count(critFailList) & " krit.🍋", bgColor: colorFailure, textColor: "#000000", payload: chatButtonPayload(scriptCommand, { "cPlayerMessage": critFailureQuery, "cRecipientList": stringify(critFailList, '"', ",") }) }
+!mmm     else 
+!mmm       set multiButtonProps = multiButtonProps, { label: "0 krit.🍋", bgColor: colorInactive, textColor: "#000000", payload: "#" }
+!mmm     end if 
+!mmm     set output = output & chatTightBoxMultiButton(multiButtonProps)
 !mmm         
-!mmm   end combine
+!mmm   do whisperback(output)
 !mmm
 !mmm end script
