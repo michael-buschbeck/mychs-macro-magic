@@ -1,4 +1,4 @@
-!rem // showPersistentEffects v0.2 2024-02-27 phr
+!rem // showPersistentEffects v0.3 WIP 2024-04-14 phr
 !rem //
 !rem // Chats a list of active persistent effects for the selected token, or all tokens if none are selected.
 !rem 
@@ -16,40 +16,47 @@
 !mmm set pEregistry = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
 !mmm set cleanRegistry = { pEregistry... where ...value ne undef }
 !mmm if not cleanRegistry
-!mmm   chat: ${"&"}{template:default} {\{name=No active persistent effects in current game}\}
-!mmm else
-!mmm   for effectRecord in cleanRegistry...
-!mmm     if (not selected or (selected and effectRecord.key eq selected)) and effectRecord.value
-!mmm       combine chat
-!mmm         chat: ${"&"}{template:default} {\{name=${effectRecord.key.token_name}: Active persistent effects}\}
+!mmm   do chat(chatTightBoxRow("No active persistent effects in current game"))
+!rem //  chat: ${"&"}{template:default} {\{name=No active persistent effects in current game}\}
+!mmm   exit script
+!mmm end if
+!mmm 
+!rem // TODO: integrate the remaining code with the exact same code in endOfRoundEffects.mmm
+!mmm set output = chatTightBoxHeader("Active persistent effects")
+!mmm   for affectedTokenRecord in cleanRegistry...
+!rem     // If there is a selected token, only produce output for this token alone. If there is no selected token, produce output for every token with an active persistent effect.
+!mmm     if (not selected or (selected and affectedTokenRecord.key eq selected)) and affectedTokenRecord.value
+!mmm       set output = output & chatTightBoxSubHeader(affectedTokenRecord.key.token_name)
 !mmm         set activeCounter = 0
-!mmm         for statusRule in m3mgdGetActivePersistentEffects(effectRecord.key)
+!mmm         for statusRule in m3mgdGetActivePersistentEffects(affectedTokenRecord.key)
 !mmm           set activeCounter = activeCounter + 1
-!mmm           chat: {{ #${activeCounter}, another ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}: 
+!rem //          chat: {{ #${activeCounter}, another ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}: 
+!mmm           set line = "+" & statusRule.effect.expiry.count & " " & statusRule.effect.expiry.type & "s: **" & statusRule.label & "**"
+!mmm           set tooltip = statusRule.desc
 !mmm           for mod in statusRule.effect.rollModifiers...
-!mmm             chat: ${sign(mod.value, "display")} ${mod.key}; 
+!mmm             set line = line & " " & sign(mod.value, "display") & " " & mod.key 
 !mmm           end for
 !mmm           if statusRule.effect.noAttack
-!mmm             chat: kein Angriff;
+!mmm             set line = line & " kein Angriff;"
 !mmm           end if
 !mmm           if statusRule.effect.noDefense
-!mmm             chat: keine Abwehr;
+!mmm             set line = line & " keine Abwehr;"
 !mmm           end if
 !mmm           if statusRule.effect.noFocusedDefense
-!mmm             chat: keine konzentrierte Abwehr;
+!mmm             set line = line & " keine konzentrierte Abwehr;"
 !mmm           end if
 !mmm           if statusRule.effect.marker
-!mmm             chat: ${statusRule.effect.marker};
+!rem            // TODO: in m3mgdInjuryStatus (defined in _libMidgard()) status_pummeled = bewusstlos ergänzen, hier Label aus m3mgdInjuryStatus ziehen
+!mmm             set line = line & " " & statusRule.effect.marker
 !mmm           end if
 !mmm           if statusRule.effect.cappedAttribute
-!mmm             chat: **${statusRule.effect.cappedAttribute}** reduziert
+!mmm             set line = line & " **" & statusRule.effect.cappedAttribute & "** reduziert"
 !mmm           end if
-!mmm           chat: ${chatButton("X", removeEffectPayload(effectRecord.key, activeCounter-1, cssTableCellButton))}
-!mmm           chat: }}
+!rem //          chat: ${chatButton("X", removeEffectPayload(affectedTokenRecord.key, activeCounter-1, cssTableCellButton))}
+!rem            // TODO: hier statt einer Zeile eine ButtonRow erzeugen, neue Funktion chatTightBoxButtonRow() schaffen für einen einzelnen vollbreiten (display:block) Button
+!mmm           set output = output & chatTightBoxRow(line, tooltip)
 !mmm         end for
-!mmm       end combine
 !mmm     end if
 !mmm   end for
-!mmm end if
-!mmm
+!mmm   do chat(output)
 !mmm end script
