@@ -13,7 +13,7 @@
 !mmm         chat: /w "${tokenID.character_name}" ${"&"}{template:default} 
 !mmm         chat: {{name=${m3mgdShapeMoji(tokenID) & tokenID.name}: Rundeneffekte}} 
 !mmm
-!mmm         for statusRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
+!mmm         for statusRule in m3mgdInjuryStatus... where tokenID.(...key) eq "shown"
 !mmm
 !mmm           if statusRule.value.combatRoundEffects and not timeToDie < 0
 !mmm
@@ -66,24 +66,7 @@
 !mmm
 !mmm             set activeCounter = activeCounter + 1
 !mmm             chat: {{ #${activeCounter}, noch ${statusRule.effect.expiry.count} ${DE.(statusRule.effect.expiry.type & "s")}= ${highlight(statusRule.label, "info", statusRule.desc)} 
-!mmm             for mod in statusRule.rollModifiers...
-!mmm               chat: ${sign(mod.value, "display")} ${mod.key}; 
-!mmm             end for
-!mmm             if statusRule.effect.noAttack
-!mmm               chat: kein Angriff;
-!mmm             end if
-!mmm             if statusRule.effect.noDefense
-!mmm               chat: keine Abwehr;
-!mmm             end if
-!mmm             if statusRule.effect.noFocusedDefense
-!mmm               chat: keine konzentrierte Abwehr;
-!mmm             end if
-!mmm             if statusRule.effect.marker
-!mmm               chat: ${statusRule.effect.marker};
-!mmm             end if
-!mmm             if statusRule.effect.cappedAttribute
-!mmm               chat: **${statusRule.effect.cappedAttribute}** reduziert
-!mmm             end if
+!mmm             chat: ${stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ")}
 !mmm             chat: }}
 !mmm           
 !mmm           end for
