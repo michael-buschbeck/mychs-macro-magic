@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-02-27)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-04-14)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -49,20 +49,23 @@
 !mmm   set m3mgdParryStandardTypes = "Buckler", "Parierdolch", "Kampfgabeln"
 !mmm   set m3mgdParryStandardEffectiveAgainst = "Einhandschwert", "Fechtwaffe", "Spießwaffe", "Stichwaffe", "Stockwaffe", "Zauberstab", "Buckler", "Parierdolch", "Kampfgabeln", "waffenlos"
 !mmm
-!mmm   set m3mgdInjuryStatus = { "green": { "rollModifiers": {"meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Erschöpft", "icon": "🟢", "desc": "alles -4" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "yellow": { "label": "Schwer verwundet", "icon": "🟡", "desc": "Ausdauer begrenzt auf 50%" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "red": { "noAttack": true, "noDefense": true, "label": "Handlungsunfähig", "icon": "🔴", "desc": "B=4, PW:Kon nach 10min, sonst Schock" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "brown": { "noAttack": true, "noDefense": true, "label": "Schock", "icon": "🟤", "desc": "Keine Angriffe oder Abwehr" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "death_zone": { "noAttack": true, "noDefense": true, "label": "Dem Tode nah", "icon": "💀", "desc": "B=0, PW:Kon nach 10min, sonst Schock" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "ninja_mask": { "noAttack": true, "noDefense": true, "label": "Schwere Kopfverletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "back_pain": { "combatRoundEffects": { "death": 10 }, "label": "Schwere Halswirbelverletzung", "icon": "", "desc": "10% Sterberisiko pro Kampfrunde" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "sleepy": { "combatRoundEffects": { "health": -1, "endurance": -1 }, "label": "Schwere Halsverletzung", "icon": "", "desc": "-1 LP/AP pro Kampfrunde" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "grab": { "rollModifiers": { "meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Arm schwer verletzt", "icon": "", "desc": "alles -4 (falsche Hand)" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "tread": { "rollModifiers": { "defense": -4 }, "label": "Bein schwer verletzt", "icon": "", "desc": "Abwehr -4" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "bleeding_eye": { "rollModifiers": { "Sehen": -2 }, "label": "Augen schwer verletzt", "icon": "", "desc": "Sehen -2" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "screaming": { "rollModifiers": { "Hören": -2 }, "label": "Ohren schwer verletzt", "icon": "", "desc": "Hören -2" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "broken_heart": { "noAttack": true, "noDefense": true, "label": "Schwere innere Verletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
-!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "white_tower": { "rollModifiers": { "meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Rippen schwer verletzt", "icon": "", "desc": "alles -4" } }
+!mmm   set m3mgdInjuryStatus = { "status_green": { "rollModifiers": {"meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Erschöpft", "icon": "🟢", "desc": "alles -4" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_yellow": { "label": "Schwer verwundet", "icon": "🟡", "desc": "max. halbe AP, halbe Bewegung" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_red": { "noAttack": true, "noDefense": true, "label": "Handlungsunfähig", "icon": "🔴", "desc": "B=4, PW:Kon nach 10min, sonst Schock" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_brown": { "noAttack": true, "noDefense": true, "label": "Schock", "icon": "🟤", "desc": "Keine Angriffe oder Abwehr" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_pummeled": { "noAttack": true, "noDefense": true, "label": "Bewusstlos", "icon": "😴", "desc": "Keine Wahrnehmung, Bewegung, Angriffe oder Abwehr" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_death_zone": { "noAttack": true, "noDefense": true, "label": "Dem Tode nah", "icon": "💀", "desc": "B=0, PW:Kon nach 10min, sonst Schock" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_ninja_mask": { "noAttack": true, "noDefense": true, "label": "Schwere Kopfverletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_back_pain": { "combatRoundEffects": { "death": 10 }, "label": "Schwere Halswirbelverletzung", "icon": "", "desc": "10% Sterberisiko pro Kampfrunde" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_sleepy": { "combatRoundEffects": { "health": -1, "endurance": -1 }, "label": "Schwere Halsverletzung", "icon": "", "desc": "-1 LP/AP pro Kampfrunde" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_grab": { "rollModifiers": { "meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Arm schwer verletzt", "icon": "", "desc": "alles -4 (falsche Hand)" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_tread": { "rollModifiers": { "defense": -4 }, "label": "Bein schwer verletzt", "icon": "", "desc": "Abwehr -4" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_bleeding_eye": { "rollModifiers": { "Sehen": -2 }, "label": "Augen schwer verletzt", "icon": "", "desc": "Sehen -2" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_screaming": { "rollModifiers": { "Hören": -2 }, "label": "Ohren schwer verletzt", "icon": "", "desc": "Hören -2" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_broken_heart": { "noAttack": true, "noDefense": true, "label": "Schwere innere Verletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
+!mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_white_tower": { "rollModifiers": { "meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Rippen schwer verletzt", "icon": "", "desc": "alles -4" } }
+!mmm
+!mmm   set m3mgdPersistentEffectTranslations = { "meleeAttack": "Nahkampfangriff", "rangedAttack": "Fernkampfangriff", "defense": "Abwehr" }
 !mmm
 !mmm   set m3mgdSpellEffects = { "fireball": { name: "Feuerball", tokenSide: 1 }, "firewall": { name: "Feuerwand", tokenSide: 2 } }
 !mmm
@@ -89,7 +92,7 @@
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
-!mmm   publish to game: m3mgdInjuryStatus, m3mgdSpellEffects, m3mgdAttrXP, m3mgdAttrXPLog
+!mmm   publish to game: m3mgdInjuryStatus, m3mgdPersistentEffectTranslations, m3mgdSpellEffects, m3mgdAttrXP, m3mgdAttrXPLog
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
@@ -110,7 +113,7 @@
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
 !mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect
-!mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdUpdatePersistentEffectsCounters
+!mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdPersistentEffectLabels, m3mgdUpdatePersistentEffectsCounters
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdGetXPLog, _m3mgdLogXP, m3mgdEditXP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP, m3mgdXPEditButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -500,7 +503,7 @@
 !mmm     set tokenActiveEffectsList = m3mgdGetActivePersistentEffects(tokenID)
 !mmm   end if
 !mmm 
-!mmm   for statusModRule in m3mgdInjuryStatus... where tokenID.("status_" & ...key) eq "shown"
+!mmm   for statusModRule in m3mgdInjuryStatus... where tokenID.(...key) eq "shown"
 !mmm     if statusModRule.value.rollModifiers.(action) and count(statusModRule.value.excluded where ...token_id eq tokenID) == 0
 !mmm       set activeStatusModifiers = activeStatusModifiers, { marker: statusModRule.key, statusModRule.value... }
 !mmm     end if
@@ -554,7 +557,7 @@
 !mmm   if defenselessStatus
 !mmm     return defenselessStatus
 !mmm   else if not tokenID.(healthAttr).max == 0 and tokenID.(healthAttr) <= 3
-!mmm     return m3mgdInjuryStatus.red
+!mmm     return m3mgdInjuryStatus.status_red
 !mmm   else
 !mmm     return false
 !mmm   end if
@@ -639,8 +642,6 @@
 !rem // 
 !mmm function m3mgdEnduranceStatusLabel(tokenID)
 !mmm   
-!mmm   set enduranceLabel = "🔋 "
-!mmm
 !mmm   if isdefault(tokenID)
 !mmm     set tokenID = m3mgdValidateOwnTokenID(script.cOwnID)
 !mmm   else
@@ -651,13 +652,9 @@
 !mmm   end if
 !mmm   
 !mmm   if tokenID.status_green eq "shown"
-!mmm     
-!mmm     return enduranceLabel & "Erschöpft"
-!mmm     
+!mmm     return "🪫 Erschöpft..."
 !mmm   else
-!mmm     
-!mmm     return enduranceLabel & "Geht noch!"
-!mmm     
+!mmm     return "🔋 Läuft!"
 !mmm   end if
 !mmm     
 !mmm end function
@@ -747,26 +744,20 @@
 !mmm   
 !mmm   set healthAttr = m3mgdGetHealthAttribute(tokenID)
 !mmm
-!mmm   if tokenID.status_yellow eq "shown"
-!mmm     
-!mmm     return "🟡 max. halbe AP, halbe Bewegung"
-!mmm     
-!mmm   else if tokenID.status_red eq "shown"
-!mmm     
-!mmm     return "🔴 handlungsunfähig, B=4, PW:Kon nach 10min, sonst Schock"
-!mmm     
-!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) >= 0
-!mmm     
-!mmm     return "💀 handlungsunfähig, B=0, PW:Kon nach 10min, sonst Schock"
-!mmm     
-!mmm   else if tokenID.status_death_zone eq "shown" and tokenID.(healthAttr) < 0
-!mmm     
-!mmm     return "💀 **Countdown läuft**"
-!mmm     
+!mmm   for statusRule in m3mgdInjuryStatus... where ...key ne "status_green" and tokenID.(...key) eq "shown"
+!mmm
+!mmm     if statusRule.key eq "status_death_zone" and tokenID.(healthAttr) < 0
+!mmm       set injuryEffects = injuryEffects, "💀 **Countdown läuft**"
+!mmm     else
+!mmm       set injuryEffects = injuryEffects, statusRule.value.icon & " " & statusRule.value.label
+!mmm     end if
+!mmm
+!mmm   end for
+!mmm
+!mmm   if injuryEffects
+!mmm     return stringify(injuryEffects, "", ", ")
 !mmm   else
-!mmm     
 !mmm     return "keine Einschränkungen"
-!mmm     
 !mmm   end if
 !mmm     
 !mmm end function
@@ -1966,6 +1957,37 @@
 !mmm
 !mmm   end combine
 !mmm   
+!mmm end function
+!rem
+!rem // m3mgdPersistentEffectLabels(persistentEffect)
+!rem // 
+!rem //   Returns a list of persistent effects (German labels) defined in the persistentEffect argument.
+!rem // 
+!mmm function m3mgdPersistentEffectLabels(persistentEffect)
+!mmm   for mod in persistentEffect.rollModifiers...
+!mmm     if m3mgdPersistentEffectTranslations.(mod.key)
+!mmm       set label = m3mgdPersistentEffectTranslations.(mod.key)
+!mmm     else
+!mmm       set label = mod.key
+!mmm     end if
+!mmm     set effectsList = effectsList, label & " " & sign(mod.value, "display")
+!mmm   end for
+!mmm   if persistentEffect.noAttack
+!mmm     set effectsList = effectsList, "kein Angriff"
+!mmm   end if
+!mmm   if persistentEffect.noDefense
+!mmm     set effectsList = effectsList, "keine Abwehr"
+!mmm   end if
+!mmm   if persistentEffect.noFocusedDefense
+!mmm     set effectsList = effectsList, "keine konzentrierte Abwehr"
+!mmm   end if
+!mmm   if persistentEffect.marker
+!mmm     set effectsList = effectsList, m3mgdInjuryStatus.(persistentEffect.marker).label
+!mmm   end if
+!mmm   if persistentEffect.cappedAttribute
+!mmm     set effectsList = effectsList, " **" & persistentEffect.cappedAttribute & "** reduziert"
+!mmm   end if
+!mmm   return effectsList
 !mmm end function
 !rem
 !rem // m3mgdUpdatePersistentEffectsCounters(tokenID, actionType)
