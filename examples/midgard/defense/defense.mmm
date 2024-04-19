@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0-pre (2024-02-27)"
+!mmm   set scriptVersion = "defense 2.0.0-pre (2024-03-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -215,7 +215,7 @@
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
 !mmm
-!mmm   if not cNoDefense and ((not criticalAttack and (defenseResult >= attackResult or iscritical(cDefenseRoll))) or (criticalAttack and iscritical(cDefenseRoll)))
+!mmm   if not cNoDefense and ((not criticalAttack and ((defenseResult >= attackResult and not isfumble(cDefenseRoll)) or iscritical(cDefenseRoll))) or (criticalAttack and iscritical(cDefenseRoll)))
 !mmm
 !rem     // Defense successful
 !mmm     set defenseSuccess = true

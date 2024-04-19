@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.3.4 (2024-02-28)"
+!mmm   set libVersion = "libMidgardBasics v1.4.0 (2024-04-13)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -26,11 +26,24 @@
 !mmm   
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: count, isChar, sign, stringify, sum, rollResult, rollMax, zeroOrPositive
-!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable
+!mmm   publish to game: isfumble, count, isChar, sign, stringify, sum, rollResult, rollMax, zeroOrPositive
+!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable, chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxMultiButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
+!mmm end function
+!rem
+!rem // 
+!rem // isfumble(rollResult, rollTemplate) overwrites MMM's own isfumble() for a dirty hack that works with simple numbers given as rollResult
+!rem // 
+!mmm function isfumble(rollResult, rollTemplate)
+!mmm   if (isdefault(rollTemplate) or rollTemplate eq "1d20" or rollTemplate eq "1d6") and rollResult == 1
+!mmm     return true
+!mmm   else if (isdefault(rollTemplate) or rollTemplate eq "1d20" or rollTemplate eq "1d6") and rollResult != 1
+!mmm     return false
+!mmm   else 
+!mmm     return unknown
+!mmm   end if
 !mmm end function
 !rem
 !rem // 
@@ -223,4 +236,61 @@
 !mmm     end if
 !mmm   end for
 !mmm   return chatButtonTableCode
+!mmm end function
+!rem
+!rem // chatTightBoxHeader(label)
+!rem //
+!mmm function chatTightBoxHeader(label)
+!mmm   set style = 'border: 1px solid #000000; display:block; margin:0px; padding:3px; background-color:#702082;'
+!mmm   set style = style & 'font-size:1.05em;font-style:normal;font-weight:bold;color:#FFFFFF;text-decoration:none;'
+!mmm   return '[' & label & '](#\" style=\"' & style & ')'
+!mmm end function
+!rem
+!rem // chatTightBoxHeader(label)
+!rem //
+!mmm function chatTightBoxSubHeader(label)
+!mmm   set style = 'border-left: 1px solid #000000;border-right: 1px solid #000000; display:block; margin:0px; padding:3px; background-color:#ffffff;'
+!mmm   set style = style & 'font-size:1.05em;font-style:normal;font-weight:bold;color:#000000;text-decoration:none;'
+!mmm   return ' [' & label & '](#\" style=\"' & style & ')'
+!mmm end function
+!rem
+!rem // chatTightBoxRow(label, bgColor, textColor)
+!rem //
+!mmm function chatTightBoxRow(label, tooltip, bgColor, textColor)
+!mmm   if isdefault(bgColor)
+!mmm     set bgColor = "#ffffff"
+!mmm   end if
+!mmm   if isdefault(textColor)
+!mmm     set textColor = "#000000"
+!mmm   end if
+!mmm   if not isdefault(tooltip)
+!mmm     set tooltip = ' title="' & tooltip & '" '
+!mmm   end if 
+!mmm   set style = "border-left: 1px solid #000000;border-right: 1px solid #000000; display:block; margin:0px; padding:3px; background-color:" & bgColor & ";"
+!mmm   set style = style & "font-style:normal; text-decoration:none; color:" & textColor & ";"
+!mmm   return ' [' & label & '](#\" ' & tooltip & 'title=\"test\" style=\"' & style & ')'
+!mmm end function
+!rem
+!rem // chatTightBoxMultiButton(buttons)
+!rem //
+!rem //   Returns Roll20 chat code for a series of buttons defined by the list of structs { label, payload, [bgColor, textColor] } provided as buttons.
+!rem //   CSS display is set to inline, so if the number is small and the labels are short, they should fit in a single row.
+!rem //
+!mmm function chatTightBoxMultiButton(buttons)
+!mmm   set gap = '[&nbsp;](#\" style=\"display:block;margin:0px;padding:0px;font-size:5px;border:none)'
+!mmm   set code = gap
+!mmm   for givenProps in buttons
+!mmm     set props = givenProps
+!mmm     set code = code & "[" & props.label & "]"
+!mmm     if not props.bgColor
+!mmm       set props = { props, bgColor: "#ffffff" }
+!mmm     end if
+!mmm     if not props.textColor
+!mmm       set props = { props, textColor: "#000000" }
+!mmm     end if
+!mmm     set style = 'border-left: 1px solid #000000;border-right: 1px solid #000000; display:inline; background-color:' & props.bgColor & ';margin:0px;padding:3px;font-style:normal;color:' & props.textColor & ';text-decoration:none;'
+!mmm     set code = code & '(' & props.payload & '\" style=\"' & style & ')'
+!mmm   end for
+!mmm   set code = code & gap
+!mmm   return code
 !mmm end function
