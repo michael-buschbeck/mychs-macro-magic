@@ -8,55 +8,36 @@
 !mmm   set payload = payload & literal("!mmm set cmd=\"removeEffect\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set removeEffectIndex=\"" & removeEffectIndex & "\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Wirklich löschen?|Nein,false|Ja,true}") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Für " & tokenID.token_name & " wirklich Effekt " & (removeEffectIndex + 1) & " löschen?|Nein,false|Ja,true}") & "&#13;"
 !mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|removePersistentEffect}" & "&#13;"
 !mmm   return payload
 !mmm end function
 !mmm 
+!rem // MAIN
+!rem
 !mmm set pEregistry = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
 !mmm set cleanRegistry = { pEregistry... where ...value ne undef }
 !mmm if not cleanRegistry
 !mmm   do chat(chatTightBoxRow("No active persistent effects in current game"))
-!rem //  chat: ${"&"}{template:default} {\{name=No active persistent effects in current game}\}
 !mmm   exit script
 !mmm end if
 !mmm 
-!rem // TODO: integrate the remaining code with the exact same code in endOfRoundEffects.mmm
 !mmm set output = chatTightBoxHeader("Active persistent effects")
-!mmm   for affectedTokenRecord in cleanRegistry...
-!rem     // If there is a selected token, only produce output for this token alone. If there is no selected token, produce output for every token with an active persistent effect.
-!mmm     if (not selected or (selected and affectedTokenRecord.key eq selected)) and affectedTokenRecord.value
-!mmm       set output = output & chatTightBoxSubHeader(affectedTokenRecord.key.token_name)
-!mmm         set activeCounter = 0
-!mmm         for statusRule in m3mgdGetActivePersistentEffects(affectedTokenRecord.key)
-!mmm           set activeCounter = activeCounter + 1
-!rem //          chat: {{ #${activeCounter}, another ${statusRule.effect.expiry.count} ${statusRule.effect.expiry.type}s= ${highlight("📃", "info", statusRule.desc)}${statusRule.label}: 
-!mmm           set line = "+" & statusRule.effect.expiry.count & " " & statusRule.effect.expiry.type & "s: **" & statusRule.label & "**"
-!mmm           set tooltip = statusRule.desc
-!mmm           for mod in statusRule.effect.rollModifiers...
-!mmm             set line = line & " " & sign(mod.value, "display") & " " & mod.key 
-!mmm           end for
-!mmm           if statusRule.effect.noAttack
-!mmm             set line = line & " kein Angriff;"
-!mmm           end if
-!mmm           if statusRule.effect.noDefense
-!mmm             set line = line & " keine Abwehr;"
-!mmm           end if
-!mmm           if statusRule.effect.noFocusedDefense
-!mmm             set line = line & " keine konzentrierte Abwehr;"
-!mmm           end if
-!mmm           if statusRule.effect.marker
-!rem            // TODO: in m3mgdInjuryStatus (defined in _libMidgard()) status_pummeled = bewusstlos ergänzen, hier Label aus m3mgdInjuryStatus ziehen
-!mmm             set line = line & " " & statusRule.effect.marker
-!mmm           end if
-!mmm           if statusRule.effect.cappedAttribute
-!mmm             set line = line & " **" & statusRule.effect.cappedAttribute & "** reduziert"
-!mmm           end if
-!rem //          chat: ${chatButton("X", removeEffectPayload(affectedTokenRecord.key, activeCounter-1, cssTableCellButton))}
-!rem            // TODO: hier statt einer Zeile eine ButtonRow erzeugen, neue Funktion chatTightBoxButtonRow() schaffen für einen einzelnen vollbreiten (display:block) Button
-!mmm           set output = output & chatTightBoxRow(line, tooltip)
-!mmm         end for
-!mmm     end if
-!mmm   end for
-!mmm   do chat(output)
+!mmm for affectedTokenRecord in cleanRegistry...
+!rem   // If there is a selected token, only produce output for this token alone. If there is no selected token, produce output for every token with an active persistent effect.
+!mmm   if (not selected or (selected and affectedTokenRecord.key eq selected)) and affectedTokenRecord.value
+!mmm     set output = output & chatTightBoxSubHeader(affectedTokenRecord.key.token_name)
+!mmm       set activeCounter = 0
+!mmm       for statusRule in m3mgdGetActivePersistentEffects(affectedTokenRecord.key)
+!mmm         set activeCounter = activeCounter + 1
+!mmm         set line = "#" & activeCounter & " (+" & statusRule.effect.expiry.count & " " & statusRule.effect.expiry.type & "s): **" & statusRule.label & "**"
+!mmm         set tooltip = statusRule.desc
+!mmm         if statusRule.effect
+!mmm           set line = line & " - " & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ")
+!mmm         end if
+!mmm         set output = output & chatTightBoxButtonRow(line, tooltip, removeEffectPayload(affectedTokenRecord.key, activeCounter-1))
+!mmm       end for
+!mmm   end if
+!mmm end for
+!mmm do chat(output)
 !mmm end script
