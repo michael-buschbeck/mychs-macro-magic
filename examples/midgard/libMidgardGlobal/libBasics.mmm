@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.4.0 (2024-04-13)"
+!mmm   set libVersion = "libMidgardBasics v1.4.1 (2024-04-14)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -27,7 +27,7 @@
 !rem   // Publish game-global functions defined below
 !rem
 !mmm   publish to game: isfumble, count, isChar, sign, stringify, sum, rollResult, rollMax, zeroOrPositive
-!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable, chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxMultiButton
+!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable, chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonRow, chatTightBoxMultiButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -246,7 +246,7 @@
 !mmm   return '[' & label & '](#\" style=\"' & style & ')'
 !mmm end function
 !rem
-!rem // chatTightBoxHeader(label)
+!rem // chatTightBoxSubHeader(label)
 !rem //
 !mmm function chatTightBoxSubHeader(label)
 !mmm   set style = 'border-left: 1px solid #000000;border-right: 1px solid #000000; display:block; margin:0px; padding:3px; background-color:#ffffff;'
@@ -254,7 +254,7 @@
 !mmm   return ' [' & label & '](#\" style=\"' & style & ')'
 !mmm end function
 !rem
-!rem // chatTightBoxRow(label, bgColor, textColor)
+!rem // chatTightBoxRow(label, tooltip, bgColor, textColor)
 !rem //
 !mmm function chatTightBoxRow(label, tooltip, bgColor, textColor)
 !mmm   if isdefault(bgColor)
@@ -268,7 +268,27 @@
 !mmm   end if 
 !mmm   set style = "border-left: 1px solid #000000;border-right: 1px solid #000000; display:block; margin:0px; padding:3px; background-color:" & bgColor & ";"
 !mmm   set style = style & "font-style:normal; text-decoration:none; color:" & textColor & ";"
-!mmm   return ' [' & label & '](#\" ' & tooltip & 'title=\"test\" style=\"' & style & ')'
+!mmm   return ' [' & label & '](#\" ' & tooltip & ' style=\"' & style & ')'
+!mmm end function
+!rem
+!rem // chatTightBoxButtonRow(label, tooltip, payload, bgColor, textColor)
+!rem //
+!mmm function chatTightBoxButtonRow(label, tooltip, payload, bgColor, textColor)
+!mmm   if isdefault(bgColor)
+!mmm     set bgColor = "#ffffff"
+!mmm   end if
+!mmm   if isdefault(textColor)
+!mmm     set textColor = "#000000"
+!mmm   end if
+!mmm   if not isdefault(tooltip)
+!mmm     set tooltip = ' title="' & tooltip & '" '
+!mmm   end if 
+!mmm   if isdefault(payload)
+!mmm     set payload = '#'
+!mmm   end if
+!mmm   set style = "border-left: 1px solid #000000;border-right: 1px solid #000000; display:block; margin:0px; padding:3px; background-color:" & bgColor & ";"
+!mmm   set style = style & "font-style:normal; text-decoration:none; color:" & textColor & ";"
+!mmm   return ' [' & label & '](' & payload & '\" ' & tooltip & ' style=\"' & style & ')'
 !mmm end function
 !rem
 !rem // chatTightBoxMultiButton(buttons)
