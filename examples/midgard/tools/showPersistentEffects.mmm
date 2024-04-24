@@ -1,4 +1,4 @@
-!rem // showPersistentEffects v0.3 WIP 2024-04-14 phr
+!rem // showPersistentEffects v1.0 2024-04-24 phr 
 !rem //
 !rem // Chats a list of active persistent effects for the selected token, or all tokens if none are selected.
 !rem 
@@ -8,7 +8,7 @@
 !mmm   set payload = payload & literal("!mmm set cmd=\"removeEffect\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set removeEffectIndex=\"" & removeEffectIndex & "\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Für " & tokenID.token_name & " wirklich Effekt " & (removeEffectIndex + 1) & " löschen?|Nein,false|Ja,true}") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Für " & tokenID.token_name & " wirklich Effekt Nr." & (removeEffectIndex + 1) & " löschen?|Nein,false|Ja,true}") & "&#13;"
 !mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|removePersistentEffect}" & "&#13;"
 !mmm   return payload
 !mmm end function
@@ -30,8 +30,8 @@
 !mmm       set activeCounter = 0
 !mmm       for statusRule in m3mgdGetActivePersistentEffects(affectedTokenRecord.key)
 !mmm         set activeCounter = activeCounter + 1
-!mmm         set line = "#" & activeCounter & " (+" & statusRule.effect.expiry.count & " " & statusRule.effect.expiry.type & "s): **" & statusRule.label & "**"
-!mmm         set tooltip = statusRule.desc
+!mmm         set line = "❌ " & "#" & activeCounter & " (+" & statusRule.effect.expiry.count & " " & statusRule.effect.expiry.type & "s): **" & statusRule.label & "**"
+!mmm         set tooltip = "Effekt löschen? " & statusRule.desc
 !mmm         if statusRule.effect
 !mmm           set line = line & " - " & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ")
 !mmm         end if
