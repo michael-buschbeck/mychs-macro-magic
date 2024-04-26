@@ -9,7 +9,7 @@
 !mmm       set trackerData = trackerData, { title: charName, token: charName.token_id, value: charName.Gw + charName.ItemBGewandheit + charName.modGw + charName.gRusGW }
 !mmm     end if
 !mmm   end for
-!mmm   set trackerData = { title: "Runde", value: "1", formula: "+1" }, trackerData order (...left.value > ...right.value)
+!mmm   set trackerData = { title: "Runde", token: "", value: 1, formula: "+1" }, trackerData order (...left.value > ...right.value)
 !mmm   do settracker(trackerData)
 !mmm   do showtracker(true)
 !mmm
