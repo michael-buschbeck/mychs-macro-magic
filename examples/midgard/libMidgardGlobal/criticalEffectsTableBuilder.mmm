@@ -1,5 +1,5 @@
 !rem // Critical effects tables
-!rem // Last revised: 2024-02-27
+!rem // Last revised: 2024-04-24
 !mmm function m3mgdBuildCriticalEffectsTables()
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
@@ -10,7 +10,7 @@
 !mmm
 !mmm     set tableName = "defenseFailure"
 !mmm     
-!mmm     chat: ${tableName} 
+!rem //    chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 10
@@ -84,7 +84,7 @@
 !mmm     set entryData = { entryData, persistent: { expiry: { count: "1d6", type: "round" }, marker: "status_pummeled" } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!rem //    chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
 !mmm   
 !mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
@@ -93,7 +93,7 @@
 !mmm
 !mmm     set tableName = "defenseSuccess"
 !mmm     
-!mmm     chat: ${tableName} 
+!rem //    chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 10
@@ -163,7 +163,7 @@
 !mmm     set entryData = { entryData, persistent: { 'Nahkampf mit Waffe': { focus: "foe", expiry: { count: "1d6", type: "round" }, marker: "status_pummeled" }, 'Fernkampf': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } }, 'Waffenlos': { expiry: { count: 1, type: "defense" }, rollModifiers: { defense: +2 } } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!rem //    chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
 !mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
 !mmm
@@ -171,7 +171,7 @@
 !mmm
 !mmm     set tableName = "rangedAttackFailure"
 !mmm   
-!mmm     chat: ${tableName} 
+!rem //    chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 10
@@ -225,14 +225,14 @@
 !mmm     set entryData = { entryData, persistent: { expiry: { count: "1d10", type: "round" }, marker: "status_pummeled" } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!rem //    chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
 !mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
 !rem     // Build table: meleeAttackFailure 
 !mmm
 !mmm     set tableName = "meleeAttackFailure"
 !mmm     
-!mmm     chat: ${tableName} 
+!rem //    chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 20
@@ -326,14 +326,14 @@
 !mmm     set entryData = { entryData, immediate: '!mmm do m3mgdRollChanceEffect(myID, 50, "1d100", xhelmetworn, "!mmm do setattr(myID, \'status_pummeled\', true)", { expiry: { count: "1d10", type: "round" }, marker: "status_pummeled" })' } 
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!rem //    chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
 !mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
 !rem     // Build table: attackSuccess 
 !mmm
 !mmm     set tableName = "attackSuccess"
 !mmm     
-!mmm     chat: ${tableName} 
+!rem //    chat: ${tableName} 
 !mmm     set table = {}
 !mmm
 !mmm     set entryID = 10
@@ -444,7 +444,7 @@
 !mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_dead", true)' } 
 !mmm     set table = { table, (entryID): entryData }
 !mmm
-!mmm     chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
+!rem //    chat: (#${table + 0}, total weight: ${sum(table... select ...value.weight)}), 
 !mmm     set m3mgdCriticalEffectsTable = { m3mgdCriticalEffectsTable, (tableName): table }
 !mmm
 !rem     // Save table
