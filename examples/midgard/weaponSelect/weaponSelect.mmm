@@ -1,6 +1,7 @@
 !rem // Midgard combat weapon selector script
+!rem //
 !mmm script
-!mmm   set scriptVersion = "weaponSelect v1.1.1 (2022-03-12)"
+!mmm   set scriptVersion = "weaponSelect v1.2 (2024-05-24)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -24,12 +25,15 @@
 !mmm     exit script
 !mmm   end if
 !mmm
+!rem   // Inform user, abort attack if injury or critical effect status does not allow for it, and count down persistent effects if required
+!mmm   if m3mgdIsUnfitToAttack(cOwnID)
+!mmm     exit script
+!mmm   end if
+!rem
 !rem   // MAIN: Generate weapon selector menus for each weapon group requested 
 !mmm
 !mmm   for weaponGroup in cWeaponGroups
-!mmm     
 !mmm     do chat(cOwnID.token_name, "/w \"" & cOwnID.character_name & "\" " & m3mgdWeaponSelectorChatMenu(cOwnID, weaponGroup))
-!mmm       
 !mmm   end for
 !mmm
 !mmm end script
