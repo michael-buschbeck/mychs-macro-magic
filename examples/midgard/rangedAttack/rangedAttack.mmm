@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0-pre (2024-03-16)"
+!mmm   set scriptVersion = "2.0.0-pre (2024-05-24)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -556,8 +556,7 @@
 !mmm   if effEnduranceLoss > 0
 !mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
 !mmm   end if
-!mmm   debug do cAttackRoll
-!mmm   if attackResult >= 20 and not ? isfumble(cAttackRoll)
+!mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
 !mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType, "ranged")
 !mmm   end if
 !mmm
