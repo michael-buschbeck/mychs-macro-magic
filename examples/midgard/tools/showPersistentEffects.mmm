@@ -3,22 +3,13 @@
 !rem // Chats a list of active persistent effects for the selected token, or all tokens if none are selected.
 !rem 
 !mmm script
-!mmm function removeEffectPayload(tokenID, removeEffectIndex)
-!mmm   set payload = literal("!mmm customize") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set cmd=\"removeEffect\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set removeEffectIndex=\"" & removeEffectIndex & "\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Für " & tokenID.token_name & " wirklich Effekt Nr." & (removeEffectIndex + 1) & " löschen?|Nein,false|Ja,true}") & "&#13;"
-!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|removePersistentEffect}" & "&#13;"
-!mmm   return payload
-!mmm end function
 !mmm 
 !rem // MAIN
 !rem
 !mmm set pEregistry = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
 !mmm set cleanRegistry = { pEregistry... where ...value ne undef }
 !mmm if not cleanRegistry
-!mmm   do chat(chatTightBoxRow("Keine persistenten Effekte im aktuellen Spiel."))
+!mmm   do chat(chatTightBoxRow("Keine Dauereffekte im aktuellen Spiel."))
 !mmm   exit script
 !mmm end if
 !mmm 
@@ -27,7 +18,7 @@
 !mmm else
 !mmm   set refLabel = "alle"
 !mmm end if
-!mmm set output = chatTightBoxHeader("Persistente Effekte für " & refLabel)
+!mmm set output = chatTightBoxHeader("Dauereffekte für " & refLabel)
 !mmm
 !mmm for affectedTokenRecord in cleanRegistry...
 !rem   // If there is a selected token, only produce output for this token alone. If there is no selected token, produce output for every token with an active persistent effect.
@@ -41,7 +32,7 @@
 !mmm         if statusRule.effect
 !mmm           set line = line & " - " & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ")
 !mmm         end if
-!mmm         set output = output & chatTightBoxButtonRow(line, tooltip, removeEffectPayload(affectedTokenRecord.key, activeCounter-1))
+!mmm         set output = output & chatTightBoxButtonRow(line, tooltip, _m3mgdRemovePersistentEffectPayload(affectedTokenRecord.key, activeCounter-1))
 !mmm       end for
 !mmm   end if
 !mmm end for
