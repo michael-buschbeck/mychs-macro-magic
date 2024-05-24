@@ -1,4 +1,4 @@
-!rem // showPersistentEffects v1.0 2024-04-24 phr 
+!rem // showPersistentEffects v1.1 2024-05-24 phr 
 !rem //
 !rem // Chats a list of active persistent effects for the selected token, or all tokens if none are selected.
 !rem 
@@ -18,11 +18,17 @@
 !mmm set pEregistry = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
 !mmm set cleanRegistry = { pEregistry... where ...value ne undef }
 !mmm if not cleanRegistry
-!mmm   do chat(chatTightBoxRow("No active persistent effects in current game"))
+!mmm   do chat(chatTightBoxRow("Keine persistenten Effekte im aktuellen Spiel."))
 !mmm   exit script
 !mmm end if
 !mmm 
-!mmm set output = chatTightBoxHeader("Active persistent effects")
+!mmm if selected
+!mmm   set refLabel = selected.token_name
+!mmm else
+!mmm   set refLabel = "alle"
+!mmm end if
+!mmm set output = chatTightBoxHeader("Persistente Effekte für " & refLabel)
+!mmm
 !mmm for affectedTokenRecord in cleanRegistry...
 !rem   // If there is a selected token, only produce output for this token alone. If there is no selected token, produce output for every token with an active persistent effect.
 !mmm   if (not selected or (selected and affectedTokenRecord.key eq selected)) and affectedTokenRecord.value
@@ -39,5 +45,10 @@
 !mmm       end for
 !mmm   end if
 !mmm end for
+!mmm
+!mmm if activeCounter == 0
+!mmm   set output = output & chatTightBoxRow("keine")
+!mmm end if
+!mmm
 !mmm do chat(output)
 !mmm end script
