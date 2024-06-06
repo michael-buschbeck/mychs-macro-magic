@@ -1,0 +1,148 @@
+!rem // libExchange: MMM data exchange utility functions
+!rem // 
+!rem // _libExchange()
+!rem // 
+!rem //   Initializer and publisher function. Call once from autorun.
+!rem //
+!mmm function _libExchange()
+!mmm   
+!mmm   set libVersion = "libExchange v0.1 WIP (2024-06-06)"
+!mmm   set sender = "MacroSheetLibrary"
+!mmm
+!rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
+!rem   //set m3mgdExchangeDataSheet = "MacroSheet"
+!rem   //set m3mgdExchange = m3mgdExchangeDataSheet.character_id
+!mmm   set m3mgdExchangeRegistries = "m3mgdCombatData", "m3mgdActivePersistentEffects"
+!rem
+!mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
+!mmm     do whisperback(libVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Data exchange will not work.")
+!mmm     do delay(5)
+!mmm     return false
+!mmm   end if
+!mmm
+!rem   // Publish game-global variables defined below
+!rem
+!rem   //publish to game: m3mgdExchangeDataSheet, m3mgdExchange
+!mmm   publish to game: m3mgdExchangeRegistries
+!rem
+!rem   // Publish game-global functions defined below
+!rem
+!mmm   publish to game: m3mgdExchangeFlushRegistry, m3mgdExchangeGetRegistry, m3mgdExchangeStoreEntry, m3mgdExchangeGetData, m3mgdExchangeDeleteEntry
+!mmm
+!mmm   chat: ${libVersion} loaded.
+!mmm   
+!mmm end function
+!rem
+!rem // m3mgdExchangeFlushRegistry(registryID)
+!rem // 
+!rem //   Clears out the central data exchange attribute indicated by m3mgdExchangeDataSheet.(registryID)
+!rem // 
+!mmm function m3mgdExchangeFlushRegistry(registryID)
+!mmm
+!mmm   if not m3mgdExchange.(registryID)
+!mmm     debug chat: m3mgdExchangeFlushRegistry(): attribute m3mgdExchange.${registryID} not found or not accessible. Aborting.
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   return (setattr(m3mgdExchange, registryID, "") eq "") and (setattrmax(m3mgdExchange, registryID, "") eq "")
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdExchangeGetRegistry(registryID)
+!rem // 
+!rem //   Returns the entire data stored in the central data exchange attribute indicated by m3mgdExchangeDataSheet.(registryID)
+!rem // 
+!mmm function m3mgdExchangeGetRegistry(registryID)
+!mmm
+!mmm   return deserialize(m3mgdExchange.(registryID))
+!mmm
+!mmm end function
+!rem 
+!rem // m3mgdExchangeStoreEntry(registryID, entry)
+!rem // 
+!rem //   Stores entry in the central data registry for retrieval by another script.
+!rem // 
+!mmm function m3mgdExchangeStoreEntry(registryID, entry)
+!mmm
+!mmm   if not m3mgdExchange.(registryID) and isdenied(m3mgdExchange.(registryID))
+!mmm     debug chat: m3mgdExchangeStoreEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     return false
+!mmm   else if not m3mgdExchange.(registryID)
+!mmm     set registry = entry
+!mmm   else
+!mmm     set registry = m3mgdExchangeGetRegistry(registryID), entry
+!mmm   end if
+!mmm
+!mmm   debug do registry
+!mmm
+!mmm   set serialRegistry = serialize(registry)
+!mmm   return (setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry)
+!mmm
+!mmm end function
+!rem 
+!rem // m3mgdExchangeGetData(registryID, searchCriteria)
+!rem // 
+!rem //   Retrieves one or several entries from a central data registry, as specified by searchCriteria.
+!rem //   All given criteria must be met at the same time (AND).
+!rem // 
+!mmm function m3mgdExchangeGetData(registryID, searchCriteria)
+!mmm
+!mmm   if not m3mgdExchange.(registryID)
+!mmm     debug chat: m3mgdExchangeGetData(): attribute m3mgdExchange.${registryID} not found or not accessible. Aborting.
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set registry = m3mgdExchangeGetRegistry(registryID)
+!mmm   for entry in registry
+!mmm     set match = false
+!mmm     for rule in searchCriteria...
+!mmm       if entry.(rule.key) eq rule.value
+!mmm         set match = true
+!mmm       else
+!mmm         set match = false
+!mmm         exit for
+!mmm       end if
+!mmm     end for
+!mmm     if match
+!mmm       set foundEntries = foundEntries, entry
+!mmm     end if
+!mmm   end for
+!mmm
+!mmm   return foundEntries
+!mmm
+!mmm end function
+!rem 
+!rem // m3mgdExchangeDeleteEntry(registryID, searchCriteria)
+!rem // 
+!rem //   Deletes one or several entries from a central data registry, identified by the searchCriteria provided (all at the same time/AND).
+!rem // 
+!mmm function m3mgdExchangeDeleteEntry(registryID, searchCriteria)
+!mmm
+!mmm   if not m3mgdExchange.(registryID)
+!mmm     debug chat: m3mgdExchangeDeleteEntry(): attribute m3mgdExchange.${registryID} not found or not accessible. Aborting.
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set registry = m3mgdExchangeGetRegistry(registryID)
+!mmm   for entry in registry
+!mmm     set match = false
+!mmm     for rule in searchCriteria...
+!mmm       if entry.(rule.key) eq rule.value
+!mmm         set match = true
+!mmm       else
+!mmm         set match = false
+!mmm         exit for
+!mmm       end if
+!mmm     end for
+!mmm     if match
+!mmm       set foundEntries = foundEntries, entry
+!mmm     else
+!mmm       set survivingEntries = survivingEntries, entry
+!mmm     end if
+!mmm   end for
+!mmm
+!mmm   debug chat: deleting ${foundEntries}
+!mmm   set serialRegistry = serialize(survivingEntries)
+!mmm   return (setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry)
+!mmm
+!mmm end function

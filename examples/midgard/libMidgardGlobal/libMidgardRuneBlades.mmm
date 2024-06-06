@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgardRuneBlades()
 !mmm   
-!mmm   set libVersion = "libMidgardRuneBlades v1.1.1-pre (2024-02-14)"
+!mmm   set libVersion = "libMidgardRuneBlades v1.1.1 (2024-02-14)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Game-global constants for publication
