@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-04-14)"
+!mmm   set libVersion = "libMidgard v1.4.0-pre (2024-05-24)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -15,7 +15,7 @@
 !mmm
 !rem   // Game-global constants for publication
 !rem
-!mmm   set m3mgdScriptCommands = { "defense": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}", "editXP": "&#x25;{MacroSheet|editXP}" }
+!mmm   set m3mgdScriptCommands = { "defense": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}", "editXP": "&#x25;{MacroSheet|editXP}", "removeEffect": "&#x25;{MacroSheet|removePersistentEffect}" }
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm 
@@ -65,6 +65,7 @@
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_broken_heart": { "noAttack": true, "noDefense": true, "label": "Schwere innere Verletzung", "icon": "", "desc": "Keine Angriffe oder Abwehr" } }
 !mmm   set m3mgdInjuryStatus = { m3mgdInjuryStatus, "status_white_tower": { "rollModifiers": { "meleeAttack": -4, "rangedAttack": -4, "defense": -4 }, "label": "Rippen schwer verletzt", "icon": "", "desc": "alles -4" } }
 !mmm
+!mmm   set m3mgdTokenAttributes = { "bar1": "Bewegung", "bar2": "AP", "bar3": "LP" }
 !mmm   set m3mgdPersistentEffectTranslations = { "meleeAttack": "Nahkampfangriff", "rangedAttack": "Fernkampfangriff", "defense": "Abwehr" }
 !mmm
 !mmm   set m3mgdSpellEffects = { "fireball": { name: "Feuerball", tokenSide: 1 }, "firewall": { name: "Feuerwand", tokenSide: 2 } }
@@ -92,7 +93,7 @@
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
-!mmm   publish to game: m3mgdInjuryStatus, m3mgdPersistentEffectTranslations, m3mgdSpellEffects, m3mgdAttrXP, m3mgdAttrXPLog
+!mmm   publish to game: m3mgdInjuryStatus, m3mgdTokenAttributes, m3mgdPersistentEffectTranslations, m3mgdSpellEffects, m3mgdAttrXP, m3mgdAttrXPLog
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
@@ -100,7 +101,7 @@
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
 !mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdHandleStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
-!mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects
+!mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects, _m3mgdRemovePersistentEffectPayload
 !mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdIsUnfitToAttack
 !mmm   publish to game: m3mgdShapeMoji, m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
@@ -485,6 +486,20 @@
 !mmm   return deserialize(m3mgdExchange.m3mgdActivePersistentEffects).(tokenID)
 !mmm end function
 !rem
+!rem // _m3mgdRemovePersistentEffectPayload(tokenID, removeEffectIndex)
+!rem //
+!rem //   Returns a chat button payload to remove tokenID's active persistent effect identified by removeEffectIndex.
+!rem //
+!mmm function _m3mgdRemovePersistentEffectPayload(tokenID, removeEffectIndex)
+!mmm   set payload = literal("!mmm customize") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set cmd=\"removeEffect\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set removeEffectIndex=\"" & removeEffectIndex & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Für " & tokenID.token_name & " wirklich Effekt Nr." & (removeEffectIndex + 1) & " löschen?|Nein,false|Ja,true}") & "&#13;"
+!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.removeEffect & "&#13;"
+!mmm   return payload
+!mmm end function
+!rem
 !rem // m3mgdActiveStatusModifiers(tokenID, action)
 !rem //
 !rem //   Returns a list of tokenID's active status modifiers from severe injuries or critical effects for a given action (defense, meleeAttack, see, hear etc.).
@@ -564,7 +579,7 @@
 !mmm
 !mmm end function
 !rem
-!rem // m3mgdIsUnfitToAttack(tokenID)
+!rem // m3mgdIsUnfitToAttack(tokenID) 
 !rem // 
 !rem //   Returns true (and outputs the reasons to the chat) if tokenID is unable to attack. Otherwise returns false.
 !rem // 
@@ -1778,16 +1793,6 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!rem   // For variable expiry counts where .count is not an integer, make the roll and update persistentEffect with the result
-!mmm   if persistentEffect.effect.expiry.count and (persistentEffect.effect.expiry.count + 0 ne persistentEffect.effect.expiry.count)
-!mmm     set persistentEffect = { persistentEffect, effect: { persistentEffect.effect, expiry: { persistentEffect.effect.expiry, count: roll(persistentEffect.effect.expiry.count) } } }
-!mmm   end if
-!mmm
-!rem   // New effects counting rounds need to be marked as new, so they are not immediately counted down at end of the current round
-!mmm   if persistentEffect.effect.expiry.type eq "round"
-!mmm     set persistentEffect = { persistentEffect, effect: { persistentEffect.effect, expiry: { persistentEffect.effect.expiry, new: true } } }
-!mmm   end if
-!mmm
 !mmm   do setattr(tokenID, "status_blue", tokenID.status_blue + 1)
 !mmm
 !mmm   set effectsDB = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
@@ -1854,16 +1859,30 @@
 !mmm     end for
 !mmm 
 !rem     // Wrap and store each applicable persistent effect
+!rem
 !mmm     if persistentEffectsList > 1
 !mmm       set pEcounter = 1
 !mmm     end if
+!mmm
 !mmm     for applicablePersistentEffect in persistentEffectsList
+!mmm
 !mmm       set completePersistentEffect = { effect: applicablePersistentEffect, label: criticalEffect.label, desc: descText }
+!mmm
 !mmm       if completePersistentEffect.effect.focus eq "foe"
 !mmm         set targetID = foeID
 !mmm       else if completePersistentEffect
 !mmm         set targetID = tokenID
 !mmm       end if
+!mmm
+!rem       // For variable expiry counts where .count is not an integer, make the roll and update persistentEffect with the result
+!mmm       if completePersistentEffect.effect.expiry.count and (completePersistentEffect.effect.expiry.count + 0 ne completePersistentEffect.effect.expiry.count)
+!mmm         set completePersistentEffect = { completePersistentEffect, effect: { completePersistentEffect.effect, expiry: { completePersistentEffect.effect.expiry, count: roll(completePersistentEffect.effect.expiry.count) } } }
+!mmm       end if
+!rem       // New effects counting rounds need to be marked as new, so they are not immediately counted down at end of the current round
+!mmm       if completePersistentEffect.effect.expiry.type eq "round"
+!mmm         set completePersistentEffect = { completePersistentEffect, effect: { completePersistentEffect.effect, expiry: { completePersistentEffect.effect.expiry, new: true } } }
+!mmm       end if
+!mmm
 !mmm       set completePersistentEffect = m3mgdStorePersistentEffect(targetID, completePersistentEffect)
 !mmm       if pEcounter
 !mmm         set pEcounterLabel = "(Effekt #" & pEcounter & ")"
@@ -1872,6 +1891,7 @@
 !mmm       if pEcounter
 !mmm         set pEcounter = pEcounter + 1
 !mmm       end if
+!mmm
 !mmm     end for
 !mmm
 !mmm   end combine
@@ -1985,7 +2005,7 @@
 !mmm     set effectsList = effectsList, m3mgdInjuryStatus.(persistentEffect.marker).label
 !mmm   end if
 !mmm   if persistentEffect.cappedAttribute
-!mmm     set effectsList = effectsList, " **" & persistentEffect.cappedAttribute & "** reduziert"
+!mmm     set effectsList = effectsList, m3mgdTokenAttributes.(persistentEffect.cappedAttribute) & " reduziert"
 !mmm   end if
 !mmm   return effectsList
 !mmm end function

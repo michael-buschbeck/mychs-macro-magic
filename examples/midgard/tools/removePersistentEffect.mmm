@@ -1,4 +1,4 @@
-!rem // removePersistentEffect v0.1 2024-02-04 phr
+!rem // removePersistentEffect v1.0 2024-05-24 phr
 !rem //
 !rem // Removes an active persistent effect identified by tokenID and removeEffectIndex.
 !rem 
@@ -31,7 +31,7 @@
 !mmm     
 !mmm     do setattr(m3mgdExchange, "m3mgdActivePersistentEffects", serialize({ effectsDB, (tokenID): updatedActiveEffects }))
 !mmm
-!mmm     chat: Removed one active effect on ${highlight(tokenID.token_name, "info", tokenID)}.
+!mmm     chat: Dauereffekt #${removeEffectIndex+1} von ${highlight(tokenID.token_name, "info", tokenID)} beendet.
 !mmm   end if
 !mmm
 !mmm end script
