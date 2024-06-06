@@ -107,7 +107,7 @@ See above (and below) for examples.
 
 Sends text to the chat impersonating the player or character who sent the script.
 
-The template is simple text that can contain `${expression}` placeholders. When the **chat** command is executed, all ${expression} placeholders are evaluated and substituted into the template text.
+The template is simple text that can contain `${expression}` placeholders. When the **chat** command is executed, all `${expression}` placeholders are evaluated and substituted into the template text.
 
 You can use /me, /whisper, and any other Roll20 chat directives in a **chat** command. 
 
@@ -139,7 +139,7 @@ Chat messages sent through the **chat** command impersonate the `sender` running
 | 4    | _!mmm_     **chat:**  /me rolls his eyes. All six of them. | ***Spiderbro rolls his eyes. All six of them.***
 | 5    | _!mmm_ **end script**
 
-You can set `sender` to any character name, token name, character ID, or token ID. If you set it to an invalid value of if the player doesn't have control permission for the character or token, your customized `sender` value will be ignored and your chat message will be sent as the player running the script.
+You can set `sender` to any character name, token name, character ID, or token ID. If you set it to an invalid value or if the player doesn't have control permission for the character or token, your customized `sender` value will be ignored and your chat message will be sent as the player running the script.
 
 
 ### _!mmm_ **chat [**<span>_label_</span>**]:** *template*
@@ -893,10 +893,10 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `bar1_edit`          | `false`              | write  |       | Whether the token's top bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
 | `bar2`               | `20` / `30`          | write  | write | Token's middle bar value – right circle (default blue)
 | `bar2_shown`         | `true`               | write  |       | Visibility of token's middle bar – `false` to hide, `true` to show
-| `bar1_edit`          | `false`              | write  |       | Whether the token's middle bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
+| `bar2_edit`          | `false`              | write  |       | Whether the token's middle bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
 | `bar3`               | `20` / `30`          | write  | write | Token's bottom bar value – left circle (default red)
 | `bar3_shown`         | `true`               | write  |       | Visibility of token's bottom bar – `false` to hide, `true` to show
-| `bar1_edit`          | `false`              | write  |       | Whether the token's bottom bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
+| `bar3_edit`          | `false`              | write  |       | Whether the token's bottom bar value can be edited by players controlling the token – `false` to make read-only, `true` to allow editing
 | `tooltip`            | `"Wounded"`          | write  |       | Token's tooltip text
 | `tooltip_shown`      | `true`               | write  |       | Visibility of token's tooltip – `false` to hide, `true` to show
 | `status_`...         | `true`               | write  |       | Token's status markers – `false` to hide, `true` to show, or any single digit to show with an overlay – see below
