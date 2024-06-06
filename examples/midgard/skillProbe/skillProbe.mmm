@@ -3,7 +3,7 @@
 !rem // GM script to execute group probes on skills, privately show results and whisper tailored messages to players based on their probe results.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.2.2 (2024-06-06)"
+!mmm   set scriptVersion = "skillProbe 1.2.3 (2024-06-06)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -12,7 +12,7 @@
 !mmm   end if
 !rem
 !mmm   set scriptCommand = literal("%" & "{MacroSheet|skillProbe}")
-!mmm   set usableSkills = "Alchemie", "Fälschen", "Fallen entdecken", "Fallenmechanik", "Gassenwissen", "Heilkunde", "Landeskunde (Alba)", "Menschenkenntnis", "Naturkunde", "Pflanzenkunde", "Schleichen", "Spurensuche", "Tarnen", "Tierkunde", "Verhören", "Zauberkunde"
+!mmm   set usableSkills = "Alchemie", "Fälschen", "Fallen entdecken", "Fallenmechanik", "Gassenwissen", "Heilkunde", "Landeskunde (Alba)", "Menschenkenntnis", "Naturkunde", "Pflanzenkunde", "Schleichen", "Spurensuche", "Tarnen", "Tierkunde", "Überleben (Wald)", "Verhören", "Zauberkunde"
 !mmm
 !rem   // Output formatting constants
 !mmm   set playerMsgEmoji = "🖅"
