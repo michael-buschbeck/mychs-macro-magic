@@ -136,7 +136,7 @@
 !mmm       if not tokenEffSkill and not isunknown(tokenID) and not isdenied(tokenID)
 !mmm       
 !mmm         set tokenLeadAttr = leadAttributes.(tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill & " (Ungelernt)", "LeitE2")))
-!mmm         set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill & " (Ungelernt)", "FW2"))
+!mmm         set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill & " (Ungelernt)", "FW2")) + tokenID.(tokenLeadAttr)
 !mmm         if not isunknown(tokenEffSkill) and tokenEffSkill > 0
 !mmm           set fallBack = " (ungelernt)"
 !mmm         end if
