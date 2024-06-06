@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.36.1";
+const MMM_VERSION = "1.36.2";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -2101,6 +2101,12 @@ class MychScriptContext extends MychStash
 
     $getCharacterAndTokenObjs(nameOrId)
     {
+        if (nameOrId == undefined ||
+            nameOrId == "")
+        {
+            return [undefined, undefined];
+        }
+
         let characterOrToken =
             getObj("character", nameOrId) ||
             getObj("graphic", nameOrId);
