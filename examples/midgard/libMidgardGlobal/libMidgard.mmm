@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.1-pre (2024-06-11)"
+!mmm   set libVersion = "libMidgard v1.4.1-pre (2024-06-14)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -101,7 +101,7 @@
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
 !mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdHandleStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
-!mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects, m3mgdRemovePersistentEffect, _m3mgdRemovePersistentEffectPayload
+!mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects, m3mgdRemovePersistentEffect, m3mgdStorePersistentEffectPayload, m3mgdRemovePersistentEffectPayload
 !mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdIsUnfitToAttack
 !mmm   publish to game: m3mgdShapeMoji, m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
@@ -515,11 +515,24 @@
 !mmm   return (setattr(m3mgdExchange, "m3mgdActivePersistentEffects", newStorage) eq newStorage)
 !mmm end function
 !rem
-!rem // _m3mgdRemovePersistentEffectPayload(tokenID, removeEffectIndex)
+!rem // m3mgdStorePersistentEffectPayload(tokenID, removeEffectIndex)
 !rem //
 !rem //   Returns a chat button payload to remove tokenID's active persistent effect identified by removeEffectIndex.
 !rem //
-!mmm function _m3mgdRemovePersistentEffectPayload(tokenID, removeEffectIndex)
+!mmm function m3mgdStorePersistentEffectPayload(tokenID, effectData)
+!mmm   set payload = literal("!mmm customize") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set cmd=\"restoreEffect\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set effectData=\"" & serialize(effectData) & "\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.removeEffect & "&#13;"
+!mmm   return payload
+!mmm end function
+!rem
+!rem // m3mgdRemovePersistentEffectPayload(tokenID, removeEffectIndex)
+!rem //
+!rem //   Returns a chat button payload to remove tokenID's active persistent effect identified by removeEffectIndex.
+!rem //
+!mmm function m3mgdRemovePersistentEffectPayload(tokenID, removeEffectIndex)
 !mmm   set payload = literal("!mmm customize") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set cmd=\"removeEffect\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"

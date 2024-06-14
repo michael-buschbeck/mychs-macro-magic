@@ -1,4 +1,4 @@
-!rem // removePersistentEffect v2.0-pre 2024-06-11 phr
+!rem // removePersistentEffect v2.0-pre 2024-06-14 phr
 !rem //
 !rem // Removes an active persistent effect identified by tokenID and removeEffectIndex.
 !rem 
@@ -7,6 +7,7 @@
 !mmm   set customizable tokenID = default
 !mmm   set customizable removeEffectIndex = default
 !mmm   set customizable deleteConfirm = false
+!mmm   set customizable effectData = default
 !mmm
 !rem   // cmd: removeEffect
 !rem
@@ -26,10 +27,20 @@
 !mmm     set tokenID = selected
 !mmm     set effectCopy = m3mgdGetActivePersistentEffects(tokenID)
 !mmm     if m3mgdRemovePersistentEffect(tokenID, removeEffectIndex)
-!rem       // todo: add a proper function to reinstate effectCopy
-!mmm       chat: Dauereffekt #${removeEffectIndex+1} von ${highlight(tokenID.token_name, "info", tokenID)} beendet. ${effectCopy}
+!rem       // todo: test function to reinstate effectCopy, prettify everything
+!mmm       chat: Dauereffekt #${removeEffectIndex+1} von ${highlight(tokenID.token_name, "info", tokenID)} beendet. [Wiederherstellen](${m3mgdStorePersistentEffectPayload(tokenID, effectCopy)}) ${effectCopy}
 !mmm     else 
 !mmm       chat: Fehler beim Versuch, Dauereffekt #${removeEffectIndex+1} von ${highlight(tokenID.token_name, "info", tokenID)} zu beenden. Effektdatenbank möglicherweise beschädigt oder kein Zugriff möglich.
+!mmm     end if
+!rem
+!rem   // cmd: restoreEffect
+!rem
+!mmm   else if cmd eq "restoreEffect" and not isdefault(tokenID) and not isdefault(effectData)
+!mmm
+!mmm     if m3mgdStorePersistentEffect(tokenID, effectData)
+!mmm       chat: Dauereffekt für ${highlight(tokenID.token_name, "info", tokenID)} erneuert: ${effectData}
+!mmm     else
+!mmm       chat: Fehler beim Versuch, Dauereffekt für ${highlight(tokenID.token_name, "info", tokenID)} zu erneuern.
 !mmm     end if
 !rem
 !rem   // cmd: none, ...
