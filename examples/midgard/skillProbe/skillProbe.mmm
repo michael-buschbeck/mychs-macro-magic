@@ -3,7 +3,7 @@
 !rem // GM script to execute group probes on skills, privately show results and whisper tailored messages to players based on their probe results.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.2.3 (2024-06-06)"
+!mmm   set scriptVersion = "skillProbe 1.2.4 (2024-07-12)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -126,16 +126,13 @@
 !rem       // Initialize: refetch token ID and get name and skills
 !mmm       set tokenID = id.token_id
 !mmm
-!rem //      set leadAttributes = { ("@" & "{LeitSt}"): "LeitSt", ("@" & "{LeitGw}"): "LeitGw", ("@" & "{LeitGs}"): "LeitGs", ("@" & "{LeitKo}"): "LeitKo", ("@" & "{LeitIn}"): "LeitIn", ("@" & "{LeitZt}"): "LeitZt", ("@" & "{LeitAu}"): "LeitAu", ("@" & "{LeitpA}"): "LeitpA", ("@" & "{LeitWk}"): "LeitWk" }
-!rem //      set tokenLeadAttr = leadAttributes.(tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "LeitE")))
-!mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "FW")) + tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "Fertigkeitsbonus")) + roll(tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "LeitE")))
+!mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "FW")) + tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "Fertigkeitsbonus")) + roll(tokenID, tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "LeitE")))
 !mmm       set tokenModifier = cCModifier
 !mmm       set fallBack = ""
 !mmm
 !rem       // If skill is missing, try to default to the unlearned version
 !mmm       if not tokenEffSkill and not isunknown(tokenID) and not isdenied(tokenID)
 !mmm       
-!rem //         set tokenLeadAttr = leadAttributes.(tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill & " (Ungelernt)", "LeitE2")))
 !mmm         set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill & " (Ungelernt)", "FW2")) + roll(tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill, "LeitE2")))
 !mmm         if not isunknown(tokenEffSkill) and tokenEffSkill > 0
 !mmm           set fallBack = " (ungelernt)"
