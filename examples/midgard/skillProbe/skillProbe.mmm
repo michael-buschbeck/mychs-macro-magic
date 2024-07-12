@@ -3,7 +3,7 @@
 !rem // GM script to execute group probes on skills, privately show results and whisper tailored messages to players based on their probe results.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.2.4 (2024-07-12)"
+!mmm   set scriptVersion = "skillProbe 1.2.5 (2024-07-12)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -154,14 +154,15 @@
 !mmm         
 !rem         // Execute skill roll
 !mmm         set effModifier = sign(tokenEffSkill + tokenModifier, "math")
-!mmm         set tokenRoll = roll("1d20" & effModifier)
+!mmm         set tokenRoll = roll("1d20")
+!mmm         set tokenResult = tokenRoll + effModifier
 !mmm         
 !rem         // Build tooltip to break down components
-!mmm         set tokenResultTooltip = tokenRoll & " = (1d20 = " & (tokenRoll - effModifier) & ") + (EW = " & tokenEffSkill & ") " & sign(tokenModifier, "display")
+!mmm         set tokenResultTooltip = tokenResult & " = (1d20 = " & tokenRoll & ") + (EW = " & tokenEffSkill & ") " & sign(tokenModifier, "display")
 !mmm         
 !mmm         if iscritical(tokenRoll)
 !mmm           set critSuccessList = critSuccessList, tokenID
-!mmm         else if tokenRoll >= 20
+!mmm         else if tokenResult >= 20
 !mmm           set successList = successList, tokenID
 !mmm         else if isfumble(tokenRoll)
 !mmm           set critFailList = critFailList, tokenID
@@ -170,13 +171,13 @@
 !mmm         end if
 !mmm
 !rem         // Compose output table row for GM
-!mmm         if tokenRoll >= 20 and fallBack eq ""
-!mmm           set tokenXPGain = m3mgdProcessSkillXP(cBSkill, tokenRoll - effModifier, tokenID)
-!mmm           set output = output & chatTightBoxRow(tokenID.token_name & " **" & tokenRoll & "** &nbsp; EP: " & tokenXPGain, literal(tokenResultTooltip), colorSuccess)
-!mmm         else if tokenRoll >= 20
-!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenRoll & "** &nbsp; (keine EP)", literal(tokenResultTooltip), colorSuccess)
+!mmm         if tokenResult >= 20 and fallBack eq ""
+!mmm           set tokenXPGain = m3mgdProcessSkillXP(cBSkill, tokenRoll, tokenID)
+!mmm           set output = output & chatTightBoxRow(tokenID.token_name & " **" & tokenResult & "** &nbsp; EP: " & tokenXPGain, literal(tokenResultTooltip), colorSuccess)
+!mmm         else if tokenResult >= 20
+!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenResult & "** &nbsp; (keine EP)", literal(tokenResultTooltip), colorSuccess)
 !mmm         else 
-!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenRoll & "**", literal(tokenResultTooltip), colorFailure)
+!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenResult & "**", literal(tokenResultTooltip), colorFailure)
 !mmm         end if
 !mmm
 !mmm       end if
