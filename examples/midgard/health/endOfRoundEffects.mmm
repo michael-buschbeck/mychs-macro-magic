@@ -8,14 +8,16 @@
 !mmm
 !mmm   set header = chatTightBoxHeader("Update zum Rundenende")
 !mmm
-!mmm   for token in gettokens()
+!mmm   for token in gettokens() order (...left.PC > ...right.PC)
 !mmm 
 !mmm     if not isdenied(token.token_id)
 !mmm
 !mmm       set tokenID = token.token_id
 !mmm       set counterUpdates = m3mgdUpdatePersistentEffectsCounters(tokenID, "round")
-!mmm       if counterUpdates == 0
+!mmm       if not counterUpdates 
 !mmm         set noUpdates = ": keine Zählerupdates"
+!mmm       else
+!mmm         set noUpdates = ""
 !mmm       end if
 !mmm   
 !mmm       set output = chatTightBoxSubHeader(m3mgdShapeMoji(tokenID) & tokenID.name & noUpdates)
@@ -63,14 +65,14 @@
 !mmm
 !mmm       end for
 !mmm     
-!mmm       if counterUpdates != 0
+!mmm       if counterUpdates
 !mmm         set output = output & chatTightBoxRow("🔵 Updates: " & counterUpdates)
 !mmm       end if
 !mmm
 !mmm       if m3mgdHasActivePersistentEffects(tokenID)
 !mmm         for statusRule in m3mgdGetActivePersistentEffects(tokenID)
 !mmm           set activeCounter = activeCounter + 1
-!mmm           set output = output & chatTightBoxRow("#" & activeCounter & ", noch " & statusRule.effect.expiry.count & " " & DE.(statusRule.effect.expiry.type & "s") & ": " & highlight(statusRule.label, "info", statusRule.desc) & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; "))
+!mmm           set output = output & chatTightBoxRow("#" & activeCounter & "&nbsp;**" & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ") & "**, noch " & statusRule.effect.expiry.count & " " & DE.(statusRule.effect.expiry.type & "s") & " (" & statusRule.label & ")")
 !mmm         end for
 !mmm       end if
 !mmm
