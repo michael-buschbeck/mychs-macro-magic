@@ -1,92 +1,92 @@
+!rem // endOfRoundEffects v2.0-pre 2024-08-09 phr 
+!rem //
+!rem // Executes and chats a summary of modifications to active persistent effects to all visible tokens.
+!rem 
 !mmm script
 !mmm
 !mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe" }
+!mmm
+!mmm   set header = chatTightBoxHeader("Update zum Rundenende")
 !mmm
 !mmm   for token in gettokens()
 !mmm 
 !mmm     if not isdenied(token.token_id)
 !mmm
 !mmm       set tokenID = token.token_id
+!mmm       set counterUpdates = m3mgdUpdatePersistentEffectsCounters(tokenID, "round")
+!mmm       if counterUpdates == 0
+!mmm         set noUpdates = ": keine Zählerupdates"
+!mmm       end if
 !mmm   
-!mmm       combine chat using ""
-!mmm       
-!mmm         chat: /w "${tokenID.character_name}" ${"&"}{template:default} 
-!mmm         chat: {{name=${m3mgdShapeMoji(tokenID) & tokenID.name}: Rundeneffekte}} 
+!mmm       set output = chatTightBoxSubHeader(m3mgdShapeMoji(tokenID) & tokenID.name & noUpdates)
 !mmm
-!mmm         for statusRule in m3mgdInjuryStatus... where tokenID.(...key) eq "shown"
+!mmm       for statusRule in m3mgdInjuryStatus... where tokenID.(...key) eq "shown"
 !mmm
-!mmm           if statusRule.value.combatRoundEffects and not timeToDie < 0
+!mmm         if statusRule.value.combatRoundEffects and not timeToDie < 0
 !mmm
-!mmm             chat: {{ ${statusRule.value.icon}${statusRule.value.label}=
+!mmm           set currentEffectSummary = ""
 !mmm
-!mmm             for roundEffect in statusRule.value.combatRoundEffects...
+!mmm           for roundEffect in statusRule.value.combatRoundEffects...
 !mmm
-!mmm               if roundEffect.key eq "health"
+!mmm             if roundEffect.key eq "health"
 !mmm 
-!mmm                 set newHealth = m3mgdModifyHealth(roundEffect.value, tokenID, m3mgdGetHealthAttribute(tokenID))
-!mmm                 chat: ${" "}**LP:**&nbsp;${highlight(roundEffect.value, "bad", statusRule.value.desc)}&nbsp;=>&nbsp;${highlight(newHealth, "normal")}
-!mmm                 if newHealth < 0
-!mmm                   set timeToDie = roll("1d6-" & abs(newHealth)) 
-!mmm                   chat: ${highlight(timeToDie, "bad")}&nbsp;**Minuten bis zum Tod!**
-!mmm                 end if
+!mmm               set newHealth = m3mgdModifyHealth(roundEffect.value, tokenID, m3mgdGetHealthAttribute(tokenID))
+!mmm               set currentEffectSummary = currentEffectSummary & " **LP:**&nbsp;" & highlight(roundEffect.value, "bad", statusRule.value.desc) & "&nbsp;=>&nbsp;" & highlight(newHealth, "normal")
+!mmm               if newHealth < 0
+!mmm                 set timeToDie = roll("1d6-" & abs(newHealth)) 
+!mmm                 set currentEffectSummary = currentEffectSummary & highlight(timeToDie, "bad") & "&nbsp;**Minuten bis zum Tod!**"
+!mmm               end if
 !mmm
-!mmm               else if roundEffect.key eq "endurance"
+!mmm             else if roundEffect.key eq "endurance"
 !mmm
-!mmm                 set newEndurance = m3mgdModifyEndurance(roundEffect.value, tokenID, m3mgdGetEnduranceAttribute(tokenID))
-!mmm                 chat: ${" "}**AP:**&nbsp;${highlight(roundEffect.value, "bad", statusRule.value.desc)}&nbsp;=>&nbsp;${highlight(newEndurance, "normal")}
+!mmm               set newEndurance = m3mgdModifyEndurance(roundEffect.value, tokenID, m3mgdGetEnduranceAttribute(tokenID))
+!mmm               set currentEffectSummary = currentEffectSummary & "**AP:**&nbsp;" & highlight(roundEffect.value, "bad", statusRule.value.desc) & "&nbsp;=>&nbsp;" & highlight(newEndurance, "normal")
 !mmm
-!mmm               else if roundEffect.key eq "death"
+!mmm             else if roundEffect.key eq "death"
 !mmm
-!mmm                 set deathRoll = roll("1d100")
-!mmm                 if deathRoll < roundEffect.value
-!mmm                   chat: ${highlight(deathRoll, "bad", "<" & roundEffect.value)} war **tödlich:** ${tokenID.name} ist in diesem Moment von uns gegangen.
-!mmm                   set newHealth = -1
-!mmm                   set timeToDie = -1
-!mmm                 else
-!mmm                   chat: Puh, Glück gehabt. Mit ${highlight(deathRoll, "good", ">=" & roundEffect.value)} bin ich dem Tod nochmal von der Schippe gesprungen.
-!mmm                 end if
+!mmm               set deathRoll = roll("1d100")
+!mmm               if deathRoll < roundEffect.value
+!mmm                 set currentEffectSummary = currentEffectSummary & highlight(deathRoll, "bad", "<" & roundEffect.value) & " war **tödlich:** " & tokenID.name & " ist in diesem Moment von uns gegangen."
+!mmm                 set newHealth = -1
+!mmm                 set timeToDie = -1
+!mmm               else
+!mmm                 set currentEffectSummary = currentEffectSummary & "Puh, Glück gehabt. Mit " & highlight(deathRoll, "good", ">=" & roundEffect.value) & " bin ich dem Tod nochmal von der Schippe gesprungen."
+!mmm               end if
 !mmm
-!mmm               end if 
+!mmm             end if 
 !mmm
-!mmm             end for
-!mmm
-!mmm             chat: }}
-!mmm
-!mmm           end if
-!mmm
-!mmm         end for
-!mmm     
-!mmm         set counterUpdates = m3mgdUpdatePersistentEffectsCounters(tokenID, "round")
-!mmm         if counterUpdates
-!mmm           chat: {{ 🔵 Updates=${counterUpdates} }}
-!mmm         end if
-!mmm
-!mmm         if m3mgdHasActivePersistentEffects(tokenID)
-!mmm           for statusRule in m3mgdGetActivePersistentEffects(tokenID)
-!mmm
-!mmm             set activeCounter = activeCounter + 1
-!mmm             chat: {{ #${activeCounter}, noch ${statusRule.effect.expiry.count} ${DE.(statusRule.effect.expiry.type & "s")}= ${highlight(statusRule.label, "info", statusRule.desc)} 
-!mmm             chat: ${stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ")}
-!mmm             chat: }}
-!mmm           
 !mmm           end for
+!mmm
+!mmm           set output = output & chatTightBoxRow(statusRule.value.icon & statusRule.value.label & currentEffectSummary)
+!mmm
 !mmm         end if
 !mmm
-!mmm         if newHealth < 0 and timeToDie < 0
-!mmm         
-!mmm           chat: {{Zustand=**Sofortiger Tod &#10013;**}}
-!mmm         
-!mmm         else
-!mmm         
-!mmm           chat: {{${m3mgdHealthStatusLabel(tokenID)}=${m3mgdHealthStatusEffectsDesc(tokenID)}}}
-!mmm           chat: {{${m3mgdEnduranceStatusLabel(tokenID)}=${m3mgdEnduranceStatusEffectsDesc(tokenID)}}}
-!mmm         
-!mmm         end if
-!mmm         
-!mmm       end combine
+!mmm       end for
+!mmm     
+!mmm       if counterUpdates != 0
+!mmm         set output = output & chatTightBoxRow("🔵 Updates: " & counterUpdates)
+!mmm       end if
 !mmm
+!mmm       if m3mgdHasActivePersistentEffects(tokenID)
+!mmm         for statusRule in m3mgdGetActivePersistentEffects(tokenID)
+!mmm           set activeCounter = activeCounter + 1
+!mmm           set output = output & chatTightBoxRow("#" & activeCounter & ", noch " & statusRule.effect.expiry.count & " " & DE.(statusRule.effect.expiry.type & "s") & ": " & highlight(statusRule.label, "info", statusRule.desc) & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; "))
+!mmm         end for
+!mmm       end if
+!mmm
+!mmm       if newHealth < 0 and timeToDie < 0
+!mmm         set output = output & chatTightBoxRow("Zustand: **Sofortiger Tod &#10013;**")
+!mmm       else if m3mgdShapeMoji(tokenID) ne "😀"
+!mmm         set output = output & chatTightBoxRow(m3mgdHealthStatusLabel(tokenID) & ": " & m3mgdHealthStatusEffectsDesc(tokenID))
+!mmm         set output = output & chatTightBoxRow(m3mgdEnduranceStatusLabel(tokenID) & ": " & m3mgdEnduranceStatusEffectsDesc(tokenID))
+!mmm       end if
+!mmm         
+!mmm       if tokenID.PC == 1
+!mmm         chat: /w "${tokenID.character_name}" ${header & output}
+!mmm       end if
+!mmm       set GMoutput = GMoutput & output
 !mmm     end if
 !mmm     
 !mmm   end for
-!mmm   
+!mmm   chat: /w GM ${header & GMoutput}
 !mmm end script
