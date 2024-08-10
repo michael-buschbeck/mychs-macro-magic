@@ -1,4 +1,4 @@
-!rem // showPersistentEffects v1.2-pre 2024-06-14 phr 
+!rem // showPersistentEffects v1.2-pre 2024-08-10 phr 
 !rem //
 !rem // Chats a list of active persistent effects for the selected token, or all tokens if none are selected.
 !rem 
@@ -27,11 +27,8 @@
 !mmm       set activeCounter = 0
 !mmm       for statusRule in m3mgdGetActivePersistentEffects(affectedTokenRecord.key)
 !mmm         set activeCounter = activeCounter + 1
-!mmm         set line = "❌ " & "#" & activeCounter & " (+" & statusRule.effect.expiry.count & " " & statusRule.effect.expiry.type & "s): **" & statusRule.label & "**"
-!mmm         set tooltip = "Effekt löschen? " & statusRule.desc
-!mmm         if statusRule.effect
-!mmm           set line = line & " - " & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ")
-!mmm         end if
+!mmm         set line = "❌ " & "#" & activeCounter & " **" & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ") & "** (+" & statusRule.effect.expiry.count & " " & statusRule.effect.expiry.type & "s): " & statusRule.label
+!mmm         set tooltip = "Effekt löschen?"
 !mmm         set output = output & chatTightBoxButtonRow(line, tooltip, m3mgdRemovePersistentEffectPayload(affectedTokenRecord.key, activeCounter-1))
 !mmm       end for
 !mmm   end if

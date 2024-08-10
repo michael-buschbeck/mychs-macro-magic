@@ -1,10 +1,8 @@
-!rem // endOfRoundEffects v2.0-pre 2024-08-09 phr 
+!rem // endOfRoundEffects v2.0-pre 2024-08-10 phr 
 !rem //
 !rem // Executes and chats a summary of modifications to active persistent effects to all visible tokens.
 !rem 
 !mmm script
-!mmm
-!mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe" }
 !mmm
 !mmm   set header = chatTightBoxHeader("Update zum Rundenende")
 !mmm
@@ -66,13 +64,19 @@
 !mmm       end for
 !mmm     
 !mmm       if counterUpdates
-!mmm         set output = output & chatTightBoxRow("🔵 Updates: " & counterUpdates)
+!mmm         set output = output & chatTightBoxRow("🔵 " & counterUpdates)
 !mmm       end if
 !mmm
 !mmm       if m3mgdHasActivePersistentEffects(tokenID)
 !mmm         for statusRule in m3mgdGetActivePersistentEffects(tokenID)
 !mmm           set activeCounter = activeCounter + 1
-!mmm           set output = output & chatTightBoxRow("#" & activeCounter & "&nbsp;**" & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ") & "**, noch " & statusRule.effect.expiry.count & " " & DE.(statusRule.effect.expiry.type & "s") & " (" & statusRule.label & ")")
+!mmm           if statusRule.effect.expiry.count == 1
+!mmm             set remainderLingo = "noch 1 " & DE.(statusRule.effect.expiry.type)
+!mmm           else
+!mmm             set remainderLingo = "noch " & statusRule.effect.expiry.count & " " & DE.(statusRule.effect.expiry.type & "s")
+!mmm           end if
+!mmm           set rowLabel = "❌ " & "#" & activeCounter & "&nbsp;**" & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ") & "**, " & remainderLingo & " (" & statusRule.label & ")"
+!mmm           set output = output & chatTightBoxButtonRow(rowLabel, "Effekt löschen?", m3mgdRemovePersistentEffectPayload(tokenID, activeCounter - 1))
 !mmm         end for
 !mmm       end if
 !mmm

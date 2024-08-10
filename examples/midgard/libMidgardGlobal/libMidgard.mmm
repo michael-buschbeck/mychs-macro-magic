@@ -2100,7 +2100,7 @@
 !mmm   do setattr(m3mgdExchange, "m3mgdActivePersistentEffects", serialize({ effectsDB, (tokenID): updatedActiveEffects }))
 !mmm
 !mmm   if newEffectsRemoved + effectCountersDecreased + effectsExpired > 0
-!mmm     set summaryLog = currentTypeEffects & " " & DE.(actionType & "s") & "-Effekte: " & newEffectsRemoved & " -🆕, "
+!mmm     set summaryLog = currentTypeEffects & " " & DE.(actionType & "s") & "-Effekt" & repeat("e", currentTypeEffects-1) & ": " & newEffectsRemoved & " 🆕 entfernt, "
 !mmm     set summaryLog = summaryLog & effectCountersDecreased & " reduziert, " & effectsExpired & " beendet."
 !mmm     return summaryLog
 !mmm   else
