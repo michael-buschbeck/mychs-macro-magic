@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.1-pre (2024-06-14)"
+!mmm   set libVersion = "libMidgard v1.4.2-pre (2024-08-09)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -2099,10 +2099,13 @@
 !mmm   set effectsDB = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
 !mmm   do setattr(m3mgdExchange, "m3mgdActivePersistentEffects", serialize({ effectsDB, (tokenID): updatedActiveEffects }))
 !mmm
-!mmm   set summaryLog = "Von " & currentTypeEffects & " " & actionType & "-Effekten: " & newEffectsRemoved & " NEU-Marker entfernt, "
-!mmm   set summaryLog = summaryLog & effectCountersDecreased & " Zähler reduziert, " & effectsExpired & " Effekte beendet."
-!mmm
-!mmm   return summaryLog
+!mmm   if newEffectsRemoved + effectCountersDecreased + effectsExpired > 0
+!mmm     set summaryLog = "Von " & currentTypeEffects & " " & actionType & "-Effekten: " & newEffectsRemoved & " NEU-Marker entfernt, "
+!mmm     set summaryLog = summaryLog & effectCountersDecreased & " Zähler reduziert, " & effectsExpired & " Effekte beendet."
+!mmm     return summaryLog
+!mmm   else
+!mmm     return 0
+!mmm   end if
 !mmm
 !mmm end function
 !rem
