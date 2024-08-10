@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.4.2 (2024-08-09)"
+!mmm   set libVersion = "libMidgardBasics v1.4.4 (2024-08-10)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -24,9 +24,14 @@
 !mmm   end for
 !mmm   publish to game: d6Max
 !mmm   
+!rem   // Localization of key terms to German
+!rem
+!mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe" }
+!mmm
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: isfumble, count, isChar, sign, stringify, sum, rollResult, rollMax, zeroOrPositive
+!mmm   publish to game: DE
+!mmm   publish to game: isfumble, count, isChar, sign, stringify, sum, repeat, rollResult, rollMax, zeroOrPositive
 !mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable, chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonRow, chatTightBoxMultiButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -128,6 +133,18 @@
 !mmm     set sumVal = list
 !mmm   end if
 !mmm   return sumVal
+!mmm end function
+!rem
+!rem // repeat(string, num)
+!rem //
+!rem //   Concatenates string num times. If num is zero, returns an empty string.
+!rem //
+!mmm function repeat(string, num)
+!mmm   if num > 0
+!mmm     return string & repeat(num-1)
+!mmm   else
+!mmm     return ""
+!mmm   end if
 !mmm end function
 !rem
 !rem // rollResult(roll, baseSkill, [modifiers])
