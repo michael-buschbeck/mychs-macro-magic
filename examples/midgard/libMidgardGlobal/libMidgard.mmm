@@ -102,7 +102,7 @@
 !mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdHandleStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
 !mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects, m3mgdRemovePersistentEffect
-!mmm   publish to game: m3mgdStorePersistentEffectPayload, m3mgdRemovePersistentEffectPayload, m3mgdShowPersistentEffectsPayload
+!mmm   publish to game: m3mgdRemovePersistentEffectPayload, m3mgdShowPersistentEffectsPayload
 !mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdIsUnfitToAttack
 !mmm   publish to game: m3mgdShapeMoji, m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
@@ -519,19 +519,6 @@
 !mmm   else
 !mmm     return false
 !mmm   end if
-!mmm end function
-!rem
-!rem // m3mgdStorePersistentEffectPayload(tokenID, removeEffectIndex)
-!rem //
-!rem //   Returns a chat button payload to remove tokenID's active persistent effect identified by removeEffectIndex.
-!rem //
-!mmm function m3mgdStorePersistentEffectPayload(tokenID, effectData)
-!mmm   set payload = literal("!mmm customize") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set cmd=\"restoreEffect\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set effectData=\"" & serialize(effectData) & "\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
-!mmm   return payload
 !mmm end function
 !rem
 !rem // m3mgdRemovePersistentEffectPayload(tokenID, effectIndex)
