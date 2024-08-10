@@ -32,7 +32,7 @@
 !rem
 !mmm   publish to game: DE
 !mmm   publish to game: isfumble, count, isChar, sign, stringify, sum, repeat, rollResult, rollMax, zeroOrPositive
-!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable, chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonRow, chatTightBoxMultiButton
+!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable, chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonSubHeader, chatTightBoxButtonRow, chatTightBoxMultiButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -141,7 +141,7 @@
 !rem //
 !mmm function repeat(string, num)
 !mmm   if num > 0
-!mmm     return string & repeat(num-1)
+!mmm     return string & repeat(string, num - 1)
 !mmm   else
 !mmm     return ""
 !mmm   end if
@@ -286,6 +286,26 @@
 !mmm   set style = "border-left: 1px solid #000000;border-right: 1px solid #000000; display:block; margin:0px; padding:3px; background-color:" & bgColor & ";"
 !mmm   set style = style & "font-style:normal; text-decoration:none; color:" & textColor & ";"
 !mmm   return ' [' & label & '](#\" ' & tooltip & ' style=\"' & style & ')'
+!mmm end function
+!rem
+!rem // chatTightBoxButtonSubHeader(label, tooltip, payload, bgColor, textColor)
+!rem //
+!mmm function chatTightBoxButtonSubHeader(label, tooltip, payload, bgColor, textColor)
+!mmm   if isdefault(bgColor)
+!mmm     set bgColor = "#ffffff"
+!mmm   end if
+!mmm   if isdefault(textColor)
+!mmm     set textColor = "#000000"
+!mmm   end if
+!mmm   if not isdefault(tooltip)
+!mmm     set tooltip = ' title="' & tooltip & '" '
+!mmm   end if 
+!mmm   if isdefault(payload)
+!mmm     set payload = '#'
+!mmm   end if
+!mmm   set style = "border-left: 1px solid #000000;border-right: 1px solid #000000; border-top: 1px solid #555555; border-bottom: 1px solid #dddddd; display:block; margin:0px; padding:3px; background-color:" & bgColor & ";"
+!mmm   set style = style & "font-size:1.05em; font-style:normal; font-weight:bold; color:" & textColor & "; text-decoration:none;"
+!mmm   return ' [' & label & '](' & payload & '\" ' & tooltip & ' style=\"' & style & ')'
 !mmm end function
 !rem
 !rem // chatTightBoxButtonRow(label, tooltip, payload, bgColor, textColor)
