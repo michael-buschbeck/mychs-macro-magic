@@ -1,5 +1,5 @@
 !rem // Critical effects tables
-!rem // Last revised: 2024-04-24
+!rem // Last revised: 2024-08-10
 !mmm function m3mgdBuildCriticalEffectsTables()
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
@@ -341,7 +341,7 @@
 !mmm     set entryID = 30
 !mmm     set entryData = { weight: 10, label: '⚅ Rumpftreffer mit Rippenbrüchen', url: '' }
 !mmm     set entryData = { entryData, desc: 'Du brichst dem Gegner 1W3 Rippen. Ein paar gebrochene Rippen verursachen zwar Schmerzen bei Bewegung und Atmen, sind aber vergleichsweise harmlos. Wenn der Brustkorb mit Erste Hilfe fachgerecht bandagiert ist, wird der Verletzte nur wenig behindert. Nur in bewegungsintensiven Situationen erleidet er wegen der Schmerzen –4 auf Erfolgs- und Widerstandswürfe, z.B. auf EW:Angriff und WW:Abwehr und beim Einsatz von Fertigkeiten wie Akrobatik oder Klettern. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der gebrochenen Rippen. Andernfalls verdoppelt sich die Heilzeit.' }
-!mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_white_tower", true)' }
+!mmm     set entryData = { entryData, immediate: '!mmm do setattr(foeID, "status_white_tower", true)', persistent: { focus: "foe", expiry: { count: 999, type: "round" }, rollModifiers: { defense: -4, meleeAttack: -4, rangedAttack: -4 } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 35
@@ -367,7 +367,7 @@
 !mmm     set entryID = 62
 !mmm     set entryData = { weight: 9, label: '⚅ Schwere Verletzung am rechten Bein', url: '' }
 !mmm     set entryData = { entryData, desc: 'Das rechte Bein ist für 30 Minuten stark geprellt und kann nicht genutzt werden. Wird der Verwundete regelmäßig von einem Gefährten versorgt (30 Minuten), der Erste Hilfe gelernt hat, leidet er 2W6+7 Tage unter den Auswirkungen der Beinverletzung. Andernfalls verdoppelt sich die Heilzeit. Während dieser Zeit kann sich der Verletzte nur mit B4 fortbewegen. Wird das Bein mit Erster Hilfe geschient, erhöht sich seine Bewegungsweite auf B6, mit einem Stock sogar auf die Hälfte seiner normalen Bewegungsweite (B/2). Mit Stock kann er auch mit einer einhändigen Waffe im Nahkampf kämpfen, aber die Abwehr wird durch die mangelnde Beweglichkeit weiterhin sehr erschwert (–4 auf WW:Abwehr). Wenn das Opfer durch eine **andere** als eine Stich-, Wurf- oder Schusswaffe **mehr als 1/3 des LP–Maximums verliert,** besteht eine **20% Chance,** dass das Bein abgetrennt wird (bei einer Waffe mit Schneide) oder dauerhaft verkrüppelt bleibt. Mit Beinschutz führt auch der Treffer mit einer scharfen Waffe nicht zum Abtrennen, sondern nur zur Verkrüppelung des Beins.' }
-!mmm     set entryData = { entryData, immediate: ('!mmm do setattr(foeID, "status_tread", true)', '!mmm do setattr(foeID, "bar1", 4)') }
+!mmm     set entryData = { entryData, immediate: ('!mmm do setattr(foeID, "status_tread", true)', '!mmm do setattr(foeID, "bar1", 4)'), persistent: { focus: "foe", expiry: { count: 999, type: "round"}, rollModifiers: { defense: -4 } } }
 !mmm     set table = { table, (entryID): entryData }
 !mmm
 !mmm     set entryID = 71
