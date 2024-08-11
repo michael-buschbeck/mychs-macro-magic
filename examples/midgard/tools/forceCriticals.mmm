@@ -7,8 +7,8 @@
 !mmm     chat:    [**Nahkampf: Fehlschlag**](${_m3mgdWeaponButtonPayload(cOwnID, "melee", "Kurzschwert", {"cAttackRoll": "1d20cf", "cDamageRoll": "1d6"} )}) }}
 !mmm     chat: {{ [Fernkampf: Erfolg](${_m3mgdWeaponButtonPayload(cOwnID, "ranged", "Bogen", {"cAttackRoll": "1d20cs", "cDamageRoll": "1d6"} )}) =
 !mmm     chat:    [**Fernkampf: Fehlschlag**](${_m3mgdWeaponButtonPayload(cOwnID, "ranged", "Bogen", {"cAttackRoll": "1d20cf", "cDamageRoll": "1d6"} )}) }}
-!rem //    chat: {{ [Abwehr: Erfolg](${_m3mgdWeaponButtonPayload(cOwnID, "defense", "Kurzschwert", {"cDefenseRoll": "1d20cs", "cDamageRoll": "1d6"} )}) =
-!rem //    chat:    [**Abwehr: Fehlschlag**](${_m3mgdWeaponButtonPayload(cOwnID, "defense", "Kurzschwert", {"cDefenseRoll": "1d20cf", "cDamageRoll": "1d6"} )}) }}
+!mmm     chat: {{ [Abwehr: Erfolg](${_m3mgdWeaponButtonPayload(cOwnID, "defense", "Kurzschwert", {"cDefenseRoll": "1d20cs", "cDamageRoll": "1d6"} )}) =
+!mmm     chat:    [**Abwehr: Fehlschlag**](${_m3mgdWeaponButtonPayload(cOwnID, "defense", "Kurzschwert", {"cDefenseRoll": "1d20cf", "cDamageRoll": "1d6"} )}) }}
 !mmm   end combine
 !mmm
 !mmm end script

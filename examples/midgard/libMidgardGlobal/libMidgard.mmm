@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.3-pre (2024-08-10)"
+!mmm   set libVersion = "libMidgard v1.4.3-pre (2024-08-11)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -103,7 +103,7 @@
 !mmm   publish to game: _m3mgdHandleStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
 !mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects, m3mgdRemovePersistentEffect
 !mmm   publish to game: m3mgdRemovePersistentEffectPayload, m3mgdShowPersistentEffectsPayload
-!mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdIsUnfitToAttack
+!mmm   publish to game: m3mgdActiveStatusModifiers, m3mgdIsExhausted, m3mgdIsDefenseless, m3mgdIsUnfitToAttack, m3mgdUpdateAttackEffects
 !mmm   publish to game: m3mgdShapeMoji, m3mgdEnduranceStatusLabel, m3mgdEnduranceStatusEffectsDesc
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
 !mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth, m3mgdProcessInjury
@@ -646,24 +646,52 @@
 !mmm       if script.cGMSilentMode
 !mmm         chat: /w GM 
 !mmm       end if
-!mmm       chat: ${"&"}{template:default} {\{name=${tokenID.name}: Angriff nicht möglich }\}
+!mmm       do chat(chatTightBoxHeader(tokenID.token_name & ": Kein Angriff möglich"))
 !mmm       for reason in noAttackStatusList
 !mmm         set counter = counter + 1
 !mmm         if reason.expiry
-!mmm           chat: {\{ #${counter} (noch ${reason.expiry.count} ${reason.expiry.type})=${reason.label}: ${reason.desc} }\}
+!mmm           do chat(chatTightBoxRow("#" & counter & " (noch " & reason.expiry.count & " " & reason.expiry.type & ") -- " & reason.label & ": " & reason.desc))
 !mmm         else
-!mmm           chat: {\{ #${counter}=${reason.label}: ${reason.desc}  }\}
+!mmm           do chat(chatTightBoxRow("#" & counter & " -- " & reason.label & ": " & reason.desc))
 !mmm         end if
 !mmm       end for
-!mmm       set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(tokenID, "attack")
-!mmm       if endOfActionSummary
-!mmm         chat: {\{ Angriff beendet=${endOfActionSummary} }\}
-!mmm       end if
+!mmm       set payload = literal("!mmm customize") & "&#13;"
+!mmm       set payload = payload & literal("!mmm set cmd=\"updateAttackEffects\"") & "&#13;"
+!mmm       set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
+!mmm       set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
+!mmm       do chat(chatTightBoxButtonRow("**Angriffszähler um 1 reduzieren**", "", payload))
 !mmm     end combine
 !mmm     return true
 !mmm   end if
 !mmm
 !mmm   return false
+!mmm
+!mmm end function
+!rem
+!rem // m3mgdUpdateAttackEffects(tokenID) 
+!rem // 
+!rem //   Updates persistent effect counters for one attack event, returns true.
+!rem // 
+!mmm function m3mgdUpdateAttackEffects(tokenID)
+!mmm
+!mmm   set tokenID = m3mgdValidateOwnTokenID(tokenID)
+!mmm   if not tokenID
+!mmm     return unknown
+!mmm   end if
+!mmm
+!mmm   combine chat
+!mmm     if script.cGMSilentMode
+!mmm       chat: /w GM 
+!mmm     end if
+!mmm     do chat(chatTightBoxHeader(tokenID.token_name & ": Angriffszähler"))
+!mmm     set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(tokenID, "attack")
+!mmm     if endOfActionSummary
+!mmm       do chat(chatTightBoxRow(endOfActionSummary))
+!mmm     else
+!mmm       do chat(chatTightBoxButtonRow("Keine Angriffs-Zähler gefunden. Wahrscheinlich blockiert ein Runden-Effekt deinen Angriff und verschwindet zum Ende der Runde. &nbsp; &nbsp; 🛈 **Alle Details anzeigen**", "Details zu allen aktuellen Effekten", m3mgdShowPersistentEffectsPayload(tokenID)))
+!mmm     end if
+!mmm   end combine
+!mmm   return true
 !mmm
 !mmm end function
 !rem
@@ -1738,16 +1766,17 @@
 !mmm     set selectorPrompt = selectorPrompt & " (🤐) "
 !mmm   end if
 !mmm
+!mmm   set chatMenu = ""
+!mmm
 !mmm   if weaponsGroup eq "defense"
 !mmm     set noDefensePayload = "!mmm customize&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
 !mmm     set noDefensePayload = noDefensePayload & m3mgdScriptCommands.defense
-!mmm     set selectorPrompt = selectorPrompt & " [Wehrlos](" & noDefensePayload & cssTableHeaderButton & ") "
+!mmm     set chatMenu = chatTightBoxFlowButton("Wehrlos", "", noDefensePayload, "#ce0f69", "#ffffff")
 !mmm   end if
 !mmm
-!mmm   set chatMenu = ""
 !mmm   set itemCounter = 0
 !mmm
 !mmm   for weaponLabelAttr in weaponsList
@@ -1781,25 +1810,18 @@
 !mmm     if weaponUsable
 !mmm
 !mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollSpecs)
-!mmm       
-!mmm       if itemCounter % 2 == 0
-!mmm         set chatMenu = chatMenu & "{\{[" & weaponLabel & "](" & payload & ")="
-!mmm       else
-!mmm         set chatMenu = chatMenu & "[**" & weaponLabel & "**](" & payload & ")}\}"
-!mmm       end if
+!mmm       set chatMenu = chatMenu & chatTightBoxFlowButton(weaponLabel, "", payload)
 !mmm       set itemCounter = itemCounter + 1
 !mmm
 !mmm     end if
 !mmm
 !mmm   end for
 !mmm
-!mmm   if itemCounter % 2 != 0
-!mmm     set chatMenu = chatMenu & "}\}"
-!mmm   else if itemCounter == 0
-!mmm     set chatMenu = chatMenu & "{\{(keine)}\}"
+!mmm   if itemCounter == 0
+!mmm     set chatMenu = chatMenu & chatTightBoxRow("(keine)")
 !mmm   end if
-!mmm   set chatMenu = "&" & "{template:default} {\{name=" & selectorPrompt & "}\} " & chatMenu
-!rem
+!mmm   set chatMenu = chatTightBoxHeader(selectorPrompt) & chatMenu
+!mmm
 !mmm   return chatMenu
 !mmm   
 !mmm end function

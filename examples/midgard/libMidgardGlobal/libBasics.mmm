@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.4.4 (2024-08-10)"
+!mmm   set libVersion = "libMidgardBasics v1.4.4 (2024-08-11)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -32,7 +32,8 @@
 !rem
 !mmm   publish to game: DE
 !mmm   publish to game: isfumble, count, isChar, sign, stringify, sum, repeat, rollResult, rollMax, zeroOrPositive
-!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable, chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonSubHeader, chatTightBoxButtonRow, chatTightBoxMultiButton
+!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable
+!mmm   publish to game: chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonSubHeader, chatTightBoxButtonRow, chatTightBoxFlowButton, chatTightBoxMultiButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -324,6 +325,26 @@
 !mmm     set payload = '#'
 !mmm   end if
 !mmm   set style = "border-left: 1px solid #000000;border-right: 1px solid #000000; display:block; margin:0px; padding:3px; background-color:" & bgColor & ";"
+!mmm   set style = style & "font-style:normal; text-decoration:none; color:" & textColor & ";"
+!mmm   return ' [' & label & '](' & payload & '\" ' & tooltip & ' style=\"' & style & ')'
+!mmm end function
+!rem
+!rem // chatTightBoxFlowButton(label, tooltip, payload, bgColor, textColor)
+!rem //
+!mmm function chatTightBoxFlowButton(label, tooltip, payload, bgColor, textColor)
+!mmm   if isdefault(bgColor)
+!mmm     set bgColor = "#dddddd"
+!mmm   end if
+!mmm   if isdefault(textColor)
+!mmm     set textColor = "#000000"
+!mmm   end if
+!mmm   if not isdefault(tooltip)
+!mmm     set tooltip = ' title="' & tooltip & '" '
+!mmm   end if 
+!mmm   if isdefault(payload)
+!mmm     set payload = '#'
+!mmm   end if
+!mmm   set style = "border: 1px solid #000000; display:float; margin:0px; padding:3px; background-color:" & bgColor & ";"
 !mmm   set style = style & "font-style:normal; text-decoration:none; color:" & textColor & ";"
 !mmm   return ' [' & label & '](' & payload & '\" ' & tooltip & ' style=\"' & style & ')'
 !mmm end function

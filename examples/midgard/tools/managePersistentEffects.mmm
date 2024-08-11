@@ -1,4 +1,4 @@
-!rem // managePersistentEffects v1.0-pre 2024-08-10 phr
+!rem // managePersistentEffects v1.0-pre 2024-08-11 phr
 !rem //
 !rem // Lists, displays details, removes or restores either all or one particular active persistent effect identified by [tokenID] and [effectIndex].
 !rem 
@@ -47,6 +47,12 @@
 !mmm     else
 !mmm       do chat(chatTightBoxRow("Fehler beim Versuch, Dauereffekt für " & tokenID.token_name & " [" & tokenID & "] zu erneuern."))
 !mmm     end if
+!rem
+!rem   // cmd: updateAttackEffects
+!rem
+!mmm   else if cmd eq "updateAttackEffects" and not isdefault(tokenID)
+!mmm
+!mmm     do m3mgdUpdateAttackEffects(tokenID)
 !rem
 !rem   // cmd: showDetails
 !rem
