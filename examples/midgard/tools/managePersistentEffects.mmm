@@ -1,0 +1,115 @@
+!rem // managePersistentEffects v1.0-pre 2024-08-11 phr
+!rem //
+!rem // Lists, displays details, removes or restores either all or one particular active persistent effect identified by [tokenID] and [effectIndex].
+!rem 
+!mmm script
+!mmm   set customizable cmd = default
+!mmm   set customizable tokenID = default
+!mmm   set customizable effectIndex = default
+!mmm   set customizable deleteConfirm = false
+!mmm   set customizable effectData = default
+!mmm
+!rem   // German-specific output: compute proper language depending of number of remaining units
+!mmm   function remainderLingo(count, singularUnit)
+!mmm     if count == 1
+!mmm       return "1 " & DE.(singularUnit)
+!mmm     else 
+!mmm       return count & " " & DE.(singularUnit & "s")
+!mmm     end if
+!mmm   end function
+!mmm
+!rem   // cmd: removeEffect
+!rem
+!mmm   if cmd eq "removeEffect" and (not isdefault(tokenID)) and (not isdefault(effectIndex)) and deleteConfirm
+!mmm
+!mmm     set effectData = m3mgdRemovePersistentEffect(tokenID, effectIndex)
+!mmm
+!mmm     if effectData
+!mmm       do setattr(m3mgdExchange, "m3mgdPersistentEffectsBackup", serialize( { deserialize(m3mgdExchange.m3mgdPersistentEffectsBackup)... where ...key ne "", { (tokenID): effectData } } ))
+!mmm       set restoreEffectPayload = literal("!mmm customize") & "&#13;"
+!mmm       set restoreEffectPayload = restoreEffectPayload & literal("!mmm set cmd=\"restoreEffect\"") & "&#13;"
+!mmm       set restoreEffectPayload = restoreEffectPayload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
+!mmm       set restoreEffectPayload = restoreEffectPayload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
+!mmm       set output = chatTightBoxRow("Dauereffekt #" & (effectIndex+1) & " von " & tokenID.token_name & "(" & tokenID & ") beendet.")
+!mmm       set output = output & chatTightBoxButtonRow("**Wiederherstellen**: " & effectData.effect.expiry.count & "x " & m3mgdPersistentEffectLabels(effectData.effect), "Gelöschten Dauereffekt wiederherstellen", restoreEffectPayload)
+!mmm       do chat(output)
+!mmm     else 
+!mmm       chat: Fehler beim Versuch, Dauereffekt #${effectIndex+1} von ${highlight(tokenID.token_name, "info", tokenID)} zu beenden. Effektdatenbank möglicherweise beschädigt oder kein Zugriff möglich.
+!mmm     end if
+!rem
+!rem   // cmd: restoreEffect
+!rem
+!mmm   else if cmd eq "restoreEffect" and not isdefault(tokenID)
+!mmm
+!mmm     set effectData = deserialize(m3mgdExchange.m3mgdPersistentEffectsBackup).(tokenID)
+!mmm     if m3mgdStorePersistentEffect(tokenID, effectData)
+!mmm       do chat(chatTightBoxRow("Dauereffekt für " & tokenID.token_name & " erneuert: " & effectData.effect.expiry.count & " x " & m3mgdPersistentEffectLabels(effectData.effect))) 
+!mmm     else
+!mmm       do chat(chatTightBoxRow("Fehler beim Versuch, Dauereffekt für " & tokenID.token_name & " [" & tokenID & "] zu erneuern."))
+!mmm     end if
+!rem
+!rem   // cmd: updateAttackEffects
+!rem
+!mmm   else if cmd eq "updateAttackEffects" and not isdefault(tokenID)
+!mmm
+!mmm     do m3mgdUpdateAttackEffects(tokenID)
+!rem
+!rem   // cmd: showDetails
+!rem
+!mmm   else if cmd eq "showEffectsDetails" and not isdefault(tokenID)
+!mmm
+!mmm     set output = chatTightBoxHeader("Dauereffekte für " & tokenID.token_name)
+!mmm     set activeCounter = 0
+!mmm     for statusRule in m3mgdGetActivePersistentEffects(tokenID)
+!mmm       if (isdefault(effectIndex) or activeCounter == effectIndex)
+!mmm         set activeCounter = activeCounter + 1
+!mmm         set output = output & chatTightBoxSubHeader("#" & activeCounter & " " & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; "))
+!mmm         set output = output & chatTightBoxRow(statusRule.label & ": " & statusRule.desc)
+!mmm         set output = output & chatTightBoxButtonRow("**Dauer**: Noch " & remainderLingo(statusRule.effect.expiry.count, statusRule.effect.expiry.type) & repeat("&nbsp;", 5) & "❌ Effekt löschen", "Effekt löschen?", m3mgdRemovePersistentEffectPayload(tokenID, activeCounter-1))
+!mmm       end if
+!mmm     end for
+!mmm     do chat(output)
+!rem
+!rem   // default behavior: show list of persistent effects, either for all visible tokens or the one given as tokenID
+!rem
+!mmm   else
+!mmm
+!mmm     set pEregistry = deserialize(m3mgdExchange.m3mgdActivePersistentEffects)
+!mmm     set cleanRegistry = { pEregistry... where ...value ne undef }
+!mmm     if not cleanRegistry
+!mmm       do chat(chatTightBoxRow("Keine Dauereffekte im aktuellen Spiel."))
+!mmm       exit script
+!mmm     end if
+!mmm 
+!mmm     if not isdefault(tokenID) 
+!mmm       set refLabel = tokenID.token_name
+!mmm     else if selected
+!mmm       set refLabel = selected.token_name
+!mmm     else
+!mmm       set refLabel = "alle"
+!mmm     end if
+!mmm     set output = chatTightBoxHeader("Dauereffekte für " & refLabel)
+!mmm
+!mmm     for affectedTokenRecord in cleanRegistry...
+!rem       // If a particular token is chosen, only produce output for this token alone. Otherwise, produce output for every token with an active persistent effect.
+!mmm       if ((isdefault(tokenID) and not selected) or (not isdefault(tokenID) and affectedTokenRecord.key eq tokenID) or (selected and affectedTokenRecord.key eq selected)) and affectedTokenRecord.value
+!mmm         set output = output & chatTightBoxButtonSubHeader(affectedTokenRecord.key.token_name & " 🛈", "Details zu allen aktuellen Effekten", m3mgdShowPersistentEffectsPayload(affectedTokenRecord.key))
+!mmm         set activeCounter = 0
+!mmm         for statusRule in m3mgdGetActivePersistentEffects(affectedTokenRecord.key)
+!mmm           set activeCounter = activeCounter + 1
+!mmm           set line = "❌ " & "#" & activeCounter & " **" & stringify(m3mgdPersistentEffectLabels(statusRule.effect), "", "; ") & "** (+" & remainderLingo(statusRule.effect.expiry.count, statusRule.effect.expiry.type) & "): " & statusRule.label
+!mmm           set tooltip = "Effekt löschen?"
+!mmm           set output = output & chatTightBoxButtonRow(line, tooltip, m3mgdRemovePersistentEffectPayload(affectedTokenRecord.key, activeCounter-1))
+!mmm         end for
+!mmm       end if
+!mmm     end for
+!mmm
+!mmm     if activeCounter == 0
+!mmm       set output = output & chatTightBoxRow("keine")
+!mmm     end if
+!mmm
+!mmm     do chat(output)
+!mmm
+!mmm   end if
+!mmm
+!mmm end script

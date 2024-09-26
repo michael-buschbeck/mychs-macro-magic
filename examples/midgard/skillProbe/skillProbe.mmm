@@ -3,7 +3,7 @@
 !rem // GM script to execute group probes on skills, privately show results and whisper tailored messages to players based on their probe results.
 !rem //
 !mmm script
-!mmm   set scriptVersion = "skillProbe 1.2.3 (2024-06-06)"
+!mmm   set scriptVersion = "skillProbe 1.2.6 (2024-07-12)"
 !rem
 !rem   // MMM compatibility check: die if MMM version too low
 !mmm   if version < 1.24
@@ -16,8 +16,10 @@
 !mmm
 !rem   // Output formatting constants
 !mmm   set playerMsgEmoji = "🖅"
-!mmm   set colorSuccess = "#58b53c"
+!mmm   set colorCritSuccess = "#58b53c"
+!mmm   set colorSuccess = "#88f268"
 !mmm   set colorFailure = "#d95d86"
+!mmm   set colorCritFailure = "#a8204d"
 !mmm   set colorInactive = "#adadad"
 !rem
 !rem   // FUNCTIONS
@@ -126,16 +128,13 @@
 !rem       // Initialize: refetch token ID and get name and skills
 !mmm       set tokenID = id.token_id
 !mmm
-!rem //      set leadAttributes = { ("@" & "{LeitSt}"): "LeitSt", ("@" & "{LeitGw}"): "LeitGw", ("@" & "{LeitGs}"): "LeitGs", ("@" & "{LeitKo}"): "LeitKo", ("@" & "{LeitIn}"): "LeitIn", ("@" & "{LeitZt}"): "LeitZt", ("@" & "{LeitAu}"): "LeitAu", ("@" & "{LeitpA}"): "LeitpA", ("@" & "{LeitWk}"): "LeitWk" }
-!rem //      set tokenLeadAttr = leadAttributes.(tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "LeitE")))
-!mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "FW")) + tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "Fertigkeitsbonus")) + roll(tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "LeitE")))
+!mmm       set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "FW")) + tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "Fertigkeitsbonus")) + roll(tokenID, tokenID.(findattr(tokenID, "fertigkeiten", "Fertigkeit", cBSkill, "LeitE")))
 !mmm       set tokenModifier = cCModifier
 !mmm       set fallBack = ""
 !mmm
 !rem       // If skill is missing, try to default to the unlearned version
 !mmm       if not tokenEffSkill and not isunknown(tokenID) and not isdenied(tokenID)
 !mmm       
-!rem //         set tokenLeadAttr = leadAttributes.(tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill & " (Ungelernt)", "LeitE2")))
 !mmm         set tokenEffSkill = tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill & " (Ungelernt)", "FW2")) + roll(tokenID.(findattr(tokenID, "fertigkeiten2", "Fertigkeit2", cBSkill, "LeitE2")))
 !mmm         if not isunknown(tokenEffSkill) and tokenEffSkill > 0
 !mmm           set fallBack = " (ungelernt)"
@@ -157,29 +156,36 @@
 !mmm         
 !rem         // Execute skill roll
 !mmm         set effModifier = sign(tokenEffSkill + tokenModifier, "math")
-!mmm         set tokenRoll = roll("1d20" & effModifier)
+!mmm         set tokenRoll = roll("1d20")
+!mmm         set tokenResult = tokenRoll + effModifier
 !mmm         
 !rem         // Build tooltip to break down components
-!mmm         set tokenResultTooltip = tokenRoll & " = (1d20 = " & (tokenRoll - effModifier) & ") + (EW = " & tokenEffSkill & ") " & sign(tokenModifier, "display")
+!mmm         set tokenResultTooltip = tokenResult & " = (1d20 = " & tokenRoll & ") + (EW = " & tokenEffSkill & ") " & sign(tokenModifier, "display")
 !mmm         
+!rem         // Organize results and output table row for GM
 !mmm         if iscritical(tokenRoll)
 !mmm           set critSuccessList = critSuccessList, tokenID
-!mmm         else if tokenRoll >= 20
+!mmm           if fallBack eq ""
+!mmm             set tokenXPGain = m3mgdProcessSkillXP(cBSkill, tokenRoll, tokenID)
+!rem             // CHECK: What about PPs?
+!mmm             set output = output & chatTightBoxRow(tokenID.token_name & " **" & tokenResult & "** &nbsp; EP: " & tokenXPGain, literal(tokenResultTooltip), colorCritSuccess)
+!mmm           else
+!mmm             set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenResult & "** &nbsp; (keine EP)", literal(tokenResultTooltip), colorCritSuccess)
+!mmm           end if
+!mmm         else if tokenResult >= 20
 !mmm           set successList = successList, tokenID
+!mmm           if fallBack eq ""
+!mmm             set tokenXPGain = m3mgdProcessSkillXP(cBSkill, tokenRoll, tokenID)
+!mmm             set output = output & chatTightBoxRow(tokenID.token_name & " **" & tokenResult & "** &nbsp; EP: " & tokenXPGain, literal(tokenResultTooltip), colorSuccess)
+!mmm           else
+!mmm             set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenResult & "** &nbsp; (keine EP)", literal(tokenResultTooltip), colorSuccess)
+!mmm           end if
 !mmm         else if isfumble(tokenRoll)
 !mmm           set critFailList = critFailList, tokenID
+!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenResult & "**", literal(tokenResultTooltip), colorCritFailure)
 !mmm         else 
 !mmm           set failureList = failureList, tokenID
-!mmm         end if
-!mmm
-!rem         // Compose output table row for GM
-!mmm         if tokenRoll >= 20 and fallBack eq ""
-!mmm           set tokenXPGain = m3mgdProcessSkillXP(cBSkill, tokenRoll - effModifier, tokenID)
-!mmm           set output = output & chatTightBoxRow(tokenID.token_name & " **" & tokenRoll & "** &nbsp; EP: " & tokenXPGain, literal(tokenResultTooltip), colorSuccess)
-!mmm         else if tokenRoll >= 20
-!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenRoll & "** &nbsp; (keine EP)", literal(tokenResultTooltip), colorSuccess)
-!mmm         else 
-!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenRoll & "**", literal(tokenResultTooltip), colorFailure)
+!mmm           set output = output & chatTightBoxRow(tokenID.token_name & fallback & " **" & tokenResult & "**", literal(tokenResultTooltip), colorFailure)
 !mmm         end if
 !mmm
 !mmm       end if
@@ -209,7 +215,7 @@
 !mmm     set failureQuery = "'?" & "{Spielerinfo bei Misserfolg|}'"
 !mmm     set critFailureQuery = "'?" & "{Spielerinfo bei kritischem Misserfolg|}'"
 !mmm     if count(critSuccessList) > 0
-!mmm       set multiButtonProps = { label: count(critSuccessList) & " krit. 🍑", bgColor: colorSuccess, textColor: "#000000", payload: chatButtonPayload(scriptCommand, { "cPlayerMessage": critSuccessQuery, "cRecipientList": stringify(critSuccessList, '"', ",") }) }
+!mmm       set multiButtonProps = { label: count(critSuccessList) & " krit. 🍑", bgColor: colorCritSuccess, textColor: "#000000", payload: chatButtonPayload(scriptCommand, { "cPlayerMessage": critSuccessQuery, "cRecipientList": stringify(critSuccessList, '"', ",") }) }
 !mmm     else 
 !mmm       set multiButtonProps = { label: "0 krit.🍑", bgColor: colorInactive, textColor: "#000000", payload: "#" }
 !mmm     end if 
@@ -224,7 +230,7 @@
 !mmm       set multiButtonProps = multiButtonProps, { label: "0 🍋", bgColor: colorInactive, textColor: "#000000", payload: "#" }
 !mmm     end if 
 !mmm     if count(critFailList) > 0
-!mmm       set multiButtonProps = multiButtonProps, { label: count(critFailList) & " krit.🍋", bgColor: colorFailure, textColor: "#000000", payload: chatButtonPayload(scriptCommand, { "cPlayerMessage": critFailureQuery, "cRecipientList": stringify(critFailList, '"', ",") }) }
+!mmm       set multiButtonProps = multiButtonProps, { label: count(critFailList) & " krit.🍋", bgColor: colorCritFailure, textColor: "#000000", payload: chatButtonPayload(scriptCommand, { "cPlayerMessage": critFailureQuery, "cRecipientList": stringify(critFailList, '"', ",") }) }
 !mmm     else 
 !mmm       set multiButtonProps = multiButtonProps, { label: "0 krit.🍋", bgColor: colorInactive, textColor: "#000000", payload: "#" }
 !mmm     end if 
