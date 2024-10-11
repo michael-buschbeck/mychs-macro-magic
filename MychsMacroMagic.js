@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.36.2";
+const MMM_VERSION = "1.37.0";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -1883,6 +1883,12 @@ class MychScriptContext extends MychStash
     {
         switch (attributeName)
         {
+            case "token_name_plate":
+            case "token_name_shown":
+            {
+                return this.privileged;
+            }
+
             case "bar1_edit":
             case "bar2_edit":
             case "bar3_edit":
@@ -2166,6 +2172,8 @@ class MychScriptContext extends MychStash
             "name",
             "character_name",
             "token_name",
+            "token_name_plate",
+            "token_name_shown",
             "character_id",
             "token_id",
             "page",
@@ -2277,6 +2285,20 @@ class MychScriptContext extends MychStash
             {
                 lookupObj = token;
                 lookupKey = (max ? undefined : "name");
+            }
+            break;
+
+            case "token_name_plate":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "showname");
+            }
+            break;
+
+            case "token_name_shown":
+            {
+                lookupObj = token;
+                lookupKey = (max ? undefined : "showplayers_name");
             }
             break;
 
@@ -2513,6 +2535,22 @@ class MychScriptContext extends MychStash
             case "token_name":
             {
                 updateObj = token;
+            }
+            break;
+
+            case "token_name_plate":
+            {
+                updateObj = token;
+                updateKey = (max ? undefined : "showname");
+                updateVal = MychExpression.coerceBoolean(attributeValue);
+            }
+            break;
+
+            case "token_name_shown":
+            {
+                updateObj = token;
+                updateKey = (max ? undefined : "showplayers_name");
+                updateVal = MychExpression.coerceBoolean(attributeValue);
             }
             break;
 
