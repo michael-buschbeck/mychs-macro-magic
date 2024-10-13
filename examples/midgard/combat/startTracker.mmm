@@ -4,12 +4,10 @@
 !rem //
 !mmm script
 !mmm   
-!mmm   for token in gettokens() where not isdenied(token.character_name)
+!mmm   for token in gettokens() where not isdenied(...) and ...name select ...name
 !mmm     set trackerData = trackerData, { token: token.token_id, value: token.Gw + token.ItemBGewandheit + token.modGw + token.gRusGW }
 !mmm   end for
-!mmm debug do count(trackerData), trackerData
-!mmm   set trackerData = { token: "", title: "Runde", value: "1", formula: "+1" }, trackerData order (...left.value > ...right.value)
-!mmm debug do trackerData
+!mmm   set trackerData = { token: "-", title: "Runde", value: "0", formula: "+1" }, trackerData order (...left.value > ...right.value)
 !mmm   do settracker(trackerData)
 !mmm   do showtracker(true)
 !mmm
