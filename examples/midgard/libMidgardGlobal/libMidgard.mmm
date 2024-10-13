@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.4.3-pre (2024-08-11)"
+!mmm   set libVersion = "libMidgard v1.4.3-pre (2024-10-10)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -1452,7 +1452,7 @@
 !mmm   
 !mmm     set weaponType = "Zweihandschwert"
 !mmm   
-!mmm   else if ("waffenloser Kampf", "Faust", "Faustkampf", "Ringen (ohne Rüstung)", "Ringen (mit Rüstung)", "Tatze", "Klaue", "Tentakel", "Biss", "Horn", "Berührung") where ... eq weaponLabel
+!mmm   else if ("waffenloser Kampf", "Faust", "Faustkampf", "Ringen (ohne Rüstung)", "Ringen (mit Rüstung)", "Werfen", "Tatze", "Klaue", "Tentakel", "Biss", "Horn", "Berührung") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "waffenlos"
 !mmm   
