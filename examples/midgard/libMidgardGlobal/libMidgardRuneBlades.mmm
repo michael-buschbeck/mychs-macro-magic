@@ -320,6 +320,8 @@
 !rem // 
 !mmm function m3mgdRuneEffectWaterWalker(tokenID, weaponLabel, command, targetID)
 !mmm
+!mmm   set weaponToggleCost = 1
+!mmm
 !mmm   if not (tokenID.character_name eq "Wulfric MacConuilh" or tokenID.character_name eq "Yerrick MacRothgar")
 !mmm     do whisperback("*Wasserläufer* ist an Wulfric MacConuilh gebunden und reagiert nicht auf " & tokenID.name)
 !mmm     return false
@@ -375,6 +377,11 @@
 !mmm   
 !mmm     end if
 !mmm   
+!mmm     if weaponToggleCost > 0
+!mmm       do m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, "AP")
+!mmm       chat: /w "${tokenID.character_name}" Das hat ${weaponToggleCost} AP gekostet.
+!mmm     end if
+!mmm
 !mmm   end if
 !mmm   
 !mmm   return true
@@ -434,6 +441,11 @@
 !mmm       set torches = ""
 !mmm     end if
 !mmm     chat: ${tokenID.name}s Windstoß löscht alle Kerzen ${torches} auf 30m Entfernung; Nebel, Rauch oder Gas werden weggeweht.
+!mmm
+!mmm     if weaponToggleCost > 0
+!mmm       do m3mgdModifyEndurance(-1 * weaponToggleCost, tokenID, "AP")
+!mmm       chat: /w "${tokenID.character_name}" Das hat ${weaponToggleCost} AP gekostet.
+!mmm     end if
 !mmm
 !mmm     return true
 !mmm
