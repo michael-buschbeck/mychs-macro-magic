@@ -24,7 +24,7 @@
 !rem   //
 !rem   //  cOwnID               Override if the script should work from a sender not identical with the character
 !rem   //  cAttackSpell         The name of the attack spell (must be identical to your magic sheet)
-!rem   //  cSpellType           ?
+!rem   //  cSpellType           Geist/Körper/Umgebung (spell "target" as per character sheet labelling)
 !rem   //
 !mmm   set customizable cOwnID = sender.token_id
 !mmm   if selected and sender.token_id ne selected and m3mgdValidateOwnTokenID(selected.token_id)
@@ -86,6 +86,8 @@
 !rem   // Fetch attacker data
 !rem
 !mmm   set effCastingSkill = cOwnID.Zaubern + cOwnID.BonusZauber + cOwnID.ItemBZaubern + cOwnID.(findattr(cOwnID, "zauber", "Zauber", cAttackSpell, "ZauSpezBonus"))
+!mmm   set cSpellType = cOwnID.(findattr(cOwnID, "zauber", "Zauber", cAttackSpell, "Ziel"))
+!mmm   set cWeaponType = cSpellType
 !mmm   set magicEnduranceCost = cOwnID.(findattr(sender, "zauber", "Zauber", cAttackSpell, "AP"))
 !rem
 !rem   // Fetch target data
