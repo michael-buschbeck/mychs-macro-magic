@@ -15,7 +15,7 @@
 !mmm
 !rem   // Game-global constants for publication
 !rem
-!mmm   set m3mgdScriptCommands = { "magicAttack": "&#x25;{MacroSheet|magicAttack}", "defense": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}", "editXP": "&#x25;{MacroSheet|editXP}", "managePersistentEffects": "&#x25;{MacroSheet|managePersistentEffects}" }
+!mmm   set m3mgdScriptCommands = { "magicAttack": "&#x25;{MacroSheet|magicAttack}", "defense": "&#x25;{MacroSheet|defense}", "resistance": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}", "editXP": "&#x25;{MacroSheet|editXP}", "managePersistentEffects": "&#x25;{MacroSheet|managePersistentEffects}" }
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm 
@@ -1573,15 +1573,17 @@
 !mmm 
 !mmm end function
 !rem
-!rem // m3mgdDefenseInitPayload(tokenID)  
+!rem // m3mgdDefenseInitPayload(tokenID, [magicAttack])  
 !rem //
 !rem //   Returns MMM code for a defense customize block, formatted as a chat button payload.
 !rem //   If tokenID.PC==true, the block is designed for player characters (3D roll), otherwise for NPCs (GM silent mode).
 !rem //
-!mmm function m3mgdDefenseInitPayload(tokenID)  
+!mmm function m3mgdDefenseInitPayload(tokenID, magicAttack)  
 !mmm   set payload = "!mmm customize&#13;"
-!mmm   set payload = payload & literal("!mmm set cSemiManualModifiers=\"?" & "{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0| Konzentrierte Abwehr +4,+4| Ich greife überstürzt an -2,-2| Ich bin überrascht -4,-4}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set cManualModifiers=\"?" & "{Weitere spezielle Abwehrmodifikatoren|0}") & "&#13;"
+!mmm   if not magicAttack
+!mmm     set payload = payload & literal("!mmm set cSemiManualModifiers=\"?" & "{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0| Konzentrierte Abwehr +4,+4| Ich greife überstürzt an -2,-2| Ich bin überrascht -4,-4}\"") & "&#13;"
+!mmm   end if
+!mmm   set payload = payload & literal("!mmm set cManualModifiers=\"?" & "{Spezielle Abwehrmodifikatoren|0}") & "&#13;"
 !mmm   if tokenID.PC
 !mmm     set payload = payload & "&amp;{template} &#91;[1d20]] &#123;{&#125;}&#13;"
 !mmm     set payload = payload & literal("!mmm set cDefenseRoll=$[" & "[0]]") & "&#13;"
@@ -1717,6 +1719,8 @@
 !mmm   end if
 !mmm   if weaponsGroup eq "defense"
 !mmm     set weaponScriptCommand = m3mgdDefenseInitPayload(tokenID) & weaponScriptCommand
+!mmm   else if weaponsGroup eq "resistance"
+!mmm     set weaponScriptCommand = m3mgdDefenseInitPayload(tokenID, "magicAttack") & weaponScriptCommand
 !mmm   end if
 !mmm
 !mmm   set payload = "!mmm customize&#13;"
@@ -1771,6 +1775,11 @@
 !mmm     set payload = payload & literal("!mmm set cWeaponLabel=\"@" & "{" & tokenID.character_name & "|" & findattr(tokenID, "Abwehr", "AbwWaffe", weaponLabel) & "}\"") & "&#13;"
 !mmm     set payload = payload & literal("!mmm set cWeaponType=\"" & m3mgdDefenseWeaponType(weaponLabel) & "\"") & "&#13;"
 !mmm       
+!mmm   else if weaponsGroup eq "resistance"
+!mmm       
+!mmm     set payload = payload & literal("!mmm set cWeaponType=\"magicSpell\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set cWeaponLabel=\"" & weaponsGroup & "\"") & "&#13;"
+!mmm       
 !mmm   end if
 !mmm
 !rem   // Make or pass on any rolls
@@ -1807,38 +1816,60 @@
 !mmm
 !mmm end function
 !rem
-!rem // m3mgdSpellSelectorChatMenu([tokenID])  
+!rem // m3mgdSpellSelectorChatMenu([tokenID], [combatMode], [attackSpellType])
 !rem //
 !rem //   Returns code for a chat menu for tokenID to select among spells.
 !rem //   Buttons execute a customize block to hand over the chosen weapon to the relevant script. 
 !rem //   Scripts called differ between player characters (identified by the attribute "PC" evaluating as true) and NPCs.
 !rem //
-!mmm function m3mgdSpellSelectorChatMenu(tokenID)  
+!mmm function m3mgdSpellSelectorChatMenu(tokenID, combatMode, attackSpellType)  
 !mmm   
 !mmm   if isdefault(tokenID)
 !mmm     set tokenID = sender.token_id
 !mmm   end if
-!mmm   
-!mmm   set spellList = m3mgdSpellList(tokenID)
-!mmm   set selectorPrompt = "Auswahl: Zauber"
-!mmm   
-!mmm   if isunknown(tokenID.PC)
-!mmm     set selectorPrompt = selectorPrompt & " (🤐) "
-!mmm   end if
 !mmm
-!mmm   set chatMenu = ""
+!mmm   if isdefault(combatMode)
 !mmm
-!mmm   set itemCounter = 0
-!mmm
-!mmm   for spellAttr in spellList
+!mmm     set spellList = m3mgdSpellList(tokenID)
+!mmm     set selectorPrompt = "Auswahl: Zauber"
 !mmm     
-!mmm     set spellLabel = tokenID.(spellAttr)
-!mmm     set rollSpecs = { "cAttackRoll": "1d20", "cDamageRoll": tokenID.(findattr(tokenID, "Angriff", "Waffe", weaponLabel, "WaffeSchaden")) }
-!mmm     set payload = _m3mgdSpellButtonPayload(tokenID, spellLabel, rollSpecs)
-!mmm     set chatMenu = chatMenu & chatTightBoxFlowButton(spellLabel, "", payload)
-!mmm     set itemCounter = itemCounter + 1
+!mmm     if isunknown(tokenID.PC)
+!mmm       set selectorPrompt = selectorPrompt & " (🤐) "
+!mmm     end if
+!mmm  
+!mmm     set chatMenu = ""
+!mmm  
+!mmm     set itemCounter = 0
+!mmm  
+!mmm     for spellAttr in spellList
+!mmm       
+!mmm       set spellLabel = tokenID.(spellAttr)
+!mmm       set rollSpecs = { "cAttackRoll": "1d20" }
+!mmm       set payload = _m3mgdSpellButtonPayload(tokenID, spellLabel, rollSpecs)
+!mmm       set chatMenu = chatMenu & chatTightBoxFlowButton(spellLabel, "", payload)
+!mmm       set itemCounter = itemCounter + 1
+!mmm  
+!mmm     end for
+!mmm   
+!mmm   else if combatMode eq "defense" and attackSpellType eq "Umgebung"
+!mmm   
+!mmm     return m3mgdWeaponSelectorChatMenu(tokenID, "defense", "magic")
+!mmm   
+!mmm   else if combatMode eq "defense" and (attackSpellType eq "Geist" or attackSpellType eq "Körper")
+!mmm   
+!mmm     set selectorPrompt = "Resistenz gegen Zauber"
+!mmm     set noDefensePayload = "!mmm customize&#13;"
+!mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
+!mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
+!mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
+!mmm     set noDefensePayload = noDefensePayload & m3mgdScriptCommands.defense
+!mmm     set chatMenu = chatTightBoxFlowButton("Wehrlos", "", noDefensePayload, "#ce0f69", "#ffffff")
 !mmm
-!mmm   end for
+!mmm     set payload = _m3mgdWeaponButtonPayload(tokenID, "resistance", attackSpellType)
+!mmm     set chatMenu = chatMenu & chatTightBoxFlowButton("Resistenz " & attackSpellType, "", payload)
+!mmm     set itemCounter = itemCounter + 1
+!mmm     
+!mmm   end if
 !mmm
 !mmm   if itemCounter == 0
 !mmm     set chatMenu = chatMenu & chatTightBoxRow("(keine)")
@@ -2698,7 +2729,7 @@
 !mmm   
 !mmm end function
 !rem
-!rem // m3mgdChatDefensePrompt(targetID, [attackerID], weaponType)
+!rem // m3mgdChatDefensePrompt(targetID, [attackerID], weaponType, weaponsGroup)
 !rem //
 !mmm function m3mgdChatDefensePrompt(targetID, attackerID, weaponType, weaponsGroup)
 !mmm   
@@ -2714,15 +2745,30 @@
 !mmm   end if
 !mmm   
 !mmm   if attackerID.PC 
+!mmm
 !mmm     set sender = targetID.token_name
-!mmm     chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", weaponType)}
+!mmm     if weaponsGroup eq "magic"
+!mmm       set attackSpellType = attackerID.(findattr(attackerID, "Zauber", "Zauber", weaponType, "Ziel"))
+!mmm       chat: /w "${targetID.character_name}" ${m3mgdSpellSelectorChatMenu(targetID, "defense", attackSpellType)}
+!mmm     else 
+!mmm       chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", weaponType)}
+!mmm     end if
+!mmm
 !mmm   else
+!mmm
 !mmm     set sender = attackerID.token_name
 !mmm     set approvePayload = "!mmm script&#13;"
-!mmm     set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
-!mmm     set approvePayload = approvePayload & "!mmm end script&#13;"
 !mmm
-!mmm     set rerollPayload = _m3mgdWeaponButtonPayload(attackerID, weaponsGroup, script.cWeaponLabel, default, { cTargetID: targetID, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
+!mmm     if weaponsGroup eq "magic"
+!mmm       set attackSpellType = attackerID.(findattr(attackerID, "Zauber", "Zauber", weaponType, "Ziel"))
+!mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdSpellSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & attackSpellType & "\"))") & "&#13;"
+!mmm       set rerollPayload = _m3mgdSpellButtonPayload(attackerID, weaponsType, default, { cTargetID: targetID, cManualModifiers: script.cManualModifiers })
+!mmm     else 
+!mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
+!mmm       set rerollPayload = _m3mgdWeaponButtonPayload(attackerID, weaponsGroup, script.cWeaponLabel, default, { cTargetID: targetID, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
+!mmm     end if
+!mmm
+!mmm     set approvePayload = approvePayload & "!mmm end script&#13;"
 !mmm
 !mmm     chat: /w GM [🖅 **an ${targetID.character_name}**](${approvePayload}) &nbsp; *oder* &nbsp; [🎲 nochmal würfeln](${rerollPayload})
 !mmm   end if
