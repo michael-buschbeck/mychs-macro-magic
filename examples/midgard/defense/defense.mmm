@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.0.0 (2024-03-16)"
+!mmm   set scriptVersion = "defense 2.1.0 (2024-11-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -47,7 +47,7 @@
 !rem   //  
 !mmm   set customizable cDefenseRoll = roll("1d20")
 !mmm   set customizable cSemiManualModifiers = 0
-!mmm
+!mmm   set customizable cManualModifiers = 0
 !rem
 !rem   // Initialize & collect data
 !rem
@@ -79,26 +79,48 @@
 !mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: ${m3mgdExchange.(m3mgdAttrAttackTargetID).name} wurde zuletzt angegriffen, nicht ich.${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
 !mmm     exit script
 !mmm   end if
+!rem
+!rem   // Initialize modifier log to collect rule effects as applied by the script for user output
+!mmm   set modifierLog = ""
+!mmm   set modifierTooltip = ""
+!mmm
 !mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
 !mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
 !mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
 !mmm   set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
 !mmm   set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
 !mmm   set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
+!mmm   set defenseProperty = "Abwehr"
+!mmm   set defensePropertyBonus = "BonusAbwehr"
 !rem   // Special case: magic weapons or weapon spells with additional effects scripts whose name is stored in .max
 !mmm   if m3mgdExchange.(m3mgdAttrAttackWeaponType).max ne ""
 !mmm     set attackWeaponSpecialEffect = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
 !mmm   end if
+!rem   // Special case: magic spells whose name is stored in attack_type.max
+!mmm   if m3mgdExchange.(m3mgdAttrAttackType).max ne ""
+!mmm     set attackSpell = m3mgdExchange.(m3mgdAttrAttackType).max
+!mmm     set attackSpellType = attackWeaponType
+!mmm     if attackSpellType eq "Geist"
+!mmm       set defenseProperty = "ResGeist"
+!mmm       set defensePropertyBonus = "BonusResG"
+!mmm     else if attackSpellType eq "Körper"
+!mmm       set defenseProperty = "ResKörper"
+!mmm       set defensePropertyBonus = "BonusResK"
+!mmm     else if attackSpellType eq "Bewegung"
+!mmm       set defenseProperty = "Abwehr"
+!mmm       set defensePropertyBonus = "BonusAbwehr"
+!mmm     else 
+!mmm       do whisperback("Unknown target type for attack spell -- defense works only for spells targeting Geist, Körper or Umgebung. Aborting.")
+!mmm       exit script
+!mmm     end if
+!mmm     set modifierLog = modifierLog & " {{ Zauberei = Verteidigung mit **" & defenseProperty & "** (" & cOwnID.(defenseProperty) & "+" & cOwnID.(defensePropertyBonus) & ") }}"
+!mmm   end if
 !mmm
 !rem   // Initialize defender 
-!mmm   set effDefense = cOwnID.Abwehr + cOwnID.BonusAbwehr
+!mmm   set effDefense = cOwnID.(defenseProperty) + cOwnID.(defensePropertyBonus)
 !mmm   set endurance = cOwnID.(cEnduranceAttr)
 !mmm   set health = cOwnID.(cHealthAttr)
 !mmm   set maxHealth = cOwnID.(cHealthAttr).max
-!rem
-!rem   // Initialize modifier log to collect rule effects as applied by the script for user output
-!mmm   set modifierLog = ""
-!mmm   set modifierTooltip = ""
 !mmm
 !rem   // Check if an active defense is even possible
 !mmm   set defenseless = m3mgdIsDefenseless(cOwnID)
@@ -122,7 +144,7 @@
 !rem     // Not helpless, so let's prep for the big defense!
 !rem
 !rem     // Validate defense weapon, default to the only one or request manual entry
-!mmm     if cWeaponLabel eq ""
+!mmm     if cWeaponLabel eq "" and not attackType eq "magic"
 !mmm       set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
 !mmm       if not defenseWeaponList
 !mmm         do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
@@ -138,7 +160,7 @@
 !rem     // If user wants to use a parry weapon/shield, validate
 !mmm     set parryWeaponUsable = false
 !mmm     set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
-!mmm     if parryWeapon
+!mmm     if parryWeapon and not attackType eq "magic"
 !mmm       if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
 !mmm         set parryWeaponUsable = true
 !mmm       else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
@@ -158,7 +180,7 @@
 !mmm       else
 !mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos: bin erschöpft (AP=0)}}"
 !mmm       end if
-!mmm     else if not (cWeaponLabel eq cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWaffe")))
+!mmm     else if not (cWeaponLabel eq cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWaffe"))) and not attackType eq "magic"
 !rem       // Script was called for a parry weapon that was not found in the character sheet
 !mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nicht im Charakterblatt}}"
 !mmm       set cWeaponLabel = ""
@@ -239,8 +261,8 @@
 !mmm       set effEnduranceLoss = 0
 !mmm     end if
 !mmm
-!rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health)
-!mmm     set effArmorProtection = m3mgdEffectiveArmorProtection(cOwnID, attackWeaponType)
+!rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health, armor does not work against direct magic attacks)
+!mmm     set effArmorProtection = m3mgdEffectiveArmorProtection(cOwnID, attackWeaponType, attackType)
 !mmm     if not cOwnID.(cHealthAttr).max == 0 and effArmorProtection
 !mmm       set effHealthLoss = zeroOrPositive(attackDamage - effArmorProtection)
 !mmm     else if not cOwnID.(cHealthAttr).max == 0

@@ -2304,11 +2304,15 @@
 !mmm
 !mmm end function
 !rem
-!rem // m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
+!rem // m3mgdEffectiveArmorProtection(tokenID, attackWeaponType, [attackType])
 !rem //
 !rem //   Returns tokenID's current effective armor protection against attackWeapontype as a highlight() struct with metadata in the tooltip 
 !rem //
-!mmm function m3mgdEffectiveArmorProtection(tokenID, attackWeaponType)
+!mmm function m3mgdEffectiveArmorProtection(tokenID, attackWeaponType, attackType)
+!mmm
+!mmm   if not isdefault(attackType) and attackType eq "magic" and attackWeaponType ne "Umgebung"
+!mmm     return false
+!mmm   end if
 !mmm
 !mmm   set armorLabel = (tokenID.repeating.ruestung where ...RsGetragen == true).Rüstung
 !mmm   set nominalArmorProtection = (tokenID.repeating.ruestung where ...RsGetragen == true).RüsLP
@@ -2713,7 +2717,7 @@
 !mmm
 !mmm     if script.defenseSuccess and effEnduranceLoss > 0
 !mmm       chat: {\{Schaden=**${effEnduranceLoss}&nbsp;AP**}\}
-!mmm     else if not script.defenseSuccess and attackDamage & "" eq "0"
+!mmm     else if not script.defenseSuccess and (not attackDamage or attackDamage & "" eq "0")
 !mmm       chat: {\{Schaden=**SPEZIAL**}\}
 !mmm     else if not script.defenseSuccess
 !mmm       chat: {\{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}\}

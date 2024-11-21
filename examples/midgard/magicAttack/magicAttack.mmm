@@ -146,9 +146,7 @@
 !mmm
 !rem   // Register practice point, if applicable
 !mmm   if iscritical(cAttackRoll) and foeEndurance > 0
-!mmm     if m3mgdProcessCombatPP(cOwnID, "Zaubern", cTargetID)
-!mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
-!mmm     end if
+!mmm     set modifierLog = modifierLog & " {{Praxispunkt=Für die Zauberkategorie **" & cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "Prozess")) & "** bitte manuell notieren. [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
 !mmm   else if iscritical(cAttackRoll)
 !mmm     set modifierLog = modifierLog & " {{Kein Praxispunkt=Gegner war schon erschöpft (AP=0)}} "
 !mmm   end if
