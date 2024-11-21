@@ -1,0 +1,228 @@
+!rem // Midgard Magic Attack Script
+!rem //
+!mmm script
+!mmm   set scriptVersion = "1.0.0pre (2024-11-17)"
+!mmm
+!mmm   set customizable cCheckVersion = false
+!mmm   if cCheckVersion
+!mmm     do whisperback(scriptVersion)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // MMM compatibility check: die if MMM version too low
+!mmm   if version < 1.28
+!mmm     do whisperback("Abbruch: MMM-Version 1.28.0 oder höher erforderlich.")
+!mmm     exit script
+!mmm   end if
+!mmm
+!mmm   if not m3mgdExchange
+!mmm     do whisperback("Game-global m3mgdExchange variables missing.")
+!mmm     exit script
+!mmm   end if
+!rem
+!rem   // Config: set defaults for customizable variables
+!rem   //
+!rem   //  cOwnID               Override if the script should work from a sender not identical with the character
+!rem   //  cAttackSpell         The name of the attack spell (must be identical to your magic sheet)
+!rem   //  cSpellType           ?
+!rem   //
+!mmm   set customizable cOwnID = sender.token_id
+!mmm   if selected and sender.token_id ne selected and m3mgdValidateOwnTokenID(selected.token_id)
+!mmm     set customizable cOwnID = selected.token_id
+!mmm   else if m3mgdValidateOwnTokenID(sender.token_id)
+!mmm     set customizable cOwnID = sender.token_id
+!mmm   else
+!mmm     set customizable cOwnID = default
+!mmm   end if
+!mmm   set customizable cAttackSpell = default
+!mmm   set customizable cSpellType = default
+!rem
+!rem   //  cVerbose             Toggle narrative output: true for on, false for off (made for oeGStefan)
+!rem   //  cGMSilentMode        true/false: override if GM operates this script and wants to keep it silent
+!rem   //  cFoeNameDefault      Output label for targets without names
+!rem   //
+!mmm   set customizable cVerbose = true
+!mmm   set customizable cGMSilentMode = (cOwnID.PC != 1)
+!mmm   set customizable cFoeNameDefault = "Fiesling ohne Namen"
+!rem
+!rem   //  cTargetID            Target token: override in customize block with Roll20 target picker
+!rem   //  cSemiManualModifiers Override in customize block with nested dropdowns or preset value
+!rem   //  cManualModifiers     Override in customize block with input box or preset value
+!rem   //  cAttackRoll          Override in customize block to see beautifully animated 3D dice
+!rem   //  
+!mmm   set customizable cTargetID = ""
+!mmm   set customizable cManualModifiers = default
+!mmm   set customizable cAttackRoll = roll("1d20")
+!mmm
+!rem
+!rem   // Initialize & collect data
+!rem
+!rem   // Override chat sender for characters unconnected to the player (usually NPCs)
+!mmm   if cOwnID.token_name ne sender
+!mmm     set sender = cOwnID.token_name
+!mmm   end if
+!mmm   
+!rem   // Refetch token id to ensure access in case of erroneous override in customize block
+!mmm   set cOwnID = m3mgdValidateOwnTokenID(cOwnID)
+!mmm   if not cOwnID
+!mmm     do whisperback(scriptVersion & ": Invalid own token ID configured. Check custom config script.")
+!mmm     exit script
+!mmm   end if
+!rem
+!rem   // Abort attack if injury or critical effect status does not allow for it
+!mmm   if m3mgdIsUnfitToAttack(cOwnID)
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Constants
+!rem
+!mmm   set emojiMagic = "✨"
+!mmm
+!mmm   if isdefault(cManualModifiers)
+!mmm     do whisperback(m3mgdSpellSelectorChatMenu(cOwnID))
+!mmm     exit script
+!mmm   end if
+!mmm
+!rem   // Fetch attacker data
+!rem
+!mmm   set effCastingSkill = cOwnID.Zaubern + cOwnID.BonusZauber + cOwnID.ItemBZaubern + cOwnID.(findattr(cOwnID, "zauber", "Zauber", cAttackSpell, "ZauSpezBonus"))
+!mmm   set magicEnduranceCost = cOwnID.(findattr(sender, "zauber", "Zauber", cAttackSpell, "AP"))
+!rem
+!rem   // Fetch target data
+!rem
+!mmm   set foeName = cTargetID.token_name
+!mmm   if isdenied(foeName) or isunknown(foeName)
+!mmm     set foeName = cFoeNameDefault
+!mmm   end if
+!mmm   set foeEndurance = cTargetID.bar2
+!mmm
+!rem   // Collect attack modifiers
+!mmm   set modifiers = 0
+!mmm   set autoModifiers = 0
+!mmm   set modifierLog = ""
+!mmm   set modifierTooltip = ""
+!rem   // - Attacker's active status markers for exhaustion, injury etc.
+!mmm   for activeMod in m3mgdActiveStatusModifiers(cOwnID, "magicAttack")
+!mmm     set autoModifiers = autoModifiers + activeMod.rollModifiers.magicAttack
+!mmm     set modifierLog = modifierLog & " {{" & activeMod.label & "=" & sign(activeMod.rollModifiers.magicAttack, "display") & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " " & activeMod.label & "&nbsp;&nbsp;&nbsp;" & sign(activeMod.rollModifiers.magicAttack, "display") & " "
+!mmm   end for
+!rem   // - Target exhausted
+!mmm   if m3mgdIsExhausted(cTargetID)
+!mmm     set autoModifiers = autoModifiers + 4
+!mmm     set modifierLog = modifierLog & " {{Ziel erschöpft=+4}} "
+!mmm     set modifierTooltip = modifierTooltip & " Ziel&nbsp;erschöpft&nbsp;&nbsp;&nbsp;+4 "
+!mmm   end if
+!rem   // Process manual modifiers and sum up the various modifiers
+!mmm   if cManualModifiers != 0
+!mmm     set modifierLog = modifierLog & " {{Benutzereingabe=" & sign(cManualModifiers, "display") & "}} "
+!mmm     set modifierTooltip = modifierTooltip & " Benutzereingabe&nbsp;&nbsp;&nbsp;" & sign(cManualModifiers, "display") & " "
+!mmm   end if
+!mmm   set modifiers = modifiers + autoModifiers + cManualModifiers
+!mmm
+!rem   // Process endurance cost for spellcasting
+!mmm   if magicEnduranceCost > 0
+!mmm     set effEnduranceLoss = cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)) - m3mgdModifyEndurance(-1 * magicEnduranceCost, cOwnID, m3mgdGetEnduranceAttribute(cOwnID))
+!mmm     set modifierLog = modifierLog & "{{ " & cAttackSpell & "=-" & magicEnduranceCost & " AP }}"
+!mmm   end if
+!rem
+!rem   // Run & format rolls
+!rem
+!mmm   set attackResult = rollResult(cAttackRoll, effCastingSkill, modifiers)
+!mmm   set modifiers = highlight(sign(modifiers, "display"), "info", modifierTooltip)
+!mmm   if modifierLog eq ""
+!mmm     set modifierLog = "{{Boni/Mali=keine}}"
+!mmm   end if
+!mmm   set criticalAttack = iscritical(cAttackRoll)
+!mmm 
+!rem   // Save key attack data for defense script
+!mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
+!mmm     if not m3mgdExchangeStoreAttack("magic", cAttackSpell) 
+!mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
+!mmm     end if
+!mmm   end if
+!mmm
+!rem   // Register practice point, if applicable
+!mmm   if iscritical(cAttackRoll) and foeEndurance > 0
+!mmm     if m3mgdProcessCombatPP(cOwnID, "Zaubern", cTargetID)
+!mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
+!mmm     end if
+!mmm   else if iscritical(cAttackRoll)
+!mmm     set modifierLog = modifierLog & " {{Kein Praxispunkt=Gegner war schon erschöpft (AP=0)}} "
+!mmm   end if
+!mmm
+!mmm
+!mmm   if cVerbose
+!mmm     combine chat
+!rem       // Check if script is run for an NPC (whisper data to GM only)
+!mmm       if cGMSilentMode
+!mmm         chat: /w GM 
+!mmm       end if
+!mmm       chat [AttackOpening]:                Der magische Angriff mit dem Spruch **$[attackSpell]{cAttackSpell}** 
+!mmm       if criticalAttack
+!mmm         chat [AttackIsCriticalSuccess]:    ist ein **kritischer Erfolg** ($[attackResult]{attackResult+0}). 
+!mmm       else if isfumble(cAttackRoll)
+!mmm         chat [AttackIsCriticalFailure]:    ist ein **grausamer Patzer**. 
+!mmm       else if attackResult >= 22
+!mmm         chat [AttackSucceedsWell]:         scheint ordentlich zu gelingen ($[attackResult]{attackResult+0}).
+!mmm       else if attackResult >= 20
+!mmm         chat [AttackSucceedsBarely]:       klappt gerade so ($[attackResult]{attackResult+0}).
+!mmm       else if attackResult >= 18
+!mmm         chat [AttackFailsBarely]:          scheitert knapp ($[attackResult]{attackResult+0}). 
+!mmm       else
+!mmm         chat [AttackFailsClearly]:         geht in die Hose ($[attackResult]{attackResult+0}). 
+!mmm       end if
+!mmm       if attackResult >= 20 
+!mmm         chat [AttackSuccessClosing]:       $[targetName]{foeName} kann nun Widerstand leisten.
+!mmm       else
+!mmm         chat [AttackFailureClosing]:       $[targetName]{foeName} war zu keinem Zeitpunkt in Gefahr.
+!mmm       end if
+!mmm     end combine
+!mmm   end if
+!rem
+!rem   // Add data table for easy reference
+!mmm   combine chat
+!rem     // Check if script is run for an NPC (whisper data to GM only)
+!mmm     if cGMSilentMode
+!mmm       chat: /w GM 
+!mmm     end if
+!mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Zauberangriff mit ${cAttackSpell}
+!mmm     do chat(m3mgdRerunButton(cOwnID, "magicAttack", cAttackSpell, {"cAttackRoll": cAttackRoll}))
+!mmm     chat:      }} 
+!mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(cTargetID)}}}
+!mmm     if iscritical(cAttackRoll) 
+!mmm       chat:    {{Kritischer Erfolg=${attackResult} }}
+!mmm     else if isfumble(cAttackRoll)
+!mmm       chat:    {{Kritischer Fehlschlag=${attackResult} [🎲](${m3mgdCriticalEffectRollPayload(cOwnID, "magicAttackFailure", cTargetID)}${cssTableCellButton}) }}
+!mmm     else if attackResult >= 20
+!mmm       chat:    {{Erfolg=${attackResult}}}
+!mmm     else 
+!mmm       chat:    {{Fehlschlag=${attackResult}}}
+!mmm     end if
+!mmm     chat:      {{Boni/Mali=${modifiers}}}
+!mmm     if attackResult >= 20 and not isfumble(cAttackRoll)
+!mmm       chat:    {{Zauberdauer=${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "ZD"))} (Art: ${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "Art"))}/${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "Prozess"))})}}
+!mmm       chat:    {{Zauberziel=${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "Ziel"))} / ${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "WB"))} / max. ${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "RW"))} Entfernung}}
+!mmm       chat:    {{Wirkungsdauer=${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "WD"))}}}
+!mmm     end if
+!mmm   end combine
+!mmm
+!rem   // If present, reduce counters for attack-specific modifier effects
+!mmm   set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(cOwnID, "attack")
+!mmm   if endOfActionSummary
+!mmm     set modifierLog = modifierLog & " {{ Angriffszähler=" & endOfActionSummary & " }}"
+!mmm   end if
+!mmm
+!mmm   if modifierLog ne "{{Boni/Mali=keine}}"
+!mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
+!mmm   end if
+!mmm
+!rem   // Injury & exhaustion special effects
+!mmm   if effEnduranceLoss > 0
+!mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
+!mmm   end if
+!mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
+!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cAttackSpell, "magic")
+!mmm   end if
+!mmm
+!mmm end script
