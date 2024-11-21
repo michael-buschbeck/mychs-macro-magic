@@ -2757,14 +2757,17 @@
 !mmm   else
 !mmm
 !mmm     set sender = attackerID.token_name
+!mmm     set attackNarrative = "**" & targetID.token_name & "**, aufpassen! Ich mach dich platt! Wenn du nicht sofort reagierst, sieht es düster aus... "
 !mmm     set approvePayload = "!mmm script&#13;"
 !mmm
 !mmm     if weaponsGroup eq "magic"
 !mmm       set attackSpellType = attackerID.(findattr(attackerID, "Zauber", "Zauber", weaponType, "Ziel"))
 !mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdSpellSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & attackSpellType & "\"))") & "&#13;"
+!mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '" & attackNarrative & "')") & "&#13;"
 !mmm       set rerollPayload = _m3mgdSpellButtonPayload(attackerID, weaponsType, default, { cTargetID: targetID, cManualModifiers: script.cManualModifiers })
 !mmm     else 
 !mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
+!mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '" & attackNarrative & "')") & "&#13;"
 !mmm       set rerollPayload = _m3mgdWeaponButtonPayload(attackerID, weaponsGroup, script.cWeaponLabel, default, { cTargetID: targetID, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
 !mmm     end if
 !mmm
