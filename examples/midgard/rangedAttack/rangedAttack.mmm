@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.0 (2024-05-24)"
+!mmm   set scriptVersion = "2.0.1 (2024-11-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -113,13 +113,13 @@
 !mmm       do whisperback("Fehler: " & cOwnID.name & " hat keine Fernkampfwaffe " & cWeaponLabel & ".")
 !mmm       exit script
 !mmm     else 
-!mmm       do m3mgdWeaponSelectorChatMenu(cOwnID, "ranged")
+!mmm       chat: /w "${cOwnID.character_name}" ${m3mgdWeaponSelectorChatMenu(cOwnID, "ranged")}
 !mmm       exit script
 !mmm     end if
 !mmm   end if
 !mmm
 !mmm   if isdefault(cSemiManualModifiers) or isdefault(cManualModifiers)
-!mmm     do m3mgdWeaponSelectorChatMenu(cOwnID, "ranged")
+!mmm     chat: /w "${cOwnID.character_name}" ${m3mgdWeaponSelectorChatMenu(cOwnID, "ranged")}
 !mmm     exit script
 !mmm   end if
 !mmm
