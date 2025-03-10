@@ -46,7 +46,10 @@
 !mmm   set customizable cmd = default
 !mmm   set customizable tokenID = default
 !mmm   set customizable spellID = default
+!mmm   set customizable spellCategory = default
+!mmm   set customizable spellLevel = default
 !mmm
+!mmm   set spellIndex = deserialize("MacroSheet".m3mgdSpellBookIndex)
 !mmm   set spellBook = deserialize("MacroSheet".m3mgdSpellBook)
 !mmm
 !mmm   if cmd eq "addSpellToSheet" and tokenID ne "" and not isdefault(spellID)
@@ -64,20 +67,57 @@
 !mmm       do whisperback("spellManager: Irgendwas ist schiefgegangen beim Versuch, den Zauber '" & spell.value.Zauber & "' ins Zauberblatt von '" & tokenID.character_name & "' zu schreiben.")
 !mmm     end if 
 !mmm
+!mmm   else if cmd eq "listSpells" and not isdefault(spellCategory)
+!mmm
+!rem     // Print relevant part of spellbook to chat
+!mmm     combine chat
+!mmm       set heading = "Die Große Midgard-Zauberschule :: " & spellCategory
+!mmm       if spellCategory eq "Zauberspruch"
+!mmm         set heading = heading & " (Stufe " & spellLevel & ")"
+!mmm       end if 
+!mmm       do chat(chatTightBoxHeader(heading))
+!mmm       for spell in spellBook...
+!mmm         if (spell.value.Kategorie eq spellCategory and spellCategory ne "Zauberspruch") or (spellCategory eq "Zauberspruch" and spell.value.Kategorie eq spellCategory and spell.value.Stufe == spellLevel)
+!mmm           set payload = literal("!mmm customize") & "&#13;"
+!mmm           set payload = payload & literal("!mmm set cmd=\"addSpellToSheet\"") & "&#13;"
+!mmm           set payload = payload & literal("!mmm set tokenID=selected.token_id") & "&#13;"
+!mmm           set payload = payload & literal("!mmm set spellID=\"" & spell.key & "\"") & "&#13;"
+!mmm           set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|spellManager}" & "&#13;"
+!mmm           do chat(chatTightBoxFlowButton(spell.value.Zauber, "", payload))
+!mmm         end if
+!mmm       end for
+!mmm       set payload = literal("!mmm customize") & "&#13;"
+!mmm       set payload = payload & literal("!mmm set cmd=default") & "&#13;"
+!mmm       set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|spellManager}" & "&#13;"
+!mmm       do chat(chatTightBoxButtonRow("<< zurück zum Index", "", payload))
+!mmm     end combine
+!mmm
 !mmm   else if isdefault(cmd)
 !mmm
-!rem     // Print spellbook to chat
+!rem     // Print spellbook index to chat
 !mmm     combine chat
-!mmm       do chat(chatTightBoxHeader("Das Große Midgard-Zauberbuch"))
-!mmm       for spell in spellBook...
-!mmm         set payload = literal("!mmm customize") & "&#13;"
-!mmm         set payload = payload & literal("!mmm set cmd=\"addSpellToSheet\"") & "&#13;"
-!mmm         set payload = payload & literal("!mmm set tokenID=selected.token_id") & "&#13;"
-!mmm         set payload = payload & literal("!mmm set spellID=\"" & spell.key & "\"") & "&#13;"
-!mmm         set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|spellManager}" & "&#13;"
-!mmm         do chat(chatTightBoxFlowButton(spell.value.Zauber, "", payload))
+!mmm       do chat(chatTightBoxHeader("Die Große Midgard-Zauberschule"))
+!mmm       for spellCategory in spellIndex...
+!mmm         if spellCategory.key eq "Zauberspruch"
+!mmm           do chat(chatTightBoxSubHeader(spellCategory))
+!mmm           for spellLevel in (1,2,3,4,5,6,7,8,9,10,11,12)
+!mmm             set payload = literal("!mmm customize") & "&#13;"
+!mmm             set payload = payload & literal("!mmm set cmd=\"listSpells\"") & "&#13;"
+!mmm             set payload = payload & literal("!mmm set spellCategory=\"" & spellCategory.key & "\"") & "&#13;"
+!mmm             set payload = payload & literal("!mmm set spellLevel=\"" & spellLevel & "\"") & "&#13;"
+!mmm             set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|spellManager}" & "&#13;"
+!mmm             do chat(chatTightBoxFlowButton(spellLevel, "", payload))
+!mmm           end for
+!mmm         else 
+!mmm           set payload = literal("!mmm customize") & "&#13;"
+!mmm           set payload = payload & literal("!mmm set cmd=\"listSpells\"") & "&#13;"
+!mmm           set payload = payload & literal("!mmm set spellCategory=\"" & spellCategory.key & "\"") & "&#13;"
+!mmm           set payload = payload & literal("!mmm end customize") & "&#13;" & "&#x25;{MacroSheet|spellManager}" & "&#13;"
+!mmm           do chat(chatTightBoxButtonRow(spellCategory, "", payload))
+!mmm         end if
 !mmm       end for
 !mmm     end combine
+!mmm
 !mmm   end if
 !mmm
 !mmm end script
