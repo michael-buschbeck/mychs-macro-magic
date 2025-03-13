@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.5.0-pre (2024-11-17)"
+!mmm   set libVersion = "libMidgard v1.5.0-pre (2025-03-12)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -32,6 +32,7 @@
 !mmm   set m3mgdAttrAttackDamage        = "m3mgd_attack_damage"
 !mmm   set m3mgdAttrAttackDamageRoll    = "m3mgd_attack_damage_roll"
 !mmm   set m3mgdAttrAttackWeaponType    = "m3mgd_attack_weapon_type"
+!mmm   set m3mgdAttrAttackEnduranceCost = "m3mgd_attack_endurance_cost"
 !mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
 !mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
 !mmm
@@ -87,7 +88,7 @@
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
 !mmm   publish to game: m3mgdScriptCommands, m3mgdExchange
-!mmm   publish to game: m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType
+!mmm   publish to game: m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType, m3mgdAttrAttackEnduranceCost
 !mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
 !mmm   publish to game: m3mgdExchangeAttrList
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
@@ -1273,6 +1274,13 @@
 !mmm     end if
 !mmm   end if
 !mmm
+!mmm   if script.magicEnduranceCost ne undef
+!mmm     set storeTarget = storeTarget + 1
+!mmm     if setattr(dataExchangeID, m3mgdAttrAttackEnduranceCost, script.magicEnduranceCost) == script.magicEnduranceCost
+!mmm       set storeCounter = storeCounter + 1
+!mmm     end if
+!mmm   end if
+!mmm
 !mmm   return (storeCounter == storeTarget)
 !mmm   
 !mmm end function
@@ -1858,6 +1866,7 @@
 !mmm   else if combatMode eq "defense" and attackSpellType eq "Umgebung"
 !mmm   
 !mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, spellDamage)
+!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, spellDamage)
 !mmm     return m3mgdWeaponSelectorChatMenu(tokenID, "defense", "magic")
 !mmm   
 !mmm   else if combatMode eq "defense" and (attackSpellType eq "Geist" or attackSpellType eq "Körper")
@@ -1865,7 +1874,7 @@
 !mmm     if isdefault(spellDamage)
 !mmm       do whisperback("Schadenseingabe fehlt.")
 !mmm     else
-!mmm       if setattr(m3mgdExchange, m3mgdAttrAttackDamage, spellDamage) != spellDamage
+!mmm       if setattr(m3mgdExchange, m3mgdAttrAttackDamage, spellDamage) + setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, spellDamage) != spellDamage / 2
 !mmm         do whisperback("Schaden konnte nicht gespeichert werden.")
 !mmm       end if
 !mmm     end if
@@ -2708,7 +2717,12 @@
 !mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "attackSuccess", script.cOwnID)}${cssTableCellButton})
 !mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", m3mgdExchange.(m3mgdAttrAttackerID))}${cssTableCellButton}) }\}
 !mmm     else if script.criticalAttack == true
-!mmm       chat: {\{Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "attackSuccess", script.cOwnID)}${cssTableCellButton}) }\}
+!mmm       chat: {\{Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** 
+!mmm       if m3mgdExchange.(m3mgdAttrAttackType) ne "magic"
+!mmm         chat: [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "attackSuccess", script.cOwnID)}${cssTableCellButton}) }\}
+!mmm       else
+!mmm         chat: }\}
+!mmm       end if
 !mmm     else if isfumble(script.cDefenseRoll)
 !mmm       chat: {\{Kritischer Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", m3mgdExchange.(m3mgdAttrAttackerID))}${cssTableCellButton}) }\}
 !mmm     else 
@@ -2724,7 +2738,12 @@
 !mmm     end if
 !mmm
 !mmm     if script.criticalAttack == true and m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
-!mmm       chat: {\{Kritischer Zaubererfolg=Zauber wirkt **doppelt so stark** oder ist **halb so teuer**: Nach Wahl des Zauberers umsetzen.}\}
+!mmm       chat: {\{Kritischer Zaubererfolg=
+!mmm       if script.defenseResult < 20
+!mmm         chat: Zauber wirkt **doppelt so stark** (Abwehrergebnis < 20, Schaden wurde verdoppelt)}\}
+!mmm       else 
+!mmm         chat: Zauber ist **halb so teuer** (Zauberer wurden ${floor(script.attackEnduranceCost/2)} AP gutgeschrieben).}\}
+!mmm       end if
 !mmm     end if
 !mmm
 !mmm     if script.newHealth < 0 and script.timeToDie < 0
@@ -2781,7 +2800,7 @@
 !mmm       set attackSpellType = attackerID.(findattr(attackerID, "Zauber", "Zauber", weaponType, "Ziel"))
 !mmm       set approvePayload = approvePayload & literal("!mmm set attackDamage='?" & "{Schadenspunkte, falls Resistenz/Abwehr misslingt|}'") & "&#13;"
 !mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdSpellSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & attackSpellType & "\", attackDamage))") & "&#13;"
-!mmm       set rerollPayload = _m3mgdSpellButtonPayload(attackerID, weaponsType, default, { cTargetID: targetID, cManualModifiers: script.cManualModifiers })
+!mmm       set rerollPayload = _m3mgdSpellButtonPayload(attackerID, weaponType, default, { cTargetID: targetID, cManualModifiers: script.cManualModifiers })
 !mmm     else 
 !mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
 !mmm       set rerollPayload = _m3mgdWeaponButtonPayload(attackerID, weaponsGroup, script.cWeaponLabel, default, { cTargetID: targetID, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
