@@ -1,7 +1,7 @@
 !rem // Midgard Magic Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.0.0pre (2024-11-17)"
+!mmm   set scriptVersion = "1.0.1pre (2025-03-12)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -203,7 +203,8 @@
 !mmm     if attackResult >= 20 and not isfumble(cAttackRoll)
 !mmm       chat:    {{Zauberdauer=${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "ZD"))} (Art: ${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "Art"))}/${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "Prozess"))})}}
 !mmm       chat:    {{Zauberziel=${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "Ziel"))} / ${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "WB"))} / max. ${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "RW"))} Entfernung}}
-!mmm       chat:    {{Wirkungsdauer=${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "WD"))}}}
+!mmm       chat:    {{Wirkungsdauer=${cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "WD"))} }}
+!rem  //     chat:    {{Material/Kosten=...}}
 !mmm     end if
 !mmm   end combine
 !mmm

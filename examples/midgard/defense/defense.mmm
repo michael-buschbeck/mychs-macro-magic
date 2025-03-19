@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.1.0 (2024-11-17)"
+!mmm   set scriptVersion = "defense 2.1.1 (2025-03-12)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -84,6 +84,7 @@
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !mmm
+!mmm   set attackerID = m3mgdExchange.(m3mgdAttrAttackerID)
 !mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
 !mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
 !mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
@@ -99,6 +100,7 @@
 !rem   // Special case: magic spells whose name is stored in attack_type.max
 !mmm   if m3mgdExchange.(m3mgdAttrAttackType).max ne ""
 !mmm     set attackSpell = m3mgdExchange.(m3mgdAttrAttackType).max
+!mmm     set attackEnduranceCost = m3mgdExchange.(m3mgdAttrAttackEnduranceCost)
 !mmm     set attackSpellType = attackWeaponType
 !mmm     if attackSpellType eq "Geist"
 !mmm       set defenseProperty = "ResGeist"
@@ -106,7 +108,7 @@
 !mmm     else if attackSpellType eq "Körper"
 !mmm       set defenseProperty = "ResKörper"
 !mmm       set defensePropertyBonus = "BonusResK"
-!mmm     else if attackSpellType eq "Bewegung"
+!mmm     else if attackSpellType eq "Umgebung"
 !mmm       set defenseProperty = "Abwehr"
 !mmm       set defensePropertyBonus = "BonusAbwehr"
 !mmm     else 
@@ -254,6 +256,13 @@
 !rem     // Defense failed (or there was no defense)
 !mmm     set defenseSuccess = false
 !mmm
+!rem     // Critically successful magic attacks
+!mmm     if attackSpell and criticalAttack and defenseResult < 20
+!mmm       set attackDamage = attackDamage * 2
+!mmm     else if attackSpell and criticalAttack and not isfumble(cDefenseRoll) and attackEnduranceCost >= 2
+!mmm       set attackerNewEndurance = m3mgdModifyEndurance(floor(attackEnduranceCost / 2), attackerID)
+!mmm     end if
+!mmm
 !rem     // Defender loses full hit points worth of endurance regardless of armor, if not an undead creature with unlimited endurance
 !mmm     if not cOwnID.(cEnduranceAttr).max == 0
 !mmm       set effEnduranceLoss = attackDamage
@@ -287,15 +296,15 @@
 !mmm   end if
 !rem
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
-!mmm   if isChar(m3mgdExchange.(m3mgdAttrAttackerID)) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
-!mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackDamageRoll, m3mgdExchange.(m3mgdAttrAttackerID), cOwnID)
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": +" & xpGain & " EP}} "
+!mmm   if isChar(attackerID) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
+!mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackDamageRoll, attackerID, cOwnID)
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackerID.name & ": +" & xpGain & " EP}} "
 !mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (∞ AP, abgewehrt) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackerID.name & ": keine (∞ AP, abgewehrt) }} "
 !mmm   else if cNoDefense or (cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0)
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (Ziel erschöpft/wehrlos) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackerID.name & ": keine (Ziel erschöpft/wehrlos) }} "
 !mmm   else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (kein AP-Verlust) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackerID.name & ": keine (kein AP-Verlust) }} "
 !mmm   end if
 !mmm
 !rem   // Register practice point, if applicable
@@ -360,7 +369,7 @@
 !mmm   
 !rem   // Weapon-specific special damage effects
 !mmm   if not defenseSuccess and attackWeaponSpecialEffect
-!mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, m3mgdExchange.(m3mgdAttrAttackerID))
+!mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, attackerID)
 !mmm   end if
 !mmm
 !rem   // Injury & exhaustion special effects
