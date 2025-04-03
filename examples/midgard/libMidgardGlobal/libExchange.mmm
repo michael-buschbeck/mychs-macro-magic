@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v0.2 WIP (2025-03-13)"
+!mmm   set libVersion = "libExchange v0.3 WIP (2025-03-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
@@ -40,8 +40,8 @@
 !rem // 
 !mmm function m3mgdExchangeFlushRegistry(registryID)
 !mmm
-!mmm   if not m3mgdExchange.(registryID)
-!mmm     debug chat: m3mgdExchangeFlushRegistry(): attribute m3mgdExchange.${registryID} not found or not accessible. Aborting.
+!mmm   if isdenied(m3mgdExchange.(registryID))
+!mmm     debug chat: m3mgdExchangeFlushRegistry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -65,8 +65,14 @@
 !rem // 
 !mmm function m3mgdExchangeStoreEntry(registryID, entry)
 !mmm
-!mmm   if not m3mgdExchange.(registryID) and isdenied(m3mgdExchange.(registryID))
+!mmm   if isdenied(m3mgdExchange.(registryID))
 !mmm     debug chat: m3mgdExchangeStoreEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     return false
+!mmm   else if isunknown(entry.origin.character_id) or isdenied(entry.origin.character_id)
+!mmm     debug chat: m3mgdExchangeStoreEntry(): cannot store data with unknown or denied reference for **origin** token/character: ${entry.origin} Aborting.
+!mmm     return false
+!mmm   else if isunknown(entry.target.character_id) or isdenied(entry.target.character_id)
+!mmm     debug chat: m3mgdExchangeStoreEntry(): cannot store data with unknown or denied reference for **target** token/character: ${entry.target} Aborting.
 !mmm     return false
 !mmm   else if not m3mgdExchange.(registryID)
 !mmm     set registry = entry
@@ -88,10 +94,14 @@
 !rem // 
 !mmm function m3mgdExchangeGetData(registryID, searchCriteria)
 !mmm
-!mmm   if not m3mgdExchange.(registryID)
-!mmm     debug chat: m3mgdExchangeGetData(): attribute m3mgdExchange.${registryID} not found or not accessible. Aborting.
+!mmm   if isdenied(m3mgdExchange.(registryID))
+!mmm     debug chat: m3mgdExchangeGetData(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   end if
+!mmm
+!mmm   if isdefault(searchCriteria)
+!mmm     return m3mgdExchangeGetRegistry(registryID)
+!mmm   end if 
 !mmm
 !mmm   set registry = m3mgdExchangeGetRegistry(registryID)
 !mmm   for entry in registry
@@ -119,8 +129,11 @@
 !rem // 
 !mmm function m3mgdExchangeDeleteEntry(registryID, searchCriteria)
 !mmm
-!mmm   if not m3mgdExchange.(registryID)
-!mmm     debug chat: m3mgdExchangeDeleteEntry(): attribute m3mgdExchange.${registryID} not found or not accessible. Aborting.
+!mmm   if isdenied(m3mgdExchange.(registryID))
+!mmm     debug chat: m3mgdExchangeDeleteEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     return false
+!mmm   else if not m3mgdExchange.(registryID)
+!mmm     debug chat: m3mgdExchangeDeleteEntry(): data exchange registry ${registryID} empty/non-existant => nothing to delete. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -154,24 +167,36 @@
 !rem // 
 !mmm function m3mgdExchangeRegEdit(registryID, searchCriteria)
 !mmm
-!mmm   if not m3mgdExchange.(registryID)
-!mmm     debug chat: m3mgdExchangeRegEdit(): attribute m3mgdExchange.${registryID} not found or not accessible. Aborting.
+!mmm   if isdenied(m3mgdExchange.(registryID))
+!mmm     debug chat: m3mgdExchangeRegEdit(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   do chatTightBoxHeader("m3mgdExchangeRegEdit")
+!mmm   set output = chat(chatTightBoxHeader("Datenaustausch aufräumen"))
 !mmm   for entry in m3mgdExchangeGetData(registryID, searchCriteria)
-!mmm     set outputEntry = ""
+!mmm     set outputEntry = "❌ "
 !mmm     set tooltip = ""
 !mmm     for propertyPair in entry...
-!mmm       if isunknown(propertyPair.value.token_id)
-!mmm         set outputEntry = outputEntry & " | " & propertyPair.key & ": " & propertyPair.value
+!mmm       if isunknown(propertyPair.value.token_id) or isdenied(propertyPair.value.token_id)
+!mmm         set outputEntry = outputEntry & propertyPair.key & ": **" & propertyPair.value & "** | "
 !mmm       else
-!mmm         set outputEntry = outputEntry & " | " & propertyPair.key & ": " & propertyPair.value.token_name
-!mmm         set tooltip = propertyPair.value
+!mmm         set outputEntry = outputEntry & propertyPair.key & ": **" & propertyPair.value.token_name & "** (" & propertyPair.value & ") | "
 !mmm       end if
 !mmm     end for
-!mmm     do chatTightBoxButtonRow(outputEntry, tooltip, "")
+!mmm     set tooltip = "❌ Diesen Eintrag löschen"
+!mmm     set payload = literal("!mmm customize") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set cmd=\"deleteEntry\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set deleteConfirm=true") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set searchByAction=\"" & entry.action & "\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set searchByOrigin=\"" & entry.origin & "\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set searchByTarget=\"" & entry.target & "\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set searchByAttackType=\"" & entry.attackType & "\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set searchByAttackResult=\"" & entry.attackResult & "\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set searchByDamageResult=\"" & entry.damageResult & "\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm set searchByMagicSpell=\"" & entry.magicSpell & "\"") & "&#13;"
+!mmm     set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.exchangeRegEdit & "&#13;"
+!mmm     set output = output & chatTightBoxButtonRow(outputEntry, tooltip, payload)
 !mmm   end for
+!mmm   do chat(output)
 !mmm
 !mmm end function

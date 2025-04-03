@@ -1,0 +1,47 @@
+!rem // exchangeRegEdit
+!rem
+!mmm script
+!mmm   set customizable cmd = default
+!mmm   set customizable deleteConfirm = false
+!mmm   set customizable searchByAction = default
+!mmm   set customizable searchByOrigin = default
+!mmm   set customizable searchByTarget = default
+!mmm   set customizable searchByAttackType = default
+!mmm   set customizable searchByAttackResult = default
+!mmm   set customizable searchByMagicSpell = default
+!mmm   set customizable searchByDamageResult = default
+!mmm
+!mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, exchangeRegEdit: "&#x25;{MacroSheet|exchangeRegEdit}" }
+!mmm   set dataExchangeID = "m3mgdTestCombatExchange"
+!mmm
+%{MacroSheetLibrary|libExchange}
+!mmm   do _libExchange()
+!mmm   
+!mmm   debug chat: libExchange loaded and initialized.
+!mmm
+!mmm
+!mmm   if cmd eq "deleteEntry" and deleteConfirm == true and (searchByAction and searchByOrigin and searchByTarget)
+!mmm
+!mmm     set searchCriteria = { action: searchByAction, origin: searchByOrigin, target: searchByTarget }
+!mmm     if not isdefault(searchByAttackType)
+!mmm       set searchCriteria = { searchCriteria, attackType: searchByAttackType }
+!mmm     end if
+!mmm     if not isdefault(searchByAttackResult)
+!mmm       set searchCriteria = { searchCriteria, attackResult: searchByAttackResult }
+!mmm     end if
+!mmm     if not isdefault(searchByDamageResult)
+!mmm       set searchCriteria = { searchCriteria, damageResult: searchByDamageResult }
+!mmm     end if
+!mmm     if not isdefault(searchByMagicSpell)
+!mmm       set searchCriteria = { searchCriteria, magicSpell: searchByMagicSpell }
+!mmm     end if
+!mmm     do m3mgdExchangeDeleteEntry(dataExchangeID, searchCriteria)
+!mmm     do m3mgdExchangeRegEdit(dataExchangeID)
+!mmm
+!mmm   else 
+!mmm
+!mmm     do m3mgdExchangeRegEdit(dataExchangeID)
+!mmm
+!mmm   end if
+!mmm
+!mmm end script

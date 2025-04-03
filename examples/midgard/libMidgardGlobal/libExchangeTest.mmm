@@ -1,7 +1,8 @@
 !rem // libExchangeTest
 !rem //
 !mmm script
-!mmm   
+!mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, exchangeRegEdit: "&#x25;{MacroSheet|exchangeRegEdit}" }
+!mmm
 %{MacroSheetLibrary|libExchange}
 !mmm   do _libExchange()
 !mmm   
@@ -11,31 +12,31 @@
 !mmm
 !mmm function basicTests()   
 !mmm   debug chat: Storing a single data entry ...
-!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Yorric MacRathgar".token_id, action: "attack", target: "someone, not quite sure who", type: "magic", rollResult: 27 } )
+!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Yorric MacRathgar".token_id, action: "combatAttack", target: "someone, not quite sure who", type: "magic", rollResult: 27 } )
 !mmm   
 !mmm   debug chat: Storing a second data entry ...
-!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Yerrick MacRothgar".token_id, action: "attack", target: "Sad Orc 1", type: "melee", rollResult: 21 } )
+!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Yerrick MacRothgar".token_id, action: "combatAttack", target: "Titos Panathos", type: "melee", rollResult: 21 } )
 !mmm   
 !mmm   debug chat: Retrieving the entire registry ... 
 !mmm   debug do m3mgdExchangeGetRegistry(script.dataExchangeID)
 !mmm   
-!mmm   debug chat: Retrieving a single entry using a single search criterion ... 
+!mmm   debug chat: Retrieving a single entry using a single search criterion that does not exist ... 
 !mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { origin: "Yorric MacRathgar".token_id }  )
 !mmm   
-!mmm   debug chat: Retrieving all "attack" entries using a single search criterion ... 
-!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "attack" }  )
+!mmm   debug chat: Retrieving all "combatAttack" entries using a single search criterion ... 
+!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "combatAttack" }  )
 !mmm   
 !mmm   debug chat: Storing a third data entry ...
-!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Titos Panathos".token_id, action: "attack", target: "Sad Orc 2", type: "magic", rollResult: 39 } )
+!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Titos Panathos".token_id, action: "combatAttack", target: "Yerrick MacRothgar".token_id, type: "magic", rollResult: 39 } )
 !mmm   
 !mmm   debug chat: Failing to retrieving anything using the wrong search criterion ... 
 !mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { origin: sender }  )
 !mmm   
 !mmm   debug chat: Retrieving all magical attack entries using two search criteria ... 
-!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "attack", type: "magic" }  )
+!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "combatAttack", type: "magic" }  )
 !mmm   
 !mmm   debug chat: Testing last-criterion-counts, should yield no results ... 
-!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "attack", type: "magic", rollResult: 21 }  )
+!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "combatAttack", type: "magic", rollResult: 21 }  )
 !mmm   
 !mmm   debug chat: Deleting a single entry
 !mmm   debug do m3mgdExchangeDeleteEntry(script.dataExchangeID, { origin: "Yerrick MacRothgar".token_id } )
@@ -71,17 +72,49 @@
 !mmm   
 !mmm end function
 !mmm
+!mmm function m3mgdExchangeRegEdit(registryID, searchCriteria)
+!mmm
+!mmm   if isdenied(m3mgdExchange.(registryID))
+!mmm     debug chat: m3mgdExchangeRegEdit(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set output = chat(chatTightBoxHeader("m3mgdExchangeRegEdit"))
+!mmm   for entry in m3mgdExchangeGetData(registryID, searchCriteria)
+!mmm     set outputEntry = ""
+!mmm     set tooltip = ""
+!mmm     for propertyPair in entry...
+!mmm       if isunknown(propertyPair.value.token_id) or isdenied(propertyPair.value.token_id)
+!mmm         set outputEntry = outputEntry & " | " & propertyPair.key & ": " & propertyPair.value
+!mmm       else
+!mmm         set outputEntry = outputEntry & " | " & propertyPair.key & ": " & propertyPair.value.token_name
+!mmm         set tooltip = propertyPair.value
+!mmm       end if
+!mmm     end for
+!mmm     set payload = literal("!mmm customize") & "&#13;"
+!mmm     set payload = payload & literal("!mmm do chat('called to do sth')") & "&#13;"
+!mmm     set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.exchangeRegEdit & "&#13;"
+!mmm     set output = output & chatTightBoxButtonRow(outputEntry, tooltip, payload)
+!mmm   end for
+!mmm   do chat(output)
+!mmm end function
 !rem //
 !rem // === TEST routine =====================================================================================================================================
 !mmm function combatDataTest()  
 !mmm   
 !mmm   
-!mmm   set testAttackData = { origin: "Yorrick MacRathgar".token_id, target: "-OCOtXCg3YoWVEwO1dKI", attackType: "magic", magicSpell: "", attackResult: 34, criticalAttack: false, damageResult: 7, damageRoll: 5 }
+!mmm   set testAttackData = { origin: "Yorric MacRathgar".token_id, target: "-OCOtXCg3YoWVEwO1dKI", action: "combatAttack", attackType: "magic", magicSpell: "Frostball", attackResult: 34, criticalAttack: false, damageResult: 7, damageRoll: 5 }
+!mmm   do m3mgdExchangeStoreAttack(testAttackData)
+!mmm   set testAttackData = { origin: "Titos Panathos".token_id, target: "-OCOtXCg3YoWVEwO1dKI", action: "combatAttack", attackType: "magic", magicSpell: "Frostball", attackResult: 34, criticalAttack: false, damageResult: 7, damageRoll: 5 }
 !rem   // mundane attacks require additionally weaponType with up to two values!
 !mmm   do m3mgdExchangeStoreAttack(testAttackData)
 !mmm   
+!mmm   set testAttackData = { origin: "Yorric MacRathgar".token_id, target: "-OCOtXCg3YoWVEwO1dKI", action: "combatAttack", attackType: "magic", magicSpell: "Feuerlanze", attackResult: 25, criticalAttack: false, damageResult: 9, damageRoll: 9 }
+!mmm   do m3mgdExchangeStoreAttack(testAttackData)
+!mmm   set testAttackData = { origin: "Titos Panathos".token_id, target: "-OCOtXCg3YoWVEwO1dKI", action: "combatAttack", attackType: "magic", magicSpell: "Feuerlanze", attackResult: 25, criticalAttack: false, damageResult: 9, damageRoll: 9 }
+!mmm   do m3mgdExchangeStoreAttack(testAttackData)
 !mmm   
-!mmm   
+!rem   do m3mgdExchangeRegEdit(dataExchangeID)
 !mmm   
 !mmm   
 !mmm   
@@ -106,7 +139,7 @@
 !mmm end function  
 !mmm   
 !mmm   
-!rem //  do basicTests()
+!mmm   do basicTests()
 !mmm   do combatDataTest()
 !mmm   
 !mmm   
