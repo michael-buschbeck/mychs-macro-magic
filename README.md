@@ -882,6 +882,8 @@ MMM has a more general notion of what attributes are than Roll20 itself and adds
 | `name`               | `"Finn"`             | read   |       | Character or token name
 | `token_id`           |                      | read   |       | Token ID
 | `token_name`         | `"Finn's Spiderbro"` | read   |       | Token name – provided for Roll20 parity
+| `token_name_plate`   | `true`               | write  |       | Whether the token has a name plate
+| `token_name_shown`   | `true`               | write  |       | Whether the token's name plate is shown to other players
 | `character_id`       |                      | read   |       | Character ID
 | `character_name`     | `"Finn"`             | read   |       | Character name – provided for Roll20 parity
 | `page`               | `"-MRZtlN_1XJe4k"`   | read   |       | Page ID on which the token is displayed
@@ -1248,6 +1250,7 @@ If nothing is sent to chat at all after entering this command, MMM isn't install
 
 | Version | Date       | What's new?
 | ------- | ---------- | -----------
+| 1.37.0  | 2024-10-11 | Support `token_name_plate` and `token_name_shown` token attributes
 | 1.36.0  | 2023-06-13 | Support `selected` override
 | 1.35.0  | 2022-05-10 | Support `bars_style_top`, `bars_style_overlap`, and `bars_style_compact` token attributes
 | 1.34.0  | 2022-05-06 | Add markup-preserving `&&` string concatenation operator
