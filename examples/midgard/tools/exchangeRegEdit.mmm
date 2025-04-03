@@ -1,4 +1,6 @@
 !rem // exchangeRegEdit
+!rem //
+!rem // last revision 2025-04-03
 !rem
 !mmm script
 !mmm   set customizable cmd = default

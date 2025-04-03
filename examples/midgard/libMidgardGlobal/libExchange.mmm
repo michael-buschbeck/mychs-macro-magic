@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v0.3 WIP (2025-03-16)"
+!mmm   set libVersion = "libExchange v0.4 WIP (2025-04-03)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
@@ -172,7 +172,8 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set output = chat(chatTightBoxHeader("Datenaustausch aufräumen"))
+!mmm   set output = chatTightBoxHeader("Datenaustausch aufräumen")
+!mmm   set entryCount = 0
 !mmm   for entry in m3mgdExchangeGetData(registryID, searchCriteria)
 !mmm     set outputEntry = "❌ "
 !mmm     set tooltip = ""
@@ -196,7 +197,13 @@
 !mmm     set payload = payload & literal("!mmm set searchByMagicSpell=\"" & entry.magicSpell & "\"") & "&#13;"
 !mmm     set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.exchangeRegEdit & "&#13;"
 !mmm     set output = output & chatTightBoxButtonRow(outputEntry, tooltip, payload)
+!mmm     set entryCount = entryCount + 1
 !mmm   end for
+!mmm
+!mmm   if entryCount == 0
+!mmm     set output = output & chatTightBoxRow("(keine Einträge)")
+!mmm   end if 
+!mmm
 !mmm   do chat(output)
 !mmm
 !mmm end function
