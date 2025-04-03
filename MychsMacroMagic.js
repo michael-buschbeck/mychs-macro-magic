@@ -1,10 +1,12 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.37.0";
+const MMM_VERSION = "1.37.1";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
+
+const MMM_CALLBACK_SENDER = "MMM-f26ae389-6a7f-4708-bb50-cc97a474a437";
 
 on("ready", function()
 {
@@ -150,6 +152,36 @@ on("chat:message", function(msg)
             {
                 log("MMM [" + MMM_STARTUP_INSTANCE + "] shutting down on startup of MMM [" + startupInstance + "]");
                 MychScriptContext.running = false;
+            }
+
+            return;
+        }
+    }
+
+    if (msg.playerid == "API" && msg.who == MMM_CALLBACK_SENDER)
+    {
+        let callbackSource = msg.content;
+
+        let callbackRegExp = /^(?<command>!mmm\s+callback\s*)(?<arguments>.+)?$/u;
+        let callbackMatch = callbackRegExp.exec(callbackSource);
+
+        if (callbackMatch)
+        {
+            let callbackToken = callbackMatch.groups.arguments;
+            let callback = MychScriptContext.callbacks[callbackToken];
+
+            delete MychScriptContext.callbacks[callbackToken];
+
+            if (MychExpression.isFunction(callback))
+            {
+                try
+                {
+                    callback();
+                }
+                catch (exception)
+                {
+                    log("MMM [" + MMM_STARTUP_INSTANCE + "] callback error: " + (exception.stack || exception));
+                }
             }
 
             return;
@@ -522,6 +554,8 @@ class MychScriptContext extends MychStash
 
     static globals = new MychStash();
     static players = {};
+    static callbacks = {};
+    static callbackSerial = 0;
     static impersonation = undefined;
 
     version = MMM_VERSION;
@@ -1298,9 +1332,19 @@ class MychScriptContext extends MychStash
             MychScriptContext.impersonation = prevImpersonation;
         }
 
-        sendChat(sender, "/direct MMM starts impersonation of " + impersonation.playerid, startImpersonation)
+        MychScriptContext.$sendChatCallback(startImpersonation);
         sendChat(sender, message);
-        sendChat(sender, "/direct MMM stops impersonation of " + impersonation.playerid, stopImpersonation)
+        MychScriptContext.$sendChatCallback(stopImpersonation);
+    }
+
+    static $sendChatCallback(callback)
+    {
+        let callbackSerial = MychScriptContext.callbackSerial++;
+        let callbackToken = MMM_STARTUP_INSTANCE + "/" + callbackSerial;
+
+        MychScriptContext.callbacks[callbackToken] = callback;
+
+        sendChat(MMM_CALLBACK_SENDER, "!mmm callback " + callbackToken, null, {noarchive: true});
     }
 
     chat(options_or_message, message_if_options = undefined)
