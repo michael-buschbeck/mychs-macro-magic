@@ -76,8 +76,9 @@
 !mmm function combatDataTest()  
 !mmm   
 !mmm   
-!mmm   
-!mmm   
+!mmm   set testAttackData = { origin: "Yorrick MacRathgar".token_id, target: "-OCOtXCg3YoWVEwO1dKI", attackType: "magic", magicSpell: "", attackResult: 34, criticalAttack: false, damageResult: 7, damageRoll: 5 }
+!rem   // mundane attacks require additionally weaponType with up to two values!
+!mmm   do m3mgdExchangeStoreAttack(testAttackData)
 !mmm   
 !mmm   
 !mmm   
@@ -105,7 +106,8 @@
 !mmm end function  
 !mmm   
 !mmm   
-!mmm   do basicTests()
+!rem //  do basicTests()
+!mmm   do combatDataTest()
 !mmm   
 !mmm   
 !mmm   
