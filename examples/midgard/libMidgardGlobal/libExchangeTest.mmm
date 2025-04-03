@@ -6,46 +6,74 @@
 !mmm   do _libExchange()
 !mmm   
 !mmm   debug chat: libExchange loaded and initialized.
-!mmm   
+!mmm
+!mmm   set dataExchangeID = "m3mgdTestCombatExchange"
+!mmm
+!mmm function basicTests()   
 !mmm   debug chat: Storing a single data entry ...
-!mmm   debug do m3mgdExchangeStoreEntry("m3mgdTestCombatExchange", { origin: sender.token_id, action: "attack", target: "someone, not quite sure who", type: "magic", rollResult: 27 } )
+!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Yorric MacRathgar".token_id, action: "attack", target: "someone, not quite sure who", type: "magic", rollResult: 27 } )
 !mmm   
 !mmm   debug chat: Storing a second data entry ...
-!mmm   debug do m3mgdExchangeStoreEntry("m3mgdTestCombatExchange", { origin: "Yerrick MacRothgar".token_id, action: "attack", target: "Sad Orc 1", type: "melee", rollResult: 21 } )
+!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Yerrick MacRothgar".token_id, action: "attack", target: "Sad Orc 1", type: "melee", rollResult: 21 } )
 !mmm   
 !mmm   debug chat: Retrieving the entire registry ... 
-!mmm   debug do m3mgdExchangeGetRegistry("m3mgdTestCombatExchange")
+!mmm   debug do m3mgdExchangeGetRegistry(script.dataExchangeID)
 !mmm   
 !mmm   debug chat: Retrieving a single entry using a single search criterion ... 
-!mmm   debug do m3mgdExchangeGetData("m3mgdTestCombatExchange", { origin: sender.token_id }  )
+!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { origin: "Yorric MacRathgar".token_id }  )
 !mmm   
 !mmm   debug chat: Retrieving all "attack" entries using a single search criterion ... 
-!mmm   debug do m3mgdExchangeGetData("m3mgdTestCombatExchange", { action: "attack" }  )
+!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "attack" }  )
 !mmm   
 !mmm   debug chat: Storing a third data entry ...
-!mmm   debug do m3mgdExchangeStoreEntry("m3mgdTestCombatExchange", { origin: "Titos Panathos".token_id, action: "attack", target: "Sad Orc 2", type: "magic", rollResult: 39 } )
+!mmm   debug do m3mgdExchangeStoreEntry(script.dataExchangeID, { origin: "Titos Panathos".token_id, action: "attack", target: "Sad Orc 2", type: "magic", rollResult: 39 } )
 !mmm   
 !mmm   debug chat: Failing to retrieving anything using the wrong search criterion ... 
-!mmm   debug do m3mgdExchangeGetData("m3mgdTestCombatExchange", { origin: sender }  )
+!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { origin: sender }  )
 !mmm   
 !mmm   debug chat: Retrieving all magical attack entries using two search criteria ... 
-!mmm   debug do m3mgdExchangeGetData("m3mgdTestCombatExchange", { action: "attack", type: "magic" }  )
+!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "attack", type: "magic" }  )
 !mmm   
 !mmm   debug chat: Testing last-criterion-counts, should yield no results ... 
-!mmm   debug do m3mgdExchangeGetData("m3mgdTestCombatExchange", { action: "attack", type: "magic", rollResult: 21 }  )
+!mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "attack", type: "magic", rollResult: 21 }  )
 !mmm   
 !mmm   debug chat: Deleting a single entry
-!mmm   debug do m3mgdExchangeDeleteEntry("m3mgdTestCombatExchange", { origin: "Yerrick MacRothgar".token_id } )
+!mmm   debug do m3mgdExchangeDeleteEntry(script.dataExchangeID, { origin: "Yerrick MacRothgar".token_id } )
 !mmm   
 !mmm   debug chat: Retrieving the entire registry ... 
 !mmm   combine chat
-!mmm     for entry in m3mgdExchangeGetRegistry("m3mgdTestCombatExchange")
+!mmm     for entry in m3mgdExchangeGetRegistry(script.dataExchangeID)
 !mmm       do chat(chatTightBoxRow(entry))
 !mmm     end for
 !mmm   end combine
 !mmm 
 !mmm   debug chat: Flushing the registry ... 
-!mmm   debug do m3mgdExchangeFlushRegistry("m3mgdTestCombatExchange")
+!mmm   debug do m3mgdExchangeFlushRegistry(script.dataExchangeID)
+!mmm end function  
+!mmm   
+!rem // === rewritten libMidgard functions ===================================================================================================================
+!rem //
+!rem
+!rem // m3mgdExchangeStoreAttack(attackData)
+!rem //
+!mmm function m3mgdExchangeStoreAttack(attackData)
+!mmm   
+!mmm   set dataExchangeID = script.dataExchangeID
+!mmm
+!rem   // Check for another active attack by the same origin against the same target, which would need to be deleted first to avoid confusion
+!mmm   set activeAttacks = m3mgdExchangeGetData(dataExchangeID, { origin: attackData.origin, target: attackData.target })
+!mmm   if ? activeAttacks
+!mmm     debug chat: While storing attack data for other scripts, found unresolved attack(s) by the same origin against the same target. Delete manually and retry. ${activeAttacks}
+!mmm   end if 
+!rem 
+!rem   // Store attackData
+!mmm   return m3mgdExchangeStoreEntry(dataExchangeID, attackData)
+!mmm   
+!mmm end function
+!mmm
+!rem //
+!rem // === TEST routine =====================================================================================================================================
+!mmm function combatDataTest()  
 !mmm   
 !mmm   
 !mmm   
@@ -74,13 +102,10 @@
 !mmm   
 !mmm   
 !mmm   
+!mmm end function  
 !mmm   
 !mmm   
-!mmm   
-!mmm   
-!mmm   
-!mmm   
-!mmm   
+!mmm   do basicTests()
 !mmm   
 !mmm   
 !mmm   

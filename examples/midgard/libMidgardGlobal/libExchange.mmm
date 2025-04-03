@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v0.1 WIP (2024-06-06)"
+!mmm   set libVersion = "libExchange v0.2 WIP (2025-03-13)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
@@ -28,6 +28,7 @@
 !rem   // Publish game-global functions defined below
 !rem
 !mmm   publish to game: m3mgdExchangeFlushRegistry, m3mgdExchangeGetRegistry, m3mgdExchangeStoreEntry, m3mgdExchangeGetData, m3mgdExchangeDeleteEntry
+!mmm   publish to game: m3mgdExchangeRegEdit
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -144,5 +145,33 @@
 !mmm   debug chat: deleting ${foundEntries}
 !mmm   set serialRegistry = serialize(survivingEntries)
 !mmm   return (setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry)
+!mmm
+!mmm end function
+!rem 
+!rem // m3mgdExchangeRegEdit(registryID, searchCriteria)
+!rem // 
+!rem //   Shows entries from a central data registry, identified by the searchCriteria provided (all at the same time/AND), and offers editing and removal.
+!rem // 
+!mmm function m3mgdExchangeRegEdit(registryID, searchCriteria)
+!mmm
+!mmm   if not m3mgdExchange.(registryID)
+!mmm     debug chat: m3mgdExchangeRegEdit(): attribute m3mgdExchange.${registryID} not found or not accessible. Aborting.
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   do chatTightBoxHeader("m3mgdExchangeRegEdit")
+!mmm   for entry in m3mgdExchangeGetData(registryID, searchCriteria)
+!mmm     set outputEntry = ""
+!mmm     set tooltip = ""
+!mmm     for propertyPair in entry...
+!mmm       if isunknown(propertyPair.value.token_id)
+!mmm         set outputEntry = outputEntry & " | " & propertyPair.key & ": " & propertyPair.value
+!mmm       else
+!mmm         set outputEntry = outputEntry & " | " & propertyPair.key & ": " & propertyPair.value.token_name
+!mmm         set tooltip = propertyPair.value
+!mmm       end if
+!mmm     end for
+!mmm     do chatTightBoxButtonRow(outputEntry, tooltip, "")
+!mmm   end for
 !mmm
 !mmm end function
