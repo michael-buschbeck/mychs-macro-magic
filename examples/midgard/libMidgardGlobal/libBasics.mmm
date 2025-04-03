@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.4.4 (2024-08-11)"
+!mmm   set libVersion = "libMidgardBasics v1.4.5 (2025-03-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -290,6 +290,7 @@
 !mmm end function
 !rem
 !rem // chatTightBoxButtonSubHeader(label, tooltip, payload, bgColor, textColor)
+!rem //   WARNING: payload MUST NOT CONTAIN any colons (":"), neither literally nor escaped ("\:") or run through MMM's literal() function.
 !rem //
 !mmm function chatTightBoxButtonSubHeader(label, tooltip, payload, bgColor, textColor)
 !mmm   if isdefault(bgColor)
@@ -310,6 +311,7 @@
 !mmm end function
 !rem
 !rem // chatTightBoxButtonRow(label, tooltip, payload, bgColor, textColor)
+!rem //   WARNING: payload MUST NOT CONTAIN any colons (":"), neither literally nor escaped ("\:") or run through MMM's literal() function.
 !rem //
 !mmm function chatTightBoxButtonRow(label, tooltip, payload, bgColor, textColor)
 !mmm   if isdefault(bgColor)
@@ -330,6 +332,7 @@
 !mmm end function
 !rem
 !rem // chatTightBoxFlowButton(label, tooltip, payload, bgColor, textColor)
+!rem //   WARNING: payload MUST NOT CONTAIN any colons (":"), neither literally nor escaped ("\:") or run through MMM's literal() function.
 !rem //
 !mmm function chatTightBoxFlowButton(label, tooltip, payload, bgColor, textColor)
 !mmm   if isdefault(bgColor)
@@ -353,6 +356,7 @@
 !rem //
 !rem //   Returns Roll20 chat code for a series of buttons defined by the list of structs { label, payload, [bgColor, textColor] } provided as buttons.
 !rem //   CSS display is set to inline, so if the number is small and the labels are short, they should fit in a single row.
+!rem //   WARNING: payload MUST NOT CONTAIN any colons (":"), neither literally nor escaped ("\:") or run through MMM's literal() function.
 !rem //
 !mmm function chatTightBoxMultiButton(buttons)
 !mmm   set gap = '[&nbsp;](#\" style=\"display:block;margin:0px;padding:0px;font-size:5px;border:none)'
