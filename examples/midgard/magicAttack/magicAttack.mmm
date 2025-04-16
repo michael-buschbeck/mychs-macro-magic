@@ -1,7 +1,7 @@
 !rem // Midgard Magic Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.0.1pre (2025-03-12)"
+!mmm   set scriptVersion = "magicAttack 1.1.0-WIP (2025-04-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -139,7 +139,11 @@
 !mmm 
 !rem   // Save key attack data for defense script
 !mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
-!mmm     if not m3mgdExchangeStoreAttack("magic", cAttackSpell) 
+!mmm     set attackData = { origin: cOwnID.token_id, target: cTargetID.token_id, action: "combatAttack", attackType: "magic", attackResult: attackResult, criticalAttack: criticalAttack, magicSpell: cAttackSpell, spellType: cSpellType }
+!mmm     if magicEnduranceCost
+!mmm       set attackData = { attackData, magicEnduranceCost: magicEnduranceCost }
+!mmm     end if
+!mmm     if not m3mgdStoreAttack(attackData) 
 !mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
 !mmm     end if
 !mmm   end if
@@ -223,7 +227,7 @@
 !mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
 !mmm   end if
 !mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
-!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cAttackSpell, "magic")
+!mmm     do m3mgdChatDefensePrompt(attackData)
 !mmm   end if
 !mmm
 !mmm end script

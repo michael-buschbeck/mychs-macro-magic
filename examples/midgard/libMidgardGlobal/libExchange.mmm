@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v1.0-WIP3 (2025-04-16)"
+!mmm   set libVersion = "libExchange v1.0-pre (2025-04-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
@@ -30,7 +30,7 @@
 !rem
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: m3mgdExchangeFlushRegistry, m3mgdExchangeGetRegistry, m3mgdExchangeStoreEntry, m3mgdExchangeGetData, m3mgdExchangeDelete, m3mgdExchangeEditEntry
+!mmm   publish to game: m3mgdExchangeFlushRegistry, m3mgdExchangeGetRegistry, m3mgdExchangeStoreEntry, m3mgdExchangeGetData, m3mgdExchangeDelete, m3mgdExchangeEdit
 !mmm   publish to game: m3mgdExchangeRegEdit, m3mgdExchangeAssignAttack
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -159,17 +159,17 @@
 !mmm
 !mmm end function
 !rem 
-!rem // m3mgdExchangeEditEntry(registryID, searchCriteria, newData)
+!rem // m3mgdExchangeEdit(registryID, searchCriteria, newData)
 !rem // 
-!rem //   Changes an entry by overwriting relevant fields with newData.
+!rem //   Changes all entries that match the given searchCriteria by overwriting relevant fields with newData.
 !rem // 
-!mmm function m3mgdExchangeEditEntry(registryID, searchCriteria, newData)
+!mmm function m3mgdExchangeEdit(registryID, searchCriteria, newData)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
-!mmm     debug chat: m3mgdExchangeEditEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     debug chat: m3mgdExchangeEdit(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   else if not m3mgdExchange.(registryID)
-!mmm     debug chat: m3mgdExchangeEditEntry(): data exchange registry ${registryID} empty/non-existant => nothing to edit. Aborting.
+!mmm     debug chat: m3mgdExchangeEdit(): data exchange registry ${registryID} empty/non-existant => nothing to edit. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -177,7 +177,7 @@
 !mmm   for entry in registry
 !mmm     set match = false
 !mmm     for rule in searchCriteria...
-!mmm       if entry.(rule.key) eq rule.value
+!mmm       if isdefault(rule.value) or entry.(rule.key) eq rule.value
 !mmm         set match = true
 !mmm       else
 !mmm         set match = false
@@ -187,16 +187,23 @@
 !mmm     if match
 !mmm       set newEntry = { entry, newData }
 !mmm       set newRegistry = newRegistry, newEntry
+!mmm       set modifiedEntries = { modifiedEntries, newEntry }
 !mmm     else
 !mmm       set newRegistry = newRegistry, entry
 !mmm     end if
 !mmm   end for
 !mmm
-!mmm   debug chat: modified entry, new state: ${newEntry}
-!mmm   set serialRegistry = serialize(newRegistry)
-!mmm   if setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry
-!mmm     return newEntry
+!mmm   if match
+!mmm     set serialRegistry = serialize(newRegistry)
+!mmm     if setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry
+!mmm       debug chat: Changes saved: ${modifiedEntries}
+!mmm       return modifiedEntries
+!mmm     else
+!mmm       debug chat: Unable to save changes: ${modifiedEntries}
+!mmm       return false
+!mmm     end if
 !mmm   else
+!mmm     debug chat: No match, no change for criteria ${searchCriteria} with new data ${newData}.
 !mmm     return false
 !mmm   end if
 !mmm

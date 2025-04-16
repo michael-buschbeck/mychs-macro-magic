@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.6.0-WIP7 (2025-04-16)"
+!mmm   set libVersion = "libMidgard v1.6.0-pre (2025-04-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -101,7 +101,7 @@
 !rem
 !mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
-!mmm   publish to game: m3mgdStoreAttack, m3mgdRetrieveAttack, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
+!mmm   publish to game: m3mgdStoreAttack, m3mgdRetrieveAttack, m3mgdModifyAttackDamage, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdHandleStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
 !mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects, m3mgdRemovePersistentEffect
 !mmm   publish to game: m3mgdRemovePersistentEffectPayload, m3mgdShowPersistentEffectsPayload
@@ -283,6 +283,14 @@
 !mmm     return false
 !mmm   end if
 !mmm
+!mmm end function
+!rem
+!rem // m3mgdModifyAttackDamage(originID, targetID, attackType, attackResult, damageResult, newDamage)
+!rem // 
+!rem //   Modifies the data identified by the first several arguments by overwriting their damageResult property with newDamage. Wrapper function to get around Roll20 chat buttons' incompatibility with MMM struct syntax (:).
+!rem // 
+!mmm function m3mgdModifyAttackDamage(originID, targetID, attackType, attackResult, damageResult, newDamage)
+!mmm   return m3mgdExchangeEdit(m3mgdExchangeRegistries.combatData, { action: "combatAttack", attackType: attackType, origin: originID.token_id, target: targetID.token_id, attackResult: attackResult, damageResult: damageResult }, { damageResult: newDamage, damageRoll: newDamage })
 !mmm end function
 !rem
 !rem // _m3mgdExecuteCode(codeLines, myID, foeID)
@@ -1761,13 +1769,13 @@
 !mmm
 !mmm end function
 !rem
-!rem // m3mgdSpellSelectorChatMenu([tokenID], [combatMode], [attackSpellType], [spellDamage])
+!rem // m3mgdSpellSelectorChatMenu([tokenID], [combatMode], [attackSpellType], [attackerID], [spellDamage])
 !rem //
 !rem //   Returns code for a chat menu for tokenID to select among spells.
 !rem //   Buttons execute a customize block to hand over the chosen weapon to the relevant script. 
 !rem //   Scripts called differ between player characters (identified by the attribute "PC" evaluating as true) and NPCs.
 !rem //
-!mmm function m3mgdSpellSelectorChatMenu(tokenID, combatMode, attackSpellType, spellDamage)  
+!mmm function m3mgdSpellSelectorChatMenu(tokenID, combatMode, attackSpellType, attackerID, spellDamage)  
 !mmm   
 !mmm   if isdefault(tokenID)
 !mmm     set tokenID = sender.token_id
@@ -1798,19 +1806,10 @@
 !mmm   
 !mmm   else if combatMode eq "defense" and attackSpellType eq "Umgebung"
 !mmm   
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamage, spellDamage)
-!mmm     do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, spellDamage)
 !mmm     return m3mgdWeaponSelectorChatMenu(tokenID, "defense", "magic")
 !mmm   
 !mmm   else if combatMode eq "defense" and (attackSpellType eq "Geist" or attackSpellType eq "Körper")
 !mmm   
-!mmm     if isdefault(spellDamage)
-!mmm       do whisperback("Schadenseingabe fehlt.")
-!mmm     else
-!mmm       if setattr(m3mgdExchange, m3mgdAttrAttackDamage, spellDamage) + setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, spellDamage) != spellDamage / 2
-!mmm         do whisperback("Schaden konnte nicht gespeichert werden.")
-!mmm       end if
-!mmm     end if
 !mmm     set selectorPrompt = "Resistenz gegen Zauber"
 !mmm     set noDefensePayload = "!mmm customize&#13;"
 !mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
@@ -2697,52 +2696,62 @@
 !mmm   
 !mmm end function
 !rem
-!rem // m3mgdChatDefensePrompt(targetID, [attackerID], weaponType, weaponsGroup)
+!rem // m3mgdChatDefensePrompt(attackData)
 !rem //
-!mmm function m3mgdChatDefensePrompt(targetID, attackerID, weaponType, weaponsGroup)
+!mmm function m3mgdChatDefensePrompt(attackData)
 !mmm   
-!mmm   if isdefault(targetID) or not m3mgdValidateOwnTokenID(targetID)
+!mmm   if isdefault(attackData.target) or not m3mgdValidateOwnTokenID(attackData.target)
 !mmm     do whisperback("m3mgdChatDefensePrompt() called without a valid target ID.")
 !mmm     return false
 !mmm   end if
-!mmm   if (isdefault(attackerID) or not m3mgdValidateOwnTokenID(attackerID)) and m3mgdValidateOwnTokenID(script.cOwnID)
-!mmm     set attackerID = script.cOwnID
-!mmm   else if isdefault(attackerID)
+!mmm   if (isdefault(attackData.origin) or not m3mgdValidateOwnTokenID(attackData.origin)) and m3mgdValidateOwnTokenID(script.cOwnID)
+!mmm     set attackData = { attackData, origin: script.cOwnID }
+!mmm   else if isdefault(attackData.origin)
 !mmm     do whisperback("m3mgdChatDefensePrompt() called without a valid attacker ID, defaulting to script.cOwnID failed.")
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   if attackerID.PC 
+!mmm   if attackData.origin.PC 
 !mmm
-!mmm     set sender = targetID.token_name
+!mmm     set sender = attackData.target.token_name
 !mmm     if weaponsGroup eq "magic"
-!mmm       set attackSpellType = attackerID.(findattr(attackerID, "Zauber", "Zauber", weaponType, "Ziel"))
-!mmm       chat: /w "${targetID.character_name}" ${m3mgdSpellSelectorChatMenu(targetID, "defense", attackSpellType)}
+!mmm       chat: /w "${targetID.character_name}" ${m3mgdSpellSelectorChatMenu(targetID, "defense", attackData.spellType)}
 !mmm     else 
-!mmm       chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", weaponType)}
+!mmm       chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", attackData.weaponType)}
 !mmm     end if
 !mmm
 !mmm   else
 !mmm
-!mmm     set sender = attackerID.token_name
-!mmm     set attackNarrative = "**" & targetID.token_name & "**, aufpassen! Ich mach dich platt! Wenn du nicht sofort reagierst, sieht es düster aus... "
-!mmm     set approvePayload = "!mmm script&#13;"
-!mmm     set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '" & attackNarrative & "')") & "&#13;"
+!mmm     set sender = attackData.origin.token_name
+!mmm     set attackNarrative = "**" & attackData.target.token_name & "**, aufpassen! Ich mach dich platt! Wenn du nicht sofort reagierst, sieht es düster aus... "
 !mmm
-!mmm     if weaponsGroup eq "magic"
-!mmm       set attackSpellType = attackerID.(findattr(attackerID, "Zauber", "Zauber", weaponType, "Ziel"))
+!mmm     set approvePayload = "!mmm script&#13;"
+!mmm     set approvePayload = approvePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '" & attackNarrative & "')") & "&#13;"
+!mmm
+!mmm     set modifyDamagePayload = "!mmm script&#13;"
+!mmm     set modifyDamagePayload = modifyDamagePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '" & attackNarrative & "')") & "&#13;"
+!mmm     set modifyDamagePayload = modifyDamagePayload & literal("!mmm set newDamage='?" & "{Schadenspunkte, falls Resistenz/Abwehr misslingt|}'") & "&#13;"
+!mmm     set modifyDamagePayload = modifyDamagePayload & literal("!mmm do m3mgdModifyAttackDamage('" & attackData.origin & "', '" & attackData.target & "', '" & attackData.attackType & "', " & attackData.attackResult & ", default, newDamage)") & "&#13;"
+!mmm
+!mmm     if attackData.attackType eq "magic"
 !mmm       set approvePayload = approvePayload & literal("!mmm set attackDamage='?" & "{Schadenspunkte, falls Resistenz/Abwehr misslingt|}'") & "&#13;"
-!mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdSpellSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & attackSpellType & "\", attackDamage))") & "&#13;"
-!mmm       set rerollPayload = _m3mgdSpellButtonPayload(attackerID, weaponType, default, { cTargetID: targetID, cManualModifiers: script.cManualModifiers })
+!mmm       set approvePayload = approvePayload & literal("!mmm do m3mgdModifyAttackDamage('" & attackData.origin & "', '" & attackData.target & "', '" & attackData.attackType & "', " & attackData.attackResult & ", default, attackDamage)") & "&#13;"
+!mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '/w \"" & attackData.target.character_name & "\" ' & m3mgdSpellSelectorChatMenu(\"" & attackData.target & "\", \"defense\", \"" & attackData.spellType & "\", \"" & attackData.origin & "\", attackDamage))") & "&#13;"
+!mmm       set modifyDamagePayload = modifyDamagePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '/w \"" & attackData.target.character_name & "\" ' & m3mgdSpellSelectorChatMenu(\"" & attackData.target & "\", \"defense\", \"" & attackData.spellType & "\", \"" & attackData.origin & "\", attackDamage))") & "&#13;"
+!mmm       set rerollPayload = _m3mgdSpellButtonPayload(attackData.origin, attackData.magicSpell, default, { cTargetID: attackData.target, cManualModifiers: script.cManualModifiers })
 !mmm     else 
-!mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackerID.token_name & "', '/w \"" & targetID.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & targetID & "\", \"defense\", \"" & weaponType & "\"))") & "&#13;"
-!mmm       set rerollPayload = _m3mgdWeaponButtonPayload(attackerID, weaponsGroup, script.cWeaponLabel, default, { cTargetID: targetID, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
+!mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '/w \"" & attackData.target.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & attackData.target & "\", \"defense\", \"" & attackData.weaponType & "\"))") & "&#13;"
+!mmm       set modifyDamagePayload = modifyDamagePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '/w \"" & attackData.target.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & attackData.target & "\", \"defense\", \"" & attackData.weaponType & "\"))") & "&#13;"
+!mmm       set rerollPayload = _m3mgdWeaponButtonPayload(attackData.origin, attackData.attackType, script.cWeaponLabel, default, { cTargetID: attackData.target, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
 !mmm     end if
 !mmm
 !mmm     set approvePayload = approvePayload & "!mmm end script&#13;"
+!mmm     set modifyDamagePayload = modifyDamagePayload & "!mmm end script&#13;"
 !mmm
-!mmm     chat: /w GM [🖅 **an ${targetID.character_name}**](${approvePayload}) &nbsp; *oder* &nbsp; [🎲 nochmal würfeln](${rerollPayload})
+!mmm     chat: /w GM [✅ & 🖅 **an ${attackData.target.character_name}**](${approvePayload})&nbsp;&nbsp;[💥 Schaden ändern](${modifyDamagePayload})&nbsp;&nbsp;[🎲🗘 nochmal würfeln](${rerollPayload})
+!mmm
 !mmm   end if
+!mmm
 !mmm   return true
 !mmm   
 !mmm end function

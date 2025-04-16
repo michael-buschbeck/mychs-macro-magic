@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.1.0-WIP (2024-04-16)"
+!mmm   set scriptVersion = "meleeAttack v2.1.0-WIP2 (2024-04-16)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -368,7 +368,7 @@
 !mmm   end if
 !mmm
 !mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
-!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType, "melee")
+!mmm     do m3mgdChatDefensePrompt(attackData)
 !mmm   end if
 !mmm
 !mmm end script
