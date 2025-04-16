@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.6.0-WIP6 (2025-04-16)"
+!mmm   set libVersion = "libMidgard v1.6.0-WIP7 (2025-04-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -15,7 +15,8 @@
 !mmm
 !rem   // Game-global constants for publication
 !rem
-!mmm   set m3mgdScriptCommands = { "magicAttack": "&#x25;{MacroSheet|magicAttack}", "defense": "&#x25;{MacroSheet|defense}", "resistance": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}", "editXP": "&#x25;{MacroSheet|editXP}", "managePersistentEffects": "&#x25;{MacroSheet|managePersistentEffects}" }
+!mmm   set m3mgdScriptCommands = { "magicAttack": "&#x25;{MacroSheet|magicAttack}", "defense": "&#x25;{MacroSheet|defense}", "resistance": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}" }
+!mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, "editXP": "&#x25;{MacroSheet|editXP}", "managePersistentEffects": "&#x25;{MacroSheet|managePersistentEffects}", "defendFrostball": "&#x25;{MacroSheet|defendFrostball}", "defendSnatch": "&#x25;{MacroSheet|defendSnatch}" }
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm 

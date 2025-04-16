@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.5.1 (2024-02-03)"
+!mmm   set scriptVersion = "defendFrostball 1.6.0-WIP2 (2025-04-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -24,30 +24,43 @@
 !mmm   end if
 !mmm   set customizable cHealthAttr = "bar3"
 !mmm   set customizable cEnduranceAttr = "bar2"
+!mmm   set customizable searchByOrigin = default
+!mmm   set customizable searchByAttackResult = default
+!mmm   set customizable searchByDamageResult = default
 !mmm
 !mmm   set endurance = cOwnID.(cEnduranceAttr)
 !mmm   set health = cOwnID.(cHealthAttr)
 !mmm   set maxEndurance = cOwnID.(cEnduranceAttr).max
 !mmm   set maxHealth = cOwnID.(cHealthAttr).max
 !mmm
-!mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
-!mmm   if not (attackType eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Frostball")
-!mmm     do whisperback("Wrong attack/spell data found: '" & m3mgdExchange.(m3mgdAttrAttackType) & "' / '" & m3mgdExchange.(m3mgdAttrAttackType).max & "'")
-!mmm     exit script
+!mmm   set attackData = m3mgdRetrieveAttack(cOwnID)
+!mmm   if not (attackData and attackData.attackType eq "magic" and attackData.magicSpell eq "Frostball")
+!mmm     set filter = { action: "combatAttack", attackType: "magic", magicSpell: "Frostball" }
+!mmm     if not isdefault(searchByOrigin)
+!mmm       set filter = { filter, origin: searchByOrigin }
+!mmm     end if
+!mmm     if not isdefault(searchByAttackResult)
+!mmm       set filter = { filter, attackResult: searchByAttackResult }
+!mmm     end if
+!mmm     if not isdefault(searchByDamageResult)
+!mmm       set filter = { filter, damageResult: searchByDamageResult }
+!mmm     end if
+!mmm     set attackData = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, filter)
+!mmm     if not attackData or count(attackData) > 1
+!mmm       do whisperback("Wrong attack/spell data found.")
+!mmm       do whisperback(m3mgdExchangeAssignAttack(m3mgdExchangeRegistries.combatData, { action: "combatAttack", attackType: "magic", magicSpell: "Frostball" }, cOwnID))
+!mmm       exit script
+!mmm     end if
+!mmm     debug chat: Identified a single dataset that fits: ${attackData}
 !mmm   end if
 !mmm   
-!mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
-!mmm   if isdenied(attackResult) or isunknown(attackResult)
-!mmm     do whisperback("Access to attack result value failed: " & getreason(attackResult))
-!mmm     exit script
-!mmm   end if
-!mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
-!mmm   if criticalAttack == true
+!mmm   set attackResult = attackData.attackResult
+!mmm   if attackData.criticalAttack == true
 !mmm     set attackResult = highlight(attackResult, "good")
 !mmm   else 
 !mmm     set attackResult = highlight(attackResult, "normal")
 !mmm   end if 
-!mmm   set enduranceDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
+!mmm   set enduranceDamage = attackData.damageResult
 !mmm
 !mmm   set defenseModifier = 0
 !mmm   if endurance <= 0
@@ -55,14 +68,14 @@
 !mmm   end if
 !mmm
 !rem   // Dazzle players with special effect
-!mmm   do spawnfx("beam-frost", m3mgdExchange.(m3mgdAttrAttackerID).left, m3mgdExchange.(m3mgdAttrAttackerID).top, cOwnID.left, cOwnID.top)
+!mmm   do spawnfx("beam-frost", attackData.origin.left, attackData.origin.top, cOwnID.left, cOwnID.top)
 !mmm
 !mmm   set defenseResult = roll("1d20+" & (cOwnID.Abwehr + defenseModifier))
 !mmm   
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
 !mmm
-!mmm   if iscritical(defenseResult) or (criticalAttack == false and defenseResult >= attackResult)
+!mmm   if iscritical(defenseResult) or (attackData.criticalAttack == false and defenseResult >= attackResult)
 !mmm     
 !rem     // Defense successful
 !mmm     set defenseSuccess = true
@@ -101,15 +114,15 @@
 !mmm   set effHealthLoss = highlight(effHealthLoss, "info")
 !mmm
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
-!mmm   if isChar(m3mgdExchange.(m3mgdAttrAttackerID)) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
-!mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), effEnduranceLoss, m3mgdExchange.(m3mgdAttrAttackerID), cOwnID)
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": +" & xpGain & " EP}} "
+!mmm   if isChar(attackData.origin) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
+!mmm     set xpGain = m3mgdProcessAttackXP(attackData.attackType, effEnduranceLoss, attackData.origin, cOwnID)
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": +" & xpGain & " EP}} "
 !mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (∞ AP, abgewehrt) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": keine (∞ AP, abgewehrt) }} "
 !mmm   else if cNoDefense or (cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0)
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (Ziel erschöpft/wehrlos) }} "
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": keine (Ziel erschöpft/wehrlos) }} "
 !mmm   else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
-!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & m3mgdExchange.(m3mgdAttrAttackerID).name & ": keine (kein AP-Verlust) }} "
+!mmm       set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": keine (kein AP-Verlust) }} "
 !mmm   end if
 !mmm
 !mmm   if cOwnID.token_name ne sender
@@ -141,7 +154,7 @@
 !mmm   end if
 !rem
 !rem   // Output data table using data table execution code from library
-!mmm   do m3mgdDefenseDataTable()
+!mmm   do m3mgdDefenseDataTable(attackData)
 !mmm   
 !rem   // Output modifier log and PP reminder
 !mmm   chat: /w GM ${"&"}{template:default} ${modifierLog}

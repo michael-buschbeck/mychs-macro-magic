@@ -5,7 +5,7 @@
 !mmm   set cTargetID = "@{target|Angriffsziel|token_id}"
 !mmm end customize
 !mmm script
-!mmm   set scriptVersion = "defendSnatch 1.2.2 (2022-01-29)"
+!mmm   set scriptVersion = "defendSnatch 1.3.0 (2025-04-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -26,19 +26,30 @@
 !mmm     set customizable cTargetID = sender.token_id
 !mmm   end if
 !mmm
-!mmm   if not (m3mgdExchange.(m3mgdAttrAttackType) eq "magic" and m3mgdExchange.(m3mgdAttrAttackType).max eq "Snatch")
-!mmm     do whisperback("Wrong attack/spell data found: '" & m3mgdExchange.(m3mgdAttrAttackType) & "' / '" & m3mgdExchange.(m3mgdAttrAttackType).max & "'")
-!mmm     exit script
+!mmm   set customizable searchByOrigin = default
+!mmm   set customizable searchByAttackResult = default
+!mmm
+!mmm   set attackData = m3mgdRetrieveAttack(cTargetID)
+!mmm   if not (attackData and attackData.attackType eq "magic" and attackData.magicSpell eq "Snatch")
+!mmm     set filter = { action: "combatAttack", attackType: "magic", magicSpell: "Snatch" }
+!mmm     if not isdefault(searchByOrigin)
+!mmm       set filter = { filter, origin: searchByOrigin }
+!mmm     end if
+!mmm     if not isdefault(searchByAttackResult)
+!mmm       set filter = { filter, attackResult: searchByAttackResult }
+!mmm     end if
+!mmm     set attackData = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, filter)
+!mmm     if not attackData or count(attackData) > 1
+!mmm       do whisperback("Wrong attack/spell data found.")
+!mmm       do whisperback(m3mgdExchangeAssignAttack(m3mgdExchangeRegistries.combatData, { action: "combatAttack", attackType: "magic", magicSpell: "Snatch" }, cOwnID))
+!mmm       exit script
+!mmm     end if
+!mmm     debug chat: Identified a single dataset that fits: ${attackData}
 !mmm   end if
 !mmm   
-!mmm   set attackerID = m3mgdExchange.(m3mgdAttrAttackerID)
-!mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
-!mmm   if isdenied(attackResult) or isunknown(attackResult)
-!mmm     do whisperback("Access to attack result value failed: " & getreason(attackResult))
-!mmm     exit script
-!mmm   end if
-!mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
-!mmm   if criticalAttack == true
+!mmm   set attackerID = attackData.origin
+!mmm   set attackResult = attackData.attackResult
+!mmm   if attackData.criticalAttack == true
 !mmm     set attackResult = highlight(attackResult, "good", "Übergeben von " & attackerID.name)
 !mmm   else 
 !mmm     set attackResult = highlight(attackResult, "normal", "Übergeben von " & attackerID.name)
@@ -48,7 +59,7 @@
 !mmm   set defenseResult = defenseRoll + (cTargetID.Abwehr + round(cTargetID.St / 5))
 !mmm   set defenseResult = highlight(defenseResult, default, "= 🎲" & defenseRoll & " + Abwehr:" & cTargetID.Abwehr & " + St/5:" & round(cTargetID.St / 5))
 !mmm   
-!mmm   if iscritical(defenseRoll) or (criticalAttack == false and defenseResult >= attackResult)
+!mmm   if iscritical(defenseRoll) or (attackData.criticalAttack == false and defenseResult >= attackResult)
 !mmm     
 !mmm     set defenseSuccess = true 
 !mmm
