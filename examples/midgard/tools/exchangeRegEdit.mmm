@@ -5,6 +5,7 @@
 !mmm script
 !mmm   set customizable cmd = default
 !mmm   set customizable deleteConfirm = false
+!mmm   set customizable newTarget = default
 !mmm   set customizable searchByAction = default
 !mmm   set customizable searchByOrigin = default
 !mmm   set customizable searchByTarget = default
@@ -19,7 +20,17 @@
 %{MacroSheetLibrary|libExchange}
 !mmm   do _libExchange()
 !mmm
-!mmm   if cmd eq "deleteEntry" and deleteConfirm == true and (searchByAction and searchByOrigin and searchByTarget)
+!mmm   if cmd eq "editEntry" and newTarget and searchByAction and searchByAttackType and searchByAttackResult and searchByDamageResult
+!mmm
+!mmm     set searchCriteria = { action: searchByAction, attackType: searchByAttackType, attackResult: searchByAttackResult, damageResult: searchByDamageResult }
+!mmm     if not isdefault(searchByMagicSpell)
+!mmm       set searchCriteria = { searchCriteria, magicSpell: searchByMagicSpell }
+!mmm     end if
+!mmm     do m3mgdExchangeEditEntry(dataExchangeID, searchCriteria, { target: newTarget })
+!mmm     set sender = newTarget.token_id
+!mmm     chat: [Abwehr gegen Frostball von ](~MacroSheet|defend${searchByMagicSpell})
+!mmm
+!mmm   else if cmd eq "deleteEntry" and deleteConfirm == true and (searchByAction and searchByOrigin and searchByTarget)
 !mmm
 !mmm     set searchCriteria = { action: searchByAction, origin: searchByOrigin, target: searchByTarget }
 !mmm     if not isdefault(searchByAttackType)
@@ -34,7 +45,7 @@
 !mmm     if not isdefault(searchByMagicSpell)
 !mmm       set searchCriteria = { searchCriteria, magicSpell: searchByMagicSpell }
 !mmm     end if
-!mmm     do m3mgdExchangeDeleteEntry(dataExchangeID, searchCriteria)
+!mmm     do m3mgdExchangeDelete(dataExchangeID, searchCriteria)
 !mmm     do m3mgdExchangeRegEdit(dataExchangeID)
 !mmm
 !mmm   else 
