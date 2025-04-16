@@ -3,7 +3,7 @@
 !rem //   defines game-global variables and loads global functions for use across Midgard scripts
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "initGameGlobals 1.3.1 (2024-04-24)"
+!mmm   set scriptVersion = "initGameGlobals 1.4.0 (2025-04-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !mmm   set customizable cCheckVersion = false
@@ -26,6 +26,9 @@
 !mmm   
 %{MacroSheetLibrary|libMidgard}
 !mmm   do _libMidgard()
+!mmm   
+%{MacroSheetLibrary|libExchange}
+!mmm   do _libExchange()
 !mmm   
 %{MacroSheetLibrary|libMidgardRuneBlades}
 !mmm   do _libMidgardRuneBlades()

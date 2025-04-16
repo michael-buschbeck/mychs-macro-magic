@@ -1,6 +1,6 @@
 !rem // exchangeRegEdit
 !rem //
-!rem // last revision 2025-04-03
+!rem // last revision 2025-04-16
 !rem
 !mmm script
 !mmm   set customizable cmd = default
@@ -14,13 +14,10 @@
 !mmm   set customizable searchByDamageResult = default
 !mmm
 !mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, exchangeRegEdit: "&#x25;{MacroSheet|exchangeRegEdit}" }
-!mmm   set dataExchangeID = "m3mgdTestCombatExchange"
+!mmm   set dataExchangeID = m3mgdExchangeRegistries.combatData
 !mmm
 %{MacroSheetLibrary|libExchange}
 !mmm   do _libExchange()
-!mmm   
-!mmm   debug chat: libExchange loaded and initialized.
-!mmm
 !mmm
 !mmm   if cmd eq "deleteEntry" and deleteConfirm == true and (searchByAction and searchByOrigin and searchByTarget)
 !mmm

@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.5.0-pre (2025-03-12)"
+!mmm   set libVersion = "libMidgard v1.6.0-WIP6 (2025-04-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -100,7 +100,7 @@
 !rem
 !mmm   publish to game: m3mgdValidateOwnTokenID, m3mgdValidateTokenAttribute
 !mmm   publish to game: m3mgdGetEnduranceAttribute, m3mgdGetHealthAttribute
-!mmm   publish to game: m3mgdValidateAttackData, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
+!mmm   publish to game: m3mgdStoreAttack, m3mgdRetrieveAttack, _m3mgdExecuteCode, m3mgdRollChanceEffect, m3mgdFlushExchange
 !mmm   publish to game: _m3mgdHandleStoredAttr, m3mgdSetAttrCeiling, m3mgdAttrCeiling, m3mgdReleaseAttrCeiling
 !mmm   publish to game: m3mgdHasActivePersistentEffects, m3mgdGetActivePersistentEffects, m3mgdRemovePersistentEffect
 !mmm   publish to game: m3mgdRemovePersistentEffectPayload, m3mgdShowPersistentEffectsPayload
@@ -109,7 +109,7 @@
 !mmm   publish to game: m3mgdHealthStatusLabel, m3mgdHealthStatusEffectsDesc
 !mmm   publish to game: m3mgdModifyEndurance, m3mgdModifyHealth, m3mgdProcessInjury
 !mmm   publish to game: m3mgdGetTokenDirection, m3mgdGetViewAngle, m3mgdGetDistance, m3mgdMoveToken, m3mgdSpawnWeaponToken, m3mgdSpawnSpellToken
-!mmm   publish to game: m3mgdExchangeStoreAttack, m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
+!mmm   publish to game: m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdSpellList, m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
 !mmm   publish to game: _m3mgdSpellButtonPayload, _m3mgdWeaponButtonPayload, m3mgdSpellSelectorChatMenu, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
@@ -197,63 +197,89 @@
 !mmm     return m3mgdValidateTokenAttribute(tokenID, "bar3")
 !mmm   end if
 !mmm end function
+!rem 
+!rem // m3mgdStoreAttack(attackData)
+!rem //
+!rem //   Stores attackData in central data registry if there is no other set of attackData by the same origin against the same target.
+!rem //
+!mmm function m3mgdStoreAttack(attackData)
+!mmm   
+!rem   // Check for another active attack by the same origin against the same target
+!mmm   set filter = { action: "combatAttack", origin: attackData.origin, target: attackData.target }
+!mmm   set activeAttacks = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, filter)
+!mmm   if activeAttacks
+!mmm     debug chat: Overwriting previous attack data for the same origin against the same target (${activeAttacks}).
+!mmm     debug do m3mgdExchangeDelete(m3mgdExchangeRegistries.combatData, filter)
+!mmm   end if 
+!rem 
+!rem   // Store attackData
+!mmm   return m3mgdExchangeStoreEntry(m3mgdExchangeRegistries.combatData, attackData)
+!mmm   
+!mmm end function
 !rem
-!rem // m3mgdValidateAttackData([dataExchangeID])
+!rem // m3mgdRetrieveAttack(targetID, [originID], [dataExchangeID])
 !rem // 
-!rem //   Expects a global data exchange character sheet as m3mgdExchange or as an argument.
-!rem //   Validates attack data stack within that sheet and returns true/false.
+!rem //   Pulls stored attack data for the token pair targetID/[originID] from the registry [dataExchangeID].
+!rem //   Validates attack data stack and returns it if valid, otherwise returns false.
 !rem // 
-!mmm function m3mgdValidateAttackData(dataExchangeID)
+!mmm function m3mgdRetrieveAttack(targetID, originID, dataExchangeID)
 !mmm
+!mmm   if isdefault(targetID) or isunknown(targetID.token_id)
+!mmm     do whisperback("m3mgdRetrieveAttack(): No target ID given, aborting.")
+!mmm     return false
+!mmm   end if
 !mmm   if isdefault(dataExchangeID)
-!mmm     set dataExchangeID = m3mgdExchange
+!mmm     set dataExchangeID = m3mgdExchangeRegistries.combatData
 !mmm   end if
 !mmm   if isunknown(dataExchangeID) or isdenied(dataExchangeID)
-!mmm     do whisperback("Invalid attack data exchange sheet: " & getreason(dataExchangeID))
+!mmm     do whisperback("m3mgdRetrieveAttack(): Invalid attack data exchange sheet: " & getreason(dataExchangeID))
 !mmm     return false
 !mmm   end if
 !mmm
+!mmm   set searchCriteria = { action: "combatAttack", target: targetID }
+!mmm   if not isdefault(originID)
+!mmm     set searchCriteria = { searchCriteria, origin: originID }
+!mmm   end if 
+!mmm   set attackData = m3mgdExchangeGetData(dataExchangeID, searchCriteria)
+!mmm
 !mmm   set validItems = 0
-!mmm   if dataExchangeID.(m3mgdAttrAttackTargetID).token_id
+!mmm   if attackData.origin.token_id
 !mmm     set validItems = validItems + 1
 !mmm   end if
-!mmm   if dataExchangeID.(m3mgdAttrAttackType) eq "melee" or dataExchangeID.(m3mgdAttrAttackType) eq "ranged" or dataExchangeID.(m3mgdAttrAttackType) eq "magic"
+!mmm   if attackData.attackType eq "melee" or attackData.attackType eq "ranged" or attackData.attackType eq "magic"
 !mmm     set validItems = validItems + 1
 !mmm   end if
-!mmm   if dataExchangeID.(m3mgdAttrAttackResult) >= 20
+!mmm   if attackData.attackResult >= 20
 !mmm     set validItems = validItems + 1
 !mmm   end if
-!mmm   if dataExchangeID.(m3mgdAttrAttackResult).max eq "true" or dataExchangeID.(m3mgdAttrAttackResult).max eq "false"
+!mmm   if not isunknown(attackData.attackDamage) and attackData.attackDamage >= 0
 !mmm     set validItems = validItems + 1
 !mmm   end if
-!mmm   if not isunknown(dataExchangeID.(m3mgdAttrAttackDamage)) and dataExchangeID.(m3mgdAttrAttackDamage) >= 0
+!mmm   if not attackData.attackType eq "magic" and (not isunknown(attackData.attackDamageRoll) and attackData.attackDamageRoll >= 0)
 !mmm     set validItems = validItems + 1
 !mmm   end if
-!mmm   if not dataExchangeID.(m3mgdAttrAttackType) eq "magic" and (not isunknown(dataExchangeID.(m3mgdAttrAttackDamageRoll)) and dataExchangeID.(m3mgdAttrAttackDamageRoll) >= 0)
-!mmm     set validItems = validItems + 1
-!mmm   end if
-!mmm   if not isunknown(dataExchangeID.(m3mgdAttrAttackWeaponType))
-!mmm     if dataExchangeID.(m3mgdAttrAttackWeaponType).max ne "" 
+!mmm   if not isunknown(attackData.weaponType)
+!mmm     if attackData.weaponType[1] ne "" 
 !mmm       set validItems = validItems + 1
-!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "melee" 
-!mmm       if m3mgdValidMeleeAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType)
+!mmm     else if attackData.attackType eq "melee" 
+!mmm       if m3mgdValidMeleeAttackWeaponTypes where ... eq attackData.weaponType
 !mmm         set validItems = validItems + 1
 !mmm       else
-!mmm         do whisperback("Invalid melee attack weapon type: " & dataExchangeID.(m3mgdAttrAttackWeaponType) & " is none of " & m3mgdValidMeleeAttackWeaponTypes)
+!mmm         do whisperback("Invalid melee attack weapon type: " & attackData.weaponType & " is none of " & m3mgdValidMeleeAttackWeaponTypes)
 !mmm       end if
-!mmm     else if dataExchangeID.(m3mgdAttrAttackType) eq "ranged" 
-!mmm       if m3mgdValidRangedAttackWeaponTypes where ... eq dataExchangeID.(m3mgdAttrAttackWeaponType)
+!mmm     else if attackData.attackType eq "ranged" 
+!mmm       if m3mgdValidRangedAttackWeaponTypes where ... eq attackData.weaponType
 !mmm         set validItems = validItems + 1
 !mmm       else
-!mmm         do whisperback("Invalid range attack weapon type: " & dataExchangeID.(m3mgdAttrAttackWeaponType) & " is none of " & m3mgdValidRangedAttackWeaponTypes)
+!mmm         do whisperback("Invalid range attack weapon type: " & attackData.weaponType & " is none of " & m3mgdValidRangedAttackWeaponTypes)
 !mmm       end if
 !mmm     end if
 !mmm   end if 
 !mmm
-!mmm   if dataExchangeID.(m3mgdAttrAttackType) eq "magic"
-!mmm     return (validItems >= 5)
+!mmm   if (attackData.attackType eq "magic" and validItems >= 4) or (attackData.attackType ne "magic" and validItems == 6)
+!mmm     return attackData
 !mmm   else 
-!mmm     return (validItems == 7)
+!mmm     return false
 !mmm   end if
 !mmm
 !mmm end function
@@ -1196,95 +1222,6 @@
 !mmm   return selected.token_id
 !mmm end function
 !rem
-!rem // m3mgdExchangeStoreAttack(attackType, [magicSpell])
-!rem //
-!mmm function m3mgdExchangeStoreAttack(attackType, magicSpell)
-!mmm   
-!mmm   set dataExchangeID = m3mgdExchange
-!mmm   do m3mgdFlushExchange(dataExchangeID)
-!mmm
-!mmm   if attackType eq "magic" and isdefault(magicSpell)
-!mmm     do whisperback("Incomplete data for a magic attack: spell argument missing")
-!mmm     return false
-!mmm   else if attackType ne "magic"
-!mmm     set magicSpell = ""
-!mmm   end if
-!mmm 
-!mmm   set storeTarget = 4
-!mmm   set storeCounter = 0
-!mmm
-!rem   // Store the bare minimum of any attack dataset
-!mmm
-!mmm   if setattr(dataExchangeID, m3mgdAttrAttackType, attackType) eq attackType
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   if setattrmax(dataExchangeID, m3mgdAttrAttackType, magicSpell) eq magicSpell
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   if setattr(dataExchangeID, m3mgdAttrAttackerID, script.cOwnID) eq script.cOwnID
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   if setattr(dataExchangeID, m3mgdAttrAttackTargetID, script.cTargetID) eq script.cTargetID
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   
-!rem   // Store additional data only if present
-!mmm
-!mmm   if script.attackResult >= 20
-!mmm     set storeTarget = storeTarget + 1
-!mmm     if setattr(dataExchangeID, m3mgdAttrAttackResult, script.attackResult) == script.attackResult
-!mmm       set storeCounter = storeCounter + 1
-!mmm     end if
-!mmm   end if
-!mmm   
-!mmm   if script.criticalAttack == true or script.criticalAttack == false
-!mmm     set storeTarget = storeTarget + 1
-!rem     // normalize boolean variable to avoid setting the attribute to undef (which would evaluate as false above)
-!mmm     set criticalAttack = (script.criticalAttack == true)
-!mmm     if setattrmax(dataExchangeID, m3mgdAttrAttackResult, criticalAttack) == script.criticalAttack
-!mmm       set storeCounter = storeCounter + 1
-!mmm     end if
-!mmm   end if
-!mmm   
-!mmm   if script.damageResult ne undef
-!mmm     set storeTarget = storeTarget + 1
-!mmm     if setattr(dataExchangeID, m3mgdAttrAttackDamage, script.damageResult) == script.damageResult
-!mmm       set storeCounter = storeCounter + 1
-!mmm     end if
-!mmm   end if
-!mmm   
-!mmm   if script.cDamageRoll ne undef
-!mmm     set storeTarget = storeTarget + 1
-!mmm     set damageRoll = zeroOrPositive(script.cDamageRoll)
-!mmm     if setattr(dataExchangeID, m3mgdAttrAttackDamageRoll, damageRoll) == damageRoll
-!mmm       set storeCounter = storeCounter + 1
-!mmm     end if
-!mmm   end if
-!mmm
-!mmm   if script.cWeaponType ne ""
-!mmm     set storeTarget = storeTarget + 1
-!mmm     if setattr(dataExchangeID, m3mgdAttrAttackWeaponType, script.cWeaponType[0]) eq script.cWeaponType[0]
-!mmm       set storeCounter = storeCounter + 1
-!mmm     end if
-!mmm     if script.cWeaponType[1] ne ""
-!mmm       set storeTarget = storeTarget + 1
-!mmm       if setattrmax(dataExchangeID, m3mgdAttrAttackWeaponType, script.cWeaponType[1]) eq script.cWeaponType[1]
-!mmm         set storeCounter = storeCounter + 1
-!mmm       end if
-!mmm     end if
-!mmm   end if
-!mmm
-!mmm   if script.magicEnduranceCost ne undef
-!mmm     set storeTarget = storeTarget + 1
-!mmm     if setattr(dataExchangeID, m3mgdAttrAttackEnduranceCost, script.magicEnduranceCost) == script.magicEnduranceCost
-!mmm       set storeCounter = storeCounter + 1
-!mmm     end if
-!mmm   end if
-!mmm
-!mmm   return (storeCounter == storeTarget)
-!mmm   
-!mmm end function
-!rem
 !rem // m3mgdExchangeStoreHealthBoost(healthGain, targetID)
 !rem //
 !rem //   Allows for positive AND negative values of healthGain, since critical failures of First Aid etc. result in damage.
@@ -1603,6 +1540,8 @@
 !mmm   else
 !mmm     set payload = payload & literal("!mmm if selected") & "&#13;"
 !mmm     set payload = payload & literal("!mmm   set cOwnID = selected.token_id") & "&#13;"
+!mmm     set payload = payload & literal("!mmm else") & "&#13;"
+!mmm     set payload = payload & literal("!mmm   set cOwnID = '" & tokenID & "'") & "&#13;"
 !mmm     set payload = payload & literal("!mmm end if") & "&#13;"
 !mmm     set payload = payload & literal("!mmm set cGMSilentMode = true") & "&#13;"
 !mmm   end if
@@ -1627,25 +1566,18 @@
 !mmm   set payload = payload & literal("!mmm set attackerID = \"@" & "{target|Wer greift an?|token_id}\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set targetID = \"@" & "{target|Wer wird angegriffen (Ziel)?|token_id}\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set attackResult = \"?" & "{Angriffswert|0}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set criticalAttack = \"?" & "{Kritischer Erfolg beim Angriff|Nein,0|Ja,1}\"") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set criticalAttack = ?" & "{Kritischer Erfolg beim Angriff|Nein,false|Ja,true}") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set attackDamage = \"?" & "{Schaden laut Angreifer|0}\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set attackDamageRoll = \"?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set armorPiercing = \"?" & "{Angriff mit Lang-/Kompositbogen oder schwerer Armbrust|Nein,0|Ja,1}\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm set weaponType = \"?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}\"") & "&#13;"
 !mmm   set payload = payload & literal("!mmm if attackResult < 20") & "&#13;"
 !mmm   set payload = payload & literal("!mmm   do whisperback(\"Abbruch: Angriff mit **\" & attackResult & \"** war nicht erfolgreich, keine Abwehr nötig.\")") & "&#13;"
 !mmm   set payload = payload & literal("!mmm   exit script") & "&#13;"
 !mmm   set payload = payload & literal("!mmm end if") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do m3mgdFlushExchange()") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackType, attackType)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackerID, attackerID)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackTargetID, targetID)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackResult, attackResult)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattrmax(m3mgdExchange, m3mgdAttrAttackResult, (criticalAttack == 1))") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackDamage, attackDamage)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackDamageRoll, attackDamageRoll)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackArmorPiercing, armorPiercing)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm do setattr(m3mgdExchange, m3mgdAttrAttackWeaponType, weaponType)") & "&#13;"
+!mmm   set payload = payload & literal("!mmm set attackData = { origin: attackerID, target: targetID, action: \"combatAttack\", attackType: attackType, attackResult: attackResult, criticalAttack: criticalAttack, damageResult: attackDamage, damageRoll: attackDamageRoll, weaponType: weaponType }") & "&#13;"
+!mmm   set payload = payload & literal("!mmm if not m3mgdStoreAttack(attackData)") & "&#13;"
+!mmm   set payload = payload & literal("!mmm   do whisperback(\"Fehlschlag: Angriffsdaten konnten nicht gespeichert werden - ${attackData}\")") & "&#13;"
+!mmm   set payload = payload & literal("!mmm end if") & "&#13;"
 !mmm   set payload = payload & "!mmm end script&#13;"
 !mmm   set payload = payload & m3mgdDefenseInitPayload(tokenID)
 !mmm   set payload = payload & m3mgdScriptCommands.defense
@@ -2656,9 +2588,9 @@
 !mmm   return " [🗘](" & payload & cssTableHeaderButton & ") "
 !mmm end function
 !rem
-!rem // m3mgdDefenseDataTable()
+!rem // m3mgdDefenseDataTable(attackData)
 !rem //
-!mmm function m3mgdDefenseDataTable()
+!mmm function m3mgdDefenseDataTable(attackData)
 !mmm
 !rem   // Prepare output
 !rem
@@ -2667,11 +2599,11 @@
 !mmm   set shapeMoji = m3mgdShapeMoji(script.cOwnID)
 !mmm
 !mmm   if script.criticalAttack
-!mmm     set attackResult = highlight(script.attackResult, "good", "Kritisch erfolgreicher Angriff von " & m3mgdExchange.(m3mgdAttrAttackerID).name)
+!mmm     set attackResult = highlight(attackData.attackResult, "good", "Kritisch erfolgreicher Angriff von " & attackData.origin.name)
 !mmm   else
-!mmm     set attackResult = highlight(script.attackResult, "info", "Angriff von " & m3mgdExchange.(m3mgdAttrAttackerID).name)
+!mmm     set attackResult = highlight(attackData.attackResult, "info", "Angriff von " & attackData.origin.name)
 !mmm   end if
-!mmm   set attackDamage = highlight(m3mgdExchange.(m3mgdAttrAttackDamage), "info", m3mgdExchange.(m3mgdAttrAttackType))
+!mmm   set attackDamage = highlight(attackData.damageResult, "info", attackData.attackType)
 !mmm   set effEnduranceLoss = highlight(script.effEnduranceLoss, "normal")
 !mmm   set effHealthLoss = highlight(script.effHealthLoss, "normal", "RS: " & script.effArmorProtection)
 !mmm
@@ -2689,8 +2621,8 @@
 !mmm
 !mmm     if script.cNoDefense
 !mmm       set heading = "Keine Abwehr (wehrlos)"
-!mmm     else if m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
-!mmm       set heading = "Abwehr gegen " & m3mgdExchange.(m3mgdAttrAttackType).max
+!mmm     else if attackData.attackType eq "magic"
+!mmm       set heading = "Abwehr gegen " & attackData.magicSpell
 !mmm     else if script.cWeaponLabel eq "Abwehr ohne Schild"
 !mmm       set heading = "Abwehr ohne Schild"
 !mmm     else
@@ -2709,22 +2641,22 @@
 !mmm     end if
 !mmm
 !mmm     if script.defenseSuccess and iscritical(script.cDefenseRoll) and not script.criticalAttack
-!mmm       chat: {\{Kritischer Abwehrerfolg=${script.defenseResult} **Leichter Treffer** [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseSuccess", m3mgdExchange.(m3mgdAttrAttackerID))}${cssTableCellButton}) }\}
+!mmm       chat: {\{Kritischer Abwehrerfolg=${script.defenseResult} **Leichter Treffer** [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseSuccess", attackData.origin)}${cssTableCellButton}) }\}
 !mmm     else if script.defenseSuccess
 !mmm       chat: {\{Abwehrerfolg=${script.defenseResult} **Leichter Treffer**}\}
 !mmm     else if script.criticalAttack == true and isfumble(script.cDefenseRoll)
 !mmm       chat: {\{Kritischer Fehlschlag bei Abwehr eines kritischen Treffers=${script.defenseResult} **Schwerer kritischer Treffer** 
-!mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "attackSuccess", script.cOwnID)}${cssTableCellButton})
-!mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", m3mgdExchange.(m3mgdAttrAttackerID))}${cssTableCellButton}) }\}
+!mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(attackData.origin, "attackSuccess", script.cOwnID)}${cssTableCellButton})
+!mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", attackData.origin)}${cssTableCellButton}) }\}
 !mmm     else if script.criticalAttack == true
 !mmm       chat: {\{Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** 
-!mmm       if m3mgdExchange.(m3mgdAttrAttackType) ne "magic"
-!mmm         chat: [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchange.(m3mgdAttrAttackerID), "attackSuccess", script.cOwnID)}${cssTableCellButton}) }\}
+!mmm       if attackData.attackType ne "magic"
+!mmm         chat: [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchangeattackData.origin, "attackSuccess", script.cOwnID)}${cssTableCellButton}) }\}
 !mmm       else
 !mmm         chat: }\}
 !mmm       end if
 !mmm     else if isfumble(script.cDefenseRoll)
-!mmm       chat: {\{Kritischer Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", m3mgdExchange.(m3mgdAttrAttackerID))}${cssTableCellButton}) }\}
+!mmm       chat: {\{Kritischer Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", attackData.origin)}${cssTableCellButton}) }\}
 !mmm     else 
 !mmm       chat: {\{Ergebnis=${script.defenseResult} **Schwerer Treffer**}\}
 !mmm     end if
@@ -2737,7 +2669,7 @@
 !mmm       chat: {\{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}\}
 !mmm     end if
 !mmm
-!mmm     if script.criticalAttack == true and m3mgdExchange.(m3mgdAttrAttackType) eq "magic"
+!mmm     if script.criticalAttack == true and attackData.attackType eq "magic"
 !mmm       chat: {\{Kritischer Zaubererfolg=
 !mmm       if script.defenseResult < 20
 !mmm         chat: Zauber wirkt **doppelt so stark** (Abwehrergebnis < 20, Schaden wurde verdoppelt)}\}

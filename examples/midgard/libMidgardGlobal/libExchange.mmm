@@ -6,19 +6,22 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v0.4 WIP (2025-04-03)"
+!mmm   set libVersion = "libExchange v0.5-WIP3 (2025-04-16)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
 !rem   //set m3mgdExchangeDataSheet = "MacroSheet"
 !rem   //set m3mgdExchange = m3mgdExchangeDataSheet.character_id
-!mmm   set m3mgdExchangeRegistries = "m3mgdCombatData", "m3mgdActivePersistentEffects"
+!mmm   set m3mgdExchangeRegistries = { combatData: "m3mgdCombatData", activePersistentEffects: "m3mgdActivePersistentEffects" }
 !rem
 !mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
 !mmm     do whisperback(libVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Data exchange will not work.")
 !mmm     do delay(5)
 !mmm     return false
 !mmm   end if
+!mmm
+!mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, exchangeRegEdit: "&#x25;{MacroSheet|exchangeRegEdit}" }
+!mmm   publish to game: m3mgdScriptCommands
 !mmm
 !rem   // Publish game-global variables defined below
 !rem
@@ -27,7 +30,8 @@
 !rem
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: m3mgdExchangeFlushRegistry, m3mgdExchangeGetRegistry, m3mgdExchangeStoreEntry, m3mgdExchangeGetData, m3mgdExchangeDeleteEntry
+!mmm   publish to game: m3mgdExchangeFlushRegistry, m3mgdExchangeGetRegistry, m3mgdExchangeStoreEntry, m3mgdExchangeGetData, m3mgdExchangeDelete
+!mmm   publish to game: m3mgdExchangeStoreAttack
 !mmm   publish to game: m3mgdExchangeRegEdit
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -80,7 +84,7 @@
 !mmm     set registry = m3mgdExchangeGetRegistry(registryID), entry
 !mmm   end if
 !mmm
-!mmm   debug do registry
+!mmm   debug do registry, registryID
 !mmm
 !mmm   set serialRegistry = serialize(registry)
 !mmm   return (setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry)
@@ -123,11 +127,11 @@
 !mmm
 !mmm end function
 !rem 
-!rem // m3mgdExchangeDeleteEntry(registryID, searchCriteria)
+!rem // m3mgdExchangeDelete(registryID, searchCriteria)
 !rem // 
 !rem //   Deletes one or several entries from a central data registry, identified by the searchCriteria provided (all at the same time/AND).
 !rem // 
-!mmm function m3mgdExchangeDeleteEntry(registryID, searchCriteria)
+!mmm function m3mgdExchangeDelete(registryID, searchCriteria)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
 !mmm     debug chat: m3mgdExchangeDeleteEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.

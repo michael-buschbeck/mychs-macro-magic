@@ -39,7 +39,7 @@
 !mmm   debug do m3mgdExchangeGetData(script.dataExchangeID, { action: "combatAttack", type: "magic", rollResult: 21 }  )
 !mmm   
 !mmm   debug chat: Deleting a single entry
-!mmm   debug do m3mgdExchangeDeleteEntry(script.dataExchangeID, { origin: "Yerrick MacRothgar".token_id } )
+!mmm   debug do m3mgdExchangeDelete(script.dataExchangeID, { origin: "Yerrick MacRothgar".token_id } )
 !mmm   
 !mmm   debug chat: Retrieving the entire registry ... 
 !mmm   combine chat
@@ -54,50 +54,7 @@
 !mmm   
 !rem // === rewritten libMidgard functions ===================================================================================================================
 !rem //
-!rem
-!rem // m3mgdExchangeStoreAttack(attackData)
-!rem //
-!mmm function m3mgdExchangeStoreAttack(attackData)
-!mmm   
-!mmm   set dataExchangeID = script.dataExchangeID
-!mmm
-!rem   // Check for another active attack by the same origin against the same target, which would need to be deleted first to avoid confusion
-!mmm   set activeAttacks = m3mgdExchangeGetData(dataExchangeID, { origin: attackData.origin, target: attackData.target })
-!mmm   if ? activeAttacks
-!mmm     debug chat: While storing attack data for other scripts, found unresolved attack(s) by the same origin against the same target. Delete manually and retry. ${activeAttacks}
-!mmm   end if 
-!rem 
-!rem   // Store attackData
-!mmm   return m3mgdExchangeStoreEntry(dataExchangeID, attackData)
-!mmm   
-!mmm end function
-!mmm
-!mmm function m3mgdExchangeRegEdit(registryID, searchCriteria)
-!mmm
-!mmm   if isdenied(m3mgdExchange.(registryID))
-!mmm     debug chat: m3mgdExchangeRegEdit(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
-!mmm     return false
-!mmm   end if
-!mmm
-!mmm   set output = chat(chatTightBoxHeader("m3mgdExchangeRegEdit"))
-!mmm   for entry in m3mgdExchangeGetData(registryID, searchCriteria)
-!mmm     set outputEntry = ""
-!mmm     set tooltip = ""
-!mmm     for propertyPair in entry...
-!mmm       if isunknown(propertyPair.value.token_id) or isdenied(propertyPair.value.token_id)
-!mmm         set outputEntry = outputEntry & " | " & propertyPair.key & ": " & propertyPair.value
-!mmm       else
-!mmm         set outputEntry = outputEntry & " | " & propertyPair.key & ": " & propertyPair.value.token_name
-!mmm         set tooltip = propertyPair.value
-!mmm       end if
-!mmm     end for
-!mmm     set payload = literal("!mmm customize") & "&#13;"
-!mmm     set payload = payload & literal("!mmm do chat('called to do sth')") & "&#13;"
-!mmm     set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.exchangeRegEdit & "&#13;"
-!mmm     set output = output & chatTightBoxButtonRow(outputEntry, tooltip, payload)
-!mmm   end for
-!mmm   do chat(output)
-!mmm end function
+!rem // moved to libExchange
 !rem //
 !rem // === TEST routine =====================================================================================================================================
 !mmm function combatDataTest()  
@@ -107,7 +64,7 @@
 !mmm   do m3mgdExchangeStoreAttack(testAttackData)
 !mmm   set testAttackData = { origin: "Titos Panathos".token_id, target: "-OCOtXCg3YoWVEwO1dKI", action: "combatAttack", attackType: "magic", magicSpell: "Frostball", attackResult: 34, criticalAttack: false, damageResult: 7, damageRoll: 5 }
 !rem   // mundane attacks require additionally weaponType with up to two values!
-!mmm   do m3mgdExchangeStoreAttack(testAttackData)
+!mmm   do m3mgdExchangeStoreAttack(testAttackData) 
 !mmm   
 !mmm   set testAttackData = { origin: "Yorric MacRathgar".token_id, target: "-OCOtXCg3YoWVEwO1dKI", action: "combatAttack", attackType: "magic", magicSpell: "Feuerlanze", attackResult: 25, criticalAttack: false, damageResult: 9, damageRoll: 9 }
 !mmm   do m3mgdExchangeStoreAttack(testAttackData)
