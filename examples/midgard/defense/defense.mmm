@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.1.1 (2025-03-12)"
+!mmm   set scriptVersion = "defense 2.2.0 (2025-04-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -27,10 +27,10 @@
 !rem   //
 !mmm   if selected and sender.token_id ne selected and m3mgdValidateOwnTokenID(selected.token_id)
 !mmm     set customizable cOwnID = selected.token_id
-!mmm   else if m3mgdExchange.(m3mgdAttrAttackTargetID) ne "" and m3mgdValidateOwnTokenID(m3mgdExchange.(m3mgdAttrAttackTargetID))
-!mmm     set customizable cOwnID = m3mgdExchange.(m3mgdAttrAttackTargetID)
 !mmm   else if m3mgdValidateOwnTokenID(sender.token_id)
 !mmm     set customizable cOwnID = sender.token_id
+!mmm   else
+!mmm     set customizable cOwnID = default
 !mmm   end if
 !mmm   set customizable cWeaponLabel = ""
 !rem
@@ -71,12 +71,11 @@
 !mmm     set payload = payload & "&#x25;{MacroSheet|defense}"
 !mmm     do whisperback("<" & "br>Wer soll sich denn verteidigen?<" & "br>[**Token auswählen**](" & payload & ")")
 !mmm     exit script
-!mmm   else if not m3mgdValidateAttackData()
-!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: Angriffsdaten unvollständig oder ungültig${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
-!mmm     exit script
 !mmm   end if
-!mmm   if not m3mgdExchange.(m3mgdAttrAttackTargetID) eq cOwnID
-!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: ${m3mgdExchange.(m3mgdAttrAttackTargetID).name} wurde zuletzt angegriffen, nicht ich.${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
+!mmm   set attackData = m3mgdRetrieveAttack(cOwnID)
+!mmm   if not attackData
+!mmm     chat: /w "${cOwnID.character_name}" ${"<"}br>Abwehrskript: Angriffsdaten unvollständig oder ungültig${"<"}br>[**Angriffsdaten eingeben**](${m3mgdDefenseDataEntryPayload(cOwnID)})
+!mmm     debug chat: ${attackData}
 !mmm     exit script
 !mmm   end if
 !rem
@@ -84,24 +83,18 @@
 !mmm   set modifierLog = ""
 !mmm   set modifierTooltip = ""
 !mmm
-!mmm   set attackerID = m3mgdExchange.(m3mgdAttrAttackerID)
-!mmm   set attackType = m3mgdExchange.(m3mgdAttrAttackType)
-!mmm   set attackResult = m3mgdExchange.(m3mgdAttrAttackResult)
-!mmm   set criticalAttack = (m3mgdExchange.(m3mgdAttrAttackResult).max eq "true")
-!mmm   set attackDamage = m3mgdExchange.(m3mgdAttrAttackDamage)
-!mmm   set attackDamageRoll = m3mgdExchange.(m3mgdAttrAttackDamageRoll)
-!mmm   set attackWeaponType = m3mgdExchange.(m3mgdAttrAttackWeaponType)
 !mmm   set defenseProperty = "Abwehr"
 !mmm   set defensePropertyBonus = "BonusAbwehr"
 !rem   // Special case: magic weapons or weapon spells with additional effects scripts whose name is stored in .max
-!mmm   if m3mgdExchange.(m3mgdAttrAttackWeaponType).max ne ""
-!mmm     set attackWeaponSpecialEffect = m3mgdExchange.(m3mgdAttrAttackWeaponType).max
+!mmm   if attackData.weaponType[1] ne ""
+!mmm     set attackWeaponSpecialEffect = attackData.weaponType[1]
 !mmm   end if
 !rem   // Special case: magic spells whose name is stored in attack_type.max
-!mmm   if m3mgdExchange.(m3mgdAttrAttackType).max ne ""
-!mmm     set attackSpell = m3mgdExchange.(m3mgdAttrAttackType).max
-!mmm     set attackEnduranceCost = m3mgdExchange.(m3mgdAttrAttackEnduranceCost)
-!mmm     set attackSpellType = attackWeaponType
+!rem   // TODO
+!mmm   if attackData.magicSpell
+!mmm     set attackSpell = attackData.magicSpell
+!mmm     set attackEnduranceCost = attackData.spellEnduranceCost
+!mmm     set attackSpellType = attackData.spellType
 !mmm     if attackSpellType eq "Geist"
 !mmm       set defenseProperty = "ResGeist"
 !mmm       set defensePropertyBonus = "BonusResG"
@@ -146,7 +139,7 @@
 !rem     // Not helpless, so let's prep for the big defense!
 !rem
 !rem     // Validate defense weapon, default to the only one or request manual entry
-!mmm     if cWeaponLabel eq "" and not attackType eq "magic"
+!mmm     if cWeaponLabel eq "" and not attackData.attackType eq "magic"
 !mmm       set defenseWeaponList = m3mgdListDefenseWeapons(cOwnID)
 !mmm       if not defenseWeaponList
 !mmm         do whisperback("Fehler im Charakterbogen: " & cOwnID.name & " hat keine Abwehrwaffen bzw. -fähigkeiten.")
@@ -154,7 +147,7 @@
 !mmm       else if count(defenseWeaponList) == 1
 !mmm         set cWeaponLabel = cOwnID.(defenseWeaponList)
 !mmm       else 
-!mmm         chat: /w "${cOwnID.character_name}" ${m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackWeaponType)}
+!mmm         chat: /w "${cOwnID.character_name}" ${m3mgdWeaponSelectorChatMenu(cOwnID, "defense", attackData.weaponType)}
 !mmm         exit script
 !mmm       end if
 !mmm     end if
@@ -162,12 +155,12 @@
 !rem     // If user wants to use a parry weapon/shield, validate
 !mmm     set parryWeaponUsable = false
 !mmm     set parryWeapon = (cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "FWAbwWaffe")) > 0)
-!mmm     if parryWeapon and not attackType eq "magic"
+!mmm     if parryWeapon and not attackData.attackType eq "magic"
 !mmm       if m3mgdParryLargeShieldTypes where ... eq cWeaponLabel 
 !mmm         set parryWeaponUsable = true
-!mmm       else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackWeaponType)
+!mmm       else if (m3mgdParrySmallShieldTypes where ... eq cWeaponLabel) and (m3mgdParrySmallShieldEffectiveAgainst where ... eq attackData.weaponType)
 !mmm         set parryWeaponUsable = true
-!mmm       else if (m3mgdParryStandardTypes where ... eq cWeaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackWeaponType)
+!mmm       else if (m3mgdParryStandardTypes where ... eq cWeaponLabel) and (m3mgdParryStandardEffectiveAgainst where ... eq attackData.weaponType)
 !mmm         set parryWeaponUsable = true
 !mmm       end if
 !rem       // If shield/parry weapon accessible and endurance > 0, check applicability and calculate defense benefits
@@ -178,11 +171,11 @@
 !mmm         set effDefense = effDefense + effParryWeaponSkill
 !mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= WW inkl. +" & effParryWeaponSkill & ", AP-Verlust (leichte Treffer) -" & parryWeaponEnduranceProtection & "}}"
 !mmm       else if not parryWeaponUsable
-!mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackWeaponType & "}}"
+!mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos gegen " & attackData.weaponType & "}}"
 !mmm       else
 !mmm         set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nutzlos: bin erschöpft (AP=0)}}"
 !mmm       end if
-!mmm     else if not (cWeaponLabel eq cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWaffe"))) and not attackType eq "magic"
+!mmm     else if not (cWeaponLabel eq cOwnID.(findattr(cOwnID, "Abwehr", "AbwWaffe", cWeaponLabel, "AbwWaffe"))) and not attackData.attackType eq "magic"
 !rem       // Script was called for a parry weapon that was not found in the character sheet
 !mmm       set modifierLog = modifierLog & " {{" & cWeaponLabel & "= nicht im Charakterblatt}}"
 !mmm       set cWeaponLabel = ""
@@ -239,16 +232,16 @@
 !mmm   set effEnduranceLoss = 0
 !mmm   set effHealthLoss = 0
 !mmm
-!mmm   if not cNoDefense and ((not criticalAttack and ((defenseResult >= attackResult and not isfumble(cDefenseRoll)) or iscritical(cDefenseRoll))) or (criticalAttack and iscritical(cDefenseRoll)))
+!mmm   if not cNoDefense and ((not attackData.criticalAttack and ((defenseResult >= attackData.attackResult and not isfumble(cDefenseRoll)) or iscritical(cDefenseRoll))) or (attackData.criticalAttack and iscritical(cDefenseRoll)))
 !mmm
 !rem     // Defense successful
 !mmm     set defenseSuccess = true
 !mmm
 !rem     // Calculate endurance damage (only for max endurance > 0; may be reduced due to parry weapon or shield properties)
 !mmm     if not cOwnID.(cEnduranceAttr).max == 0 and parryWeaponEnduranceProtection
-!mmm       set effEnduranceLoss = zeroOrPositive(attackDamage - parryWeaponEnduranceProtection)
+!mmm       set effEnduranceLoss = zeroOrPositive(attackData.damageResult - parryWeaponEnduranceProtection)
 !mmm     else if not cOwnID.(cEnduranceAttr).max == 0
-!mmm       set effEnduranceLoss = attackDamage
+!mmm       set effEnduranceLoss = attackData.damageResult
 !mmm     end if
 !mmm
 !mmm   else 
@@ -257,25 +250,25 @@
 !mmm     set defenseSuccess = false
 !mmm
 !rem     // Critically successful magic attacks
-!mmm     if attackSpell and criticalAttack and defenseResult < 20
-!mmm       set attackDamage = attackDamage * 2
-!mmm     else if attackSpell and criticalAttack and not isfumble(cDefenseRoll) and attackEnduranceCost >= 2
-!mmm       set attackerNewEndurance = m3mgdModifyEndurance(floor(attackEnduranceCost / 2), attackerID)
+!mmm     if attackSpell and attackData.criticalAttack and defenseResult < 20
+!mmm       set attackData = {attackData, damageResult: attackData.damageResult * 2 }
+!mmm     else if attackSpell and attackData.criticalAttack and not isfumble(cDefenseRoll) and attackEnduranceCost >= 2
+!mmm       set attackerNewEndurance = m3mgdModifyEndurance(floor(attackEnduranceCost / 2), attackData.origin)
 !mmm     end if
 !mmm
 !rem     // Defender loses full hit points worth of endurance regardless of armor, if not an undead creature with unlimited endurance
 !mmm     if not cOwnID.(cEnduranceAttr).max == 0
-!mmm       set effEnduranceLoss = attackDamage
+!mmm       set effEnduranceLoss = attackData.damageResult
 !mmm     else 
 !mmm       set effEnduranceLoss = 0
 !mmm     end if
 !mmm
 !rem     // Calculate damage to health depending on armor (only for max health > 0, ghosts do not lose health, armor does not work against direct magic attacks)
-!mmm     set effArmorProtection = m3mgdEffectiveArmorProtection(cOwnID, attackWeaponType, attackType)
+!mmm     set effArmorProtection = m3mgdEffectiveArmorProtection(cOwnID, attackData.weaponType, attackData.attackType)
 !mmm     if not cOwnID.(cHealthAttr).max == 0 and effArmorProtection
-!mmm       set effHealthLoss = zeroOrPositive(attackDamage - effArmorProtection)
+!mmm       set effHealthLoss = zeroOrPositive(attackData.damageResult - effArmorProtection)
 !mmm     else if not cOwnID.(cHealthAttr).max == 0
-!mmm       set effHealthLoss = attackDamage
+!mmm       set effHealthLoss = attackData.damageResult
 !mmm     end if
 !mmm   end if
 !mmm
@@ -296,15 +289,15 @@
 !mmm   end if
 !rem
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
-!mmm   if isChar(attackerID) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
-!mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackDamageRoll, attackerID, cOwnID)
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackerID.name & ": +" & xpGain & " EP}} "
+!mmm   if isChar(attackData.origin) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
+!mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackData.damageRoll, attackData.origin, cOwnID)
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": +" & xpGain & " EP}} "
 !mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackerID.name & ": keine (∞ AP, abgewehrt) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": keine (∞ AP, abgewehrt) }} "
 !mmm   else if cNoDefense or (cOwnID.(cEnduranceAttr).max != 0 and endurance <= 0)
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackerID.name & ": keine (Ziel erschöpft/wehrlos) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": keine (Ziel erschöpft/wehrlos) }} "
 !mmm   else if cOwnID.(cEnduranceAttr).max != 0 and effEnduranceLoss <= 0
-!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackerID.name & ": keine (kein AP-Verlust) }} "
+!mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": keine (kein AP-Verlust) }} "
 !mmm   end if
 !mmm
 !rem   // Register practice point, if applicable
@@ -327,7 +320,7 @@
 !mmm           chat     [OngoingCriticalInjury]:    ***Ich bin immer noch lebensgefährlich verletzt, mein Countdown läuft weiter.*** [x](https://media.giphy.com/media/OY9XK7PbFqkNO/giphy.gif) ***Jetzt könnte ich eine heilende Hand gebrauchen...***
 !mmm         end if
 !mmm       else
-!mmm         if criticalAttack
+!mmm         if attackData.criticalAttack
 !mmm           chat     [DefenseFailureCritDamage]: Mich erwischt ein schwerer **kritischer Treffer**.
 !mmm         else 
 !mmm           chat     [DefenseFailureRegDamage]:  Mich erwischt ein schwerer Treffer.
@@ -353,7 +346,7 @@
 !mmm   end if
 !rem
 !rem   // Output data table using data table execution code from library
-!mmm   do m3mgdDefenseDataTable()
+!mmm   do m3mgdDefenseDataTable(attackData)
 !mmm
 !rem   // If present, reduce counters for defense-specific modifier effects
 !mmm   set endOfActionSummary = m3mgdUpdatePersistentEffectsCounters(cOwnID, "defense")
@@ -369,7 +362,7 @@
 !mmm   
 !rem   // Weapon-specific special damage effects
 !mmm   if not defenseSuccess and attackWeaponSpecialEffect
-!mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, attackerID)
+!mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, attackData.origin)
 !mmm   end if
 !mmm
 !rem   // Injury & exhaustion special effects

@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.1 (2024-11-17)"
+!mmm   set scriptVersion = "2.1.0WIP (2025-04-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -425,7 +425,11 @@
 !mmm
 !rem   // Save key attack data for defense script
 !mmm   if attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
-!mmm     if not m3mgdExchangeStoreAttack("ranged") 
+!mmm     set attackData = { origin: cOwnID.token_id, target: cTargetID.token_id, action: "combatAttack", attackType: "ranged", attackResult: attackResult, criticalAttack: criticalAttack, damageResult: damageResult, damageRoll: cDamageRoll, weaponType: cWeaponType }
+!mmm     if cMagicEnduranceCost
+!mmm       set attackData = { attackData, magicEnduranceCost: cMagicEnduranceCost }
+!mmm     end if
+!mmm     if not m3mgdStoreAttack(attackData) 
 !mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
 !mmm     end if
 !mmm   end if
