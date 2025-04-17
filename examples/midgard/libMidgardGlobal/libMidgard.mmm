@@ -2774,9 +2774,9 @@
 !mmm
 !mmm end function
 !rem
-!rem // m3mgdWeaponSpecialEffect(effect)
+!rem // m3mgdWeaponSpecialEffect(effect, attackerID, [targetID])
 !rem //
-!mmm function m3mgdWeaponSpecialEffect(effect, attackerID)
+!mmm function m3mgdWeaponSpecialEffect(effect, attackerID, targetID)
 !mmm
 !mmm   if isdefault(effect)
 !mmm     return false
@@ -2784,11 +2784,11 @@
 !mmm
 !mmm   if effect eq "waterWalkerBlastEffect"
 !mmm     
-!mmm     do m3mgdRuneEffectWaterWalker(attackerID, default, "water-blast")
+!mmm     return m3mgdRuneEffectWaterWalker(attackerID, targetID, "water-blast")
 !mmm     
 !mmm   end if
 !mmm     
-!mmm   return true
+!mmm   return false
 !mmm
 !mmm end function
 !rem

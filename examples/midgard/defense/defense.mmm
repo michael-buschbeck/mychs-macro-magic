@@ -373,7 +373,7 @@
 !mmm   
 !rem   // Weapon-specific special damage effects
 !mmm   if not defenseSuccess and attackWeaponSpecialEffect
-!mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, attackData.origin)
+!mmm     do m3mgdWeaponSpecialEffect(attackWeaponSpecialEffect, attackData.origin, attackData.target)
 !mmm   end if
 !mmm
 !rem   // Injury & exhaustion special effects
