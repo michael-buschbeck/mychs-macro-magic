@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.2.0 (2025-04-16)"
+!mmm   set scriptVersion = "defense 2.2.0-pre1 (2025-04-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -109,6 +109,17 @@
 !mmm       exit script
 !mmm     end if
 !mmm     set modifierLog = modifierLog & " {{ Zauberei = Verteidigung mit **" & defenseProperty & "** (" & cOwnID.(defenseProperty) & "+" & cOwnID.(defensePropertyBonus) & ") }}"
+!mmm   end if
+!mmm
+!rem   // Process effects on attacker (after GM approval)
+!mmm   set attackerLog = m3mgdProcessAttackerEffects(attackData)
+!mmm   if attackerLog 
+!mmm     combine chat
+!mmm       chat: /w "${attackData.origin.character_name}" ${"&"}{template:default} {{name=Kosten des Angriffs auf ${attackData.target.name}}}
+!mmm       for logline in attackerLog...
+!mmm         chat: {{ ${logline.key}=${logline.value} }}
+!mmm       end for
+!mmm     end combine
 !mmm   end if
 !mmm
 !rem   // Initialize defender 
@@ -290,7 +301,7 @@
 !rem
 !rem   // Process experience gain for attacker if script is run on an NPC, in which case player is GM with control over attacker sheet
 !mmm   if isChar(attackData.origin) and not cNoDefense and ((cOwnID.(cEnduranceAttr).max == 0 and not defenseSuccess) or (cOwnID.(cEnduranceAttr).max != 0 and endurance > 0 and effEnduranceLoss > 0))
-!mmm     set xpGain = m3mgdProcessAttackXP(m3mgdExchange.(m3mgdAttrAttackType), attackData.damageRoll, attackData.origin, cOwnID)
+!mmm     set xpGain = m3mgdProcessAttackXP(attackData.attackType, attackData.damageRoll, attackData.origin, cOwnID)
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": +" & xpGain & " EP}} "
 !mmm   else if not cNoDefense and cOwnID.(cEnduranceAttr).max == 0 and defenseSuccess
 !mmm     set modifierLog = modifierLog & " {{ Erfahrung=" & attackData.origin.name & ": keine (∞ AP, abgewehrt) }} "

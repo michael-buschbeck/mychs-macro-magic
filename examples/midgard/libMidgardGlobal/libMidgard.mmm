@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.6.0-pre (2025-04-16)"
+!mmm   set libVersion = "libMidgard v1.6.0-pre2 (2025-04-17)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -26,18 +26,10 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set m3mgdAttrAttackType          = "m3mgd_attack_type"
-!mmm   set m3mgdAttrAttackerID          = "m3mgd_attack_attackerID"
-!mmm   set m3mgdAttrAttackTargetID      = "m3mgd_attack_targetID"
-!mmm   set m3mgdAttrAttackResult        = "m3mgd_attack_result"
-!mmm   set m3mgdAttrAttackDamage        = "m3mgd_attack_damage"
-!mmm   set m3mgdAttrAttackDamageRoll    = "m3mgd_attack_damage_roll"
-!mmm   set m3mgdAttrAttackWeaponType    = "m3mgd_attack_weapon_type"
-!mmm   set m3mgdAttrAttackEnduranceCost = "m3mgd_attack_endurance_cost"
 !mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
 !mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
 !mmm
-!mmm   set m3mgdExchangeAttrList = m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType, m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
+!mmm   set m3mgdExchangeAttrList = m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
 !mmm
 !mmm   set m3mgdValidMeleeAttackWeaponTypes = "waffenlos", "Einhandschwert", "Zweihandschwert", "Fechtwaffe", "Stichwaffe", "Stockwaffe", "Spießwaffe", "Kettenwaffe", "Einhandschlagwaffe", "Zweihandschlagwaffe", "Zauberstab"
 !mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Kurzbogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
@@ -89,9 +81,7 @@
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
 !mmm   publish to game: m3mgdScriptCommands, m3mgdExchange
-!mmm   publish to game: m3mgdAttrAttackType, m3mgdAttrAttackerID, m3mgdAttrAttackTargetID, m3mgdAttrAttackResult, m3mgdAttrAttackDamage, m3mgdAttrAttackDamageRoll, m3mgdAttrAttackWeaponType, m3mgdAttrAttackEnduranceCost
-!mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
-!mmm   publish to game: m3mgdExchangeAttrList
+!mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain, m3mgdExchangeAttrList
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
@@ -114,11 +104,11 @@
 !mmm   publish to game: m3mgdSpellList, m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
 !mmm   publish to game: _m3mgdSpellButtonPayload, _m3mgdWeaponButtonPayload, m3mgdSpellSelectorChatMenu, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
-!mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
-!mmm   publish to game: m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
 !mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect
 !mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdPersistentEffectLabels, m3mgdUpdatePersistentEffectsCounters
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdGetXPLog, _m3mgdLogXP, m3mgdEditXP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP, m3mgdXPEditButton
+!mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
+!mmm   publish to game: m3mgdProcessAttackerEffects, m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -2411,9 +2401,6 @@
 !mmm     return false
 !mmm   end if
 !mmm   
-!mmm   if isdefault(attackerID)
-!mmm     set attackerID = m3mgdExchange.(m3mgdAttrAttackerID)
-!mmm   end if
 !mmm   if not isChar(attackerID)
 !mmm     do whisperback("m3mgdProcessAttackXP(): Unable to process experience for attack: attacker '" & attackerID.name & "' not linked to a character sheet.")
 !mmm     return false
@@ -2710,6 +2697,10 @@
 !mmm     do whisperback("m3mgdChatDefensePrompt() called without a valid attacker ID, defaulting to script.cOwnID failed.")
 !mmm     return false
 !mmm   end if
+!mmm
+!mmm   if not m3mgdStoreAttack(attackData) 
+!mmm     do whisperback("m3mgdChatDefensePrompt() unable to store attack data for defense script.")
+!mmm   end if
 !mmm   
 !mmm   if attackData.origin.PC 
 !mmm
@@ -2754,6 +2745,33 @@
 !mmm
 !mmm   return true
 !mmm   
+!mmm end function
+!rem
+!rem // m3mgdProcessAttackerEffects(attackData)
+!rem //
+!rem //   Registers effects of a completed attack on the attacker: practice points and endurance loss.
+!rem //
+!mmm function m3mgdProcessAttackerEffects(attackData)
+!mmm
+!rem   // Register practice point, if applicable
+!mmm   if attackData.criticalAttack and not m3mgdIsExhausted(attackData.target) and attackData.attackType eq "magic"
+!mmm     set log = { "Praxispunkt": "Für die Zauberkategorie **" & attackData.origin.(findattr(attackData.origin, "Zauber", "Zauber", attackData.magicSpell, "Prozess")) & "** bitte manuell notieren. [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} " }
+!mmm   else if attackData.criticalAttack and not m3mgdIsExhausted(attackData.target)
+!mmm     do m3mgdProcessCombatPP(attackData.origin, attackData.weaponLabel, attackData.target)
+!mmm     set log = { "Praxispunkt": "[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)" }
+!mmm   else if attackData.criticalAttack
+!mmm     set log = { "Kein Praxispunkt": "Gegner war schon erschöpft (AP=0)" }
+!mmm   end if
+!mmm
+!rem   // Register endurance loss for magic spells or magic weapons
+!mmm   set effEnduranceLoss = attackData.origin.(m3mgdGetEnduranceAttribute(attackData.origin)) - m3mgdModifyEndurance(-1 * attackData.magicEnduranceCost, attackData.origin, m3mgdGetEnduranceAttribute(attackData.origin))
+!mmm   if effEnduranceLoss > 0
+!mmm     set log = { log, "AP": "-" & effEnduranceLoss }
+!mmm     do m3mgdInjuryFX(attackData.origin, 0, effEnduranceLoss / attackData.origin.(m3mgdGetEnduranceAttribute(attackData.origin)).max)
+!mmm   end if
+!mmm
+!mmm   return log
+!mmm
 !mmm end function
 !rem
 !rem // m3mgdWeaponSpecialEffect(effect)
