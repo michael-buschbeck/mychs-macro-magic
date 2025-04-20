@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v1.0-pre (2025-04-16)"
+!mmm   set libVersion = "libExchange v1.0-pre2 (2025-04-19)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
@@ -44,7 +44,7 @@
 !mmm function m3mgdExchangeFlushRegistry(registryID)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
-!mmm     debug chat: m3mgdExchangeFlushRegistry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     chat: m3mgdExchangeFlushRegistry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -69,10 +69,10 @@
 !mmm function m3mgdExchangeStoreEntry(registryID, entry)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
-!mmm     debug chat: m3mgdExchangeStoreEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     chat: m3mgdExchangeStoreEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   else if isunknown(entry.origin.character_id) or isdenied(entry.origin.character_id)
-!mmm     debug chat: m3mgdExchangeStoreEntry(): cannot store data with unknown or denied reference for **origin** token/character: ${entry.origin} Aborting.
+!mmm     chat: m3mgdExchangeStoreEntry(): cannot store data with unknown or denied reference for **origin** token/character: ${entry.origin} Aborting.
 !mmm     return false
 !mmm   else if not m3mgdExchange.(registryID)
 !mmm     set registry = entry
@@ -93,7 +93,7 @@
 !mmm function m3mgdExchangeGetData(registryID, searchCriteria)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
-!mmm     debug chat: m3mgdExchangeGetData(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     chat: m3mgdExchangeGetData(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -128,10 +128,10 @@
 !mmm function m3mgdExchangeDelete(registryID, searchCriteria)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
-!mmm     debug chat: m3mgdExchangeDeleteEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     chat: m3mgdExchangeDeleteEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   else if not m3mgdExchange.(registryID)
-!mmm     debug chat: m3mgdExchangeDeleteEntry(): data exchange registry ${registryID} empty/non-existant => nothing to delete. Aborting.
+!mmm     chat: m3mgdExchangeDeleteEntry(): data exchange registry ${registryID} empty/non-existant => nothing to delete. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -153,7 +153,6 @@
 !mmm     end if
 !mmm   end for
 !mmm
-!mmm   debug chat: deleting ${foundEntries}
 !mmm   set serialRegistry = serialize(survivingEntries)
 !mmm   return (setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry)
 !mmm
@@ -166,10 +165,10 @@
 !mmm function m3mgdExchangeEdit(registryID, searchCriteria, newData)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
-!mmm     debug chat: m3mgdExchangeEdit(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     chat: m3mgdExchangeEdit(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   else if not m3mgdExchange.(registryID)
-!mmm     debug chat: m3mgdExchangeEdit(): data exchange registry ${registryID} empty/non-existant => nothing to edit. Aborting.
+!mmm     chat: m3mgdExchangeEdit(): data exchange registry ${registryID} empty/non-existant => nothing to edit. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -196,14 +195,12 @@
 !mmm   if match
 !mmm     set serialRegistry = serialize(newRegistry)
 !mmm     if setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry
-!mmm       debug chat: Changes saved: ${modifiedEntries}
 !mmm       return modifiedEntries
 !mmm     else
-!mmm       debug chat: Unable to save changes: ${modifiedEntries}
 !mmm       return false
 !mmm     end if
 !mmm   else
-!mmm     debug chat: No match, no change for criteria ${searchCriteria} with new data ${newData}.
+!rem  //   debug chat: No match, no change for criteria ${searchCriteria} with new data ${newData}.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -216,7 +213,7 @@
 !mmm function m3mgdExchangeRegEdit(registryID, searchCriteria)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
-!mmm     debug chat: m3mgdExchangeRegEdit(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     chat: m3mgdExchangeRegEdit(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
 !mmm   end if
 !mmm

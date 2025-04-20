@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.6.0-pre2 (2025-04-17)"
+!mmm   set libVersion = "libMidgard v1.6.0-pre3 (2025-04-20)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -166,7 +166,7 @@
 !rem //   Returns name of a valid, preferred attribute to access the token's endurance.
 !rem // 
 !mmm function m3mgdGetEnduranceAttribute(tokenID)
-!mmm   if m3mgdValidateTokenAttribute(tokenID, script.cEnduranceAttr)
+!mmm   if tokenID.PC and m3mgdValidateTokenAttribute(tokenID, script.cEnduranceAttr)
 !mmm     return script.cEnduranceAttr
 !mmm   else if tokenID.PC
 !mmm     return m3mgdValidateTokenAttribute(tokenID, "AP")
@@ -199,8 +199,7 @@
 !mmm   set filter = { action: "combatAttack", origin: attackData.origin, target: attackData.target }
 !mmm   set activeAttacks = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, filter)
 !mmm   if activeAttacks
-!mmm     debug chat: Overwriting previous attack data for the same origin against the same target (${activeAttacks}).
-!mmm     debug do m3mgdExchangeDelete(m3mgdExchangeRegistries.combatData, filter)
+!mmm     do m3mgdExchangeDelete(m3mgdExchangeRegistries.combatData, filter)
 !mmm   end if 
 !rem 
 !rem   // Store attackData
@@ -232,6 +231,10 @@
 !mmm     set searchCriteria = { searchCriteria, origin: originID }
 !mmm   end if 
 !mmm   set attackData = m3mgdExchangeGetData(dataExchangeID, searchCriteria)
+!mmm   if count(attackData) != 1
+!mmm     do whisperback("m3mgdRetrieveAttack(): Found more than one active attack by " & originID.token_name & " against " & targetID.token_name & ". Aborting.")
+!mmm     return false
+!mmm   end if
 !mmm
 !mmm   set validItems = 0
 !mmm   if attackData.origin.token_id
@@ -927,7 +930,7 @@
 !mmm   else if prvEndurance + offset <= 0
 !mmm     set effOffset = highlight(sign(0 - prvEndurance, "display"), "bad", "begrenzt auf Minimum 0")
 !mmm   else
-!mmm     set effOffset = highlight(sign(offset), "normal")
+!mmm     set effOffset = highlight(sign(offset, "display"), "normal")
 !mmm   end if 
 !mmm   
 !mmm   set newEndurance = prvEndurance + effOffset

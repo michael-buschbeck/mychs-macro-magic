@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.2.0-pre1 (2025-04-17)"
+!mmm   set scriptVersion = "defense 2.2.0-pre2 (2025-04-19)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -90,7 +90,6 @@
 !mmm     set attackWeaponSpecialEffect = attackData.weaponType[1]
 !mmm   end if
 !rem   // Special case: magic spells whose name is stored in attack_type.max
-!rem   // TODO
 !mmm   if attackData.magicSpell
 !mmm     set attackSpell = attackData.magicSpell
 !mmm     set attackEnduranceCost = attackData.spellEnduranceCost
@@ -115,7 +114,7 @@
 !mmm   set attackerLog = m3mgdProcessAttackerEffects(attackData)
 !mmm   if attackerLog 
 !mmm     combine chat
-!mmm       chat: /w "${attackData.origin.character_name}" ${"&"}{template:default} {{name=Kosten des Angriffs auf ${attackData.target.name}}}
+!mmm       chat: /w "${attackData.origin.character_name}" ${"&"}{template:default} {{name=${attackData.origin.name}: Kosten des Angriffs auf ${attackData.target.name}}}
 !mmm       for logline in attackerLog...
 !mmm         chat: {{ ${logline.key}=${logline.value} }}
 !mmm       end for
