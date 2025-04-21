@@ -18,14 +18,6 @@
 !mmm   set m3mgdScriptCommands = { "magicAttack": "&#x25;{MacroSheet|magicAttack}", "defense": "&#x25;{MacroSheet|defense}", "resistance": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}" }
 !mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, "editXP": "&#x25;{MacroSheet|editXP}", "managePersistentEffects": "&#x25;{MacroSheet|managePersistentEffects}", "defendFrostball": "&#x25;{MacroSheet|defendFrostball}", "defendSnatch": "&#x25;{MacroSheet|defendSnatch}" }
 !mmm
-!mmm   set m3mgdExchangeDataSheet = "MacroSheet"
-!mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
-!mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
-!mmm     do whisperback(libVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Data exchange will not work.")
-!mmm     do delay(5)
-!mmm     return false
-!mmm   end if
-!mmm
 !mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
 !mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
 !mmm
@@ -73,14 +65,10 @@
 !mmm     end if
 !mmm   end if
 !mmm
-!mmm   if isunknown(m3mgdExchange.m3mgdActivePersistentEffects) or m3mgdExchange.m3mgdActivePersistentEffects eq ""
-!mmm     do setattr(m3mgdExchange, "m3mgdActivePersistentEffects", serialize({}))
-!mmm   end if
-!mmm   
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
-!mmm   publish to game: m3mgdScriptCommands, m3mgdExchange
+!mmm   publish to game: m3mgdScriptCommands
 !mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain, m3mgdExchangeAttrList
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes

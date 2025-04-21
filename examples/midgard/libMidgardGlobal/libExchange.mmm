@@ -9,13 +9,22 @@
 !mmm   set libVersion = "libExchange v1.0 (2025-04-21)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
-!rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
+!rem   // Define character sheet to use as central storage
+!mmm   set m3mgdExchangeDataSheet = "MacroSheet"
+!mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
+!mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
+!mmm     do whisperback(libVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Data exchange will not work.")
+!mmm     do delay(5)
+!mmm     return false
+!mmm   end if
+!mmm
+!rem   // Set up individual registry attributes
 !mmm   set m3mgdExchangeRegistries = { combatData: "m3mgdCombatData", activePersistentEffects: "m3mgdActivePersistentEffects" }
 !mmm   for dataRegistry in m3mgdExchangeRegistries...
-!mmm     if dataRegistry.value.permission ne "view" and dataRegistry.value.permission ne "control" 
-!mmm       do whisperback(libVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Data exchange will not work.")
+!mmm     if isunknown(m3mgdExchange.(dataRegistry.value)) or m3mgdExchange.(dataRegistry.value) eq ""
+!mmm       do setattr(m3mgdExchange, dataRegistry.value, serialize({}))
+!mmm       do whisperback(libVersion & " - No registry '" & dataRegistry.value & "' in sheet '" & m3mgdExchange & "', created a new one.")
 !mmm       do delay(5)
-!mmm       return false
 !mmm     end if
 !mmm   end for
 !mmm
@@ -25,7 +34,7 @@
 !rem   // Publish game-global variables defined below
 !rem
 !rem   //publish to game: m3mgdExchangeDataSheet, m3mgdExchange
-!mmm   publish to game: m3mgdExchangeRegistries
+!mmm   publish to game: m3mgdExchange, m3mgdExchangeDataSheet, m3mgdExchangeRegistries
 !rem
 !rem   // Publish game-global functions defined below
 !rem
