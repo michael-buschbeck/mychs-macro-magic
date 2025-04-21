@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.6.0-pre3 (2025-04-20)"
+!mmm   set libVersion = "libMidgard v1.6.0 (2025-04-21)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -17,9 +17,9 @@
 !rem
 !mmm   set m3mgdScriptCommands = { "magicAttack": "&#x25;{MacroSheet|magicAttack}", "defense": "&#x25;{MacroSheet|defense}", "resistance": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}" }
 !mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, "editXP": "&#x25;{MacroSheet|editXP}", "managePersistentEffects": "&#x25;{MacroSheet|managePersistentEffects}", "defendFrostball": "&#x25;{MacroSheet|defendFrostball}", "defendSnatch": "&#x25;{MacroSheet|defendSnatch}" }
+!mmm
 !mmm   set m3mgdExchangeDataSheet = "MacroSheet"
 !mmm   set m3mgdExchange = m3mgdExchangeDataSheet.character_id
-!mmm 
 !mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
 !mmm     do whisperback(libVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Data exchange will not work.")
 !mmm     do delay(5)
@@ -140,25 +140,15 @@
 !rem //   Returns the attrLabel value found valid or false in case of validation or access issues.
 !rem // 
 !mmm function m3mgdValidateTokenAttribute(tokenID, attrLabel, defaultAttrLabel)
-!mmm 
 !mmm   if isunknown(tokenID.(attrLabel)) or isdenied(tokenID.(attrLabel))
-!mmm     
 !mmm     if isdefault(defaultAttrLabel) or isunknown(tokenID.(script.(defaultAttrLabel))) or isdenied(tokenID.(script.(defaultAttrLabel)))
-!mmm     
 !mmm       return false
-!mmm     
 !mmm     else
-!mmm     
 !mmm       return script.(defaultAttrLabel)
-!mmm     
 !mmm     end if
-!mmm     
 !mmm   else
-!mmm   
 !mmm     return attrLabel
-!mmm 
 !mmm   end if
-!mmm   
 !mmm end function
 !rem
 !rem // m3mgdGetEnduranceAttribute(tokenID)
@@ -207,32 +197,27 @@
 !mmm   
 !mmm end function
 !rem
-!rem // m3mgdRetrieveAttack(targetID, [originID], [dataExchangeID])
+!rem // m3mgdRetrieveAttack([targetID], [originID], [filters])
 !rem // 
 !rem //   Pulls stored attack data for the token pair targetID/[originID] from the registry [dataExchangeID].
 !rem //   Validates attack data stack and returns it if valid, otherwise returns false.
 !rem // 
-!mmm function m3mgdRetrieveAttack(targetID, originID, dataExchangeID)
+!mmm function m3mgdRetrieveAttack(targetID, originID, filters)
 !mmm
-!mmm   if isdefault(targetID) or isunknown(targetID.token_id)
-!mmm     do whisperback("m3mgdRetrieveAttack(): No target ID given, aborting.")
-!mmm     return false
-!mmm   end if
-!mmm   if isdefault(dataExchangeID)
-!mmm     set dataExchangeID = m3mgdExchangeRegistries.combatData
-!mmm   end if
-!mmm   if isunknown(dataExchangeID) or isdenied(dataExchangeID)
-!mmm     do whisperback("m3mgdRetrieveAttack(): Invalid attack data exchange sheet: " & getreason(dataExchangeID))
-!mmm     return false
-!mmm   end if
-!mmm
-!mmm   set searchCriteria = { action: "combatAttack", target: targetID }
+!mmm   set searchCriteria = { action: "combatAttack" }
+!mmm   if not isdefault(targetID)
+!mmm     set searchCriteria = { searchCriteria, target: targetID }
+!mmm   end if 
 !mmm   if not isdefault(originID)
 !mmm     set searchCriteria = { searchCriteria, origin: originID }
 !mmm   end if 
-!mmm   set attackData = m3mgdExchangeGetData(dataExchangeID, searchCriteria)
+!mmm   if not isdefault(filters)
+!mmm     set searchCriteria = { searchCriteria, filters }
+!mmm   end if 
+!mmm
+!mmm   set attackData = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, searchCriteria)
 !mmm   if count(attackData) != 1
-!mmm     do whisperback("m3mgdRetrieveAttack(): Found more than one active attack by " & originID.token_name & " against " & targetID.token_name & ". Aborting.")
+!mmm     debug chat: m3mgdRetrieveAttack(): Found more than one active attack by '${originID.token_name}' against '${targetID.token_name}'.
 !mmm     return false
 !mmm   end if
 !mmm

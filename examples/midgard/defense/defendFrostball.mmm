@@ -1,7 +1,7 @@
 !rem // Defends against Midgard's Frostball spell, as defined in Arkanum:86
 !rem //
 !mmm script
-!mmm   set scriptVersion = "defendFrostball 1.6.0-WIP2 (2025-04-16)"
+!mmm   set scriptVersion = "defendFrostball 1.6.0 (2025-04-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion

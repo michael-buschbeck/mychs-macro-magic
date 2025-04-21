@@ -5,7 +5,7 @@
 !mmm   set cTargetID = "@{target|Angriffsziel|token_id}"
 !mmm end customize
 !mmm script
-!mmm   set scriptVersion = "defendSnatch 1.3.0 (2025-04-16)"
+!mmm   set scriptVersion = "defendSnatch 1.3.0 (2025-04-20)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -44,7 +44,6 @@
 !mmm       do whisperback(m3mgdExchangeAssignAttack(m3mgdExchangeRegistries.combatData, { action: "combatAttack", attackType: "magic", magicSpell: "Snatch" }, cOwnID))
 !mmm       exit script
 !mmm     end if
-!mmm     debug chat: Identified a single dataset that fits: ${attackData}
 !mmm   end if
 !mmm   
 !mmm   set attackerID = attackData.origin

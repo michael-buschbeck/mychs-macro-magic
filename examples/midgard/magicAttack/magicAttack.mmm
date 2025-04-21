@@ -1,7 +1,7 @@
 !rem // Midgard Magic Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "magicAttack 1.1.0-pre2 (2025-04-17)"
+!mmm   set scriptVersion = "magicAttack 1.1.0 (2025-04-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion

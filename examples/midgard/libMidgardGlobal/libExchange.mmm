@@ -6,19 +6,18 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v1.0-pre2 (2025-04-19)"
+!mmm   set libVersion = "libExchange v1.0 (2025-04-21)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage (for now, this happens already in _libMidgard)
-!rem   //set m3mgdExchangeDataSheet = "MacroSheet"
-!rem   //set m3mgdExchange = m3mgdExchangeDataSheet.character_id
 !mmm   set m3mgdExchangeRegistries = { combatData: "m3mgdCombatData", activePersistentEffects: "m3mgdActivePersistentEffects" }
-!rem
-!mmm   if m3mgdExchange.permission ne "view" and m3mgdExchange.permission ne "control" 
-!mmm     do whisperback(libVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Data exchange will not work.")
-!mmm     do delay(5)
-!mmm     return false
-!mmm   end if
+!mmm   for dataRegistry in m3mgdExchangeRegistries...
+!mmm     if dataRegistry.value.permission ne "view" and dataRegistry.value.permission ne "control" 
+!mmm       do whisperback(libVersion & " - No permission to access Midgard data exchange sheet '" & m3mgdExchangeDataSheet & "'. Data exchange will not work.")
+!mmm       do delay(5)
+!mmm       return false
+!mmm     end if
+!mmm   end for
 !mmm
 !mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, exchangeRegEdit: "&#x25;{MacroSheet|exchangeRegEdit}" }
 !mmm   publish to game: m3mgdScriptCommands
