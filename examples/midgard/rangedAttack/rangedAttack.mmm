@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "2.0.1 (2024-11-17)"
+!mmm   set scriptVersion = "2.1.0 (2025-04-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -355,12 +355,6 @@
 !mmm     set attackFromBehind = false
 !mmm   end if
 !mmm
-!rem   // For magic weapons: Process optional endurance cost
-!mmm   if cMagicEnduranceCost > 0
-!mmm     set effEnduranceLoss = cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)) - m3mgdModifyEndurance(-1 * cMagicEnduranceCost, cOwnID, m3mgdGetEnduranceAttribute(cOwnID))
-!mmm     set modifierLog = modifierLog & "{{ " & cWeaponLabel & "=-" & cMagicEnduranceCost & " AP }}"
-!mmm   end if
-!rem
 !rem   // Run & format rolls
 !rem
 !mmm   if cSemiManualModifiers % 23 == 0
@@ -423,25 +417,9 @@
 !mmm     set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm   end if
 !mmm
-!rem   // Save key attack data for defense script
-!mmm   if attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
-!mmm     if not m3mgdExchangeStoreAttack("ranged") 
-!mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
-!mmm     end if
-!mmm   end if
-!rem
 !rem   // Break down extra magic damage to player and GM
 !mmm   if cAmmoMagic and attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberschaden=" & damageResult & " }} "
-!mmm   end if
-!mmm
-!rem   // Register practice point, if applicable
-!mmm   if iscritical(cAttackRoll) and foeEndurance > 0
-!mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel, cTargetID)
-!mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
-!mmm     end if
-!mmm   else if iscritical(cAttackRoll)
-!mmm     set modifierLog = modifierLog & " {{Kein Praxispunkt=Gegner war schon erschöpft (AP=0)}} "
 !mmm   end if
 !mmm
 !rem   // Pull together a sensible guess at a default way of addressing the weapon for output
@@ -552,12 +530,22 @@
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm
-!rem   // Injury & exhaustion special effects
-!mmm   if effEnduranceLoss > 0
-!mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
-!mmm   end if
 !mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
-!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType, "ranged")
+!mmm
+!rem     // Save key attack data for defense script
+!mmm     set attackData = { origin: cOwnID.token_id, target: cTargetID.token_id, action: "combatAttack", attackType: "ranged", attackResult: attackResult }
+!mmm     set attackData = { attackData, criticalAttack: criticalAttack, damageResult: damageResult, damageRoll: cDamageRoll, weaponType: cWeaponType, weaponLabel: cWeaponLabel }
+!mmm     if cMagicEnduranceCost
+!mmm       set attackData = { attackData, magicEnduranceCost: cMagicEnduranceCost }
+!mmm     end if
+!mmm     if not m3mgdStoreAttack(attackData) 
+!mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
+!mmm     end if
+!mmm     do m3mgdChatDefensePrompt(attackData)
+!mmm
+!rem   // Injury & exhaustion special effects
+!mmm   else if cMagicEnduranceCost > 0
+!mmm     do m3mgdInjuryFX(cOwnID, 0, cMagicEnduranceCost / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
 !mmm   end if
 !mmm
 !mmm end script

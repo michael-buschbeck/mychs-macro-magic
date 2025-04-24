@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgardRuneBlades()
 !mmm   
-!mmm   set libVersion = "libMidgardRuneBlades v1.1.1 (2024-02-14)"
+!mmm   set libVersion = "libMidgardRuneBlades v1.1.2 (2025-04-17)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Game-global constants for publication
@@ -327,9 +327,6 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   if isdefault(targetID)
-!mmm     set targetID = m3mgdExchange.(m3mgdAttrAttackTargetID)
-!mmm   end if
 !mmm   if isunknown(targetID) or isdenied(targetID) or targetID.permission ne "control"
 !mmm     do whisperback("Target given as token ID '" & targetID & "' may not be a correct token ID, or does not allow control of attributes")
 !mmm     return false

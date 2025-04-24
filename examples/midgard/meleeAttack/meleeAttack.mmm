@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.0.0 (2024-03-16)"
+!mmm   set scriptVersion = "meleeAttack v2.1.0 (2024-04-17)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -240,28 +240,11 @@
 !mmm     set damageResult = highlight(damageResult, default, damageResultLog)
 !mmm   end if
 !mmm
-!rem   // Save key attack data for defense script
-!rem
-!mmm   if attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
-!mmm     if not m3mgdExchangeStoreAttack("melee") 
-!mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
-!mmm     end if
-!mmm   end if
-!rem
 !rem   // Break down magic effects for player and GM
 !mmm   if magicExtraDamageActive and attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & (damageResult - cMagicExtraDamageRoll) & "**&nbsp;" & emojiMagic & " +&nbsp;**" & cMagicExtraDamageRoll & "**&nbsp;" & cMagicExtraDamageLabel & "}} "
 !mmm   else if magicWeapon and attackResult >= 20 and not isfumble(cAttackRoll) and damageResult > 0
 !mmm     set modifierLog = modifierLog & " {{Zauberwaffe=**" & damageResult & "**&nbsp;" & emojiMagic & " }} "
-!mmm   end if
-!mmm
-!rem   // Register practice point, if applicable
-!mmm   if iscritical(cAttackRoll) and not m3mgdIsExhausted(cTargetID)
-!mmm     if m3mgdProcessCombatPP(cOwnID, cWeaponLabel, cTargetID)
-!mmm       set modifierLog = modifierLog & " {{Praxispunkt=[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
-!mmm     end if
-!mmm   else if iscritical(cAttackRoll)
-!mmm     set modifierLog = modifierLog & " {{Kein Praxispunkt=Gegner war schon erschöpft (AP=0)}} "
 !mmm   end if
 !mmm
 !rem   // Pull together a sensible guess at a default way of addressing the weapon for output
@@ -363,8 +346,20 @@
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm
+!rem   // Save key attack data for defense script
+!rem
 !mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
-!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cWeaponType, "melee")
+!mmm
+!mmm     set attackData = { origin: cOwnID.token_id, target: cTargetID.token_id, action: "combatAttack", attackType: "melee", attackResult: attackResult }
+!mmm     set attackData = { attackData, criticalAttack: criticalAttack, damageResult: damageResult, damageRoll: cDamageRoll, weaponType: cWeaponType, weaponLabel: cWeaponLabel }
+!mmm     if cMagicEnduranceCost
+!mmm       set attackData = { attackData, magicEnduranceCost: cMagicEnduranceCost }
+!mmm     end if
+!mmm     if not m3mgdStoreAttack(attackData) 
+!mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
+!mmm     end if
+!mmm     do m3mgdChatDefensePrompt(attackData)
+!mmm
 !mmm   end if
 !mmm
 !mmm end script

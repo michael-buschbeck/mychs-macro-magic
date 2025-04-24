@@ -1,7 +1,7 @@
 !rem // Midgard Magic Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "1.0.1pre (2025-03-12)"
+!mmm   set scriptVersion = "magicAttack 1.1.0 (2025-04-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -65,7 +65,7 @@
 !rem   // Refetch token id to ensure access in case of erroneous override in customize block
 !mmm   set cOwnID = m3mgdValidateOwnTokenID(cOwnID)
 !mmm   if not cOwnID
-!mmm     do whisperback(scriptVersion & ": Invalid own token ID configured. Check custom config script.")
+!mmm     do whisperback(scriptVersion & ": Invalid own token ID configured. Check custom config script or select an NPC token.")
 !mmm     exit script
 !mmm   end if
 !rem
@@ -124,7 +124,6 @@
 !mmm
 !rem   // Process endurance cost for spellcasting
 !mmm   if magicEnduranceCost > 0
-!mmm     set effEnduranceLoss = cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)) - m3mgdModifyEndurance(-1 * magicEnduranceCost, cOwnID, m3mgdGetEnduranceAttribute(cOwnID))
 !mmm     set modifierLog = modifierLog & "{{ " & cAttackSpell & "=-" & magicEnduranceCost & " AP }}"
 !mmm   end if
 !rem
@@ -137,20 +136,6 @@
 !mmm   end if
 !mmm   set criticalAttack = iscritical(cAttackRoll)
 !mmm 
-!rem   // Save key attack data for defense script
-!mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
-!mmm     if not m3mgdExchangeStoreAttack("magic", cAttackSpell) 
-!mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
-!mmm     end if
-!mmm   end if
-!mmm
-!rem   // Register practice point, if applicable
-!mmm   if iscritical(cAttackRoll) and foeEndurance > 0
-!mmm     set modifierLog = modifierLog & " {{Praxispunkt=Für die Zauberkategorie **" & cOwnID.(findattr(cOwnID, "Zauber", "Zauber", cAttackSpell, "Prozess")) & "** bitte manuell notieren. [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} "
-!mmm   else if iscritical(cAttackRoll)
-!mmm     set modifierLog = modifierLog & " {{Kein Praxispunkt=Gegner war schon erschöpft (AP=0)}} "
-!mmm   end if
-!mmm
 !mmm
 !mmm   if cVerbose
 !mmm     combine chat
@@ -214,16 +199,24 @@
 !mmm     set modifierLog = modifierLog & " {{ Angriffszähler=" & endOfActionSummary & " }}"
 !mmm   end if
 !mmm
+!rem   // Send modifier table to acting player
 !mmm   if modifierLog ne "{{Boni/Mali=keine}}"
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} ${modifierLog}
 !mmm   end if
 !mmm
-!rem   // Injury & exhaustion special effects
-!mmm   if effEnduranceLoss > 0
-!mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
-!mmm   end if
+!rem   // If attack was successful, send all the data onward to GM or target for defense and further processing
 !mmm   if attackResult >= 20 and not isfumble(cAttackRoll)
-!mmm     do m3mgdChatDefensePrompt(cTargetID, cOwnID, cAttackSpell, "magic")
+!mmm
+!mmm     set attackData = { origin: cOwnID.token_id, target: cTargetID.token_id, action: "combatAttack", attackType: "magic" }
+!mmm     set attackData = { attackData, attackResult: attackResult, criticalAttack: criticalAttack, magicSpell: cAttackSpell, spellType: cSpellType }
+!mmm     if magicEnduranceCost
+!mmm       set attackData = { attackData, magicEnduranceCost: magicEnduranceCost }
+!mmm     end if
+!mmm     do m3mgdChatDefensePrompt(attackData)
+!mmm
+!rem   // Injury & exhaustion special effects in case of failure (otherwise they will be processed elsewhere)
+!mmm   else if effEnduranceLoss > 0
+!mmm     do m3mgdInjuryFX(cOwnID, 0, effEnduranceLoss / cOwnID.(m3mgdGetEnduranceAttribute(cOwnID)).max)
 !mmm   end if
 !mmm
 !mmm end script
