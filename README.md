@@ -1026,8 +1026,8 @@ This works in any place with an expression, of course, not just in **set** – y
 | round(*a*)                                         | Math      | round(1.5) = 2   | Round *a* to the nearest integer
 | ceil(*a*)                                          | Math      | ceil(1.3) = 2    | Return the smallest integer that's greater than or equal to *a*
 | abs(*a*)                                           | Math      | abs(-5) = 5      | Return the absolute value of *a*
-| min(...)                                           | Math      | min(3,1,2) = 1   | Return the numerically smallest value – any number of arguments allowed
-| max(...)                                           | Math      | max(3,1,2) = 3   | Return the numerically greatest value – any number of arguments allowed
+| min(...)                                           | Math      | min(3,1,2) = 1   | Return the numerically smallest value – any number of arguments allowed, lists in arguments are flattened
+| max(...)                                           | Math      | max(3,1,2) = 3   | Return the numerically greatest value – any number of arguments allowed, lists in arguments are flattened
 | sin(*degrees*)                                     | Math      | sin(90) = 1      | Return the sine of *degrees*
 | cos(*degrees*)                                     | Math      | cos(90) = 0      | Return the cosine of *degrees*
 | tan(*degrees*)                                     | Math      | tan(45) = 1      | Return the tangent of *degrees*
