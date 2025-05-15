@@ -985,15 +985,31 @@
                 { result: "-456" },
             ],
             [
-                "min(5, undefined, 'moo', 999, 2, -3.14)",
+                "min(5, undef, 'moo', 999, 2, -3.14)",
                 { result: "-3.14" },
+            ],
+            [
+                "min((4, 2, 1, -99, 5, 3) select ...)",
+                { result: "-99" },
+            ],
+            [
+                "min((4, 2, 1, -99, 5, 3) select ..., (1, 2, -999, 3) select ...)",
+                { result: "-999" },
             ],
             [
                 "max()",
                 { result: "undef" },
             ],
             [
-                "max(5, undefined, 'moo', 999, 2, -3.14)",
+                "max(5, undef, 'moo', 999, 2, -3.14)",
+                { result: "999" },
+            ],
+            [
+                "max((4, 2, 1, 99, 5, 3) select ...)",
+                { result: "99" },
+            ],
+            [
+                "max((4, 2, 1, 99, 5, 3) select ..., (1, 2, 999, 3) select ...)",
                 { result: "999" },
             ],
             [
