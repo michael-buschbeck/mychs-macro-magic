@@ -39,18 +39,8 @@
 !mmm   end for
 !mmm
 !rem   // prepare action payloads
-!mmm   set registerSelectedPayload = "!mmm customize&#13;"
-!mmm   set registerSelectedPayload = registerSelectedPayload & literal("!mmm set cmd=\"registerParty\"") & "&#13;"
-!mmm   set registerSelectedPayload = registerSelectedPayload & literal("!mmm set cPartyList=selected") & "&#13;"
-!mmm   set registerSelectedPayload = registerSelectedPayload & "!mmm end customize&#13;" & m3mgdGMScriptCommands.combatPartyManager
-!mmm      
-!mmm   set calculateAttackPayload = "!mmm customize&#13;"
-!mmm   set calculateAttackPayload = calculateAttackPayload & literal("!mmm set cmd=\"calculateAttack\"") & "&#13;"
-!mmm   set calculateAttackPayload = calculateAttackPayload & "!mmm end customize&#13;" & m3mgdGMScriptCommands.combatPartyManager
-!mmm
-!mmm   set rerollPayload = "!mmm customize&#13;"
-!mmm   set rerollPayload = rerollPayload & literal("!mmm set cmd=\"calculateAttack\"") & "&#13;"
-!mmm   set rerollPayload = rerollPayload & "!mmm end customize&#13;" & m3mgdGMScriptCommands.combatPartyManager
+!mmm   set registerSelectedPayload = chatButtonPayload(m3mgdGMScriptCommands.combatPartyManager, { cmd: "'registerParty'", cPartyList: "selected" })
+!mmm   set calculateAttackPayload = chatButtonPayload(m3mgdGMScriptCommands.combatPartyManager, { cmd: "'calculateAttack'" })
 !mmm      
 !mmm      
 !rem   // execute actions
@@ -68,8 +58,8 @@
 !mmm     set chatOutput = chatTightBoxHeader("combatPartyManager: Registrierung")
 !mmm     set chatOutput = chatOutput & chatTightBoxRow("Gruppe registriert: " & (setattr(m3mgdExchange, "m3mgdCombatParty", serialize(cPartyList)) == cPartyList), "", "#eeeeee", "#333333")
 !mmm     set chatOutput = chatOutput & listCombatParty()
-!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("Gruppe neu definieren: alle markierten Tokens", "", registerSelectedPayload)
-!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("NPC-Angriff: Zufallsverteilung vorschlagen", "", calculateAttackPayload)
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("📄 Gruppe neu definieren: alle markierten Tokens", "", registerSelectedPayload)
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("🎲 NPC-Angriff: Zufallsverteilung vorschlagen", "", calculateAttackPayload)
 !mmm
 !mmm
 !mmm   else if cmd eq "flushRegistry"
@@ -124,7 +114,7 @@
 !mmm     do m3mgdExchangeStoreEntry("m3mgdBatchCombatData", batchAttackOrder)
 !mmm     
 !mmm     set chatOutput = _m3mgdBatchCombatOrderOutput(true, noAttacks)
-!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("🎲🗘 Verteilung neu auswürfeln", "", rerollPayload)
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("🎲🗘 Verteilung neu auswürfeln", "", calculateAttackPayload)
 !mmm   
 !mmm   end if
 !mmm     
