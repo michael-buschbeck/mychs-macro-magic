@@ -1,0 +1,73 @@
+!rem // combatPartyManager
+!rem //
+!mmm script
+!mmm
+!mmm   set customizable cmd = default
+!mmm   set customizable cPartyList = default
+!mmm
+!mmm   set combatParty = deserialize(m3mgdExchange.m3mgdCombatParty)
+!mmm
+!mmm   set npcTokens = 0
+!mmm
+!rem   // Analyze the board
+!mmm   for t in gettokens()
+!mmm       if isunknown(t.character_id)
+!mmm         set npcTokens = npcTokens + 1
+!mmm         set sheetlessTokens = sheetlessTokens, t.token_id
+!mmm       else if isunknown(t.PC)
+!mmm         set npcTokens = npcTokens + 1
+!mmm         if not (npcCharacters select ...key eq t.character_id)
+!mmm           set npcCharacters = { npcCharacters, (t.character_id): (npcCharacters.(t.character_id), t) }
+!mmm         end if
+!mmm       end if
+!mmm   end for
+!mmm
+!mmm   if cmd eq "showParty"
+!mmm     
+!mmm     set chatOutput = chatTightBoxHeader("combatPartyManager: Übersicht Gruppenmitglieder")
+!mmm     for characterID in combatParty
+!mmm       set chatOutput = chatOutput & chatTightBoxRow(characterID.character_name)
+!mmm     end for
+!mmm
+!mmm   else if cmd eq "registerParty" and not isdefault(cPartyList)
+!mmm
+!mmm     set chatOutput = chatTightBoxHeader("combatPartyManager: Registrierung")
+!mmm     set chatOutput = chatOutput & chatTightBoxRow("Gruppe registriert: " & (setattr(m3mgdExchange, "m3mgdCombatParty", serialize(cPartyList) == cPartyList)))
+!mmm     
+!mmm
+!mmm   else if cmd eq "calculateAttack"
+!mmm
+!mmm     set chatOutput = chatTightBoxHeader("combatPartyManager: Zufallsverteilter Angriff (" & count(npcCharacters...) & " NPC-Typen)")
+!mmm     set chatOutput = chatOutput & chatTightBoxRow("Ziele: " & count(combatParty) & " Helden")
+!mmm     set attackCount = 0
+!mmm     for uniqueAttackerSheet in npcCharacters...
+!mmm       set attackDistribution = undef
+!mmm       set combatPartyTargeting = undef
+!mmm       for attackerToken in uniqueAttackerSheet.value
+!mmm         if not m3mgdIsUnfitToAttack(attackerToken)
+!mmm           set attackDistribution = { attackDistribution, (attackerToken): roll("1d" & count(combatParty))-1 }
+!mmm           set combatPartyTargeting = { combatPartyTargeting, (combatParty[attackDistribution.(attackerToken)]): combatPartyTargeting.(combatParty[attackDistribution.(attackerToken)]) + 1 }
+!mmm         end if
+!mmm       end for
+!mmm
+!mmm       set attackDistributionSummary = ""
+!mmm       for partyMember in combatPartyTargeting...
+!mmm         set attackDistributionSummary = attackDistributionSummary & ", " & partyMember.value & " ⚔️ " & partyMember.key.token_name
+!mmm       end for
+!mmm
+!mmm       set chatOutput = chatOutput & chatTightBoxSubHeader(count(uniqueAttackerSheet.value) & " Tokens von " & uniqueAttackerSheet.key.character_name & "(" & attackDistributionSummary & ")")
+!mmm
+!mmm       for weaponGroup in "melee", "ranged"
+!rem         // pull this logic in here in a simplified way (no need for defense weapon selection or magic) & create separate buttons for each target?
+!rem         // if we execute all attacks in one go, we need to check/change the data exchange plumbing. if we don't, how is GM going to find the button in the chat?
+!mmm         set chatOutput = chatOutput & m3mgdWeaponSelectorChatMenu(uniqueAttackerSheet.key, weaponGroup)
+!mmm       end for
+!mmm       
+!mmm
+!mmm     end for
+!mmm
+!mmm   end if
+!mmm     
+!mmm   do whisperback(chatOutput)
+!mmm 
+!mmm end script
