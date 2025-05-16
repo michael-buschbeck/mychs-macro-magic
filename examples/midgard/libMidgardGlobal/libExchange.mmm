@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v1.0.1 (2025-04-22)"
+!mmm   set libVersion = "libExchange v1.1.0 (2025-04-25)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage
@@ -19,7 +19,7 @@
 !mmm   end if
 !mmm
 !rem   // Set up individual registry attributes
-!mmm   set m3mgdExchangeRegistries = { combatData: "m3mgdCombatData", activePersistentEffects: "m3mgdActivePersistentEffects" }
+!mmm   set m3mgdExchangeRegistries = { activePersistentEffects: "m3mgdActivePersistentEffects", combatData: "m3mgdCombatData", nonCombat: "m3mgdNonCombatEffects" }
 !mmm   for dataRegistry in m3mgdExchangeRegistries...
 !mmm     if isunknown(m3mgdExchange.(dataRegistry.value)) or m3mgdExchange.(dataRegistry.value) eq ""
 !mmm       do setattr(m3mgdExchange, dataRegistry.value, serialize({}))
@@ -211,7 +211,6 @@
 !mmm       return false
 !mmm     end if
 !mmm   else
-!rem  //   debug chat: No match, no change for criteria ${searchCriteria} with new data ${newData}.
 !mmm     return false
 !mmm   end if
 !mmm
@@ -228,9 +227,9 @@
 !mmm     return false
 !mmm   end if
 !mmm
-!mmm   set output = chatTightBoxHeader("Datenaustausch aufräumen")
+!mmm   set output = chatTightBoxHeader("Datenaustausch aufräumen: " & registryID)
 !mmm   set entryCount = 0
-!mmm   for entry in m3mgdExchangeGetData(registryID, searchCriteria)
+!mmm   for entry in m3mgdExchangeGetData(registryID, searchCriteria) where ... ne {}
 !mmm     set outputEntry = "❌ "
 !mmm     set tooltip = ""
 !mmm     for propertyPair in entry...
@@ -241,17 +240,11 @@
 !mmm       end if
 !mmm     end for
 !mmm     set tooltip = "❌ Diesen Eintrag löschen"
-!mmm     set payload = literal("!mmm customize") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set cmd=\"deleteEntry\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set deleteConfirm=true") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set searchByAction=\"" & entry.action & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set searchByOrigin=\"" & entry.origin & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set searchByTarget=\"" & entry.target & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set searchByAttackType=\"" & entry.attackType & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set searchByAttackResult=\"" & entry.attackResult & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set searchByDamageResult=\"" & entry.damageResult & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set searchByMagicSpell=\"" & entry.magicSpell & "\"") & "&#13;"
-!mmm     set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.exchangeRegEdit & "&#13;"
+!mmm     set payloadSettings = { "cmd": "'deleteEntry'", "deleteConfirm": true }
+!mmm     for i in ("searchByAction": entry.action, "searchByOrigin": entry.origin, "searchByTarget": entry.target, "searchByAttackType": entry.attackType, "searchByAttackResult": entry.attackResult, "searchByDamageResult": entry.damageResult, "searchByMagicSpell": entry.magicSpell) where (...value ne "")
+!mmm       set payloadSettings = { payloadSettings, (i.key): "'" & i.value & "'" }
+!mmm     end for
+!mmm     set payload = chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, payloadSettings)
 !mmm     set output = output & chatTightBoxButtonRow(outputEntry, tooltip, payload)
 !mmm     set entryCount = entryCount + 1
 !mmm   end for
@@ -260,7 +253,7 @@
 !mmm     set output = output & chatTightBoxRow("(keine Einträge)")
 !mmm   end if 
 !mmm
-!mmm   do chat(output)
+!mmm   do chat(output & chatTightBoxButtonSubHeader("<< zurück zur Auswahl", "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: default })))
 !mmm
 !mmm end function
 !rem 
