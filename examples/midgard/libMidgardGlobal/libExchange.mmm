@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v1.0 (2025-04-21)"
+!mmm   set libVersion = "libExchange v1.0.1 (2025-04-22)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage
@@ -72,20 +72,23 @@
 !rem 
 !rem // m3mgdExchangeStoreEntry(registryID, entry)
 !rem // 
-!rem //   Stores entry in the central data registry for retrieval by another script.
+!rem //   Stores entry in the central data registry for retrieval by another script. If entry is a single key-value pair, it replaces the same key.
 !rem // 
 !mmm function m3mgdExchangeStoreEntry(registryID, entry)
 !mmm
 !mmm   if isdenied(m3mgdExchange.(registryID))
 !mmm     chat: m3mgdExchangeStoreEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
 !mmm     return false
-!mmm   else if isunknown(entry.origin.character_id) or isdenied(entry.origin.character_id)
-!mmm     chat: m3mgdExchangeStoreEntry(): cannot store data with unknown or denied reference for **origin** token/character: ${entry.origin} Aborting.
-!mmm     return false
 !mmm   else if not m3mgdExchange.(registryID)
 !mmm     set registry = entry
 !mmm   else
-!mmm     set registry = m3mgdExchangeGetRegistry(registryID), entry
+!mmm     set registry = m3mgdExchangeGetRegistry(registryID)
+!mmm     if registry.(entry.key)
+!rem       // if (entry) is a single key-value pair (provided WITHOUT {} braces which would make it a struct!): find the key and replace it
+!mmm       set registry = { registry, (entry.key): entry.value }
+!mmm     else
+!mmm       set registry = registry, entry
+!mmm     end if
 !mmm   end if
 !mmm
 !mmm   set serialRegistry = serialize(registry)
