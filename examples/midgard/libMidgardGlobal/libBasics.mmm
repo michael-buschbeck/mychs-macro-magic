@@ -1,12 +1,12 @@
 !rem // libBasics: Basic MMM utility functions
 !rem // 
-!rem // _libBasics()
+!rem // _libBasics() 
 !rem // 
 !rem //   Initializer and publisher function. Call once from autorun.
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libMidgardBasics v1.4.5 (2025-03-16)"
+!mmm   set libVersion = "libBasics v1.4.6 (2025-04-23)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -31,7 +31,7 @@
 !rem   // Publish game-global functions defined below
 !rem
 !mmm   publish to game: DE
-!mmm   publish to game: isfumble, count, isChar, sign, stringify, sum, repeat, rollResult, rollMax, zeroOrPositive
+!mmm   publish to game: isfumble, count, isChar, join, sign, stringify, sum, repeat, rollResult, rollMax, zeroOrPositive
 !mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable
 !mmm   publish to game: chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonSubHeader, chatTightBoxButtonRow, chatTightBoxFlowButton, chatTightBoxMultiButton
 !mmm
@@ -75,6 +75,20 @@
 !mmm   else
 !mmm     return false
 !mmm   end if
+!mmm end function
+!rem
+!rem // join(separator, list) joins the elements of list together in a string, separated by separator.
+!rem //
+!mmm function join(separator, list)
+!mmm   set output = ""
+!mmm   for item in list
+!mmm     if output 
+!mmm       set output = output & separator & item
+!mmm     else
+!mmm       set output = item
+!mmm     end if
+!mmm   end for
+!mmm   return output
 !mmm end function
 !rem
 !rem // sign(val, [zero]) signs a value for display
