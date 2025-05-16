@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libBasics v1.4.6 (2025-04-23)"
+!mmm   set libVersion = "libBasics v1.5.0-pre (2025-04-26)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -32,7 +32,7 @@
 !rem
 !mmm   publish to game: DE
 !mmm   publish to game: isfumble, count, isChar, join, sign, stringify, sum, repeat, rollResult, rollMax, zeroOrPositive
-!mmm   publish to game: chatButton, chatButtonPayload, chatButtonTable
+!mmm   publish to game: chatButtonPayload, chatButton, chatButtonTable
 !mmm   publish to game: chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonSubHeader, chatTightBoxButtonRow, chatTightBoxFlowButton, chatTightBoxMultiButton
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -220,6 +220,51 @@
 !mmm   end if
 !mmm end function
 !rem
+!rem // chatButtonPayload(scriptCommand, settings, [scriptType])
+!rem //
+!rem //   Returns button payload code for a customize script to call scriptCommand with the variables provided by settings.
+!rem //   (settings) is a list of key-value pairs; values must include '' for strings. 
+!rem //   If (settings.value) is a struct with a field called (.type), special treatment ensues:
+!rem //     type:3dRoll         creates a Roll20 3D roll template for (.rollDefinition::string)
+!rem //     type:conditional    creates a conditional defined by (.condition::string, .then::list, [.else::list])
+!rem //   (scriptType) is either "customize" (default) or "script".
+!rem //
+!mmm function chatButtonPayload(scriptCommand, settings, scriptType)
+!mmm   if isdefault(scriptCommand) or isdefault(settings)
+!mmm     return false
+!mmm   else if isdefault(scriptType)
+!mmm     set scriptType = "customize"
+!mmm   end if
+!mmm   set chatButtonPayloadCode = literal("!mmm " & scriptType) & "&#13;"
+!mmm   for setting in settings...
+!mmm     if setting.value.type eq "3dRoll"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & "&amp;{template} &#91;[" & setting.value.rollDefinition & "]] &#123;{&#125;}&#13;"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=$[" & "[0]]") & "&#13;"
+!mmm     else if setting.value.type eq "conditional"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm if " & setting.value.condition) & "&#13;"
+!mmm       for line in setting.value.then
+!mmm         set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm   " & line) & "&#13;"
+!mmm       end for
+!mmm       if setting.value.else
+!mmm         set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm else") & "&#13;"
+!mmm         for line in setting.value.else
+!mmm           set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm   " & line) & "&#13;"
+!mmm         end for
+!mmm       end if
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm end if") & "&#13;"
+!mmm     else if setting.value.type eq "command"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm " & setting.value) & "&#13;"
+!mmm     else if setting.value.type eq "publishToSender"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value) & "&#13;"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm publish to sender: " & setting.key) & "&#13;"
+!mmm     else
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value) & "&#13;"
+!mmm     end if
+!mmm   end for
+!mmm   set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm end " & scriptType) & "&#13;" & scriptCommand
+!mmm   return chatButtonPayloadCode
+!mmm end function
+!rem
 !rem // chatButton(label, payload, style)
 !rem //
 !rem //   Returns chat code for a button with the label and payload provided. If the optional style is given, it is applied.
@@ -229,22 +274,6 @@
 !mmm     set style = ""
 !mmm   end if
 !mmm   return " [" & label & "](" & payload & style & ") "
-!mmm end function
-!rem
-!rem // chatButtonPayload(scriptCommand, settings)
-!rem //
-!rem //   Returns button payload code for a customize script to call scriptCommand with the variables provided by settings.
-!rem //
-!mmm function chatButtonPayload(scriptCommand, settings)
-!mmm   if isdefault(scriptCommand) or isdefault(settings)
-!mmm     return false
-!mmm   end if
-!mmm   set chatButtonPayloadCode = literal("!mmm customize") & "&#13;"
-!mmm   for setting in settings...
-!mmm     set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value) & "&#13;"
-!mmm   end for
-!mmm   set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm end customize") & "&#13;" & scriptCommand
-!mmm   return chatButtonPayloadCode
 !mmm end function
 !rem
 !rem // chatButtonTable(label, rows)
