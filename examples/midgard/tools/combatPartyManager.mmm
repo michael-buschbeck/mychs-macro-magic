@@ -1,4 +1,4 @@
-!rem // combatPartyManager v0.1-WIP 2025-04-23
+!rem // combatPartyManager v1.0-WIP 2025-04-26
 !rem //
 !mmm script
 !mmm
@@ -72,6 +72,12 @@
 !mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("NPC-Angriff: Zufallsverteilung vorschlagen", "", calculateAttackPayload)
 !mmm
 !mmm
+!mmm   else if cmd eq "flushRegistry"
+!mmm
+!mmm     do m3mgdExchangeFlushRegistry("m3mgdBatchCombatData")
+!mmm     set chatOutput = chatTightBoxRow("**combatPartyManager**: Stapelverarbeitung NPC-Angriffe beendet.")
+!mmm
+!mmm
 !mmm   else if cmd eq "calculateAttack"
 !mmm
 !mmm     do m3mgdExchangeFlushRegistry("m3mgdBatchCombatData")
@@ -118,7 +124,7 @@
 !mmm     do m3mgdExchangeStoreEntry("m3mgdBatchCombatData", batchAttackOrder)
 !mmm     
 !mmm     set chatOutput = _m3mgdBatchCombatOrderOutput(true, noAttacks)
-!mmm     set chatOutput = chatOutput & chatTightBoxButtonRow("🎲🗘 Verteilung neu auswürfeln", "", rerollPayload)
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("🎲🗘 Verteilung neu auswürfeln", "", rerollPayload)
 !mmm   
 !mmm   end if
 !mmm     

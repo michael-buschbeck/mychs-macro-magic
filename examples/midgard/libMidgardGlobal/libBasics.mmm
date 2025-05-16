@@ -308,7 +308,7 @@
 !rem //
 !mmm function chatTightBoxButtonSubHeader(label, tooltip, payload, bgColor, textColor)
 !mmm   if isdefault(bgColor)
-!mmm     set bgColor = "#ffffff"
+!mmm     set bgColor = "#db98eb"
 !mmm   end if
 !mmm   if isdefault(textColor)
 !mmm     set textColor = "#000000"
@@ -329,7 +329,7 @@
 !rem //
 !mmm function chatTightBoxButtonRow(label, tooltip, payload, bgColor, textColor)
 !mmm   if isdefault(bgColor)
-!mmm     set bgColor = "#ffffff"
+!mmm     set bgColor = "#e4c7eb"
 !mmm   end if
 !mmm   if isdefault(textColor)
 !mmm     set textColor = "#000000"
