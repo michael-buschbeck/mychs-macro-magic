@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.7.0-WIP (2025-04-25)" 
+!mmm   set libVersion = "libMidgard v1.7.1-WIP (2025-05-15)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -1367,7 +1367,7 @@
 !mmm   
 !mmm     set weaponType = "Zweihandschwert"
 !mmm   
-!mmm   else if ("waffenloser Kampf", "Faust", "Faustkampf", "Ringen (ohne Rüstung)", "Ringen (mit Rüstung)", "Werfen", "Tatze", "Klaue", "Tentakel", "Biss", "Horn", "Berührung") where ... eq weaponLabel
+!mmm   else if ("waffenloser Kampf", "Faust", "Faustkampf", "Ringen (ohne Rüstung)", "Ringen (mit Rüstung)", "Werfen", "Tatze", "Klaue", "Tentakel", "Biss", "Horn", "Berührung", "Umhüllen") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "waffenlos"
 !mmm   
@@ -1479,24 +1479,17 @@
 !rem //   If tokenID.PC==true, the block is designed for player characters (3D roll), otherwise for NPCs (GM silent mode).
 !rem //
 !mmm function m3mgdDefenseInitPayload(tokenID, magicAttack)  
-!mmm   set payload = "!mmm customize&#13;"
 !mmm   if not magicAttack
-!mmm     set payload = payload & literal("!mmm set cSemiManualModifiers=\"?" & "{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0| Konzentrierte Abwehr +4,+4| Ich greife überstürzt an -2,-2| Ich bin überrascht -4,-4}\"") & "&#13;"
+!mmm     set payloadSettings = { cSemiManualModifiers: "'?" & "{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0| Konzentrierte Abwehr +4,+4| Ich greife überstürzt an -2,-2| Ich bin überrascht -4,-4}'" }
 !mmm   end if
-!mmm   set payload = payload & literal("!mmm set cManualModifiers=\"?" & "{Spezielle Abwehrmodifikatoren|0}") & "&#13;"
+!mmm   set payloadSettings = { payloadSettings, cManualModifiers: "'?" & "{Spezielle Abwehrmodifikatoren|0}'" }
 !mmm   if tokenID.PC
-!mmm     set payload = payload & "&amp;{template} &#91;[1d20]] &#123;{&#125;}&#13;"
-!mmm     set payload = payload & literal("!mmm set cDefenseRoll=$[" & "[0]]") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set cNoDefense=false") & "&#13;"
+!mmm     set payloadSettings = { payloadSettings, cDefenseRoll: { type: "3dRoll", rollDefinition: "1d20" }, cNoDefense: false }
 !mmm   else
-!mmm     set payload = payload & literal("!mmm if selected") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set cOwnID = selected.token_id") & "&#13;"
-!mmm     set payload = payload & literal("!mmm else") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set cOwnID = '" & tokenID & "'") & "&#13;"
-!mmm     set payload = payload & literal("!mmm end if") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set cGMSilentMode = true") & "&#13;"
+!mmm     set payloadSettings = { payloadSettings, ifelse: { type: "conditional", condition: "selected", then: "set cOwnID = selected.token_id", else: "set cOwnID = '" & tokenID & "'" } } 
+!mmm     set payloadSettings = { payloadSettings, cGMSilentMode: true }
 !mmm   end if
-!mmm   set payload = payload & "!mmm end customize&#13;"
+!mmm   set payload = chatButtonPayload(m3mgdScriptCommands.defense, payloadSettings)
 !mmm   return payload
 !mmm end function
 !rem
@@ -1512,27 +1505,18 @@
 !mmm     do whisperback("m3mgdDefenseDataEntryPayload() called without a valid token ID, defaulting to script.cOwnID failed.")
 !mmm     return false
 !mmm   end if
-!mmm   set payload = "!mmm script&#13;"
-!mmm   set payload = payload & literal("!mmm set attackType = \"?" & "{Art des Angriffs|Nahkampf,melee|Fernkampf,ranged|Zauberei,magic}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackerID = \"@" & "{target|Wer greift an?|token_id}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set targetID = \"@" & "{target|Wer wird angegriffen (Ziel)?|token_id}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackResult = \"?" & "{Angriffswert|0}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set criticalAttack = ?" & "{Kritischer Erfolg beim Angriff|Nein,false|Ja,true}") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackDamage = \"?" & "{Schaden laut Angreifer|0}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackDamageRoll = \"?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set weaponType = \"?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm if attackResult < 20") & "&#13;"
-!mmm   set payload = payload & literal("!mmm   do whisperback(\"Abbruch: Angriff mit **\" & attackResult & \"** war nicht erfolgreich, keine Abwehr nötig.\")") & "&#13;"
-!mmm   set payload = payload & literal("!mmm   exit script") & "&#13;"
-!mmm   set payload = payload & literal("!mmm end if") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackData = { origin: attackerID, target: targetID, action: \"combatAttack\", attackType: attackType, attackResult: attackResult, criticalAttack: criticalAttack, damageResult: attackDamage, damageRoll: attackDamageRoll, weaponType: weaponType }") & "&#13;"
-!mmm   set payload = payload & literal("!mmm if not m3mgdStoreAttack(attackData)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm   do whisperback(\"Fehlschlag: Angriffsdaten konnten nicht gespeichert werden - ${attackData}\")") & "&#13;"
-!mmm   set payload = payload & literal("!mmm end if") & "&#13;"
-!mmm   set payload = payload & "!mmm end script&#13;"
-!mmm   set payload = payload & m3mgdDefenseInitPayload(tokenID)
-!mmm   set payload = payload & m3mgdScriptCommands.defense
-!mmm   return payload
+!mmm   set payloadSettings = { attackType: "'?" & "{Art des Angriffs|Nahkampf,melee|Fernkampf,ranged|Zauberei,magic}" & "'" }
+!mmm   set payloadSettings = { payloadSettings, attackerID: "'@" & "{target|Wer greift an?|token_id}'" }
+!mmm   set payloadSettings = { payloadSettings, targetID: "'@" & "{target|Wer wird angegriffen (Ziel)?|token_id}'" }
+!mmm   set payloadSettings = { payloadSettings, attackResult: "?" & "{Angriffswert|0}" }
+!mmm   set payloadSettings = { payloadSettings, criticalAttack: "?" & "{Kritischer Erfolg beim Angriff|Nein,false|Ja,true}" }
+!mmm   set payloadSettings = { payloadSettings, attackDamage: "?" & "{Schaden laut Angreifer|0}" }
+!mmm   set payloadSettings = { payloadSettings, attackDamageRoll: "?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}" }
+!mmm   set payloadSettings = { payloadSettings, weaponType: "'?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}'" }
+!mmm   set payloadSettings = { payloadSettings, ifthen1: { type: "conditional", condition: "attackResult < 20", then: "do whisperback('Abbruch: Angriff mit **' & attackResult & '** war nicht erfolgreich, keine Abwehr nötig.')", "exit script" } }
+!mmm   set payloadSettings = { payloadSettings, attackData: "{ origin: attackerID, target: targetID, action: 'combatAttack', attackType: attackType, attackResult: attackResult, criticalAttack: criticalAttack, damageResult: attackDamage, damageRoll: attackDamageRoll, weaponType: weaponType }" }
+!mmm   set payloadSettings = { payloadSettings, ifthen2: { type: "conditional", condition: "not m3mgdStoreAttack(attackData)", then: "do whisperback('Fehlschlag: Angriffsdaten konnten nicht gespeichert werden - ' & attackData)" } }
+!mmm   return chatButtonPayload("", payloadSettings, "script") & m3mgdDefenseInitPayload(tokenID) & m3mgdScriptCommands.defense
 !mmm end function
 !rem
 !rem // _m3mgdSpellButtonPayload(tokenID, spellLabel, [rollData], [rollConfig])
@@ -2022,16 +2006,13 @@
 !rem //   GM can approve the roll to be sent to the affected player, or re-roll.
 !rem //
 !mmm function m3mgdCriticalEffectRollPayload(tokenID, tableName, foeID)
-!mmm   set rollPayload = "!mmm script&#13;"
 !mmm   if tokenID.PC
-!mmm     set rollPayload = rollPayload & "&amp;{template} &#91;[1d100]] &#123;{&#125;}&#13;"
-!mmm     set rollPayload = rollPayload & literal("!mmm set critRoll = $[" & "[0]]") & "&#13;"
+!mmm     set payloadSettings = { critRoll: { type: "3dRoll", rollDefinition: "1d100" } }
 !mmm   else 
-!mmm     set rollPayload = rollPayload & literal("!mmm set critRoll = roll('1d100')") & "&#13;"
+!mmm     set payloadSettings = { critRoll: "roll('1d100')" }
 !mmm   end if
-!mmm   set rollPayload = rollPayload & literal("!mmm do m3mgdCriticalEffectPrompt(\"" & tokenID & "\",\"" & tableName & "\",critRoll,\"" & foeID & "\")") & "&#13;"
-!mmm   set rollPayload = rollPayload & "!mmm end script&#13;"
-!mmm   return rollPayload
+!mmm   set payloadSettings = { payloadSettings, cmdline1: { type: "command", value: "do m3mgdCriticalEffectPrompt('" & tokenID & "','" & tableName & "',critRoll,'" & foeID & "')" } }
+!mmm   return chatButtonPayload("", payloadSettings, "script")
 !mmm end function
 !rem
 !rem // m3mgdCriticalEffectPrompt(tokenID, tableName, rollResult, foeID)
@@ -2061,25 +2042,21 @@
 !mmm 
 !mmm     if criticalEffect.desc + 0 == 0
 !mmm
-!mmm       set approvePayload = "!mmm script&#13;"
 !mmm       for var in criticalEffect.userInput...
-!mmm         set approvePayload = approvePayload & literal("!mmm set " & var.key & "=" & var.value) & "&#13;"
-!mmm         set approvePayload = approvePayload & literal("!mmm publish to sender: " & var.key) & "&#13;"
+!mmm         set approveSettings = { approveSettings, (var.key): { type: "publishToSender", value: "'" & var.value & "'" } }
 !mmm       end for
-!mmm       set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",default,\"" & foeID & "\")") & "&#13;"
-!mmm       set approvePayload = approvePayload & "!mmm end script&#13;"
+!mmm       set approveSettings = { approveSettings, "cmdline1": { type: "command", value: "do m3mgdExecuteCriticalEffect('" & tokenID & "','" & tableName & "'," & rollResult & ",default,'" & foeID & "')" } }
+!mmm       set approvePayload = chatButtonPayload("", approveSettings, "script")
 !mmm       chat: {\{ Effekte = ${criticalEffect.desc}${"<"&"br>"}[🖅 **an ${tokenID.character_name}**](${approvePayload}) }\}
 !mmm
 !mmm     else 
 !mmm
 !mmm       for contextDesc in criticalEffect.desc...
-!mmm         set approvePayload = "!mmm script&#13;"
 !mmm         for var in criticalEffect.userInput...
-!mmm           set approvePayload = approvePayload & literal("!mmm set " & var.key & "=" & var.value) & "&#13;"
-!mmm           set approvePayload = approvePayload & literal("!mmm publish to sender: " & var.key) & "&#13;"
+!mmm           set approveSettings = { approveSettings, (var.key): { type: "publishToSender", value: "'" & var.value & "'" } }
 !mmm         end for
-!mmm         set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",\"" & contextDesc.key & "\",\"" & foeID & "\")") & "&#13;"
-!mmm         set approvePayload = approvePayload & "!mmm end script&#13;"
+!mmm         set approveSettings = { approveSettings, "cmdline1": { type: "command", value: "do m3mgdExecuteCriticalEffect('" & tokenID & "','" & tableName & "'," & rollResult & ",'" & contextDesc.key & "','" & foeID & "')" } }
+!mmm         set approvePayload = chatButtonPayload("", approveSettings, "script")
 !mmm         chat: {\{ ${contextDesc.key} = ${contextDesc.value}${"<"&"br>"}[🖅 **an ${tokenID.character_name}**](${approvePayload}) }\}
 !mmm       end for
 !mmm
