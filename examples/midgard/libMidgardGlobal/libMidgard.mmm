@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.6.0 (2025-04-21)"
+!mmm   set libVersion = "libMidgard v1.7.0-WIP (2025-04-23)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -15,8 +15,8 @@
 !mmm
 !rem   // Game-global constants for publication
 !rem
-!mmm   set m3mgdScriptCommands = { "magicAttack": "&#x25;{MacroSheet|magicAttack}", "defense": "&#x25;{MacroSheet|defense}", "resistance": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}" }
-!mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, "editXP": "&#x25;{MacroSheet|editXP}", "managePersistentEffects": "&#x25;{MacroSheet|managePersistentEffects}", "defendFrostball": "&#x25;{MacroSheet|defendFrostball}", "defendSnatch": "&#x25;{MacroSheet|defendSnatch}" }
+!mmm   set m3mgdScriptNames = { defense: "defense", magicAttack: "magicAttack", melee: "meleeAttack", ranged: "rangedAttack", editXP: "editXP", managePersistentEffects: "managePersistentEffects", defendFrostball: "defendFrostball", defendSnatch: "defendSnatch" }
+!mmm   set m3mgdGMscriptNames = { combatPartyManager: "combatPartyManager" }
 !mmm
 !mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
 !mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
@@ -56,6 +56,13 @@
 !mmm
 !mmm   set m3mgdSpellEffects = { "fireball": { name: "Feuerball", tokenSide: 1 }, "firewall": { name: "Feuerwand", tokenSide: 2 } }
 !mmm
+!mmm   for scriptName in m3mgdScriptNames...
+!mmm     set m3mgdScriptCommands = { m3mgdScriptCommands, (scriptName.key): "&#x25;{MacroSheet|" & scriptName.value & "}" } 
+!mmm   end for
+!mmm   for scriptName in m3mgdGMscriptNames...
+!mmm     set m3mgdGMScriptCommands = { m3mgdGMScriptCommands, (scriptName.key): "&#x25;{GM_NPC_Makros|" & scriptName.value & "}" } 
+!mmm   end for
+!mmm
 !mmm   if not m3mgdCriticalEffectsTable
 !mmm     if "MacroSheet".m3mgdCriticalEffectsTable ne ""
 !mmm       set m3mgdCriticalEffectsTable = deserialize("MacroSheet".m3mgdCriticalEffectsTable)
@@ -68,7 +75,7 @@
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
-!mmm   publish to game: m3mgdScriptCommands
+!mmm   publish to game: m3mgdScriptCommands, m3mgdGMScriptCommands
 !mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain, m3mgdExchangeAttrList
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
@@ -97,6 +104,7 @@
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdGetXPLog, _m3mgdLogXP, m3mgdEditXP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP, m3mgdXPEditButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdProcessAttackerEffects, m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
+!mmm   publish to game: _m3mgdBatchCombatOrderOutput, m3mgdBatchCombatUpdate
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -1879,7 +1887,7 @@
 !mmm     
 !mmm     end if
 !mmm
-!mmm     if weaponUsable
+!mmm     if weaponUsable 
 !mmm
 !mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollSpecs)
 !mmm       set chatMenu = chatMenu & chatTightBoxFlowButton(weaponLabel, "", payload)
@@ -2791,4 +2799,68 @@
 !mmm     do m3mgdCancelRuneEffects(tokenID)
 !mmm   end if
 !mmm   
+!mmm end function
+!rem
+!rem // _m3mgdBatchCombatOrderOutput(pcSummary, [noAttacks])
+!rem //
+!rem //   Returns Roll20 chat code listing a (proposed) list of NPC combat actions ready for (continued) execution at the GM's command.
+!rem //
+!mmm function _m3mgdBatchCombatOrderOutput(pcSummary, noAttacks)
+!mmm   set batchAttackOrder = m3mgdExchangeGetRegistry("m3mgdBatchCombatData")
+!mmm   set todoList = batchAttackOrder... where ...value.executed == false
+!mmm   if todoList
+!mmm     set nextRank = max(? todoList... select ...value.rank)
+!mmm     set firstAttack = (todoList... where ...value.rank == ? nextRank)
+!mmm     if count(firstAttack > 1)
+!mmm       set firstAttack = firstAttack[0]
+!mmm     end if
+!mmm   end if
+!mmm   set chatOutput = chatTightBoxHeader("Stapelverarbeitung NPC-Angriffe")
+!mmm   for attackEntry in batchAttackOrder... select ...value order (...left.rank > ...right.rank, ...left.executed < ...right.executed)
+!mmm
+!rem     // Correct token orientation
+!mmm     set attackerAngle = m3mgdGetViewAngle(attackEntry.originID, attackEntry.targetID)
+!mmm     do setattr(attackEntry.originID, "rotation", attackEntry.originID.rotation + attackerAngle)
+!mmm
+!mmm     set rowLabel = attackEntry.originID.token_name & " (" & attackEntry.rank & ") greift " & attackEntry.targetID.name & " mit " & attackEntry.weaponLabel & " an"
+!mmm     if not attackEntry.executed
+!mmm       if attackEntry.originID eq firstAttack.key
+!mmm         set rowLabel = "** >>" & rowLabel & "**"
+!mmm       end if
+!mmm       set rollSpecs = { "cTargetID": attackEntry.targetID, "cSemiManualModifiers": 1, "cManualModifiers": 0, "cAttackRoll": "1d20" }
+!mmm       set rollSpecs = { rollSpecs, "cDamageRoll": attackEntry.originID.(findattr(attackEntry.originID, "Angriff", "Waffe", attackEntry.weaponLabel, "WaffeSchaden")) }
+!mmm       set executePayload = _m3mgdWeaponButtonPayload(attackEntry.originID, attackEntry.weaponGroup, attackEntry.weaponLabel, default, rollSpecs)
+!mmm       set chatOutput = chatOutput & chatTightBoxButtonRow(rowLabel, "Diesen Angriff jetzt ausführen", executePayload)
+!mmm     else
+!mmm       set rowLabel = rowLabel & " ✅"
+!mmm       set chatOutput = chatOutput & chatTightBoxRow(rowLabel, "Dieser Angriff wurde schon ausgeführt", "#eeeeee", "#333333")
+!mmm     end if
+!mmm   end for
+!mmm   if not isdefault(noAttacks)
+!mmm     for noAttackToken in noAttacks
+!mmm       set chatOutput = chatOutput & chatTightBoxRow((noAttackToken.key).token_name & " (" & (gettracker() where ...title eq (noAttackToken.key).token_name).value & ") greift nicht an - " & noAttackToken.value, "", default, "#666666")
+!mmm     end for
+!mmm   end if
+!mmm   if pcSummary
+!mmm     for pcTargetID in batchAttackOrder... select ...value.targetID
+!mmm       set pcTargetSummary = { pcTargetSummary, (pcTargetID): pcTargetSummary.(pcTargetID) + 1 }
+!mmm     end for
+!mmm     set attackDistributionSummary = join(", ", pcTargetSummary... select (...value & " ⚔️ " & ...key.token_name))
+!mmm     set chatOutput = chatOutput & chatTightBoxSubHeader(attackDistributionSummary)
+!mmm   end if
+!mmm
+!mmm   return(chatOutput)
+!mmm end function
+!rem
+!rem // m3mgdBatchCombatUpdate(originID, targetID)
+!rem //
+!rem //   If run by GM and if batch combat data is found, marks the present attack (identified by originID, targetID) as executed and sends an updated list to the GM.
+!rem //
+!mmm function m3mgdBatchCombatUpdate(originID, targetID)
+!mmm   set batchAttackOrder = m3mgdExchangeGetRegistry("m3mgdBatchCombatData")
+!mmm   if privileged and batchAttackOrder
+!mmm     set batchAttackRecord = batchAttackOrder... where ...value.originID eq originID and ...value.targetID eq targetID
+!mmm     do m3mgdExchangeStoreEntry("m3mgdBatchCombatData", (batchAttackRecord.key): { batchAttackRecord.value, executed: true })
+!mmm     chat: /w GM ${_m3mgdBatchCombatOrderOutput()}
+!mmm   end if
 !mmm end function
