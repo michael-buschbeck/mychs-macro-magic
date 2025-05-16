@@ -2821,6 +2821,6 @@
 !mmm   if privileged and batchAttackOrder
 !mmm     set batchAttackRecord = batchAttackOrder... where ...value.originID eq originID and ...value.targetID eq targetID
 !mmm     do m3mgdExchangeStoreEntry("m3mgdBatchCombatData", (batchAttackRecord.key): { batchAttackRecord.value, executed: true })
-!mmm     chat: /w GM ${_m3mgdBatchCombatOrderOutput()}
+!mmm     chat: /w GM ${_m3mgdBatchCombatOrderOutput()} ${chatTightBoxButtonSubHeader("🔚 Stapelverarbeitung beenden", "", chatButtonPayload(m3mgdGMScriptCommands.combatPartyManager, { cmd: "'flushRegistry'", registryID: "'m3mgdBatchCombatData'", deleteConfirm: true }))} ${chatTightBoxButtonSubHeader("🎲 Neue Runde: Ziele auswürfeln", "", chatButtonPayload(m3mgdGMScriptCommands.combatPartyManager, { cmd: "'calculateAttack'" }))}
 !mmm   end if
 !mmm end function
