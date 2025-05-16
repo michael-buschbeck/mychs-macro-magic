@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.7.0-WIP (2025-04-23)" 
+!mmm   set libVersion = "libMidgard v1.7.0-WIP (2025-04-25)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -15,7 +15,7 @@
 !mmm
 !rem   // Game-global constants for publication
 !rem
-!mmm   set m3mgdScriptNames = { defense: "defense", magicAttack: "magicAttack", melee: "meleeAttack", ranged: "rangedAttack", editXP: "editXP", managePersistentEffects: "managePersistentEffects", defendFrostball: "defendFrostball", defendSnatch: "defendSnatch" }
+!mmm   set m3mgdScriptNames = { defense: "defense", resistance: "defense", magicAttack: "magicAttack", melee: "meleeAttack", ranged: "rangedAttack", editXP: "editXP", managePersistentEffects: "managePersistentEffects", defendFrostball: "defendFrostball", defendSnatch: "defendSnatch" }
 !mmm   set m3mgdGMscriptNames = { combatPartyManager: "combatPartyManager" }
 !mmm
 !mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
@@ -177,12 +177,12 @@
 !rem 
 !rem // m3mgdStoreAttack(attackData)
 !rem //
-!rem //   Stores attackData in central data registry if there is no other set of attackData by the same origin against the same target.
+!rem //   Stores attackData in central data registry if there is no other set of attackData against the same target.
 !rem //
 !mmm function m3mgdStoreAttack(attackData)
 !mmm   
-!rem   // Check for another active attack by the same origin against the same target
-!mmm   set filter = { action: "combatAttack", origin: attackData.origin, target: attackData.target }
+!rem   // Check for another active attack against the same target
+!mmm   set filter = { action: "combatAttack", target: attackData.target }
 !mmm   set activeAttacks = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, filter)
 !mmm   if activeAttacks
 !mmm     do m3mgdExchangeDelete(m3mgdExchangeRegistries.combatData, filter)
@@ -540,13 +540,7 @@
 !rem //   Returns a chat button payload to remove tokenID's active persistent effect identified by effectIndex.
 !rem //
 !mmm function m3mgdRemovePersistentEffectPayload(tokenID, effectIndex)
-!mmm   set payload = literal("!mmm customize") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set cmd=\"removeEffect\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set effectIndex=" & effectIndex) & "&#13;"
-!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Für " & tokenID.token_name & " wirklich Effekt Nr." & (effectIndex + 1) & " löschen?|Nein,false|Ja,true}") & "&#13;"
-!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
-!mmm   return payload
+!mmm   return chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, { "cmd": "'removeEffect'", "tokenID": "'" & tokenID & "'", "effectIndex": effectIndex, "deleteConfirm": "?" & "{Für " & tokenID.token_name & " wirklich Effekt Nr." & (effectIndex + 1) & " löschen?|Nein,false|Ja,true}" } )
 !mmm end function
 !rem
 !rem // m3mgdShowPersistentEffectsPayload(tokenID, effectIndex)
@@ -554,14 +548,11 @@
 !rem //   Returns a chat button payload to show tokenID's active persistent effects (all or just the one indicated by effectIndex) with all available details.
 !rem //
 !mmm function m3mgdShowPersistentEffectsPayload(tokenID, effectIndex)
-!mmm   set payload = literal("!mmm customize") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set cmd=\"showEffectsDetails\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
+!mmm   set payloadSettings = { "cmd": "'showEffectsDetails'", "tokenID": "'" & tokenID & "'" }
 !mmm   if not isdefault(effectIndex)
-!mmm     set payload = payload & literal("!mmm set effectIndex=" & effectIndex) & "&#13;"
+!mmm     set payloadSettings = { payloadSettings, "effectIndex": effectIndex }
 !mmm   end if
-!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
-!mmm   return payload
+!mmm   return chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, payloadSettings)
 !mmm end function
 !rem
 !rem // m3mgdActiveStatusModifiers(tokenID, action)
@@ -669,10 +660,7 @@
 !mmm           do chat(chatTightBoxRow("#" & counter & " -- " & reason.label & ": " & reason.desc))
 !mmm         end if
 !mmm       end for
-!mmm       set payload = literal("!mmm customize") & "&#13;"
-!mmm       set payload = payload & literal("!mmm set cmd=\"updateAttackEffects\"") & "&#13;"
-!mmm       set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
-!mmm       set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
+!mmm       set payload = chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, { "cmd": "'updateAttackEffects'", "tokenID": "'" & tokenID & "'" })
 !mmm       do chat(chatTightBoxButtonRow("**Angriffszähler um 1 reduzieren**", "", payload))
 !mmm     end combine
 !mmm     return true
@@ -1785,11 +1773,7 @@
 !mmm   else if combatMode eq "defense" and (attackSpellType eq "Geist" or attackSpellType eq "Körper")
 !mmm   
 !mmm     set selectorPrompt = "Resistenz gegen Zauber"
-!mmm     set noDefensePayload = "!mmm customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & m3mgdScriptCommands.defense
+!mmm     set noDefensePayload = chatButtonPayload(m3mgdScriptCommands.defense, { "cOwnID": "'" & tokenID & "'", "cNoDefense": true })
 !mmm     set chatMenu = chatTightBoxFlowButton("Wehrlos", "", noDefensePayload, "#ce0f69", "#ffffff")
 !mmm
 !mmm     set payload = _m3mgdWeaponButtonPayload(tokenID, "resistance", attackSpellType)
@@ -1849,11 +1833,7 @@
 !mmm   set chatMenu = ""
 !mmm
 !mmm   if weaponsGroup eq "defense"
-!mmm     set noDefensePayload = "!mmm customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & m3mgdScriptCommands.defense
+!mmm     set noDefensePayload = chatButtonPayload(m3mgdScriptCommands.defense, { "cOwnID": "'" & tokenID & "'", "cNoDefense": true })
 !mmm     set chatMenu = chatTightBoxFlowButton("Wehrlos", "", noDefensePayload, "#ce0f69", "#ffffff")
 !mmm   end if
 !mmm
@@ -2690,9 +2670,9 @@
 !mmm
 !mmm     set sender = attackData.target.token_name
 !mmm     if weaponsGroup eq "magic"
-!mmm       chat: /w "${targetID.character_name}" ${m3mgdSpellSelectorChatMenu(targetID, "defense", attackData.spellType)}
+!mmm       chat: /w "${attackData.target.character_name}" ${m3mgdSpellSelectorChatMenu(attackData.target, "defense", attackData.spellType)}
 !mmm     else 
-!mmm       chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", attackData.weaponType)}
+!mmm       chat: /w "${attackData.target.character_name}" ${m3mgdWeaponSelectorChatMenu(attackData.target, "defense", attackData.weaponType)}
 !mmm     end if
 !mmm
 !mmm   else
