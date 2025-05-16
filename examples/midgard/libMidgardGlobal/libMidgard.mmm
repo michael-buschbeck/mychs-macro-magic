@@ -18,11 +18,6 @@
 !mmm   set m3mgdScriptNames = { defense: "defense", resistance: "defense", magicAttack: "magicAttack", melee: "meleeAttack", ranged: "rangedAttack", editXP: "editXP", managePersistentEffects: "managePersistentEffects", defendFrostball: "defendFrostball", defendSnatch: "defendSnatch" }
 !mmm   set m3mgdGMscriptNames = { combatPartyManager: "combatPartyManager" }
 !mmm
-!mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
-!mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
-!mmm
-!mmm   set m3mgdExchangeAttrList = m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
-!mmm
 !mmm   set m3mgdValidMeleeAttackWeaponTypes = "waffenlos", "Einhandschwert", "Zweihandschwert", "Fechtwaffe", "Stichwaffe", "Stockwaffe", "Spießwaffe", "Kettenwaffe", "Einhandschlagwaffe", "Zweihandschlagwaffe", "Zauberstab"
 !mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Kurzbogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
 !mmm   set m3mgdValidAttackWeaponTypes = m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
@@ -76,7 +71,6 @@
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
 !mmm   publish to game: m3mgdScriptCommands, m3mgdGMScriptCommands
-!mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain, m3mgdExchangeAttrList
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
@@ -1209,14 +1203,7 @@
 !mmm     return false
 !mmm   end if
 !mmm 
-!mmm   set storeCounter = 0
-!mmm   if setattr(dataExchangeID, m3mgdAttrHealthGain, healthGain) eq healthGain
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   if setattrmax(dataExchangeID, m3mgdAttrHealthGain, targetID) eq targetID
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   return (storeCounter == 2)
+!mmm   return m3mgdExchangeStoreEntry(m3mgdExchangeRegistries.nonCombat, { action: "healthBoost", target: targetID, value: healthGain } )
 !mmm   
 !mmm end function
 !rem
@@ -1236,14 +1223,7 @@
 !mmm     return false
 !mmm   end if
 !mmm 
-!mmm   set storeCounter = 0
-!mmm   if setattr(dataExchangeID, m3mgdAttrEnduranceGain, enduranceGain) eq enduranceGain
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   if setattrmax(dataExchangeID, m3mgdAttrEnduranceGain, targetID) eq targetID
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   return (storeCounter == 2)
+!mmm   return m3mgdExchangeStoreEntry(m3mgdExchangeRegistries.nonCombat, { action: "enduranceBoost", target: targetID, value: enduranceGain } )
 !mmm   
 !mmm end function
 !rem
