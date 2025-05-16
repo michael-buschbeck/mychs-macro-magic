@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "rangedAttack 2.2.0 (2025-04-23)"
+!mmm   set scriptVersion = "rangedAttack 2.2.1 (2025-05-16)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -541,7 +541,7 @@
 !mmm     if not m3mgdStoreAttack(attackData) 
 !mmm       do whisperback("Problem bei der Datenablage für das Abwehrskript; Angriffsdaten bitte manuell ergänzen.")
 !mmm     end if
-!mmm     do m3mgdChatDefensePrompt(attackData)
+!mmm     set directToPlayer = m3mgdChatDefensePrompt(attackData)
 !mmm
 !rem   // Injury & exhaustion special effects
 !mmm   else if cMagicEnduranceCost > 0
@@ -549,6 +549,8 @@
 !mmm   end if
 !mmm
 !rem   // Batch attacks by NPCs: mark attack as executed, offer Go! button for next attack
-!mmm   do m3mgdBatchCombatUpdate(cOwnID, cTargetID)
+!mmm   if directToPlayer
+!mmm     do m3mgdBatchCombatUpdate(cOwnID, cTargetID)
+!mmm   end if
 !mmm
 !mmm end script

@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.7.1-WIP (2025-05-15)" 
+!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-05-16)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -2606,6 +2606,8 @@
 !rem
 !rem // m3mgdChatDefensePrompt(attackData)
 !rem //
+!rem //   Returns true if defense prompt was sent to the target's player directly, false if just a reroll menu was sent to the GM (new in libMidgard 1.8.0).
+!rem //
 !mmm function m3mgdChatDefensePrompt(attackData)
 !mmm   
 !mmm   if isdefault(attackData.target) or not m3mgdValidateOwnTokenID(attackData.target)
@@ -2632,6 +2634,8 @@
 !mmm       chat: /w "${attackData.target.character_name}" ${m3mgdWeaponSelectorChatMenu(attackData.target, "defense", attackData.weaponType)}
 !mmm     end if
 !mmm
+!mmm     return true
+!mmm
 !mmm   else
 !mmm
 !mmm     set sender = attackData.origin.token_name
@@ -2657,14 +2661,15 @@
 !mmm       set rerollPayload = _m3mgdWeaponButtonPayload(attackData.origin, attackData.attackType, script.cWeaponLabel, default, { cTargetID: attackData.target, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
 !mmm     end if
 !mmm
+!mmm     set approvePayload = approvePayload & literal("!mmm do m3mgdBatchCombatUpdate('" & attackData.origin & "', '" & attackData.target & "')") & "&#13;"
 !mmm     set approvePayload = approvePayload & "!mmm end script&#13;"
 !mmm     set modifyDamagePayload = modifyDamagePayload & "!mmm end script&#13;"
 !mmm
 !mmm     chat: /w GM [✅ & 🖅 **an ${attackData.target.character_name}**](${approvePayload})&nbsp;&nbsp;[💥 Schaden ändern](${modifyDamagePayload})&nbsp;&nbsp;[🎲🗘 nochmal würfeln](${rerollPayload})
 !mmm
-!mmm   end if
+!mmm     return false
 !mmm
-!mmm   return true
+!mmm   end if
 !mmm   
 !mmm end function
 !rem
@@ -2746,14 +2751,16 @@
 !mmm   set batchAttackOrder = m3mgdExchangeGetRegistry("m3mgdBatchCombatData")
 !mmm   set todoList = batchAttackOrder... where ...value.executed == false
 !mmm   if todoList
-!mmm     set nextRank = max(? todoList... select ...value.rank)
-!mmm     set firstAttack = (todoList... where ...value.rank == ? nextRank)
+!mmm     set nextRank = max(todoList... select ...value.rank)
+!mmm     set firstAttack = (todoList... where ...value.rank == nextRank)
 !mmm     if count(firstAttack > 1)
 !mmm       set firstAttack = firstAttack[0]
 !mmm     end if
 !mmm   end if
+!mmm
 !mmm   set chatOutput = chatTightBoxHeader("Stapelverarbeitung NPC-Angriffe")
-!mmm   for attackEntry in batchAttackOrder... select ...value order (...left.rank > ...right.rank, ...left.executed < ...right.executed)
+!mmm
+!mmm   for attackEntry in batchAttackOrder... select ...value order (...left.rank > ...right.rank, ...left.executed > ...right.executed, ...left.originID.token_name lt ...right.originID.token_name)
 !mmm
 !rem     // Correct token orientation
 !mmm     set attackerAngle = m3mgdGetViewAngle(attackEntry.originID, attackEntry.targetID)
