@@ -4,6 +4,16 @@
 !rem //
 !mmm script
 !mmm   
+!mmm   for tokenID in gettokens()
+!mmm     if tokenID.character_id and not tokenID.PC
+!mmm       do setattr(tokenID, "bar1_shown", false)
+!mmm       do setattr(tokenID, "bar2_shown", true)
+!mmm       do setattr(tokenID, "bar3_shown", true)
+!mmm       do setattr(tokenID, "bars_style_compact", true)
+!mmm       do setattr(tokenID, "token_name_plate", true)
+!mmm       do setattr(tokenID, "token_name_shown", true)
+!mmm     end if
+!mmm   end for
 !mmm   for token in gettokens() where not isdenied(...) and ...name select ...name
 !mmm     set trackerData = trackerData, { token: token.token_id, value: token.Gw + token.ItemBGewandheit + token.modGw + token.gRusGW }
 !mmm   end for

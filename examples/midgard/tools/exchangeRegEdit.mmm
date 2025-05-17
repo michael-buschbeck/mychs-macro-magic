@@ -1,9 +1,10 @@
 !rem // exchangeRegEdit
 !rem //
-!rem // last revision 2025-04-16
+!rem // last revision 2025-04-25
 !rem
 !mmm script
 !mmm   set customizable cmd = default
+!mmm   set customizable registry = "combatData"
 !mmm   set customizable deleteConfirm = false
 !mmm   set customizable newTarget = default
 !mmm   set customizable searchByAction = default
@@ -14,11 +15,7 @@
 !mmm   set customizable searchByMagicSpell = default
 !mmm   set customizable searchByDamageResult = default
 !mmm
-!mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, exchangeRegEdit: "&#x25;{MacroSheet|exchangeRegEdit}" }
-!mmm   set dataExchangeID = m3mgdExchangeRegistries.combatData
-!mmm
-%{MacroSheetLibrary|libExchange}
-!mmm   do _libExchange()
+!mmm   set dataExchangeID = m3mgdExchangeRegistries.(registry)
 !mmm
 !mmm   if cmd eq "editEntry" and newTarget and searchByAction and searchByAttackType and searchByAttackResult and searchByDamageResult
 !mmm
@@ -30,27 +27,26 @@
 !mmm     set sender = newTarget.token_id
 !mmm     chat: [Abwehr gegen Frostball von ](~MacroSheet|defend${searchByMagicSpell})
 !mmm
-!mmm   else if cmd eq "deleteEntry" and deleteConfirm == true and (searchByAction and searchByOrigin and searchByTarget)
+!mmm   else if cmd eq "deleteEntry" and deleteConfirm == true and searchByAction and (searchByOrigin or searchByTarget)
 !mmm
-!mmm     set searchCriteria = { action: searchByAction, origin: searchByOrigin, target: searchByTarget }
-!mmm     if not isdefault(searchByAttackType)
-!mmm       set searchCriteria = { searchCriteria, attackType: searchByAttackType }
-!mmm     end if
-!mmm     if not isdefault(searchByAttackResult)
-!mmm       set searchCriteria = { searchCriteria, attackResult: searchByAttackResult }
-!mmm     end if
-!mmm     if not isdefault(searchByDamageResult)
-!mmm       set searchCriteria = { searchCriteria, damageResult: searchByDamageResult }
-!mmm     end if
-!mmm     if not isdefault(searchByMagicSpell)
-!mmm       set searchCriteria = { searchCriteria, magicSpell: searchByMagicSpell }
-!mmm     end if
+!mmm     set searchCriteria = { action: searchByAction }
+!mmm     for c in "origin": searchByOrigin, "target": searchByTarget, "attackType": searchByAttackType, "attackResult": searchByAttackResult, "damageResult": searchByDamageResult, "magicSpell": searchByMagicSpell where not isdefault(...value)
+!mmm       set searchCriteria = { searchCriteria, (c.key): c.value }
+!mmm     end for
 !mmm     do m3mgdExchangeDelete(dataExchangeID, searchCriteria)
 !mmm     do m3mgdExchangeRegEdit(dataExchangeID)
 !mmm
-!mmm   else 
+!mmm   else if cmd eq "showRegistry"
 !mmm
 !mmm     do m3mgdExchangeRegEdit(dataExchangeID)
+!mmm
+!mmm   else
+!mmm
+!mmm     set chatOutput = chatTightBoxHeader("Datenaustausch: Auswahl")
+!mmm     for regOption in m3mgdExchangeRegistries...
+!mmm       set chatOutput = chatOutput & chatTightBoxButtonRow(regOption.key, "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: "'showRegistry'", registry: "'" & regOption.key & "'" } ))
+!mmm     end for
+!mmm     do chat(chatOutput)
 !mmm
 !mmm   end if
 !mmm

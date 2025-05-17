@@ -1,7 +1,7 @@
 !rem // applyHealing applies both healing and energy boosts (or either)
 !rem //
 !mmm script
-!mmm   set scriptVersion = "applyHealing 2.0.0 (2022-02-19)"
+!mmm   set scriptVersion = "applyHealing 2.1.0 (2025-04-25)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -23,8 +23,8 @@
 !mmm   set cEnduranceAttr = m3mgdGetEnduranceAttribute(cOwnID)
 !mmm   
 !rem   // Points to be applied are taken, first, from customize block, and only if there was none, from the data exchange
-!mmm   set customizable maxEnduranceGain = m3mgdExchange.(m3mgdAttrEnduranceGain)
-!mmm   set customizable maxHealthGain = m3mgdExchange.(m3mgdAttrHealthGain)
+!mmm   set customizable maxEnduranceGain = m3mgdExchangeGetData(m3mgdExchangeRegistries.nonCombat, { action: "enduranceBoost", target: cOwnID }).value
+!mmm   set customizable maxHealthGain = m3mgdExchangeGetData(m3mgdExchangeRegistries.nonCombat, { action: "healthBoost", target: cOwnID }).value
 !mmm   
 !rem   // If neither is present, spill out customize block for manual entry & rerun the script
 !mmm   if not (maxHealthGain > 0 or maxEnduranceGain > 0)
@@ -72,13 +72,13 @@
 !mmm     chat: /w "${cOwnID.character_name}" ${"&"}{template:default} {{name=${m3mgdShapeMoji() & cOwnID.name}: Heil-/Ausdauereffekte}} 
 !mmm     
 !mmm     if effHealthGain == maxHealthGain
-!mmm       chat: {{Heileffekt=${highlight("+" & maxHealthGain, "normal")} **=>** ${newHealth} **LP**}}
+!mmm       chat: {{Heileffekt=${highlight("+" & (maxHealthGain+0), "normal")} **=>** ${newHealth} **LP**}}
 !mmm     else
 !mmm       chat: {{Heileffekt=${highlight("+" & effHealthGain & "/" & maxHealthGain, "important", healthLog)} **=>** ${newHealth} **LP**}}
 !mmm     end if
 !mmm
 !mmm     if effEnduranceGain == maxEnduranceGain
-!mmm       chat: {{Ausdauereffekt=${highlight("+" & maxEnduranceGain, "normal")} **=>** ${newEndurance} **AP**}}
+!mmm       chat: {{Ausdauereffekt=${highlight("+" & (maxEnduranceGain+0), "normal")} **=>** ${newEndurance} **AP**}}
 !mmm     else
 !mmm       chat: {{Ausdauereffekt=${highlight("+" & effEnduranceGain & "/" & maxEnduranceGain, "important", enduranceLog)} **=>** ${newEndurance} **AP**}}
 !mmm     end if

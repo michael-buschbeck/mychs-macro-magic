@@ -1,0 +1,123 @@
+!rem // combatPartyManager v1.0-WIP 2025-04-26
+!rem //
+!mmm script
+!mmm
+!mmm   set customizable cmd = default
+!mmm   set customizable cPartyList = default
+!mmm
+!mmm   set combatParty = deserialize(m3mgdExchange.m3mgdCombatParty)
+!mmm
+!mmm   set npartyTokenCount = 0
+!mmm   set npartyTokens = undef
+!mmm
+!mmm   function listCombatParty()
+!mmm     set chatOutput = ""
+!mmm     for characterID in script.combatParty
+!mmm       set chatOutput = chatOutput & chatTightBoxRow(characterID.character_name)
+!mmm     end for
+!mmm     if not combatParty
+!mmm       set chatOutput = chatOutput & chatTightBoxRow("(keine Gruppenmitglieder gefunden)")
+!mmm     end if
+!mmm     return chatOutput
+!mmm   end function
+!mmm
+!rem   // Analyze the board: sheetless tokens get tossed away, real NPCs not part of combatParty sorted by action rank and combatParty members' location recorded
+!mmm   set actionOrder = gettracker()
+!mmm   for t in gettokens()
+!mmm       if isunknown(t.character_id)
+!mmm         set npartyTokenCount = npartyTokenCount + 1
+!mmm         set sheetlessTokens = sheetlessTokens, t.token_id
+!mmm       else if isunknown(t.PC) and not (combatParty select ...character_id eq t.character_id)
+!mmm         set npartyTokenCount = npartyTokenCount + 1
+!mmm         set npartyTokens = npartyTokens, t.token_id
+!mmm         if actionOrder
+!mmm           set npcOrder = { npcOrder, { (t): (actionOrder where ...title eq t.token_name).value } }
+!mmm         end if
+!mmm       else if sum(combatParty select ...character_id eq t.character_id) >= 1
+!mmm         set combatPartyLocations = { combatPartyLocations, (t.token_id): { left: t.left, top: t.top } }
+!mmm       end if
+!mmm   end for
+!mmm
+!rem   // prepare action payloads
+!mmm   set registerSelectedPayload = chatButtonPayload(m3mgdGMScriptCommands.combatPartyManager, { cmd: "'registerParty'", cPartyList: "selected" })
+!mmm   set calculateAttackPayload = chatButtonPayload(m3mgdGMScriptCommands.combatPartyManager, { cmd: "'calculateAttack'" })
+!mmm      
+!mmm      
+!rem   // execute actions
+!mmm
+!mmm   if cmd eq "showParty" or isdefault(cmd)
+!mmm     
+!mmm     set chatOutput = chatTightBoxHeader("combatPartyManager: Übersicht Gruppenmitglieder")
+!mmm     set chatOutput = chatOutput & listCombatParty()
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("Gruppe neu definieren: alle markierten Tokens", "", registerSelectedPayload)
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("NPC-Angriff: Zufallsverteilung vorschlagen", "", calculateAttackPayload)
+!mmm     
+!mmm
+!mmm   else if cmd eq "registerParty" and not isdefault(cPartyList)
+!mmm
+!mmm     set chatOutput = chatTightBoxHeader("combatPartyManager: Registrierung")
+!mmm     set chatOutput = chatOutput & chatTightBoxRow("Gruppe registriert: " & (setattr(m3mgdExchange, "m3mgdCombatParty", serialize(cPartyList)) == cPartyList), "", "#eeeeee", "#333333")
+!mmm     set chatOutput = chatOutput & listCombatParty()
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("📄 Gruppe neu definieren: alle markierten Tokens", "", registerSelectedPayload)
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("🎲 NPC-Angriff: Zufallsverteilung vorschlagen", "", calculateAttackPayload)
+!mmm
+!mmm
+!mmm   else if cmd eq "flushRegistry"
+!mmm
+!mmm     do m3mgdExchangeFlushRegistry("m3mgdBatchCombatData")
+!mmm     set chatOutput = chatTightBoxRow("**combatPartyManager**: Stapelverarbeitung NPC-Angriffe beendet.")
+!mmm
+!mmm
+!mmm   else if cmd eq "calculateAttack"
+!mmm
+!mmm     do m3mgdExchangeFlushRegistry("m3mgdBatchCombatData")
+!mmm
+!mmm     for attackerToken in npartyTokens where not m3mgdIsUnfitToAttack(...) order npcOrder.(...left) > npcOrder.(...right)
+!mmm
+!rem       // Target assignment (1) Check for CQ: any PC tokens in immediate surroundings? Pick one at random to attack in close quarters
+!mmm       set cqMatches = undef
+!mmm       for partyToken in combatPartyLocations...
+!mmm         if m3mgdGetDistance(attackerToken, partyToken.key)/(distsnap()*distscale()) == 0
+!mmm           set cqMatches = cqMatches, partyToken.key
+!mmm         end if
+!mmm       end for
+!mmm       if count(cqMatches) >= 1
+!mmm         if count(cqMatches) > 1
+!mmm           set targetID = cqMatches[roll("1d" & count(cqMatches))-1].token_id
+!mmm         else
+!mmm           set targetID = cqMatches.token_id
+!mmm         end if
+!mmm         set weaponGroup = "melee"
+!mmm         set weaponLabel = attackerToken.(m3mgdListMeleeAttackWeapons(attackerToken)[0])
+!mmm         if not weaponLabel
+!mmm           set reason = "Nahkampf: hat keine Nahkampfwaffe"
+!mmm         end if
+!rem       // Target assignment (2) If no party member in close range, pick a random target for ranged attack
+!mmm       else 
+!mmm         set targetID = combatParty[roll("1d" & count(combatParty))-1].token_id
+!mmm         set weaponGroup = "ranged"
+!mmm         set weaponLabel = attackerToken.(m3mgdListRangedAttackWeapons(attackerToken)[0])
+!mmm         if not weaponLabel
+!mmm           set reason = "Fernkampf: außer Reichweite / hat keine Fernkampfwaffe"
+!mmm         end if
+!mmm       end if
+!mmm
+!mmm       if weaponLabel
+!mmm         set attackData = { rank: npcOrder.(attackerToken), weaponGroup: weaponGroup, weaponLabel: weaponLabel, executed: false }
+!mmm         set attackData = { attackData, originID: attackerToken.token_id, targetID: targetID.token_id }
+!mmm         set batchAttackOrder = { batchAttackOrder, (attackerToken.token_id): attackData }
+!mmm       else 
+!mmm         set noAttacks = noAttacks, (attackerToken): reason
+!mmm       end if
+!mmm     end for
+!mmm
+!mmm     do m3mgdExchangeStoreEntry("m3mgdBatchCombatData", batchAttackOrder)
+!mmm     
+!mmm     set chatOutput = _m3mgdBatchCombatOrderOutput(true, noAttacks)
+!mmm     set chatOutput = chatOutput & chatTightBoxButtonSubHeader("🎲🗘 Verteilung neu auswürfeln", "", calculateAttackPayload)
+!mmm   
+!mmm   end if
+!mmm     
+!mmm   do whisperback(chatOutput)
+!mmm 
+!mmm end script
