@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.6.0 (2025-04-21)"
+!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-05-16)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -15,13 +15,8 @@
 !mmm
 !rem   // Game-global constants for publication
 !rem
-!mmm   set m3mgdScriptCommands = { "magicAttack": "&#x25;{MacroSheet|magicAttack}", "defense": "&#x25;{MacroSheet|defense}", "resistance": "&#x25;{MacroSheet|defense}", "melee": "&#x25;{MacroSheet|meleeAttack}", "ranged": "&#x25;{MacroSheet|rangedAttack}" }
-!mmm   set m3mgdScriptCommands = { m3mgdScriptCommands, "editXP": "&#x25;{MacroSheet|editXP}", "managePersistentEffects": "&#x25;{MacroSheet|managePersistentEffects}", "defendFrostball": "&#x25;{MacroSheet|defendFrostball}", "defendSnatch": "&#x25;{MacroSheet|defendSnatch}" }
-!mmm
-!mmm   set m3mgdAttrHealthGain          = "m3mgd_health_gain"
-!mmm   set m3mgdAttrEnduranceGain       = "m3mgd_endurance_gain"
-!mmm
-!mmm   set m3mgdExchangeAttrList = m3mgdAttrHealthGain, m3mgdAttrEnduranceGain
+!mmm   set m3mgdScriptNames = { defense: "defense", resistance: "defense", magicAttack: "magicAttack", melee: "meleeAttack", ranged: "rangedAttack", editXP: "editXP", managePersistentEffects: "managePersistentEffects", defendFrostball: "defendFrostball", defendSnatch: "defendSnatch" }
+!mmm   set m3mgdGMscriptNames = { combatPartyManager: "combatPartyManager" }
 !mmm
 !mmm   set m3mgdValidMeleeAttackWeaponTypes = "waffenlos", "Einhandschwert", "Zweihandschwert", "Fechtwaffe", "Stichwaffe", "Stockwaffe", "Spießwaffe", "Kettenwaffe", "Einhandschlagwaffe", "Zweihandschlagwaffe", "Zauberstab"
 !mmm   set m3mgdValidRangedAttackWeaponTypes = "Bogen", "Kurzbogen", "Langbogen", "Kompositbogen", "schwere Armbrust", "leichte Armbrust", "Handarmbrust", "Schleuder", "Blasrohr", "Wurfspieß", "Wurfscheibe", "Wurfklinge", "Stielwurfwaffe"
@@ -56,6 +51,13 @@
 !mmm
 !mmm   set m3mgdSpellEffects = { "fireball": { name: "Feuerball", tokenSide: 1 }, "firewall": { name: "Feuerwand", tokenSide: 2 } }
 !mmm
+!mmm   for scriptName in m3mgdScriptNames...
+!mmm     set m3mgdScriptCommands = { m3mgdScriptCommands, (scriptName.key): "&#x25;{MacroSheet|" & scriptName.value & "}" } 
+!mmm   end for
+!mmm   for scriptName in m3mgdGMscriptNames...
+!mmm     set m3mgdGMScriptCommands = { m3mgdGMScriptCommands, (scriptName.key): "&#x25;{GM_NPC_Makros|" & scriptName.value & "}" } 
+!mmm   end for
+!mmm
 !mmm   if not m3mgdCriticalEffectsTable
 !mmm     if "MacroSheet".m3mgdCriticalEffectsTable ne ""
 !mmm       set m3mgdCriticalEffectsTable = deserialize("MacroSheet".m3mgdCriticalEffectsTable)
@@ -68,8 +70,7 @@
 !mmm   set m3mgdAttrXP = "Erfahrungsschatz"
 !mmm   set m3mgdAttrXPLog = "Erfahrungsprotokoll"
 !mmm
-!mmm   publish to game: m3mgdScriptCommands
-!mmm   publish to game: m3mgdAttrHealthGain, m3mgdAttrEnduranceGain, m3mgdExchangeAttrList
+!mmm   publish to game: m3mgdScriptCommands, m3mgdGMScriptCommands
 !mmm   publish to game: m3mgdValidAttackWeaponTypes, m3mgdValidMeleeAttackWeaponTypes, m3mgdValidRangedAttackWeaponTypes
 !mmm   publish to game: m3mgdArmorPiercingWeaponTypes
 !mmm   publish to game: m3mgdParryLargeShieldTypes, m3mgdParrySmallShieldTypes, m3mgdParrySmallShieldEffectiveAgainst, m3mgdParryStandardTypes, m3mgdParryStandardEffectiveAgainst
@@ -97,6 +98,7 @@
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdGetXPLog, _m3mgdLogXP, m3mgdEditXP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP, m3mgdXPEditButton
 !mmm   publish to game: m3mgdDefenseDataEntryPayload, m3mgdDefenseInitPayload, m3mgdDefenseDataTable, m3mgdChatDefensePrompt
 !mmm   publish to game: m3mgdProcessAttackerEffects, m3mgdWeaponSpecialEffect, m3mgdInjuryFX, m3mgdEffectiveArmorProtection
+!mmm   publish to game: _m3mgdBatchCombatOrderOutput, m3mgdBatchCombatUpdate
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -169,12 +171,12 @@
 !rem 
 !rem // m3mgdStoreAttack(attackData)
 !rem //
-!rem //   Stores attackData in central data registry if there is no other set of attackData by the same origin against the same target.
+!rem //   Stores attackData in central data registry if there is no other set of attackData against the same target.
 !rem //
 !mmm function m3mgdStoreAttack(attackData)
 !mmm   
-!rem   // Check for another active attack by the same origin against the same target
-!mmm   set filter = { action: "combatAttack", origin: attackData.origin, target: attackData.target }
+!rem   // Check for another active attack against the same target
+!mmm   set filter = { action: "combatAttack", target: attackData.target }
 !mmm   set activeAttacks = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, filter)
 !mmm   if activeAttacks
 !mmm     do m3mgdExchangeDelete(m3mgdExchangeRegistries.combatData, filter)
@@ -532,13 +534,7 @@
 !rem //   Returns a chat button payload to remove tokenID's active persistent effect identified by effectIndex.
 !rem //
 !mmm function m3mgdRemovePersistentEffectPayload(tokenID, effectIndex)
-!mmm   set payload = literal("!mmm customize") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set cmd=\"removeEffect\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set effectIndex=" & effectIndex) & "&#13;"
-!mmm   set payload = payload & literal("!mmm set deleteConfirm=?" & "{Für " & tokenID.token_name & " wirklich Effekt Nr." & (effectIndex + 1) & " löschen?|Nein,false|Ja,true}") & "&#13;"
-!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
-!mmm   return payload
+!mmm   return chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, { "cmd": "'removeEffect'", "tokenID": "'" & tokenID & "'", "effectIndex": effectIndex, "deleteConfirm": "?" & "{Für " & tokenID.token_name & " wirklich Effekt Nr." & (effectIndex + 1) & " löschen?|Nein,false|Ja,true}" } )
 !mmm end function
 !rem
 !rem // m3mgdShowPersistentEffectsPayload(tokenID, effectIndex)
@@ -546,14 +542,11 @@
 !rem //   Returns a chat button payload to show tokenID's active persistent effects (all or just the one indicated by effectIndex) with all available details.
 !rem //
 !mmm function m3mgdShowPersistentEffectsPayload(tokenID, effectIndex)
-!mmm   set payload = literal("!mmm customize") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set cmd=\"showEffectsDetails\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
+!mmm   set payloadSettings = { "cmd": "'showEffectsDetails'", "tokenID": "'" & tokenID & "'" }
 !mmm   if not isdefault(effectIndex)
-!mmm     set payload = payload & literal("!mmm set effectIndex=" & effectIndex) & "&#13;"
+!mmm     set payloadSettings = { payloadSettings, "effectIndex": effectIndex }
 !mmm   end if
-!mmm   set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
-!mmm   return payload
+!mmm   return chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, payloadSettings)
 !mmm end function
 !rem
 !rem // m3mgdActiveStatusModifiers(tokenID, action)
@@ -661,10 +654,7 @@
 !mmm           do chat(chatTightBoxRow("#" & counter & " -- " & reason.label & ": " & reason.desc))
 !mmm         end if
 !mmm       end for
-!mmm       set payload = literal("!mmm customize") & "&#13;"
-!mmm       set payload = payload & literal("!mmm set cmd=\"updateAttackEffects\"") & "&#13;"
-!mmm       set payload = payload & literal("!mmm set tokenID=\"" & tokenID & "\"") & "&#13;"
-!mmm       set payload = payload & literal("!mmm end customize") & "&#13;" & m3mgdScriptCommands.managePersistentEffects & "&#13;"
+!mmm       set payload = chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, { "cmd": "'updateAttackEffects'", "tokenID": "'" & tokenID & "'" })
 !mmm       do chat(chatTightBoxButtonRow("**Angriffszähler um 1 reduzieren**", "", payload))
 !mmm     end combine
 !mmm     return true
@@ -1213,14 +1203,7 @@
 !mmm     return false
 !mmm   end if
 !mmm 
-!mmm   set storeCounter = 0
-!mmm   if setattr(dataExchangeID, m3mgdAttrHealthGain, healthGain) eq healthGain
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   if setattrmax(dataExchangeID, m3mgdAttrHealthGain, targetID) eq targetID
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   return (storeCounter == 2)
+!mmm   return m3mgdExchangeStoreEntry(m3mgdExchangeRegistries.nonCombat, { action: "healthBoost", target: targetID, value: healthGain } )
 !mmm   
 !mmm end function
 !rem
@@ -1240,14 +1223,7 @@
 !mmm     return false
 !mmm   end if
 !mmm 
-!mmm   set storeCounter = 0
-!mmm   if setattr(dataExchangeID, m3mgdAttrEnduranceGain, enduranceGain) eq enduranceGain
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   if setattrmax(dataExchangeID, m3mgdAttrEnduranceGain, targetID) eq targetID
-!mmm     set storeCounter = storeCounter + 1
-!mmm   end if
-!mmm   return (storeCounter == 2)
+!mmm   return m3mgdExchangeStoreEntry(m3mgdExchangeRegistries.nonCombat, { action: "enduranceBoost", target: targetID, value: enduranceGain } )
 !mmm   
 !mmm end function
 !rem
@@ -1391,7 +1367,7 @@
 !mmm   
 !mmm     set weaponType = "Zweihandschwert"
 !mmm   
-!mmm   else if ("waffenloser Kampf", "Faust", "Faustkampf", "Ringen (ohne Rüstung)", "Ringen (mit Rüstung)", "Werfen", "Tatze", "Klaue", "Tentakel", "Biss", "Horn", "Berührung") where ... eq weaponLabel
+!mmm   else if ("waffenloser Kampf", "Faust", "Faustkampf", "Ringen (ohne Rüstung)", "Ringen (mit Rüstung)", "Werfen", "Tatze", "Klaue", "Tentakel", "Biss", "Horn", "Berührung", "Umhüllen") where ... eq weaponLabel
 !mmm   
 !mmm     set weaponType = "waffenlos"
 !mmm   
@@ -1503,24 +1479,17 @@
 !rem //   If tokenID.PC==true, the block is designed for player characters (3D roll), otherwise for NPCs (GM silent mode).
 !rem //
 !mmm function m3mgdDefenseInitPayload(tokenID, magicAttack)  
-!mmm   set payload = "!mmm customize&#13;"
 !mmm   if not magicAttack
-!mmm     set payload = payload & literal("!mmm set cSemiManualModifiers=\"?" & "{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0| Konzentrierte Abwehr +4,+4| Ich greife überstürzt an -2,-2| Ich bin überrascht -4,-4}\"") & "&#13;"
+!mmm     set payloadSettings = { cSemiManualModifiers: "'?" & "{Standard-Abwehrmodifikatoren| Normale Abwehr +/-0,0| Konzentrierte Abwehr +4,+4| Ich greife überstürzt an -2,-2| Ich bin überrascht -4,-4}'" }
 !mmm   end if
-!mmm   set payload = payload & literal("!mmm set cManualModifiers=\"?" & "{Spezielle Abwehrmodifikatoren|0}") & "&#13;"
+!mmm   set payloadSettings = { payloadSettings, cManualModifiers: "'?" & "{Spezielle Abwehrmodifikatoren|0}'" }
 !mmm   if tokenID.PC
-!mmm     set payload = payload & "&amp;{template} &#91;[1d20]] &#123;{&#125;}&#13;"
-!mmm     set payload = payload & literal("!mmm set cDefenseRoll=$[" & "[0]]") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set cNoDefense=false") & "&#13;"
+!mmm     set payloadSettings = { payloadSettings, cDefenseRoll: { type: "3dRoll", rollDefinition: "1d20" }, cNoDefense: false }
 !mmm   else
-!mmm     set payload = payload & literal("!mmm if selected") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set cOwnID = selected.token_id") & "&#13;"
-!mmm     set payload = payload & literal("!mmm else") & "&#13;"
-!mmm     set payload = payload & literal("!mmm   set cOwnID = '" & tokenID & "'") & "&#13;"
-!mmm     set payload = payload & literal("!mmm end if") & "&#13;"
-!mmm     set payload = payload & literal("!mmm set cGMSilentMode = true") & "&#13;"
+!mmm     set payloadSettings = { payloadSettings, ifelse: { type: "conditional", condition: "selected", then: "set cOwnID = selected.token_id", else: "set cOwnID = '" & tokenID & "'" } } 
+!mmm     set payloadSettings = { payloadSettings, cGMSilentMode: true }
 !mmm   end if
-!mmm   set payload = payload & "!mmm end customize&#13;"
+!mmm   set payload = chatButtonPayload(m3mgdScriptCommands.defense, payloadSettings)
 !mmm   return payload
 !mmm end function
 !rem
@@ -1536,27 +1505,18 @@
 !mmm     do whisperback("m3mgdDefenseDataEntryPayload() called without a valid token ID, defaulting to script.cOwnID failed.")
 !mmm     return false
 !mmm   end if
-!mmm   set payload = "!mmm script&#13;"
-!mmm   set payload = payload & literal("!mmm set attackType = \"?" & "{Art des Angriffs|Nahkampf,melee|Fernkampf,ranged|Zauberei,magic}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackerID = \"@" & "{target|Wer greift an?|token_id}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set targetID = \"@" & "{target|Wer wird angegriffen (Ziel)?|token_id}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackResult = \"?" & "{Angriffswert|0}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set criticalAttack = ?" & "{Kritischer Erfolg beim Angriff|Nein,false|Ja,true}") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackDamage = \"?" & "{Schaden laut Angreifer|0}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackDamageRoll = \"?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set weaponType = \"?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}\"") & "&#13;"
-!mmm   set payload = payload & literal("!mmm if attackResult < 20") & "&#13;"
-!mmm   set payload = payload & literal("!mmm   do whisperback(\"Abbruch: Angriff mit **\" & attackResult & \"** war nicht erfolgreich, keine Abwehr nötig.\")") & "&#13;"
-!mmm   set payload = payload & literal("!mmm   exit script") & "&#13;"
-!mmm   set payload = payload & literal("!mmm end if") & "&#13;"
-!mmm   set payload = payload & literal("!mmm set attackData = { origin: attackerID, target: targetID, action: \"combatAttack\", attackType: attackType, attackResult: attackResult, criticalAttack: criticalAttack, damageResult: attackDamage, damageRoll: attackDamageRoll, weaponType: weaponType }") & "&#13;"
-!mmm   set payload = payload & literal("!mmm if not m3mgdStoreAttack(attackData)") & "&#13;"
-!mmm   set payload = payload & literal("!mmm   do whisperback(\"Fehlschlag: Angriffsdaten konnten nicht gespeichert werden - ${attackData}\")") & "&#13;"
-!mmm   set payload = payload & literal("!mmm end if") & "&#13;"
-!mmm   set payload = payload & "!mmm end script&#13;"
-!mmm   set payload = payload & m3mgdDefenseInitPayload(tokenID)
-!mmm   set payload = payload & m3mgdScriptCommands.defense
-!mmm   return payload
+!mmm   set payloadSettings = { attackType: "'?" & "{Art des Angriffs|Nahkampf,melee|Fernkampf,ranged|Zauberei,magic}" & "'" }
+!mmm   set payloadSettings = { payloadSettings, attackerID: "'@" & "{target|Wer greift an?|token_id}'" }
+!mmm   set payloadSettings = { payloadSettings, targetID: "'@" & "{target|Wer wird angegriffen (Ziel)?|token_id}'" }
+!mmm   set payloadSettings = { payloadSettings, attackResult: "?" & "{Angriffswert|0}" }
+!mmm   set payloadSettings = { payloadSettings, criticalAttack: "?" & "{Kritischer Erfolg beim Angriff|Nein,false|Ja,true}" }
+!mmm   set payloadSettings = { payloadSettings, attackDamage: "?" & "{Schaden laut Angreifer|0}" }
+!mmm   set payloadSettings = { payloadSettings, attackDamageRoll: "?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}" }
+!mmm   set payloadSettings = { payloadSettings, weaponType: "'?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}'" }
+!mmm   set payloadSettings = { payloadSettings, ifthen1: { type: "conditional", condition: "attackResult < 20", then: "do whisperback('Abbruch: Angriff mit **' & attackResult & '** war nicht erfolgreich, keine Abwehr nötig.')", "exit script" } }
+!mmm   set payloadSettings = { payloadSettings, attackData: "{ origin: attackerID, target: targetID, action: 'combatAttack', attackType: attackType, attackResult: attackResult, criticalAttack: criticalAttack, damageResult: attackDamage, damageRoll: attackDamageRoll, weaponType: weaponType }" }
+!mmm   set payloadSettings = { payloadSettings, ifthen2: { type: "conditional", condition: "not m3mgdStoreAttack(attackData)", then: "do whisperback('Fehlschlag: Angriffsdaten konnten nicht gespeichert werden - ' & attackData)" } }
+!mmm   return chatButtonPayload("", payloadSettings, "script") & m3mgdDefenseInitPayload(tokenID) & m3mgdScriptCommands.defense
 !mmm end function
 !rem
 !rem // _m3mgdSpellButtonPayload(tokenID, spellLabel, [rollData], [rollConfig])
@@ -1777,11 +1737,7 @@
 !mmm   else if combatMode eq "defense" and (attackSpellType eq "Geist" or attackSpellType eq "Körper")
 !mmm   
 !mmm     set selectorPrompt = "Resistenz gegen Zauber"
-!mmm     set noDefensePayload = "!mmm customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & m3mgdScriptCommands.defense
+!mmm     set noDefensePayload = chatButtonPayload(m3mgdScriptCommands.defense, { "cOwnID": "'" & tokenID & "'", "cNoDefense": true })
 !mmm     set chatMenu = chatTightBoxFlowButton("Wehrlos", "", noDefensePayload, "#ce0f69", "#ffffff")
 !mmm
 !mmm     set payload = _m3mgdWeaponButtonPayload(tokenID, "resistance", attackSpellType)
@@ -1841,11 +1797,7 @@
 !mmm   set chatMenu = ""
 !mmm
 !mmm   if weaponsGroup eq "defense"
-!mmm     set noDefensePayload = "!mmm customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm set cOwnID&#x3D;&#x22;" & tokenID & "&#x22;&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm set cNoDefense&#x3D;&#x22;true&#x22;&#13;"
-!mmm     set noDefensePayload = noDefensePayload & "!mmm end customize&#13;"
-!mmm     set noDefensePayload = noDefensePayload & m3mgdScriptCommands.defense
+!mmm     set noDefensePayload = chatButtonPayload(m3mgdScriptCommands.defense, { "cOwnID": "'" & tokenID & "'", "cNoDefense": true })
 !mmm     set chatMenu = chatTightBoxFlowButton("Wehrlos", "", noDefensePayload, "#ce0f69", "#ffffff")
 !mmm   end if
 !mmm
@@ -1879,7 +1831,7 @@
 !mmm     
 !mmm     end if
 !mmm
-!mmm     if weaponUsable
+!mmm     if weaponUsable 
 !mmm
 !mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollSpecs)
 !mmm       set chatMenu = chatMenu & chatTightBoxFlowButton(weaponLabel, "", payload)
@@ -2054,16 +2006,13 @@
 !rem //   GM can approve the roll to be sent to the affected player, or re-roll.
 !rem //
 !mmm function m3mgdCriticalEffectRollPayload(tokenID, tableName, foeID)
-!mmm   set rollPayload = "!mmm script&#13;"
 !mmm   if tokenID.PC
-!mmm     set rollPayload = rollPayload & "&amp;{template} &#91;[1d100]] &#123;{&#125;}&#13;"
-!mmm     set rollPayload = rollPayload & literal("!mmm set critRoll = $[" & "[0]]") & "&#13;"
+!mmm     set payloadSettings = { critRoll: { type: "3dRoll", rollDefinition: "1d100" } }
 !mmm   else 
-!mmm     set rollPayload = rollPayload & literal("!mmm set critRoll = roll('1d100')") & "&#13;"
+!mmm     set payloadSettings = { critRoll: "roll('1d100')" }
 !mmm   end if
-!mmm   set rollPayload = rollPayload & literal("!mmm do m3mgdCriticalEffectPrompt(\"" & tokenID & "\",\"" & tableName & "\",critRoll,\"" & foeID & "\")") & "&#13;"
-!mmm   set rollPayload = rollPayload & "!mmm end script&#13;"
-!mmm   return rollPayload
+!mmm   set payloadSettings = { payloadSettings, cmdline1: { type: "command", value: "do m3mgdCriticalEffectPrompt('" & tokenID & "','" & tableName & "',critRoll,'" & foeID & "')" } }
+!mmm   return chatButtonPayload("", payloadSettings, "script")
 !mmm end function
 !rem
 !rem // m3mgdCriticalEffectPrompt(tokenID, tableName, rollResult, foeID)
@@ -2093,25 +2042,21 @@
 !mmm 
 !mmm     if criticalEffect.desc + 0 == 0
 !mmm
-!mmm       set approvePayload = "!mmm script&#13;"
 !mmm       for var in criticalEffect.userInput...
-!mmm         set approvePayload = approvePayload & literal("!mmm set " & var.key & "=" & var.value) & "&#13;"
-!mmm         set approvePayload = approvePayload & literal("!mmm publish to sender: " & var.key) & "&#13;"
+!mmm         set approveSettings = { approveSettings, (var.key): { type: "publishToSender", value: "'" & var.value & "'" } }
 !mmm       end for
-!mmm       set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",default,\"" & foeID & "\")") & "&#13;"
-!mmm       set approvePayload = approvePayload & "!mmm end script&#13;"
+!mmm       set approveSettings = { approveSettings, "cmdline1": { type: "command", value: "do m3mgdExecuteCriticalEffect('" & tokenID & "','" & tableName & "'," & rollResult & ",default,'" & foeID & "')" } }
+!mmm       set approvePayload = chatButtonPayload("", approveSettings, "script")
 !mmm       chat: {\{ Effekte = ${criticalEffect.desc}${"<"&"br>"}[🖅 **an ${tokenID.character_name}**](${approvePayload}) }\}
 !mmm
 !mmm     else 
 !mmm
 !mmm       for contextDesc in criticalEffect.desc...
-!mmm         set approvePayload = "!mmm script&#13;"
 !mmm         for var in criticalEffect.userInput...
-!mmm           set approvePayload = approvePayload & literal("!mmm set " & var.key & "=" & var.value) & "&#13;"
-!mmm           set approvePayload = approvePayload & literal("!mmm publish to sender: " & var.key) & "&#13;"
+!mmm           set approveSettings = { approveSettings, (var.key): { type: "publishToSender", value: "'" & var.value & "'" } }
 !mmm         end for
-!mmm         set approvePayload = approvePayload & literal("!mmm do m3mgdExecuteCriticalEffect(\"" & tokenID & "\",\"" & tableName & "\"," & rollResult & ",\"" & contextDesc.key & "\",\"" & foeID & "\")") & "&#13;"
-!mmm         set approvePayload = approvePayload & "!mmm end script&#13;"
+!mmm         set approveSettings = { approveSettings, "cmdline1": { type: "command", value: "do m3mgdExecuteCriticalEffect('" & tokenID & "','" & tableName & "'," & rollResult & ",'" & contextDesc.key & "','" & foeID & "')" } }
+!mmm         set approvePayload = chatButtonPayload("", approveSettings, "script")
 !mmm         chat: {\{ ${contextDesc.key} = ${contextDesc.value}${"<"&"br>"}[🖅 **an ${tokenID.character_name}**](${approvePayload}) }\}
 !mmm       end for
 !mmm
@@ -2661,6 +2606,8 @@
 !rem
 !rem // m3mgdChatDefensePrompt(attackData)
 !rem //
+!rem //   Returns true if defense prompt was sent to the target's player directly, false if just a reroll menu was sent to the GM (new in libMidgard 1.8.0).
+!rem //
 !mmm function m3mgdChatDefensePrompt(attackData)
 !mmm   
 !mmm   if isdefault(attackData.target) or not m3mgdValidateOwnTokenID(attackData.target)
@@ -2682,10 +2629,12 @@
 !mmm
 !mmm     set sender = attackData.target.token_name
 !mmm     if weaponsGroup eq "magic"
-!mmm       chat: /w "${targetID.character_name}" ${m3mgdSpellSelectorChatMenu(targetID, "defense", attackData.spellType)}
+!mmm       chat: /w "${attackData.target.character_name}" ${m3mgdSpellSelectorChatMenu(attackData.target, "defense", attackData.spellType)}
 !mmm     else 
-!mmm       chat: /w "${targetID.character_name}" ${m3mgdWeaponSelectorChatMenu(targetID, "defense", attackData.weaponType)}
+!mmm       chat: /w "${attackData.target.character_name}" ${m3mgdWeaponSelectorChatMenu(attackData.target, "defense", attackData.weaponType)}
 !mmm     end if
+!mmm
+!mmm     return true
 !mmm
 !mmm   else
 !mmm
@@ -2712,14 +2661,15 @@
 !mmm       set rerollPayload = _m3mgdWeaponButtonPayload(attackData.origin, attackData.attackType, script.cWeaponLabel, default, { cTargetID: attackData.target, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
 !mmm     end if
 !mmm
+!mmm     set approvePayload = approvePayload & literal("!mmm do m3mgdBatchCombatUpdate('" & attackData.origin & "', '" & attackData.target & "')") & "&#13;"
 !mmm     set approvePayload = approvePayload & "!mmm end script&#13;"
 !mmm     set modifyDamagePayload = modifyDamagePayload & "!mmm end script&#13;"
 !mmm
 !mmm     chat: /w GM [✅ & 🖅 **an ${attackData.target.character_name}**](${approvePayload})&nbsp;&nbsp;[💥 Schaden ändern](${modifyDamagePayload})&nbsp;&nbsp;[🎲🗘 nochmal würfeln](${rerollPayload})
 !mmm
-!mmm   end if
+!mmm     return false
 !mmm
-!mmm   return true
+!mmm   end if
 !mmm   
 !mmm end function
 !rem
@@ -2791,4 +2741,70 @@
 !mmm     do m3mgdCancelRuneEffects(tokenID)
 !mmm   end if
 !mmm   
+!mmm end function
+!rem
+!rem // _m3mgdBatchCombatOrderOutput(pcSummary, [noAttacks])
+!rem //
+!rem //   Returns Roll20 chat code listing a (proposed) list of NPC combat actions ready for (continued) execution at the GM's command.
+!rem //
+!mmm function _m3mgdBatchCombatOrderOutput(pcSummary, noAttacks)
+!mmm   set batchAttackOrder = m3mgdExchangeGetRegistry("m3mgdBatchCombatData")
+!mmm   set todoList = batchAttackOrder... where ...value.executed == false
+!mmm   if todoList
+!mmm     set nextRank = max(todoList... select ...value.rank)
+!mmm     set firstAttack = (todoList... where ...value.rank == nextRank)
+!mmm     if count(firstAttack > 1)
+!mmm       set firstAttack = firstAttack[0]
+!mmm     end if
+!mmm   end if
+!mmm
+!mmm   set chatOutput = chatTightBoxHeader("Stapelverarbeitung NPC-Angriffe")
+!mmm
+!mmm   for attackEntry in batchAttackOrder... select ...value order (...left.rank > ...right.rank, ...left.executed > ...right.executed, ...left.originID.token_name lt ...right.originID.token_name)
+!mmm
+!rem     // Correct token orientation
+!mmm     set attackerAngle = m3mgdGetViewAngle(attackEntry.originID, attackEntry.targetID)
+!mmm     do setattr(attackEntry.originID, "rotation", attackEntry.originID.rotation + attackerAngle)
+!mmm
+!mmm     set rowLabel = attackEntry.originID.token_name & " (" & attackEntry.rank & ") greift " & attackEntry.targetID.name & " mit " & attackEntry.weaponLabel & " an"
+!mmm     if not attackEntry.executed
+!mmm       if attackEntry.originID eq firstAttack.key
+!mmm         set rowLabel = "** >>" & rowLabel & "**"
+!mmm       end if
+!mmm       set rollSpecs = { "cTargetID": attackEntry.targetID, "cSemiManualModifiers": 1, "cManualModifiers": 0, "cAttackRoll": "1d20" }
+!mmm       set rollSpecs = { rollSpecs, "cDamageRoll": attackEntry.originID.(findattr(attackEntry.originID, "Angriff", "Waffe", attackEntry.weaponLabel, "WaffeSchaden")) }
+!mmm       set executePayload = _m3mgdWeaponButtonPayload(attackEntry.originID, attackEntry.weaponGroup, attackEntry.weaponLabel, default, rollSpecs)
+!mmm       set chatOutput = chatOutput & chatTightBoxButtonRow(rowLabel, "Diesen Angriff jetzt ausführen", executePayload)
+!mmm     else
+!mmm       set rowLabel = rowLabel & " ✅"
+!mmm       set chatOutput = chatOutput & chatTightBoxRow(rowLabel, "Dieser Angriff wurde schon ausgeführt", "#eeeeee", "#333333")
+!mmm     end if
+!mmm   end for
+!mmm   if not isdefault(noAttacks)
+!mmm     for noAttackToken in noAttacks
+!mmm       set chatOutput = chatOutput & chatTightBoxRow((noAttackToken.key).token_name & " (" & (gettracker() where ...title eq (noAttackToken.key).token_name).value & ") greift nicht an - " & noAttackToken.value, "", default, "#666666")
+!mmm     end for
+!mmm   end if
+!mmm   if pcSummary
+!mmm     for pcTargetID in batchAttackOrder... select ...value.targetID
+!mmm       set pcTargetSummary = { pcTargetSummary, (pcTargetID): pcTargetSummary.(pcTargetID) + 1 }
+!mmm     end for
+!mmm     set attackDistributionSummary = join(", ", pcTargetSummary... select (...value & " ⚔️ " & ...key.token_name))
+!mmm     set chatOutput = chatOutput & chatTightBoxSubHeader(attackDistributionSummary)
+!mmm   end if
+!mmm
+!mmm   return(chatOutput)
+!mmm end function
+!rem
+!rem // m3mgdBatchCombatUpdate(originID, targetID)
+!rem //
+!rem //   If run by GM and if batch combat data is found, marks the present attack (identified by originID, targetID) as executed and sends an updated list to the GM.
+!rem //
+!mmm function m3mgdBatchCombatUpdate(originID, targetID)
+!mmm   set batchAttackOrder = m3mgdExchangeGetRegistry("m3mgdBatchCombatData")
+!mmm   if privileged and batchAttackOrder
+!mmm     set batchAttackRecord = batchAttackOrder... where ...value.originID eq originID and ...value.targetID eq targetID
+!mmm     do m3mgdExchangeStoreEntry("m3mgdBatchCombatData", (batchAttackRecord.key): { batchAttackRecord.value, executed: true })
+!mmm     chat: /w GM ${_m3mgdBatchCombatOrderOutput()} ${chatTightBoxButtonSubHeader("🔚 Stapelverarbeitung beenden", "", chatButtonPayload(m3mgdGMScriptCommands.combatPartyManager, { cmd: "'flushRegistry'", registryID: "'m3mgdBatchCombatData'", deleteConfirm: true }))} ${chatTightBoxButtonSubHeader("🎲 Neue Runde: Ziele auswürfeln", "", chatButtonPayload(m3mgdGMScriptCommands.combatPartyManager, { cmd: "'calculateAttack'" }))}
+!mmm   end if
 !mmm end function
