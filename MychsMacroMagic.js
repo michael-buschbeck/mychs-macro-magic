@@ -1,7 +1,7 @@
 // Mych's Macro Magic by Michael Buschbeck <michael@buschbeck.net> (2021)
 // https://github.com/michael-buschbeck/mychs-macro-magic/blob/main/LICENSE
 
-const MMM_VERSION = "1.37.1";
+const MMM_VERSION = "1.37.2";
 
 const MMM_STARTUP_INSTANCE = MMM_VERSION + "/" + new Date().toISOString();
 const MMM_STARTUP_SENDER = "MMM-f560287b-c9a0-4273-bf03-f2c1f97d24d4";
@@ -763,17 +763,16 @@ class MychScriptContext extends MychStash
         for (let argIndex = 0; argIndex < arguments.length; ++argIndex)
         {
             let argValue = arguments[argIndex];
+            let argValueList = MychExpression.coerceList(argValue);
             
-            if (argValue == undefined)
+            for (let argValueItem of argValueList)
             {
-                continue;
-            }
+                argValueItem = MychExpression.coerceNumber(argValueItem);
 
-            argValue = MychExpression.coerceNumber(argValue);
-
-            if (minValue == undefined || minValue > argValue)
-            {
-                minValue = argValue;
+                if (minValue == undefined || minValue > argValueItem)
+                {
+                    minValue = argValueItem;
+                }
             }
         }
 
@@ -787,17 +786,16 @@ class MychScriptContext extends MychStash
         for (let argIndex = 0; argIndex < arguments.length; ++argIndex)
         {
             let argValue = arguments[argIndex];
+            let argValueList = MychExpression.coerceList(argValue);
             
-            if (argValue == undefined)
+            for (let argValueItem of argValueList)
             {
-                continue;
-            }
+                argValueItem = MychExpression.coerceNumber(argValueItem);
 
-            argValue = MychExpression.coerceNumber(argValue);
-            
-            if (maxValue == undefined || maxValue < argValue)
-            {
-                maxValue = argValue;
+                if (maxValue == undefined || maxValue < argValueItem)
+                {
+                    maxValue = argValueItem;
+                }
             }
         }
 
