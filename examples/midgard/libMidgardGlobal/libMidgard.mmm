@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-05-16)" 
+!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-06-17)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -1489,7 +1489,7 @@
 !mmm     set payloadSettings = { payloadSettings, ifelse: { type: "conditional", condition: "selected", then: "set cOwnID = selected.token_id", else: "set cOwnID = '" & tokenID & "'" } } 
 !mmm     set payloadSettings = { payloadSettings, cGMSilentMode: true }
 !mmm   end if
-!mmm   set payload = chatButtonPayload(m3mgdScriptCommands.defense, payloadSettings)
+!mmm   set payload = chatButtonPayload("", payloadSettings)
 !mmm   return payload
 !mmm end function
 !rem
@@ -1766,7 +1766,9 @@
 !mmm   if isdefault(tokenID)
 !mmm     set tokenID = sender.token_id
 !mmm   end if
-!mmm   
+!mmm
+!mmm   set tokenID = (tokenID & "").token_id
+!mmm
 !mmm   if isdefault(weaponsGroup)
 !mmm     set weaponsGroup = "melee"
 !mmm   end if
@@ -1806,7 +1808,9 @@
 !mmm   for weaponLabelAttr in weaponsList
 !mmm     
 !mmm     set weaponLabel = tokenID.(weaponLabelAttr)
-!mmm     
+!mmm if isdenied(weaponLabel)
+!mmm debug do tokenID, weaponLabel, "denied for some reason: ", getreason(weaponLabel), privileged, sender
+!mmm end if
 !mmm     if weaponsGroup eq "defense"
 !mmm       
 !rem       // Check if weaponLabel may not help against attackWeaponType 
