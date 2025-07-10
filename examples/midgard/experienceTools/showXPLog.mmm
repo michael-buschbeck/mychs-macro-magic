@@ -1,12 +1,12 @@
 !rem // showXPLog for selected token's character
-!rem // 2024-02-14
+!rem // 2025-07-10
 !mmm script
 !mmm
-!mmm   if version < 1.27 or not m3mgdExchange or not m3mgdExchangeAttrList
-!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm   if version < 1.27
+!mmm     do whisperback("MMM version too low.")
 !mmm     exit script
 !mmm   end if
-!mmm
+!mmm 
 !mmm   if not selected or isunknown(selected.(m3mgdAttrXP)) or isunknown(selected.(m3mgdAttrXPLog))
 !mmm     do whisperback("showXPLog: no token selected or character does not have attributes " & m3mgdAttrXP & " and " & m3mgdAttrXPLog & " -- aborting.")
 !mmm     exit script
