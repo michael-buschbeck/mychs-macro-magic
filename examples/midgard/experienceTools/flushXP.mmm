@@ -1,24 +1,25 @@
 !rem // flushXP
-!rem // 2022-01-29
+!rem // rev 2025-09-05
 !mmm script
-!mmm   if version < 1.26 or not m3mgdExchange or not m3mgdExchangeAttrList or not m3mgdPlayerCharacters
+!mmm   if version < 1.26 or not m3mgdAttrXP or not m3mgdAttrXPLog or not m3mgdPlayerCharacters
 !mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
 !mmm     exit script
 !mmm   end if
 !mmm
 !mmm   set confirm = "?{Wirklich die EP aller Charaktere löschen?|nein,0|ja,1}"
-!mmm   if confirm == 1
-!mmm     combine chat
-!mmm       chat: /w GM ${"&"}{template:default} {{name=**EP gelöscht für:**}}
-!mmm       for char in m3mgdPlayerCharacters
-!mmm         if not isdenied(char.character_id)
-!mmm           if setattr(char, m3mgdAttrXP, 0) == 0 and setattr(char, m3mgdAttrXPLog, "") eq ""
-!mmm             chat: {{${char.name}=${char.(m3mgdAttrXP)} -> 0, Log leer (${len(char.(m3mgdAttrXPLog))}) }}
-!mmm           else
-!mmm             chat: {{${char.name}=**FEHLER** (${char.(m3mgdAttrXP)}, Loglänge ${len(char.(m3mgdAttrXPLog))} }}
-!mmm           end if
+!mmm   if confirm == 1 and privileged
+!mmm     set output = "&" & "{template:default} {{name=**EP gelöscht für:**}}"
+!mmm     for char in m3mgdPlayerCharacters
+!mmm       if not isdenied(char.character_id)
+!mmm         if setattr(char, m3mgdAttrXP, 0) == 0 and setattr(char, m3mgdAttrXPLog, "") eq ""
+!mmm           set output = output & "{{" & char.name & "=" & char.(m3mgdAttrXP) & " -> 0, Log leer (" & len(char.(m3mgdAttrXPLog)) & ")}}"
+!mmm         else
+!mmm           set output = output & "{{" & char.name & "=**FEHLER** (" & char.(m3mgdAttrXP) & ", Loglänge " & len(char.(m3mgdAttrXPLog)) & ")}}"
 !mmm         end if
-!mmm       end for
-!mmm     end combine
+!mmm       end if
+!mmm     end for
+!mmm     do whisperback(output)
+!mmm   else
+!mmm     do whisperback("flushXP: Löschen nicht bestätigt oder fehlende GM-Rechte -- nichts gelöscht.")
 !mmm   end if 
 !mmm end script
