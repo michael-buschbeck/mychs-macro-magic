@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v1.1.0 (2025-04-25)"
+!mmm   set libVersion = "libExchange v1.1.1 (2025-09-05)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage
@@ -38,7 +38,7 @@
 !rem
 !rem   // Publish game-global functions defined below
 !rem
-!mmm   publish to game: m3mgdExchangeFlushRegistry, m3mgdExchangeGetRegistry, m3mgdExchangeStoreEntry, m3mgdExchangeGetData, m3mgdExchangeDelete, m3mgdExchangeEdit
+!mmm   publish to game: m3mgdExchangeFlushRegistry, m3mgdExchangeGetRegistry, m3mgdExchangeStoreEntry, m3mgdExchangeGetData, m3mgdExchangeExpungeMissingTokens, m3mgdExchangeDelete, m3mgdExchangeEdit
 !mmm   publish to game: m3mgdExchangeRegEdit, m3mgdExchangeAssignAttack
 !mmm
 !mmm   chat: ${libVersion} loaded.
@@ -169,6 +169,36 @@
 !mmm
 !mmm end function
 !rem 
+!rem // m3mgdExchangeExpungeMissingTokens(registryID)
+!rem // 
+!rem //   Deletes all entries from a central data registry whose origin or target tokens do not (no longer) exist.
+!rem // 
+!mmm function m3mgdExchangeExpungeMissingTokens(registryID)
+!mmm
+!mmm   if isdenied(m3mgdExchange.(registryID))
+!mmm     chat: m3mgdExchangeDeleteEntry(): attribute m3mgdExchange.${registryID} not accessible. Aborting.
+!mmm     return false
+!mmm   else if not m3mgdExchange.(registryID)
+!mmm     chat: m3mgdExchangeDeleteEntry(): data exchange registry ${registryID} empty/non-existant => nothing to delete. Aborting.
+!mmm     return false
+!mmm   end if
+!mmm
+!mmm   set registry = m3mgdExchangeGetRegistry(registryID)
+!mmm   for entry in registry
+!mmm     if privileged and (isdenied(entry.origin.token_id) or isdenied(entry.target.token_id))
+!mmm       set expungedEntries = expungedEntries, entry
+!mmm     else
+!mmm       set survivingEntries = survivingEntries, entry
+!mmm     end if
+!mmm   end for
+!mmm
+!mmm   debug do count(expungedEntries)
+!mmm
+!mmm   set serialRegistry = serialize(survivingEntries)
+!mmm   return (setattr(m3mgdExchange, registryID, serialRegistry) eq serialRegistry)
+!mmm
+!mmm end function
+!rem 
 !rem // m3mgdExchangeEdit(registryID, searchCriteria, newData)
 !rem // 
 !rem //   Changes all entries that match the given searchCriteria by overwriting relevant fields with newData.
@@ -251,9 +281,15 @@
 !mmm
 !mmm   if entryCount == 0
 !mmm     set output = output & chatTightBoxRow("(keine Einträge)")
+!mmm   else
+!mmm     set output = output & chatTightBoxRow(entryCount & " Einträge")
+!mmm     if privileged and missingTokens
+!mmm       set expungeMissingTokensPayload = chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { "cmd": "'expungeMissingTokenEntries'", "deleteConfirm": true })
+!mmm       set output = output & chatTightBoxButtonRow("❌❌❌ Alle Einträge zu fehlenden Tokens löschen", "", expungeMissingTokensPayload)
+!mmm     end if
 !mmm   end if 
 !mmm
-!mmm   do chat(output & chatTightBoxButtonSubHeader("<< zurück zur Auswahl", "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: default })))
+!mmm   do chat(output & chatTightBoxButtonSubHeader("<< zurück zur Auswahl", "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: "''" })))
 !mmm
 !mmm end function
 !rem 

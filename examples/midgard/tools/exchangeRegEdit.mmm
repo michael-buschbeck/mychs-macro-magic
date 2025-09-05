@@ -1,6 +1,6 @@
 !rem // exchangeRegEdit
 !rem //
-!rem // last revision 2025-04-25
+!rem // last revision 2025-09-05 
 !rem
 !mmm script
 !mmm   set customizable cmd = default
@@ -34,6 +34,11 @@
 !mmm       set searchCriteria = { searchCriteria, (c.key): c.value }
 !mmm     end for
 !mmm     do m3mgdExchangeDelete(dataExchangeID, searchCriteria)
+!mmm     do m3mgdExchangeRegEdit(dataExchangeID)
+!mmm
+!mmm   else if cmd eq "expungeMissingTokenEntries" and deleteConfirm == true
+!mmm
+!mmm     do m3mgdExchangeExpungeMissingTokens(dataExchangeID)
 !mmm     do m3mgdExchangeRegEdit(dataExchangeID)
 !mmm
 !mmm   else if cmd eq "showRegistry"
