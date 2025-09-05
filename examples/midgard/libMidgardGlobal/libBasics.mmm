@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libBasics v1.5.0-pre (2025-09-05 11:25)"
+!mmm   set libVersion = "libBasics v1.5.0-pre (2025-09-05 20:20)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -26,7 +26,7 @@
 !mmm   
 !rem   // Localization of key terms to German
 !rem
-!mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe" }
+!mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe", melee: "Nahkampf", ranged: "Fernkampf", magic: "Zauberei" }
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
