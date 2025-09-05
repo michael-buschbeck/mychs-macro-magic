@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-09-05 09:54)" 
+!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-09-05 10:24)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -2011,11 +2011,11 @@
 !rem //
 !mmm function m3mgdCriticalEffectRollPayload(tokenID, tableName, foeID) 
 !mmm   if tokenID.PC
-!mmm     set payloadSettings = { critRoll: { type: "3dRoll", rollDefinition: "1d100" } }
+!mmm     set payloadSettings = { aa_critRoll: { type: "3dRoll", rollDefinition: "1d100" } }
 !mmm   else 
-!mmm     set payloadSettings = { critRoll: "roll('1d100')" }
+!mmm     set payloadSettings = { aa_critRoll: "roll('1d100')" }
 !mmm   end if
-!mmm   set payloadSettings = { payloadSettings, cmdline1: { type: "command", value: "do m3mgdCriticalEffectPrompt('" & tokenID & "','" & tableName & "',critRoll,'" & foeID & "')" } }
+!mmm   set payloadSettings = { payloadSettings, bb_cmdline1: { type: "command", value: "do m3mgdCriticalEffectPrompt('" & tokenID & "','" & tableName & "',aa_critRoll,'" & foeID & "')" } }
 !mmm   return chatButtonPayload("", payloadSettings, "script")
 !mmm end function
 !rem
