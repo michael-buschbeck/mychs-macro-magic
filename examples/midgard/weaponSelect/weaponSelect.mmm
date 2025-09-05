@@ -1,7 +1,7 @@
 !rem // Midgard combat weapon selector script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "weaponSelect v1.2.1 (2024-08-11)"
+!mmm   set scriptVersion = "weaponSelect v1.3.0 (2025-09-05)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -33,11 +33,9 @@
 !rem   // MAIN: Generate weapon selector menus for each weapon group requested 
 !mmm
 !mmm   set sender = cOwnID.token_name
-!mmm   combine chat
-!mmm     chat: /w "${cOwnID.character_name}"
-!mmm     for weaponGroup in cWeaponGroups
-!mmm       do chat(m3mgdWeaponSelectorChatMenu(cOwnID, weaponGroup))
-!mmm     end for
-!mmm   end combine
-!mmm
+!mmm   set menuOutput = ""
+!mmm   for weaponGroup in cWeaponGroups
+!mmm     set menuOutput = menuOutput & m3mgdWeaponSelectorChatMenu(cOwnID, weaponGroup)
+!mmm   end for
+!mmm   do whisperback(chatTightBoxHeader("Waffenwahl: " & cOwnID.token_name) & menuOutput)
 !mmm end script
