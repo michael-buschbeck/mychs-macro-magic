@@ -1,5 +1,5 @@
 !rem // showXPLog for selected token's character
-!rem // 2025-07-10
+!rem // rev 2025-09-05 (using whisperback instead of chat: /w ...)
 !mmm script
 !mmm
 !mmm   if version < 1.27
@@ -12,28 +12,22 @@
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm   combine chat
-!mmm     if sender.character_name
-!mmm       chat: /w ${sender.character_name} 
-!mmm     else
-!mmm       chat: /w GM
-!mmm     end if
-!mmm     chat: ${"&"}{template:default} {{name=EP-Sitzungsprotokoll für **${selected.name}** (${selected.(m3mgdAttrXP)} EP)}}
-!mmm     set xpLog = m3mgdGetXPLog(selected)
-!mmm     if not xpLog
-!mmm       chat: {{Keine Einträge}}
-!mmm     else 
-!mmm       set lineNo = 1
-!mmm       for entry in xpLog...
-!mmm         if entry.value ne ""
-!rem           set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP für " & entry.key & "")
-!mmm           set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP")
-!mmm         else
-!mmm           set editCtrl = ""
-!mmm         end if 
-!mmm         chat: {{#${lineNo}: ${entry.key}=${entry.value} ${editCtrl} }}
-!mmm         set lineNo = lineNo + 1
-!mmm       end for
-!mmm     end if
-!mmm   end combine
+!mmm   set output = "&" & "{template:default} {{name=EP-Sitzungsprotokoll für **" & selected.name & "** (" & selected.(m3mgdAttrXP) & " EP)}}"
+!mmm   set xpLog = m3mgdGetXPLog(selected)
+!mmm   if not xpLog
+!mmm     set output = output & "{{Keine Einträge}}"
+!mmm   else 
+!mmm     set lineNo = 1
+!mmm     for entry in xpLog...
+!mmm       if entry.value ne ""
+!rem         set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP für " & entry.key & "")
+!mmm         set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP")
+!mmm       else
+!mmm         set editCtrl = ""
+!mmm       end if 
+!mmm       set output = output & "{{#" & lineNo & ": " & entry.key & "=" & entry.value & " " & editCtrl & "}}"
+!mmm       set lineNo = lineNo + 1
+!mmm     end for
+!mmm   end if
+!mmm   do whisperback(output)
 !mmm end script
