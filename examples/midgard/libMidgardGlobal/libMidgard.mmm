@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-06-17)" 
+!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-09-05 09:54)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -2009,7 +2009,7 @@
 !rem //   Chats a prompt to the GM that shows the critical effect selected from tableName by rollResult.
 !rem //   GM can approve the roll to be sent to the affected player, or re-roll.
 !rem //
-!mmm function m3mgdCriticalEffectRollPayload(tokenID, tableName, foeID)
+!mmm function m3mgdCriticalEffectRollPayload(tokenID, tableName, foeID) 
 !mmm   if tokenID.PC
 !mmm     set payloadSettings = { critRoll: { type: "3dRoll", rollDefinition: "1d100" } }
 !mmm   else 
@@ -2510,7 +2510,7 @@
 !mmm   set prvHealth = script.health
 !mmm   set shapeMoji = m3mgdShapeMoji(script.cOwnID)
 !mmm
-!mmm   if script.criticalAttack
+!mmm   if attackData.criticalAttack
 !mmm     set attackResult = highlight(attackData.attackResult, "good", "Kritisch erfolgreicher Angriff von " & attackData.origin.name)
 !mmm   else
 !mmm     set attackResult = highlight(attackData.attackResult, "info", "Angriff von " & attackData.origin.name)
@@ -2552,18 +2552,18 @@
 !mmm       chat: {\{Angriff=${attackResult} }\}
 !mmm     end if
 !mmm
-!mmm     if script.defenseSuccess and iscritical(script.cDefenseRoll) and not script.criticalAttack
+!mmm     if script.defenseSuccess and iscritical(script.cDefenseRoll) and not attackData.criticalAttack
 !mmm       chat: {\{Kritischer Abwehrerfolg=${script.defenseResult} **Leichter Treffer** [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseSuccess", attackData.origin)}${cssTableCellButton}) }\}
 !mmm     else if script.defenseSuccess
 !mmm       chat: {\{Abwehrerfolg=${script.defenseResult} **Leichter Treffer**}\}
-!mmm     else if script.criticalAttack == true and isfumble(script.cDefenseRoll)
+!mmm     else if attackData.criticalAttack == true and isfumble(script.cDefenseRoll)
 !mmm       chat: {\{Kritischer Fehlschlag bei Abwehr eines kritischen Treffers=${script.defenseResult} **Schwerer kritischer Treffer** 
 !mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(attackData.origin, "attackSuccess", script.cOwnID)}${cssTableCellButton})
 !mmm       chat: [🎲](${m3mgdCriticalEffectRollPayload(script.cOwnID, "defenseFailure", attackData.origin)}${cssTableCellButton}) }\}
-!mmm     else if script.criticalAttack == true
+!mmm     else if attackData.criticalAttack == true
 !mmm       chat: {\{Fehlschlag=${script.defenseResult} **Schwerer kritischer Treffer** 
 !mmm       if attackData.attackType ne "magic"
-!mmm         chat: [🎲](${m3mgdCriticalEffectRollPayload(m3mgdExchangeattackData.origin, "attackSuccess", script.cOwnID)}${cssTableCellButton}) }\}
+!mmm         chat: [🎲](${m3mgdCriticalEffectRollPayload(attackData.origin, "attackSuccess", script.cOwnID)}${cssTableCellButton}) }\}
 !mmm       else
 !mmm         chat: }\}
 !mmm       end if
@@ -2581,7 +2581,7 @@
 !mmm       chat: {\{Schaden=**${effHealthLoss}&nbsp;LP&nbsp;/&nbsp;${effEnduranceLoss}&nbsp;AP**}\}
 !mmm     end if
 !mmm
-!mmm     if script.criticalAttack == true and attackData.attackType eq "magic"
+!mmm     if attackData.criticalAttack == true and attackData.attackType eq "magic"
 !mmm       chat: {\{Kritischer Zaubererfolg=
 !mmm       if script.defenseResult < 20
 !mmm         chat: Zauber wirkt **doppelt so stark** (Abwehrergebnis < 20, Schaden wurde verdoppelt)}\}
