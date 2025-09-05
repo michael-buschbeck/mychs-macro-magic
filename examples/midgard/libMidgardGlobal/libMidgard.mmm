@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-09-05 10:24)" 
+!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-09-05 11:32)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -1930,10 +1930,12 @@
 !mmm   set sender = tokenID.token_name
 !mmm
 !mmm   combine chat
-!mmm     if isdefault(context)
-!mmm       chat: ${"&"}{template:default} {\{name=${tokenID.token_name} würfelt ${criticalEffect.label} }\}
+!mmm     if isdefault(foeID)
+!mmm       chat: ${"&"}{template:default} 
+!mmm       chat: {\{name=${tokenID.token_name} würfelt "${criticalEffect.label}" für sich selbst }\}
 !mmm     else 
-!mmm       chat: ${"&"}{template:default} {\{name=${tokenID.token_name} würfelt ${criticalEffect.label} (${context}) }\}
+!mmm       chat: ${"&"}{template:default} 
+!mmm       chat: {\{name=${tokenID.token_name} würfelt "${criticalEffect.label}" für ${foeID.name} (${context & ""}) }\}
 !mmm     end if
 !mmm     chat: {\{Wurf=${highlight(rollResult, "normal", "Wurf mit 1W100")} }\}
 !mmm     if criticalEffect.desc + 0 == 0
@@ -2037,21 +2039,29 @@
 !mmm
 !mmm   combine chat
 !mmm
-!mmm     chat: /w GM ${"&"}{template:default} {\{name=${tokenID.token_name} würfelt ${criticalEffect.label} }\}
+!mmm     chat: /w GM ${"&"}{template:default} 
 !mmm     if isdefault(foeID)
+!mmm       chat: {\{name=${tokenID.token_name} würfelt "${criticalEffect.label}" für sich selbst }\}
 !mmm       chat: {\{Wurf=${rollResult} }\}
 !mmm     else
+!mmm       chat: {\{name=${tokenID.token_name} würfelt "${criticalEffect.label}" für ${foeID.name} }\}
 !mmm       chat: {\{Wurf=${rollResult} &nbsp; **Gegner:** ${highlight(foeID.name,"info")} }\}
 !mmm     end if
 !mmm 
+!mmm     if isdefault(foeID)
+!mmm       set rcpt = tokenID.character_name
+!mmm     else
+!mmm       set rcpt = foeID.character_name
+!mmm     end if 
+!mmm
 !mmm     if criticalEffect.desc + 0 == 0
 !mmm
 !mmm       for var in criticalEffect.userInput...
 !mmm         set approveSettings = { approveSettings, (var.key): { type: "publishToSender", value: "'" & var.value & "'" } }
 !mmm       end for
-!mmm       set approveSettings = { approveSettings, "cmdline1": { type: "command", value: "do m3mgdExecuteCriticalEffect('" & tokenID & "','" & tableName & "'," & rollResult & ",default,'" & foeID & "')" } }
+!mmm       set approveSettings = { approveSettings, "zz_cmdline1": { type: "command", value: "do m3mgdExecuteCriticalEffect('" & tokenID & "','" & tableName & "'," & rollResult & ",default,'" & foeID & "')" } }
 !mmm       set approvePayload = chatButtonPayload("", approveSettings, "script")
-!mmm       chat: {\{ Effekte = ${criticalEffect.desc}${"<"&"br>"}[🖅 **an ${tokenID.character_name}**](${approvePayload}) }\}
+!mmm       chat: {\{ Effekte = ${criticalEffect.desc}${"<"&"br>"}[🖅 **an ${rcpt}**](${approvePayload}) }\}
 !mmm
 !mmm     else 
 !mmm
@@ -2061,7 +2071,7 @@
 !mmm         end for
 !mmm         set approveSettings = { approveSettings, "cmdline1": { type: "command", value: "do m3mgdExecuteCriticalEffect('" & tokenID & "','" & tableName & "'," & rollResult & ",'" & contextDesc.key & "','" & foeID & "')" } }
 !mmm         set approvePayload = chatButtonPayload("", approveSettings, "script")
-!mmm         chat: {\{ ${contextDesc.key} = ${contextDesc.value}${"<"&"br>"}[🖅 **an ${tokenID.character_name}**](${approvePayload}) }\}
+!mmm         chat: {\{ ${contextDesc.key} = ${contextDesc.value}${"<"&"br>"}[🖅 **an ${rcpt}**](${approvePayload}) }\}
 !mmm       end for
 !mmm
 !mmm     end if
