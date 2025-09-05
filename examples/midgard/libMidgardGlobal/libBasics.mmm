@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libBasics v1.5.0-pre (2025-09-05)"
+!mmm   set libVersion = "libBasics v1.5.0-pre (2025-09-05 10:17)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -253,7 +253,7 @@
 !mmm       end if
 !mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm end if") & "&#13;"
 !mmm     else if setting.value.type eq "command"
-!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm " & setting.value) & "&#13;"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm " & setting.value.value) & "&#13;"
 !mmm     else if setting.value.type eq "publishToSender"
 !mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value) & "&#13;"
 !mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm publish to sender: " & setting.key) & "&#13;"
