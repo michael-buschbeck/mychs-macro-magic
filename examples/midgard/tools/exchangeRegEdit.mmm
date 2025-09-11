@@ -56,7 +56,7 @@
 !mmm     for regOption in m3mgdExchangeRegistries...
 !mmm       set chatOutput = chatOutput & chatTightBoxButtonRow(regOption.key, "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: "'showRegistry'", registry: "'" & regOption.key & "'" } ))
 !mmm     end for
-!mmm     do chat(chatOutput)
+!mmm     do whisperback(chatOutput)
 !mmm
 !mmm   end if
 !mmm

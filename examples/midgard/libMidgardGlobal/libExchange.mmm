@@ -291,7 +291,7 @@
 !mmm     end if
 !mmm   end if 
 !mmm
-!mmm   do chat(output & chatTightBoxButtonSubHeader("<< zurück zur Auswahl", "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: "''" })))
+!mmm   do whisperback(output & chatTightBoxButtonSubHeader("<< zurück zur Auswahl", "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: "''" })))
 !mmm
 !mmm end function
 !rem 
