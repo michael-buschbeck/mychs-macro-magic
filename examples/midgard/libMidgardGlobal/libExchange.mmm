@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libExchange()
 !mmm   
-!mmm   set libVersion = "libExchange v1.1.1 (2025-09-05)"
+!mmm   set libVersion = "libExchange v1.1.2 (2025-09-11)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Define character sheet to use as central storage
@@ -284,8 +284,10 @@
 !mmm   else
 !mmm     set output = output & chatTightBoxRow(entryCount & " Einträge")
 !mmm     if privileged and missingTokens
-!mmm       set expungeMissingTokensPayload = chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { "cmd": "'expungeMissingTokenEntries'", "deleteConfirm": true })
+!mmm       set expungeMissingTokensPayload = chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { "registry": registryID, "cmd": "'expungeMissingTokenEntries'", "deleteConfirm": true })
 !mmm       set output = output & chatTightBoxButtonRow("❌❌❌ Alle Einträge zu fehlenden Tokens löschen", "", expungeMissingTokensPayload)
+!mmm     else if privileged
+!mmm       set output = output & chatTightBoxButtonRow("❌❌❌ Alle Einträge löschen", "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { "registry": registryID, "cmd": "'flushRegistry'", "deleteConfirm": true }))
 !mmm     end if
 !mmm   end if 
 !mmm
