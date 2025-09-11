@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-09-11 15:00)" 
+!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-09-11 23:00)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -1505,17 +1505,17 @@
 !mmm     do whisperback("m3mgdDefenseDataEntryPayload() called without a valid token ID, defaulting to script.cOwnID failed.")
 !mmm     return false
 !mmm   end if
-!mmm   set payloadSettings = { attackType: "'?" & "{Art des Angriffs|Nahkampf,melee|Fernkampf,ranged|Zauberei,magic}" & "'" }
-!mmm   set payloadSettings = { payloadSettings, attackerID: "'@" & "{target|Wer greift an?|token_id}'" }
-!mmm   set payloadSettings = { payloadSettings, targetID: "'@" & "{target|Wer wird angegriffen (Ziel)?|token_id}'" }
-!mmm   set payloadSettings = { payloadSettings, attackResult: "?" & "{Angriffswert|0}" }
-!mmm   set payloadSettings = { payloadSettings, criticalAttack: "?" & "{Kritischer Erfolg beim Angriff|Nein,false|Ja,true}" }
-!mmm   set payloadSettings = { payloadSettings, attackDamage: "?" & "{Schaden laut Angreifer|0}" }
-!mmm   set payloadSettings = { payloadSettings, attackDamageRoll: "?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}" }
-!mmm   set payloadSettings = { payloadSettings, weaponType: "'?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}'" }
-!mmm   set payloadSettings = { payloadSettings, ifthen1: { type: "conditional", condition: "attackResult < 20", then: "do whisperback('Abbruch: Angriff mit **' & attackResult & '** war nicht erfolgreich, keine Abwehr nötig.')", "exit script" } }
-!mmm   set payloadSettings = { payloadSettings, attackData: "{ origin: attackerID, target: targetID, action: 'combatAttack', attackType: attackType, attackResult: attackResult, criticalAttack: criticalAttack, damageResult: attackDamage, damageRoll: attackDamageRoll, weaponType: weaponType }" }
-!mmm   set payloadSettings = { payloadSettings, ifthen2: { type: "conditional", condition: "not m3mgdStoreAttack(attackData)", then: "do whisperback('Fehlschlag: Angriffsdaten konnten nicht gespeichert werden - ' & attackData)" } }
+!mmm   set payloadSettings = { aa_attackType: "'?" & "{Art des Angriffs|Nahkampf,melee|Fernkampf,ranged|Zauberei,magic}" & "'" }
+!mmm   set payloadSettings = { payloadSettings, ab_attackerID: "'@" & "{target|Wer greift an?|token_id}'" }
+!mmm   set payloadSettings = { payloadSettings, ac_targetID: "'@" & "{target|Wer wird angegriffen (Ziel)?|token_id}'" }
+!mmm   set payloadSettings = { payloadSettings, ad_attackResult: "?" & "{Angriffswert|0}" }
+!mmm   set payloadSettings = { payloadSettings, ae_criticalAttack: "?" & "{Kritischer Erfolg beim Angriff|Nein,false|Ja,true}" }
+!mmm   set payloadSettings = { payloadSettings, af_attackDamage: "?" & "{Schaden laut Angreifer|0}" }
+!mmm   set payloadSettings = { payloadSettings, ag_attackDamageRoll: "?" & "{Schadenswurf (Ergebnis von 1W6+1 ohne Boni) laut Angreifer|0}" }
+!mmm   set payloadSettings = { payloadSettings, ah_weaponType: "'?" & "{Waffentyp|" & stringify(m3mgdValidAttackWeaponTypes, "", "|") & "}'" }
+!mmm   set payloadSettings = { payloadSettings, ai_ifthen1: { type: "conditional", condition: "attackResult < 20", then: "do whisperback('Abbruch: Angriff mit **' & attackResult & '** war nicht erfolgreich, keine Abwehr nötig.')", "exit script" } }
+!mmm   set payloadSettings = { payloadSettings, aj_attackData: "{ origin: ab_attackerID, target: ac_targetID, action: 'combatAttack', attackType: aa_attackType, attackResult: ad_attackResult, criticalAttack: ae_criticalAttack, damageResult: af_attackDamage, damageRoll: ag_attackDamageRoll, weaponType: ah_weaponType }" }
+!mmm   set payloadSettings = { payloadSettings, ak_ifthen2: { type: "conditional", condition: "not m3mgdStoreAttack(aj_attackData)", then: "do whisperback('Fehlschlag: Angriffsdaten konnten nicht gespeichert werden - ' & aj_attackData)" } }
 !mmm   return chatButtonPayload("", payloadSettings, "script") & m3mgdDefenseInitPayload(tokenID) & m3mgdScriptCommands.defense
 !mmm end function
 !rem
