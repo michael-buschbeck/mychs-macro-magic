@@ -1,4 +1,4 @@
-!rem // managePersistentEffects v1.0-pre 2024-08-11 phr
+!rem // managePersistentEffects v1.0 2024-08-11 phr
 !rem //
 !rem // Lists, displays details, removes or restores either all or one particular active persistent effect identified by [tokenID] and [effectIndex].
 !rem 
