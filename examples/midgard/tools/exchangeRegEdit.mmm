@@ -1,6 +1,6 @@
 !rem // exchangeRegEdit
 !rem //
-!rem // last revision 2025-09-11 
+!rem // last revision 2025-10-01
 !rem
 !mmm script
 !mmm   set customizable cmd = default
@@ -54,7 +54,11 @@
 !mmm
 !mmm     set chatOutput = chatTightBoxHeader("Datenaustausch: Auswahl")
 !mmm     for regOption in m3mgdExchangeRegistries...
-!mmm       set chatOutput = chatOutput & chatTightBoxButtonRow(regOption.key, "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: "'showRegistry'", registry: "'" & regOption.key & "'" } ))
+!mmm       if regOption.key eq "activePersistentEffects"
+!mmm         set chatOutput = chatOutput & chatTightBoxButtonRow(regOption.key, "", chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, { cmd: 0 } ))
+!mmm       else
+!mmm         set chatOutput = chatOutput & chatTightBoxButtonRow(regOption.key, "", chatButtonPayload(m3mgdScriptCommands.exchangeRegEdit, { cmd: "'showRegistry'", registry: "'" & regOption.key & "'" } ))
+!mmm       end if
 !mmm     end for
 !mmm     do whisperback(chatOutput)
 !mmm

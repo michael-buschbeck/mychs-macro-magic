@@ -246,7 +246,7 @@
 !mmm
 !mmm end function
 !rem 
-!rem // m3mgdExchangeRegEdit(registryID, searchCriteria)
+!rem // m3mgdExchangeRegEdit(registryID, [searchCriteria])
 !rem // 
 !rem //   Shows entries from a central data registry, identified by the searchCriteria provided (all at the same time/AND), and offers editing and removal.
 !rem // 
