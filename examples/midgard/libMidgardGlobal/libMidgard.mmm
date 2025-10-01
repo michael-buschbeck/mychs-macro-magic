@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.0-WIP (2025-09-11 23:00)" 
+!mmm   set libVersion = "libMidgard v1.8.0 (2025-10-01)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -534,7 +534,7 @@
 !rem //   Returns a chat button payload to remove tokenID's active persistent effect identified by effectIndex.
 !rem //
 !mmm function m3mgdRemovePersistentEffectPayload(tokenID, effectIndex)
-!mmm   return chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, { "cmd": "'removeEffect'", "tokenID": "'" & tokenID & "'", "effectIndex": effectIndex, "deleteConfirm": "?" & "{Für " & tokenID.token_name & " wirklich Effekt Nr." & (effectIndex + 1) & " löschen?|Nein,false|Ja,true}" } )
+!mmm   return chatButtonPayload(m3mgdScriptCommands.managePersistentEffects, { "cmd": "'removeEffect'", "tokenID": "'" & tokenID & "'", "effectIndex": effectIndex, "deleteConfirm": "?" & "{Für " & tokenLabel(tokenID) & " wirklich Effekt Nr." & (effectIndex + 1) & " löschen?|Nein,false|Ja,true}" } )
 !mmm end function
 !rem
 !rem // m3mgdShowPersistentEffectsPayload(tokenID, effectIndex)
