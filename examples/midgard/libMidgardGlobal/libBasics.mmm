@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libBasics v1.5.0-pre (2025-04-26)"
+!mmm   set libVersion = "libBasics v1.5.1 (2025-10-01)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -26,7 +26,7 @@
 !mmm   
 !rem   // Localization of key terms to German
 !rem
-!mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe" }
+!mmm   set DE = { round: "Runde", rounds: "Runden", defense: "Abwehr", defenses: "Abwehren", attack: "Angriff", attacks: "Angriffe", melee: "Nahkampf", ranged: "Fernkampf", magic: "Zauberei" }
 !mmm
 !rem   // Publish game-global functions defined below
 !rem
@@ -34,6 +34,7 @@
 !mmm   publish to game: isfumble, count, isChar, join, sign, stringify, sum, repeat, rollResult, rollMax, zeroOrPositive
 !mmm   publish to game: chatButtonPayload, chatButton, chatButtonTable
 !mmm   publish to game: chatTightBoxHeader, chatTightBoxSubHeader, chatTightBoxRow, chatTightBoxButtonSubHeader, chatTightBoxButtonRow, chatTightBoxFlowButton, chatTightBoxMultiButton
+!mmm   publish to game: tokenLabel
 !mmm
 !mmm   chat: ${libVersion} loaded.
 !mmm   
@@ -253,9 +254,9 @@
 !mmm       end if
 !mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm end if") & "&#13;"
 !mmm     else if setting.value.type eq "command"
-!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm " & setting.value) & "&#13;"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm " & setting.value.value) & "&#13;"
 !mmm     else if setting.value.type eq "publishToSender"
-!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value) & "&#13;"
+!mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value.value) & "&#13;"
 !mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm publish to sender: " & setting.key) & "&#13;"
 !mmm     else
 !mmm       set chatButtonPayloadCode = chatButtonPayloadCode & literal("!mmm set " & setting.key & "=" & setting.value) & "&#13;"
@@ -374,7 +375,7 @@
 !mmm   return ' [' & label & '](' & payload & '\" ' & tooltip & ' style=\"' & style & ')'
 !mmm end function
 !rem
-!rem // chatTightBoxFlowButton(label, tooltip, payload, bgColor, textColor)
+!rem // chatTightBoxFlowButton(label, tooltip, payload, bgColor, textColor) 
 !rem //   WARNING: payload MUST NOT CONTAIN any colons (":"), neither literally nor escaped ("\:") or run through MMM's literal() function.
 !rem //
 !mmm function chatTightBoxFlowButton(label, tooltip, payload, bgColor, textColor)
@@ -418,4 +419,17 @@
 !mmm   end for
 !mmm   set code = code & gap
 !mmm   return code
+!mmm end function
+!rem
+!rem // tokenLabel(tokenID)
+!rem //
+!rem //   Returns a user-readable label for the token identified by tokenID, which is usually tokenID.token_name,
+!rem //   If there are problems accessing the token, alternative information is returned.
+!rem //
+!mmm function tokenLabel(tokenID)
+!mmm   if isunknown(tokenID.token_name) or isdenied(tokenID.token_name)
+!mmm     return("ungültiger oder gelöschter Token, ID: " & tokenID)
+!mmm   else
+!mmm     return tokenID.token_name
+!mmm   end if
 !mmm end function

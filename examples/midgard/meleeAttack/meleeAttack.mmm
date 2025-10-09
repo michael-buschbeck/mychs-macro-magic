@@ -200,7 +200,7 @@
 !mmm   end if
 !mmm   set modifiers = modifiers + autoModifiers + semiAutoModifiers + cManualModifiers
 !rem
-!rem   // Run & format rolls
+!rem   // Run & format rolls 
 !rem
 !mmm   set attackResult = rollResult(cAttackRoll, effAttack, modifiers)
 !mmm   if modifierLog eq ""

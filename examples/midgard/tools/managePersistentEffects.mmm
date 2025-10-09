@@ -1,4 +1,4 @@
-!rem // managePersistentEffects v1.0-pre 2024-08-11 phr
+!rem // managePersistentEffects v1.0 2024-08-11 phr
 !rem //
 !rem // Lists, displays details, removes or restores either all or one particular active persistent effect identified by [tokenID] and [effectIndex].
 !rem 
@@ -93,7 +93,7 @@
 !mmm     for affectedTokenRecord in cleanRegistry...
 !rem       // If a particular token is chosen, only produce output for this token alone. Otherwise, produce output for every token with an active persistent effect.
 !mmm       if ((isdefault(tokenID) and not selected) or (not isdefault(tokenID) and affectedTokenRecord.key eq tokenID) or (selected and affectedTokenRecord.key eq selected)) and affectedTokenRecord.value
-!mmm         set output = output & chatTightBoxButtonSubHeader(affectedTokenRecord.key.token_name & " 🛈", "Details zu allen aktuellen Effekten", m3mgdShowPersistentEffectsPayload(affectedTokenRecord.key))
+!mmm         set output = output & chatTightBoxButtonSubHeader(tokenLabel(affectedTokenRecord.key) & " 🛈", "Details zu allen aktuellen Effekten", m3mgdShowPersistentEffectsPayload(affectedTokenRecord.key))
 !mmm         set activeCounter = 0
 !mmm         for statusRule in m3mgdGetActivePersistentEffects(affectedTokenRecord.key)
 !mmm           set activeCounter = activeCounter + 1

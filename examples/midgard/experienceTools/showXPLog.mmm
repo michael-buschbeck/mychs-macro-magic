@@ -1,39 +1,33 @@
 !rem // showXPLog for selected token's character
-!rem // 2024-02-14
+!rem // rev 2025-09-05 (using whisperback instead of chat: /w ...)
 !mmm script
 !mmm
-!mmm   if version < 1.27 or not m3mgdExchange or not m3mgdExchangeAttrList
-!mmm     do whisperback("MMM version too low or game-global m3mgdExchange variables missing.")
+!mmm   if version < 1.27
+!mmm     do whisperback("MMM version too low.")
 !mmm     exit script
 !mmm   end if
-!mmm
+!mmm 
 !mmm   if not selected or isunknown(selected.(m3mgdAttrXP)) or isunknown(selected.(m3mgdAttrXPLog))
 !mmm     do whisperback("showXPLog: no token selected or character does not have attributes " & m3mgdAttrXP & " and " & m3mgdAttrXPLog & " -- aborting.")
 !mmm     exit script
 !mmm   end if
 !mmm
-!mmm   combine chat
-!mmm     if sender.character_name
-!mmm       chat: /w ${sender.character_name} 
-!mmm     else
-!mmm       chat: /w GM
-!mmm     end if
-!mmm     chat: ${"&"}{template:default} {{name=EP-Sitzungsprotokoll für **${selected.name}** (${selected.(m3mgdAttrXP)} EP)}}
-!mmm     set xpLog = m3mgdGetXPLog(selected)
-!mmm     if not xpLog
-!mmm       chat: {{Keine Einträge}}
-!mmm     else 
-!mmm       set lineNo = 1
-!mmm       for entry in xpLog...
-!mmm         if entry.value ne ""
-!rem           set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP für " & entry.key & "")
-!mmm           set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP")
-!mmm         else
-!mmm           set editCtrl = ""
-!mmm         end if 
-!mmm         chat: {{#${lineNo}: ${entry.key}=${entry.value} ${editCtrl} }}
-!mmm         set lineNo = lineNo + 1
-!mmm       end for
-!mmm     end if
-!mmm   end combine
+!mmm   set output = "&" & "{template:default} {{name=EP-Sitzungsprotokoll für **" & selected.name & "** (" & selected.(m3mgdAttrXP) & " EP)}}"
+!mmm   set xpLog = m3mgdGetXPLog(selected)
+!mmm   if not xpLog
+!mmm     set output = output & "{{Keine Einträge}}"
+!mmm   else 
+!mmm     set lineNo = 1
+!mmm     for entry in xpLog...
+!mmm       if entry.value ne ""
+!rem         set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP für " & entry.key & "")
+!mmm         set editCtrl = m3mgdXPEditButton(selected.token_id, -1 * entry.value, "KORREKTUR, doch keine EP")
+!mmm       else
+!mmm         set editCtrl = ""
+!mmm       end if 
+!mmm       set output = output & "{{#" & lineNo & ": " & entry.key & "=" & entry.value & " " & editCtrl & "}}"
+!mmm       set lineNo = lineNo + 1
+!mmm     end for
+!mmm   end if
+!mmm   do whisperback(output)
 !mmm end script

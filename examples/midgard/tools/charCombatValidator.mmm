@@ -1,5 +1,6 @@
 !mmm script
 !mmm   
+!rem   // revised 2025-09-05 to recognize weapon entries without names
 !rem
 !mmm function m3mgdCreateDropDownWeaponSelectorAttr(characterID, weaponsGroup)  
 !mmm   
@@ -84,7 +85,7 @@
 !mmm       set weaponProperties = unknown
 !mmm       set rangedWeaponAmmoLog = ""
 !mmm       
-!mmm       if charID.(findattr(charID, "Angriff", "Waffe", weaponLabel, "FkWaffe")) == 1
+!mmm       if weaponLabel ne "" and charID.(findattr(charID, "Angriff", "Waffe", weaponLabel, "FkWaffe")) == 1
 !mmm         set weaponProperties = m3mgdRangedWeaponProperties(weaponLabel)
 !mmm         if not isunknown(weaponProperties) and weaponProperties[4]
 !rem //and count(weaponProperties) == 5
@@ -99,13 +100,15 @@
 !mmm           set rangedWeaponAmmoLog = "Munition: **kein Standard-Attribut bekannt.**"
 !mmm           set weaponProperties = unknown
 !mmm         end if
-!mmm       else 
+!mmm       else if weaponLabel ne ""
 !mmm         set weaponProperties = m3mgdMeleeWeaponType(weaponLabel)
 !mmm       end if
 !mmm     
 !mmm       if not isunknown(weaponProperties)
 !mmm         chat: *${weaponLabel}* als Standardwaffe erkannt. ${rangedWeaponAmmoLog}
-!mmm       else 
+!mmm       else if weaponLabel eq ""
+!mmm         chat: **Eine Waffe hat keine Bezeichnung (könnte als "Name" im Kampfblatt stehen). Bitte Daten ergänzen oder Eintrag löschen!**
+!mmm       else
 !mmm         set configCallAttr = "m3mgd_configCall_" & weaponLabel
 !mmm         if isunknown(charID.(configCallAttr))
 !mmm           set payload = "!mmm script&#13;"

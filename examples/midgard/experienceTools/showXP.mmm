@@ -1,21 +1,15 @@
 !rem // showXP
-!rem // 2022-03-19
+!rem // revised 2025-09-05
 !mmm script
-!mmm   combine chat
-!mmm     if sender.character_name
-!mmm       chat: /w ${sender.character_name} 
-!mmm     else
-!mmm       chat: /w GM
+!mmm   set output = "&" & "{template:default}" & "{{name=EP-Übersicht}}"
+!mmm   for char in m3mgdPlayerCharacters
+!mmm     if not isdenied(char.character_id)
+!mmm       set output = output & "{{" & char.name & "=" & char.Erfahrungsschatz & "}}"
 !mmm     end if
-!mmm     chat: ${"&"}{template:default} {{name=EP-Übersicht}}
-!mmm     for char in m3mgdPlayerCharacters
-!mmm       if not isdenied(char.character_id)
-!mmm         chat: {{${char.name}=${char.Erfahrungsschatz}}}
-!mmm       end if
-!mmm     end for
-!mmm     chat: {{ EP-Protokoll=[📃](~MacroSheet|showXPLog) (Einzelnen Token auswählen!) }}
-!mmm     if privileged
-!mmm       chat: {{ EP löschen=[**LÖSCHEN**](~MacroSheet|flushXP) }}
-!mmm     end if
-!mmm   end combine
+!mmm   end for
+!mmm   set output = output & "{{ EP-Protokoll=[📃](~MacroSheet|showXPLog) (Einzelnen Token auswählen!) }}"
+!mmm   if privileged
+!mmm     set output = output & "{{ EP löschen=[**LÖSCHEN**](~MacroSheet|flushXP) }}"
+!mmm   end if
+!mmm   do whisperback(output)
 !mmm end script

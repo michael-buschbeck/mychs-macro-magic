@@ -1,0 +1,33 @@
+!rem // exchangeRetrieveAttacks
+!rem //
+!rem // initial version 2025-09-05 
+!rem
+!mmm script
+!mmm   set customizable tokenID = selected.token_id
+!mmm   set customizable cmd = default
+!mmm   set customizable searchByOrigin = default
+!mmm   set customizable searchByTarget = default
+!mmm   set customizable searchByAttackResult = default
+!mmm   set customizable searchByMagicSpell = default
+!mmm   set customizable searchByDamageResult = default
+!mmm   set dataExchangeID = m3mgdExchangeRegistries.("combatData")
+!mmm
+!mmm   if cmd eq "defensePrompt" and not isdefault(searchByOrigin) and not isdefault(searchByTarget)
+!mmm
+!mmm   do m3mgdChatDefensePrompt({origin:searchByOrigin, target:searchByTarget})
+!mmm
+!mmm   else
+!mmm     set chatOutput = chatTightBoxHeader("Angriffe von oder gegen " & tokenID.token_name)
+!mmm     set attackList = m3mgdExchangeGetData(dataExchangeID, { action: "combatAttack", origin: tokenID.token_id }), m3mgdExchangeGetData(dataExchangeID, { action: "combatAttack", target: tokenID.token_id })
+!mmm     for attackEntry in attackList
+!mmm       set label = "🛡️ " & attackEntry.origin.token_name & " ⚔️ " & attackEntry.target.token_name & " (" & DE.(attackEntry.attackType) & ", Angriffswert " & attackEntry.attackResult & ", Schaden " & attackEntry.damageResult & ")"
+!mmm       set handoverData = { "cmd": "'defensePrompt'", searchByOrigin: "'" & attackEntry.origin & "'", searchByTarget: "'" & attackEntry.target & "'", searchByAttackResult: attackEntry.attackResult, searchByDamageResult: attackEntry.damageResult }
+!mmm       if not isdefault(searchByMagicSpell) and attackEntry.attackType eq "magic"
+!mmm         set handoverData = { handoverData, searchByMagicSpell: attackEntry.magicSpell }
+!mmm       end if
+!mmm       set chatOutput = chatOutput & chatTightBoxButtonRow(label, "Abwehrbutton an " & attackEntry.target.token_name & " schicken", chatButtonPayload("&#x25;{TestStuff|exchangeRetrieveAttacks}", handoverData))
+!mmm     end for
+!mmm     do whisperback(chatOutput)
+!mmm   end if
+!mmm
+!mmm end script
