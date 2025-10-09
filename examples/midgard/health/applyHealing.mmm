@@ -1,7 +1,7 @@
 !rem // applyHealing applies both healing and energy boosts (or either)
 !rem //
 !mmm script
-!mmm   set scriptVersion = "applyHealing 2.1.0 (2025-04-25)"
+!mmm   set scriptVersion = "applyHealing 2.1.1 (2025-10-09)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -27,7 +27,7 @@
 !mmm   set customizable maxHealthGain = m3mgdExchangeGetData(m3mgdExchangeRegistries.nonCombat, { action: "healthBoost", target: cOwnID }).value
 !mmm   
 !rem   // If neither is present, spill out customize block for manual entry & rerun the script
-!mmm   if not (maxHealthGain > 0 or maxEnduranceGain > 0)
+!mmm   if maxHealthGain == undef and maxEnduranceGain == undef
 !mmm   
 !mmm     set payload = "!mmm customize&#13;"
 !mmm     set payload = payload & literal("!mmm set maxHealthGain=?" & "{Gewonnene Lebenspunkte (LP)|0}") & "&#13;"
