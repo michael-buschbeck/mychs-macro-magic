@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.2.1 (2025-05-16)"
+!mmm   set scriptVersion = "meleeAttack v2.2.2 (2025-10-10)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -311,6 +311,7 @@
 !mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Nahkampfangriff mit $[weaponLabel]{outputWeaponLabel}
 !mmm     do chat(m3mgdRerunButton(cOwnID, "melee", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll}))
+!mmm     do chat(m3mgdRerollButton(cOwnID, "melee", cWeaponLabel, { "cAttackRoll": "1d20", "cDamageRoll": weaponDamageExpr }, {"cOwnID": cOwnID, "cTargetID": cTargetID, "cSemiManualModifiers": cSemiManualModifiers, "cManualModifiers": cManualModifiers}) )
 !mmm     chat:      }}
 !mmm     chat:      {{Ziel=**$[targetName]{foeName}** ${m3mgdShapeMoji(cTargetID)}}}
 !mmm     if criticalAttack
