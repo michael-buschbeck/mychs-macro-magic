@@ -2676,18 +2676,16 @@
 !mmm       set approvePayload = approvePayload & literal("!mmm do m3mgdModifyAttackDamage('" & attackData.origin & "', '" & attackData.target & "', '" & attackData.attackType & "', " & attackData.attackResult & ", default, attackDamage)") & "&#13;"
 !mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '/w \"" & attackData.target.character_name & "\" ' & m3mgdSpellSelectorChatMenu(\"" & attackData.target & "\", \"defense\", \"" & attackData.spellType & "\", \"" & attackData.origin & "\", attackDamage))") & "&#13;"
 !mmm       set modifyDamagePayload = modifyDamagePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '/w \"" & attackData.target.character_name & "\" ' & m3mgdSpellSelectorChatMenu(\"" & attackData.target & "\", \"defense\", \"" & attackData.spellType & "\", \"" & attackData.origin & "\", attackDamage))") & "&#13;"
-!mmm       set rerollPayload = _m3mgdSpellButtonPayload(attackData.origin, attackData.magicSpell, default, { cTargetID: attackData.target, cManualModifiers: script.cManualModifiers })
 !mmm     else 
 !mmm       set approvePayload = approvePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '/w \"" & attackData.target.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & attackData.target & "\", \"defense\", \"" & attackData.weaponType & "\"))") & "&#13;"
 !mmm       set modifyDamagePayload = modifyDamagePayload & literal("!mmm do chat('" & attackData.origin.token_name & "', '/w \"" & attackData.target.character_name & "\" ' & m3mgdWeaponSelectorChatMenu(\"" & attackData.target & "\", \"defense\", \"" & attackData.weaponType & "\"))") & "&#13;"
-!mmm       set rerollPayload = _m3mgdWeaponButtonPayload(attackData.origin, attackData.attackType, script.cWeaponLabel, default, { cTargetID: attackData.target, cSemiManualModifiers: script.cSemiManualModifiers, cManualModifiers: script.cManualModifiers })
 !mmm     end if
 !mmm
 !mmm     set approvePayload = approvePayload & literal("!mmm do m3mgdBatchCombatUpdate('" & attackData.origin & "', '" & attackData.target & "')") & "&#13;"
 !mmm     set approvePayload = approvePayload & "!mmm end script&#13;"
 !mmm     set modifyDamagePayload = modifyDamagePayload & "!mmm end script&#13;"
 !mmm
-!mmm     chat: /w GM [✅ & 🖅 **an ${attackData.target.character_name}**](${approvePayload})&nbsp;&nbsp;[💥 Schaden ändern](${modifyDamagePayload})&nbsp;&nbsp;[🎲🗘 nochmal würfeln](${rerollPayload})
+!mmm     chat: /w GM [✅ & 🖅 **an ${attackData.target.character_name}**](${approvePayload})&nbsp;&nbsp;[💥 Schaden ändern](${modifyDamagePayload})
 !mmm
 !mmm     return false
 !mmm
