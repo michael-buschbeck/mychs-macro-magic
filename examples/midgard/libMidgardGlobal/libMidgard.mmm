@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.0 (2025-10-01)" 
+!mmm   set libVersion = "libMidgard v1.8.1 (2025-10-10)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -92,7 +92,7 @@
 !mmm   publish to game: m3mgdExchangeStoreHealthBoost, m3mgdExchangeStoreEnduranceBoost
 !mmm   publish to game: m3mgdSpellList, m3mgdListDefenseWeapons, m3mgdListMeleeAttackWeapons, m3mgdListRangedAttackWeapons
 !mmm   publish to game: m3mgdDefenseWeaponType, m3mgdMeleeWeaponType, m3mgdRangedWeaponProperties
-!mmm   publish to game: _m3mgdSpellButtonPayload, _m3mgdWeaponButtonPayload, m3mgdSpellSelectorChatMenu, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton
+!mmm   publish to game: _m3mgdSpellButtonPayload, _m3mgdWeaponButtonPayload, m3mgdSpellSelectorChatMenu, m3mgdWeaponSelectorChatMenu, m3mgdRerunButton, m3mgdRerollButton
 !mmm   publish to game: m3mgdGetCriticalEffect, m3mgdStorePersistentEffect, m3mgdExecuteCriticalEffect
 !mmm   publish to game: m3mgdCriticalEffectPrompt, m3mgdCriticalEffectRollPayload, m3mgdPersistentEffectLabels, m3mgdUpdatePersistentEffectsCounters
 !mmm   publish to game: m3mgdProcessCombatPP, m3mgdGetXPLog, _m3mgdLogXP, m3mgdEditXP, m3mgdProcessAttackXP, m3mgdProcessSkillXP, m3mgdProcessSpellXP, m3mgdXPEditButton
@@ -1808,9 +1808,7 @@
 !mmm   for weaponLabelAttr in weaponsList
 !mmm     
 !mmm     set weaponLabel = tokenID.(weaponLabelAttr)
-!mmm if isdenied(weaponLabel)
-!mmm debug do tokenID, weaponLabel, "denied for some reason: ", getreason(weaponLabel), privileged, sender
-!mmm end if
+!mmm
 !mmm     if weaponsGroup eq "defense"
 !mmm       
 !rem       // Check if weaponLabel may not help against attackWeaponType 
@@ -1837,8 +1835,7 @@
 !mmm
 !mmm     if weaponUsable 
 !mmm
-!mmm       set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollSpecs)
-!mmm       set chatMenu = chatMenu & chatTightBoxFlowButton(weaponLabel, "", payload)
+!mmm       set chatMenu = chatMenu & chatTightBoxFlowButton(weaponLabel, "", _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollSpecs))
 !mmm       set itemCounter = itemCounter + 1
 !mmm
 !mmm     end if
@@ -2507,7 +2504,18 @@
 !mmm   else 
 !mmm     set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData)
 !mmm   end if
-!mmm   return " [🗘](" & payload & cssTableHeaderButton & ") "
+!mmm   return " [🗘](" & payload & "\" title=\"Führt die Aktion MIT DENSELBEN WÜRFEN neu aus, Gegner und Modifikatoren können neu gewählt werden" & cssTableHeaderButton & ") "
+!mmm end function
+!rem
+!rem // m3mgdRerollButton(tokenID, weaponsGroup, weaponLabel, rollData, rollConfig)
+!rem //
+!mmm function m3mgdRerollButton(tokenID, weaponsGroup, weaponLabel, rollData, rollConfig)
+!mmm   if weaponsGroup eq "magicAttack"
+!mmm     set payload = _m3mgdSpellButtonPayload(tokenID, weaponLabel, rollData)
+!mmm   else 
+!mmm     set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData, rollConfig)
+!mmm   end if
+!mmm   return chatButton("🎲", payload, cssTableHeaderButton, "Würfelt die Aktion neu aus, Gegner und Modifikatoren BLEIBEN GLEICH!")
 !mmm end function
 !rem
 !rem // m3mgdDefenseDataTable(attackData)
