@@ -2511,7 +2511,7 @@
 !rem //
 !mmm function m3mgdRerollButton(tokenID, weaponsGroup, weaponLabel, rollData, rollConfig)
 !mmm   if weaponsGroup eq "magicAttack"
-!mmm     set payload = _m3mgdSpellButtonPayload(tokenID, weaponLabel, rollData)
+!mmm     set payload = _m3mgdSpellButtonPayload(tokenID, weaponLabel, rollData, rollConfig)
 !mmm   else 
 !mmm     set payload = _m3mgdWeaponButtonPayload(tokenID, weaponsGroup, weaponLabel, rollData, rollConfig)
 !mmm   end if
