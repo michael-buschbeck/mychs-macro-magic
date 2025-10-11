@@ -1,7 +1,7 @@
 !rem // Midgard Magic Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "magicAttack 1.1.0 (2025-04-17)"
+!mmm   set scriptVersion = "magicAttack 1.1.1 (2025-10-10)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -173,6 +173,7 @@
 !mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Zauberangriff mit ${cAttackSpell}
 !mmm     do chat(m3mgdRerunButton(cOwnID, "magicAttack", cAttackSpell, {"cAttackRoll": cAttackRoll}))
+!mmm     do chat(m3mgdRerollButton(cOwnID, "magicAttack", cAttackSpell, { "cAttackRoll": "1d20" }, {"cOwnID": cOwnID, "cTargetID": cTargetID, "cManualModifiers": cManualModifiers}) )
 !mmm     chat:      }} 
 !mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(cTargetID)}}}
 !mmm     if iscritical(cAttackRoll) 

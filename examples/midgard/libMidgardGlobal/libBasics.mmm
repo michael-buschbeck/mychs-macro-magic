@@ -6,7 +6,7 @@
 !rem //
 !mmm function _libBasics()
 !mmm   
-!mmm   set libVersion = "libBasics v1.5.1 (2025-10-01)"
+!mmm   set libVersion = "libBasics v1.5.2 (2025-10-10)"
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // Brute-force build a dictionary of maximum roll results
@@ -266,15 +266,21 @@
 !mmm   return chatButtonPayloadCode
 !mmm end function
 !rem
-!rem // chatButton(label, payload, style)
+!rem // chatButton(label, payload, style, [tooltip])
 !rem //
-!rem //   Returns chat code for a button with the label and payload provided. If the optional style is given, it is applied.
+!rem //   Returns chat code for a button with the label and payload provided. If the optional style is given, it is applied. 
+!rem //   If an optional tooltip is given, it is shown.
 !rem //
-!mmm function chatButton(label, payload, style)
+!mmm function chatButton(label, payload, style, tooltip)
 !mmm   if isdefault(style)
 !mmm     set style = ""
 !mmm   end if
-!mmm   return " [" & label & "](" & payload & style & ") "
+!mmm   if isdefault(tooltip)
+!mmm     set tooltip = ""
+!mmm   else
+!mmm     set tooltip = "\" title=\"" & tooltip
+!mmm   end if
+!mmm   return " [" & label & "](" & payload & tooltip & style & ") "
 !mmm end function
 !rem
 !rem // chatButtonTable(label, rows)

@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "rangedAttack 2.2.1 (2025-05-16)"
+!mmm   set scriptVersion = "rangedAttack 2.2.2 (2025-10-10)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -478,6 +478,7 @@
 !mmm     end if
 !mmm     chat:      ${"&"}{template:default} {{name=${cOwnID.name}: Fernkampfangriff ${sharpShootingInsert} mit ${cWeaponType[0]} * ${cWeaponName} *
 !mmm     do chat(m3mgdRerunButton(cOwnID, "ranged", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cSharpExtraRoll": cSharpExtraRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll}))
+!mmm     do chat(m3mgdRerollButton(cOwnID, "ranged", cWeaponLabel, { "cAttackRoll": "1d20", "cDamageRoll": weaponDamageExpr }, {"cOwnID": cOwnID, "cTargetID": cTargetID, "cSemiManualModifiers": cSemiManualModifiers, "cManualModifiers": cManualModifiers}) )
 !mmm     chat:      }} 
 !mmm     chat:      {{Ziel=**${foeName}** ${m3mgdShapeMoji(cTargetID)}}}
 !mmm     if iscritical(cAttackRoll) and cSemiManualModifiers % 23 == 0
