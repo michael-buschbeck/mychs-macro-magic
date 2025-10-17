@@ -1,7 +1,7 @@
 !rem // Midgard Melee Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "meleeAttack v2.2.2 (2025-10-10)"
+!mmm   set scriptVersion = "meleeAttack v2.2.3 (2025-10-17)"
 !rem
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -121,14 +121,20 @@
 !rem
 !mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, cTargetID)
 !mmm   if (myViewAngle < -90) or (myViewAngle > 90)
-!mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes ($[viewAngle]{myViewAngle}°). Schade.
+!mmm     combine chat
+!mmm       chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes ($[viewAngle]{myViewAngle}°). Schade.
+!mmm       chat: ${m3mgdRerunButton(cOwnID, "melee", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll})}
+!mmm     end combine
 !mmm     exit script
 !mmm   end if
 !mmm   set foeViewAngle = m3mgdGetViewAngle(cTargetID, cOwnID)
 !mmm   set distance = m3mgdGetDistance(cOwnID, cTargetID)
 !mmm   set distanceUnits = distunits() 
 !mmm   if (distance/(distsnap()*distscale())) > 0
-!mmm     chat [OutsideStrikeDistance]: $[targetName]{foeName} ist zu weit entfernt für mein $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} * ($[weaponLabel]{cWeaponLabel}). Schade.
+!mmm     combine chat
+!mmm       chat [OutsideStrikeDistance]: $[targetName]{foeName} ist zu weit entfernt für mein $[weaponType]{cWeaponType} * $[weaponName]{cWeaponName} * ($[weaponLabel]{cWeaponLabel}). Schade.
+!mmm       chat: ${m3mgdRerunButton(cOwnID, "melee", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll})}
+!mmm     end combine
 !mmm     exit script
 !mmm   end if
 !mmm      

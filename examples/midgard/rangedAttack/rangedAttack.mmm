@@ -1,7 +1,7 @@
 !rem // Midgard Ranged Attack Script
 !rem //
 !mmm script
-!mmm   set scriptVersion = "rangedAttack 2.2.2 (2025-10-10)"
+!mmm   set scriptVersion = "rangedAttack 2.2.3 (2025-10-17)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -189,14 +189,20 @@
 !mmm     set ammoLabel = cAmmoMagicLabel
 !mmm   end if
 !mmm   if ammoCount ne "∞" and ammoCount <= 0
-!mmm     chat [OutOfAmmo]: Ich greife nach meinen ${ammoLabel}n, um auf ${foeName} zu schießen, doch **OH SCHRECK -- keine ${ammoLabel} mehr drin!** Schade. Da hat ${foeName} nochmal Glück gehabt.
+!mmm     combine chat
+!mmm       chat [OutOfAmmo]: Ich greife nach meinen ${ammoLabel}n, um auf ${foeName} zu schießen, doch **OH SCHRECK -- keine ${ammoLabel} mehr drin!** Schade. Da hat ${foeName} nochmal Glück gehabt.
+!mmm       chat: ${m3mgdRerunButton(cOwnID, "ranged", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cSharpExtraRoll": cSharpExtraRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll})}
+!mmm     end combine
 !mmm     exit script
 !mmm   end if
 !mmm
 !rem   // Calculate direction, exit if direction to target is outside arc of view 
 !mmm   set myViewAngle = m3mgdGetViewAngle(cOwnID, cTargetID)
 !mmm   if (myViewAngle < -45) or (myViewAngle > 45)
-!mmm     chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
+!mmm     combine chat
+!mmm       chat [OutsideFieldOfVision]: $[targetName]{foeName} ist außerhalb meines Blickfeldes. Schade.
+!mmm       chat: ${m3mgdRerunButton(cOwnID, "ranged", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cSharpExtraRoll": cSharpExtraRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll})}
+!mmm     end combine
 !mmm     exit script
 !mmm   end if
 !mmm   set foeViewAngle = m3mgdGetViewAngle(cTargetID, cOwnID)
@@ -223,7 +229,7 @@
 !mmm     combine chat
 !mmm       chat [OutsideStrikeDistance]: $[targetName]{foeName} ist außerhalb der Reichweite ($[weaponLabel]{cWeaponLabel}: $[maxRange]{cRangeUpperBoundFar}). Schade.
 !mmm       chat: Mein ${cAmmoLabel} fliegt grob in Richtung ${foeName}, der aber viel zu weit weg ist.
-!mmm       chat: ${"&"}{template:default} {{name=${cWeaponLabel}: Außer Reichweite}} 
+!mmm       chat: ${"&"}{template:default} {{name=${cWeaponLabel}: Außer Reichweite ${m3mgdRerunButton(cOwnID, "ranged", cWeaponLabel, {"cAttackRoll": cAttackRoll, "cDamageRoll": cDamageRoll, "cSharpExtraRoll": cSharpExtraRoll, "cMagicExtraDamageRoll": cMagicExtraDamageRoll})}}} 
 !mmm       chat: {{Ziel=**${foeName}**}}
 !mmm       chat: {{Entfernung=${distance} ${distanceUnits} 
 !mmm       chat: (${round(distance/(distsnap()*distscale()))} Planquadrate, **außerhalb der Reichweite: >${cRangeUpperBoundFar}m**)}}
