@@ -14,11 +14,11 @@
 !mmm       do setattr(tokenID, "token_name_shown", true)
 !mmm     end if
 !mmm   end for
-!mmm   for token in gettokens() where not isdenied(...) and ...name and not isunknown(...Typ) select ...name
+!mmm   for token in gettokens() where not isdenied(...) and ...name and not isunknown(...Grad) select ...name
 !rem //    debug do token, token.token_id, token.token_name, token.character_name
 !mmm     set trackerData = trackerData, { token: token.token_id, value: token.Gw + token.ItemBGewandheit + token.modGw + token.gRusGW }
 !mmm   end for
-!mmm   set trackerData = { token: "-", title: "Runde", value: "0", formula: "+1" }, trackerData order (...left.value > ...right.value)
+!mmm   set trackerData = { token: "-", title: "Runde", value: "0", formula: "+1" }, trackerData order (...left.value > ...right.value), { token: "-", title: "Ende der Runde", value: "0", formula: "+1" }
 !mmm   do settracker(trackerData)
 !mmm   do showtracker(true)
 !mmm
