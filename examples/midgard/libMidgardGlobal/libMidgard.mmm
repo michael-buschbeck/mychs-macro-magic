@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.1 (2025-10-10)" 
+!mmm   set libVersion = "libMidgard v1.8.2 (2025-10-17)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -189,7 +189,7 @@
 !rem
 !rem // m3mgdRetrieveAttack([targetID], [originID], [filters])
 !rem // 
-!rem //   Pulls stored attack data for the token pair targetID/[originID] from the registry [dataExchangeID].
+!rem //   Pulls stored attack data for the token pair targetID/[originID] from the combatData registry.
 !rem //   Validates attack data stack and returns it if valid, otherwise returns false.
 !rem // 
 !mmm function m3mgdRetrieveAttack(targetID, originID, filters)
@@ -205,9 +205,31 @@
 !mmm     set searchCriteria = { searchCriteria, filters }
 !mmm   end if 
 !mmm
-!mmm   set attackData = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, searchCriteria)
-!mmm   if count(attackData) != 1
+!mmm   set attackData = m3mgdExchangeGetData(m3mgdExchangeRegistries.combatData, searchCriteria) where ... ne {}
+!mmm   if count(attackData) != 1 and not(attackData == undef)
 !mmm     debug chat: m3mgdRetrieveAttack(): Found more than one active attack by '${originID.token_name}' against '${targetID.token_name}'.
+!rem     // Experimental, not sure if this case will continue to come up
+!mmm     set output = chatTightBoxHeader("Angriff auswählen")
+!mmm     for entry in attackData
+!mmm       set outputEntry = "🛡️ "
+!mmm       set tooltip = "🛡️ Gegen diesen Angriff verteidigen"
+!mmm       for propertyPair in entry...
+!mmm         if isunknown(propertyPair.value.token_id) or isdenied(propertyPair.value.token_id)
+!mmm           set outputEntry = outputEntry & propertyPair.key & ": **" & propertyPair.value & "** | "
+!mmm         else
+!mmm           set outputEntry = outputEntry & propertyPair.key & ": **" & propertyPair.value.token_name & "** (" & propertyPair.value & ") | "
+!mmm         end if
+!mmm       end for
+!mmm       set payloadSettings = { aa_target: entry.target }
+!mmm       if weaponsGroup eq "magic"
+!mmm         set payloadSettings = { payloadSettings, aa_spellType: entry.spellType, bb: { type: "command", value: "do chat(m3mgdSpellSelectorChatMenu(aa_target, 'defense', aa_spellType)" } } 
+!mmm       else 
+!mmm         set payloadSettings = { payloadSettings, aa_weaponType: entry.weaponType, bb: { type: "command", value: "do chat(m3mgdWeaponSelectorChatMenu(aa_target, 'defense', aa_weaponType)" } } 
+!mmm       end if
+!mmm       set payload = chatButtonPayload("", payloadSettings)
+!mmm       set output = output & chatTightBoxButtonRow(outputEntry, tooltip, payload)
+!mmm     end for
+!mmm     do whisperback(output)
 !mmm     return false
 !mmm   end if
 !mmm
