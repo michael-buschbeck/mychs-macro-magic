@@ -1,7 +1,7 @@
 !rem // Midgard Combat Defense Script
 !rem // 
 !mmm script
-!mmm   set scriptVersion = "defense 2.2.0 (2025-04-19)"
+!mmm   set scriptVersion = "defense 2.2.1 (2026-03-11)"
 !mmm
 !mmm   set customizable cCheckVersion = false
 !mmm   if cCheckVersion
@@ -321,7 +321,7 @@
 !mmm   if cVerbose
 !mmm     combine chat
 !rem       // Check if script is run for an NPC (whisper data to GM only)
-!mmm       if cGMSilentMode
+!mmm       if cGMSilentMode and not (newHealth < 0 and timeToDie < 0) 
 !mmm         chat: /w GM 
 !mmm       end if
 !mmm       if defenseSuccess
