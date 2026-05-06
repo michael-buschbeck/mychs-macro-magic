@@ -4,7 +4,7 @@
 !rem //
 !mmm function _libMidgard()
 !mmm   
-!mmm   set libVersion = "libMidgard v1.8.2 (2025-10-17)" 
+!mmm   set libVersion = "libMidgard v1.8.3 (2026-03-12)" 
 !mmm   set sender = "MacroSheetLibrary"
 !mmm
 !rem   // MMM compatibility check: die if MMM version too low
@@ -2723,10 +2723,10 @@
 !mmm
 !rem   // Register practice point, if applicable
 !mmm   if attackData.criticalAttack and not m3mgdIsExhausted(attackData.target) and attackData.attackType eq "magic"
-!mmm     set log = { "Praxispunkt": "Für die Zauberkategorie **" & attackData.origin.(findattr(attackData.origin, "Zauber", "Zauber", attackData.magicSpell, "Prozess")) & "** bitte manuell notieren. [x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)}} " }
+!mmm     set log = { "Praxispunkt": "Für die Zauberkategorie **" & attackData.origin.(findattr(attackData.origin, "Zauber", "Zauber", attackData.magicSpell, "Prozess")) & "** bitte manuell notieren. [x](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExeXltenYzbmFpOWt3dngydzVzYzI3djEyZHh3bG1uODU4cTR3bW1hdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d1nhBs9Ss8DAdD0FMV/giphy.gif)}} " }
 !mmm   else if attackData.criticalAttack and not m3mgdIsExhausted(attackData.target)
 !mmm     do m3mgdProcessCombatPP(attackData.origin, attackData.weaponLabel, attackData.target)
-!mmm     set log = { "Praxispunkt": "[x](https://media.giphy.com/media/hKafco7mFwBioBxqFT/giphy.gif)" }
+!mmm     set log = { "Praxispunkt": "[x](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExeXltenYzbmFpOWt3dngydzVzYzI3djEyZHh3bG1uODU4cTR3bW1hdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d1nhBs9Ss8DAdD0FMV/giphy.gif)" }
 !mmm   else if attackData.criticalAttack
 !mmm     set log = { "Kein Praxispunkt": "Gegner war schon erschöpft (AP=0)" }
 !mmm   end if
