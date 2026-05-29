@@ -99,7 +99,7 @@
 !rem // m3mgdExchangeGetData(registryID, searchCriteria)
 !rem // 
 !rem //   Retrieves one or several entries from a central data registry, as specified by searchCriteria.
-!rem //   All given criteria must be met at the same time (AND).
+!rem //   All given criteria must be met at the same time (AND). If no matching entries are found, returns undef.
 !rem // 
 !mmm function m3mgdExchangeGetData(registryID, searchCriteria)
 !mmm
